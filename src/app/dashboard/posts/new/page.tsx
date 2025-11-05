@@ -1,55 +1,24 @@
 "use client";
 
-import { use, useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Save, Eye, Trash2, Upload, X } from "lucide-react";
-import { Post } from "@/types/post.types";
+import { Save, Eye, Upload, X } from "lucide-react";
 
-export default function EditPostPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params);
+export default function NewPostPage() {
   const router = useRouter();
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [post, setPost] = useState<Post | null>(null);
   const [form, setForm] = useState({
     title: "",
     content: "",
     coverImage: "",
     status: "draft" as "draft" | "published",
   });
-
-  useEffect(() => {
-    async function fetchPost() {
-      try {
-        const response = await fetch(`/api/admin/posts/${id}`);
-        if (response.ok) {
-          const data = await response.json();
-          setPost(data);
-          setForm({
-            title: data.title,
-            content: data.content,
-            coverImage: data.coverImage || "",
-            status: data.status,
-          });
-        } else {
-          alert("הכתבה לא נמצאה");
-          router.push("/admin/posts");
-        }
-      } catch (error) {
-        console.error("Failed to fetch post:", error);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchPost();
-  }, [id, router]);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -92,17 +61,17 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
     }
   };
 
-  const handleUpdate = async (status: "draft" | "published") => {
+  const handleSubmit = async (status: "draft" | "published") => {
     if (!form.title || !form.content) {
       alert("כותרת ותוכן הם שדות חובה");
       return;
     }
 
-    setSaving(true);
+    setLoading(true);
 
     try {
-      const response = await fetch(`/api/admin/posts/${id}`, {
-        method: "PATCH",
+      const response = await fetch("/api/admin/posts", {
+        method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
@@ -115,65 +84,30 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
       });
 
       if (response.ok) {
-        router.push("/admin/posts");
+        router.push("/dashboard");
       } else {
-        alert("עדכון הכתבה נכשל");
+        alert("יצירת הפוסט נכשלה");
       }
     } catch (error) {
-      console.error("Failed to update post:", error);
-      alert("עדכון הכתבה נכשל");
+      console.error("Failed to create post:", error);
+      alert("יצירת הפוסט נכשלה");
     } finally {
-      setSaving(false);
+      setLoading(false);
     }
   };
-
-  const handleDelete = async () => {
-    if (!confirm("האם אתה בטוח שברצונך למחוק את הכתבה הזו? פעולה זו לא ניתנת לביטול.")) {
-      return;
-    }
-
-    try {
-      const response = await fetch(`/api/admin/posts/${id}`, {
-        method: "DELETE",
-      });
-
-      if (response.ok) {
-        router.push("/admin/posts");
-      } else {
-        alert("מחיקת הכתבה נכשלה");
-      }
-    } catch (error) {
-      console.error("Failed to delete post:", error);
-      alert("מחיקת הכתבה נכשלה");
-    }
-  };
-
-  if (loading) {
-    return <div className="text-center py-8">טוען...</div>;
-  }
-
-  if (!post) {
-    return <div className="text-center py-8">הכתבה לא נמצאה</div>;
-  }
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">ערוך כתבה</h1>
-          <p className="text-muted-foreground mt-1">
-            עדכן את הכתבה שלך
-          </p>
-        </div>
-        <Button variant="destructive" onClick={handleDelete}>
-          <Trash2 className="h-4 w-4 me-2" />
-          מחק
-        </Button>
+      <div>
+        <h1 className="text-3xl font-bold">צור פוסט חדש</h1>
+        <p className="text-muted-foreground mt-1">
+          כתוב פוסט חדש לבלוג
+        </p>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>פרטי הכתבה</CardTitle>
+          <CardTitle>פרטי הפוסט</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
@@ -182,7 +116,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
               id="title"
               value={form.title}
               onChange={(e) => setForm({ ...form, title: e.target.value })}
-              placeholder="הזן כותרת כתבה"
+              placeholder="הזן כותרת פוסט"
               required
             />
           </div>
@@ -193,7 +127,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
               id="content"
               value={form.content}
               onChange={(e) => setForm({ ...form, content: e.target.value })}
-              placeholder="כתוב את תוכן הכתבה בפורמט Markdown..."
+              placeholder="כתוב את תוכן הפוסט בפורמט Markdown..."
               className="min-h-[400px] font-mono"
               required
             />
@@ -262,24 +196,24 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
         <Button
           variant="outline"
           onClick={() => router.back()}
-          disabled={saving}
+          disabled={loading}
         >
           ביטול
         </Button>
         <Button
           variant="outline"
-          onClick={() => handleUpdate("draft")}
-          disabled={saving}
+          onClick={() => handleSubmit("draft")}
+          disabled={loading}
         >
           <Save className="h-4 w-4 me-2" />
           שמור כטיוטה
         </Button>
         <Button
-          onClick={() => handleUpdate("published")}
-          disabled={saving}
+          onClick={() => handleSubmit("published")}
+          disabled={loading}
         >
           <Eye className="h-4 w-4 me-2" />
-          {form.status === "published" ? "עדכן" : "פרסם"}
+          פרסם
         </Button>
       </div>
     </div>

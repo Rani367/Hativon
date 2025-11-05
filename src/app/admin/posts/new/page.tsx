@@ -7,21 +7,59 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Save, Eye } from "lucide-react";
+import { Save, Eye, Upload, X } from "lucide-react";
 
 export default function NewPostPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [form, setForm] = useState({
     title: "",
     content: "",
     coverImage: "",
-    author: "",
-    category: "",
-    tags: "",
     status: "draft" as "draft" | "published",
   });
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      alert("נא להעלות קובץ תמונה בלבד");
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert("גודל התמונה חייב להיות קטן מ-5MB");
+      return;
+    }
+
+    setUploading(true);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setForm({ ...form, coverImage: data.url });
+      } else {
+        alert("העלאת התמונה נכשלה");
+      }
+    } catch (error) {
+      console.error("Failed to upload image:", error);
+      alert("העלאת התמונה נכשלה");
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const handleSubmit = async (status: "draft" | "published") => {
     if (!form.title || !form.content) {
@@ -38,8 +76,9 @@ export default function NewPostPage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          ...form,
-          tags: form.tags ? form.tags.split(",").map((t) => t.trim()) : [],
+          title: form.title,
+          content: form.content,
+          coverImage: form.coverImage,
           status,
         }),
       });
@@ -94,59 +133,62 @@ export default function NewPostPage() {
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="coverImage">כתובת תמונת שער</Label>
-              <Input
-                id="coverImage"
-                value={form.coverImage}
-                onChange={(e) => setForm({ ...form, coverImage: e.target.value })}
-                placeholder="https://example.com/image.jpg"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="author">כותב</Label>
-              <Input
-                id="author"
-                value={form.author}
-                onChange={(e) => setForm({ ...form, author: e.target.value })}
-                placeholder="שם הכותב"
-              />
-            </div>
+          <div className="space-y-2">
+            <Label>תמונת שער</Label>
+            {form.coverImage ? (
+              <div className="space-y-2">
+                <div className="relative rounded-lg overflow-hidden border">
+                  <img
+                    src={form.coverImage}
+                    alt="תצוגה מקדימה"
+                    className="w-full h-48 object-cover"
+                  />
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="icon"
+                    className="absolute top-2 left-2"
+                    onClick={() => setForm({ ...form, coverImage: "" })}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+                <Input
+                  value={form.coverImage}
+                  onChange={(e) => setForm({ ...form, coverImage: e.target.value })}
+                  placeholder="או הזן כתובת URL"
+                  className="text-sm"
+                />
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => document.getElementById('imageUpload')?.click()}
+                    disabled={uploading}
+                  >
+                    <Upload className="h-4 w-4 me-2" />
+                    {uploading ? "מעלה..." : "העלה תמונה"}
+                  </Button>
+                  <input
+                    id="imageUpload"
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleImageUpload}
+                  />
+                </div>
+                <Input
+                  placeholder="או הזן כתובת URL של תמונה"
+                  value={form.coverImage}
+                  onChange={(e) => setForm({ ...form, coverImage: e.target.value })}
+                />
+              </div>
+            )}
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="category">קטגוריה</Label>
-              <Input
-                id="category"
-                value={form.category}
-                onChange={(e) => setForm({ ...form, category: e.target.value })}
-                placeholder="למשל: ספורט, תרבות"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="tags">תגיות (מופרדות בפסיקים)</Label>
-              <Input
-                id="tags"
-                value={form.tags}
-                onChange={(e) => setForm({ ...form, tags: e.target.value })}
-                placeholder="למשל: כדורסל, משחק, תחרות"
-              />
-            </div>
-          </div>
-
-          {form.tags && (
-            <div className="flex flex-wrap gap-2">
-              {form.tags.split(",").map((tag) => (
-                <Badge key={tag.trim()} variant="outline">
-                  {tag.trim()}
-                </Badge>
-              ))}
-            </div>
-          )}
         </CardContent>
       </Card>
 

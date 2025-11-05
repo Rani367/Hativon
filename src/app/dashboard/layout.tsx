@@ -4,68 +4,50 @@ import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Home, FileText, PlusCircle, LogOut, Menu } from "lucide-react";
+import { FileText, PlusCircle, LogOut, Menu } from "lucide-react";
 
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const [checking, setChecking] = useState(true);
   const [authenticated, setAuthenticated] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [userName, setUserName] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // Check authentication for all admin routes except login page
+  // Check authentication for all dashboard routes
   useEffect(() => {
     async function checkAuth() {
-      if (pathname === "/admin") {
-        setChecking(false);
-        return;
-      }
-
       try {
         const response = await fetch("/api/check-auth");
         const data = await response.json();
 
         if (data.authenticated) {
-          // Check if user is admin
-          if (data.user && data.user.role === 'admin') {
-            setAuthenticated(true);
-            setIsAdmin(true);
-          } else if (data.legacy) {
-            // Legacy admin authentication
-            setAuthenticated(true);
-            setIsAdmin(true);
-          } else {
-            // User is authenticated but not an admin - redirect to dashboard
-            router.push("/dashboard");
+          setAuthenticated(true);
+          if (data.user) {
+            setUserName(data.user.displayName || data.user.email);
           }
         } else {
-          router.push("/admin");
+          router.push("/");
         }
       } catch (error) {
         console.error("Auth check failed:", error);
-        router.push("/admin");
+        router.push("/");
       } finally {
         setChecking(false);
       }
     }
 
     checkAuth();
-  }, [pathname, router]);
+  }, [router]);
 
   const handleLogout = async () => {
     try {
-      await fetch("/api/logout", { method: "POST" });
-      router.push("/admin");
+      await fetch("/api/auth/logout", { method: "POST" });
+      router.push("/");
     } catch (error) {
       console.error("Logout failed:", error);
     }
   };
-
-  // Show login page without layout
-  if (pathname === "/admin") {
-    return children;
-  }
 
   // Show loading state
   if (checking) {
@@ -76,15 +58,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     );
   }
 
-  // Only show admin layout if authenticated
+  // Only show dashboard if authenticated
   if (!authenticated) {
     return null;
   }
 
   const navItems = [
-    { href: "/admin/dashboard", label: "לוח בקרה", icon: Home },
-    { href: "/admin/posts", label: "כל הכתבות", icon: FileText },
-    { href: "/admin/posts/new", label: "כתבה חדשה", icon: PlusCircle },
+    { href: "/dashboard", label: "הפוסטים שלי", icon: FileText },
+    { href: "/dashboard/posts/new", label: "פוסט חדש", icon: PlusCircle },
   ];
 
   return (
@@ -94,20 +75,23 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <div className="container flex h-14 items-center">
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="mr-4 lg:hidden"
+            className="ms-4 lg:hidden"
           >
             <Menu className="h-6 w-6" />
           </button>
           <div className="flex flex-1 items-center justify-between">
-            <h1 className="text-xl font-semibold">פאנל ניהול</h1>
+            <h1 className="text-xl font-semibold">לוח הבקרה שלי</h1>
             <div className="flex items-center gap-4">
+              <span className="text-sm text-muted-foreground hidden sm:inline">
+                {userName}
+              </span>
               <Link href="/">
                 <Button variant="outline" size="sm">
-                  צפה באתר
+                  חזרה לאתר
                 </Button>
               </Link>
               <Button variant="ghost" size="sm" onClick={handleLogout}>
-                <LogOut className="h-4 w-4 mr-2" />
+                <LogOut className="h-4 w-4 ms-2" />
                 התנתק
               </Button>
             </div>
@@ -119,8 +103,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         {/* Sidebar */}
         <aside
           className={`${
-            sidebarOpen ? "translate-x-0" : "-translate-x-full"
-          } fixed inset-y-0 left-0 z-40 w-64 border-r bg-background transition-transform lg:translate-x-0 lg:static`}
+            sidebarOpen ? "translate-x-0" : "translate-x-full"
+          } fixed inset-y-0 right-0 z-40 w-64 border-l bg-background transition-transform lg:translate-x-0 lg:static`}
         >
           <nav className="space-y-1 p-4 pt-20 lg:pt-4">
             {navItems.map((item) => {
