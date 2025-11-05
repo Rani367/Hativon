@@ -120,4 +120,15 @@
   body {
     @apply bg-background text-foreground;
   }
+
+  /* RTL support - ensure proper text direction */
+  [dir="rtl"] {
+    direction: rtl;
+    text-align: start;
+  }
+
+  [dir="ltr"] {
+    direction: ltr;
+    text-align: start;
+  }
 }

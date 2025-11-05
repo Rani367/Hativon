@@ -26,16 +26,16 @@ const components = {
     </a>
   ),
   ul: ({ children }: { children?: React.ReactNode }) => (
-    <ul className="mb-4 list-disc pl-5">{children}</ul>
+    <ul className="mb-4 list-disc ps-5">{children}</ul>
   ),
   ol: ({ children }: { children?: React.ReactNode }) => (
-    <ol className="mb-4 list-decimal pl-5">{children}</ol>
+    <ol className="mb-4 list-decimal ps-5">{children}</ol>
   ),
   li: ({ children }: { children?: React.ReactNode }) => (
     <li className="mb-2">{children}</li>
   ),
   blockquote: ({ children }: { children?: React.ReactNode }) => (
-    <blockquote className="mb-4 border-neutral-300 border-l-2 py-2 pl-4 italic">
+    <blockquote className="mb-4 border-neutral-300 border-s-2 py-2 ps-4 italic">
       {children}
     </blockquote>
   ),

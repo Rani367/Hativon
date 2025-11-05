@@ -149,6 +149,7 @@ export async function createPost(input: PostInput): Promise<Post> {
     description,
     date: now,
     author: input.author,
+    authorId: input.authorId,
     tags: input.tags || [],
     category: input.category,
     status: input.status || 'draft',
@@ -185,6 +186,7 @@ export async function updatePost(id: string, input: Partial<PostInput>): Promise
   }
   if (input.coverImage !== undefined) updatedPost.coverImage = input.coverImage;
   if (input.author !== undefined) updatedPost.author = input.author;
+  if (input.authorId !== undefined) updatedPost.authorId = input.authorId;
   if (input.tags !== undefined) updatedPost.tags = input.tags;
   if (input.category !== undefined) updatedPost.category = input.category;
   if (input.status !== undefined) updatedPost.status = input.status;
@@ -230,4 +232,48 @@ export async function getPostStats(): Promise<PostStats> {
     thisWeek: posts.filter(p => new Date(p.createdAt) >= weekStart).length,
     thisMonth: posts.filter(p => new Date(p.createdAt) >= monthStart).length,
   };
+}
+
+/**
+ * Check if user can edit a post
+ * Admin can edit all posts, regular users can only edit their own posts
+ */
+export async function canUserEditPost(userId: string, postId: string, isAdmin: boolean): Promise<boolean> {
+  if (isAdmin) {
+    return true; // Admin can edit all posts
+  }
+
+  const post = await getPostById(postId);
+  if (!post) {
+    return false;
+  }
+
+  // User can edit if they are the author
+  return post.authorId === userId;
+}
+
+/**
+ * Check if user can delete a post
+ * Admin can delete all posts, regular users can only delete their own posts
+ */
+export async function canUserDeletePost(userId: string, postId: string, isAdmin: boolean): Promise<boolean> {
+  if (isAdmin) {
+    return true; // Admin can delete all posts
+  }
+
+  const post = await getPostById(postId);
+  if (!post) {
+    return false;
+  }
+
+  // User can delete if they are the author
+  return post.authorId === userId;
+}
+
+/**
+ * Get posts by author ID
+ */
+export async function getPostsByAuthor(authorId: string): Promise<Post[]> {
+  const posts = await readPosts();
+  return posts.filter(post => post.authorId === authorId);
 }

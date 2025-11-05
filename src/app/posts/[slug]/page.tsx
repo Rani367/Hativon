@@ -1,5 +1,6 @@
 import { getPost, getWordCount } from "@/lib/posts";
 import { format } from "date-fns";
+import { he } from "date-fns/locale";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { Metadata } from "next";
@@ -24,7 +25,7 @@ export async function generateMetadata(
 
   if (!post) {
     return {
-      title: "Post Not Found",
+      title: "הכתבה לא נמצאה",
     };
   }
 
@@ -88,11 +89,11 @@ export default async function PostPage({ params }: PostPageProps) {
     datePublished: new Date(post.date).toISOString(),
     author: {
       "@type": "Person",
-      name: post.author || "Guest Author",
+      name: post.author || "כותב אורח",
     },
     publisher: {
       "@type": "Organization",
-      name: "Your Site Name",
+      name: "חטיבון",
       logo: {
         "@type": "ImageObject",
         url: `${siteUrl}/logo.png`,
@@ -125,10 +126,10 @@ export default async function PostPage({ params }: PostPageProps) {
 
         <header className="mb-8">
           <div className="flex items-center gap-4 text-muted-foreground mb-4">
-            <time>{format(new Date(post.date), "MMMM d, yyyy")}</time>
-            {post.author && <span>By {post.author}</span>}
+            <time>{format(new Date(post.date), "d בMMMM yyyy", { locale: he })}</time>
+            {post.author && <span>מאת {post.author}</span>}
             <span>{calculateReadingTime(wordCount)}</span>
-            <span>{wordCount} words</span>
+            <span>{wordCount} מילים</span>
           </div>
 
           <h1 className="text-4xl font-bold mb-4 text-foreground">
