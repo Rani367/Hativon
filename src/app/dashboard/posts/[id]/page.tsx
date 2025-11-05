@@ -38,8 +38,8 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
             status: data.status,
           });
         } else {
-          alert("הכתבה לא נמצאה");
-          router.push("/admin/posts");
+          alert("הפוסט לא נמצא");
+          router.push("/dashboard");
         }
       } catch (error) {
         console.error("Failed to fetch post:", error);
@@ -115,20 +115,20 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
       });
 
       if (response.ok) {
-        router.push("/admin/posts");
+        router.push("/dashboard");
       } else {
-        alert("עדכון הכתבה נכשל");
+        alert("עדכון הפוסט נכשל");
       }
     } catch (error) {
       console.error("Failed to update post:", error);
-      alert("עדכון הכתבה נכשל");
+      alert("עדכון הפוסט נכשל");
     } finally {
       setSaving(false);
     }
   };
 
   const handleDelete = async () => {
-    if (!confirm("האם אתה בטוח שברצונך למחוק את הכתבה הזו? פעולה זו לא ניתנת לביטול.")) {
+    if (!confirm("האם אתה בטוח שברצונך למחוק את הפוסט הזה? פעולה זו לא ניתנת לביטול.")) {
       return;
     }
 
@@ -138,13 +138,13 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
       });
 
       if (response.ok) {
-        router.push("/admin/posts");
+        router.push("/dashboard");
       } else {
-        alert("מחיקת הכתבה נכשלה");
+        alert("מחיקת הפוסט נכשלה");
       }
     } catch (error) {
       console.error("Failed to delete post:", error);
-      alert("מחיקת הכתבה נכשלה");
+      alert("מחיקת הפוסט נכשלה");
     }
   };
 
@@ -153,16 +153,16 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
   }
 
   if (!post) {
-    return <div className="text-center py-8">הכתבה לא נמצאה</div>;
+    return <div className="text-center py-8">הפוסט לא נמצא</div>;
   }
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">ערוך כתבה</h1>
+          <h1 className="text-3xl font-bold">ערוך פוסט</h1>
           <p className="text-muted-foreground mt-1">
-            עדכן את הכתבה שלך
+            עדכן את הפוסט שלך
           </p>
         </div>
         <Button variant="destructive" onClick={handleDelete}>
@@ -173,7 +173,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
 
       <Card>
         <CardHeader>
-          <CardTitle>פרטי הכתבה</CardTitle>
+          <CardTitle>פרטי הפוסט</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
@@ -182,7 +182,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
               id="title"
               value={form.title}
               onChange={(e) => setForm({ ...form, title: e.target.value })}
-              placeholder="הזן כותרת כתבה"
+              placeholder="הזן כותרת פוסט"
               required
             />
           </div>
@@ -193,7 +193,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
               id="content"
               value={form.content}
               onChange={(e) => setForm({ ...form, content: e.target.value })}
-              placeholder="כתוב את תוכן הכתבה בפורמט Markdown..."
+              placeholder="כתוב את תוכן הפוסט בפורמט Markdown..."
               className="min-h-[400px] font-mono"
               required
             />
