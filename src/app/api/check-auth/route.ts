@@ -1,11 +1,31 @@
-import { NextRequest, NextResponse } from 'next/server';
-import * as cookie from 'cookie';
+import { NextResponse } from 'next/server';
+import { getCurrentUser, isLegacyAdminAuthenticated } from '@/lib/auth/middleware';
 
-export async function GET(request: NextRequest) {
-  const cookieHeader = request.headers.get('cookie') || '';
-  const cookies = cookie.parse(cookieHeader);
+/**
+ * Check authentication status
+ * Supports both new JWT system and legacy admin authentication
+ */
+export async function GET() {
+  try {
+    // Try new JWT system first
+    const user = await getCurrentUser();
 
-  const isAuthenticated = cookies.authToken === 'authenticated';
+    if (user) {
+      return NextResponse.json({
+        authenticated: true,
+        user,
+      });
+    }
 
-  return NextResponse.json({ authenticated: isAuthenticated });
+    // Fall back to legacy admin authentication
+    const legacyAuth = await isLegacyAdminAuthenticated();
+
+    return NextResponse.json({
+      authenticated: legacyAuth,
+      legacy: legacyAuth,
+    });
+  } catch (error) {
+    console.error('Check auth error:', error);
+    return NextResponse.json({ authenticated: false });
+  }
 }

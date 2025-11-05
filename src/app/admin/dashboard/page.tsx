@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { FileText, PlusCircle, Eye, EyeOff, Calendar, TrendingUp } from "lucide-react";
 import { PostStats, Post } from "@/types/post.types";
 import { format } from "date-fns";
+import { he } from "date-fns/locale";
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState<PostStats | null>(null);
@@ -32,22 +33,22 @@ export default function AdminDashboard() {
   }, []);
 
   if (loading) {
-    return <div className="text-center py-8">Loading...</div>;
+    return <div className="text-center py-8">טוען...</div>;
   }
 
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Dashboard</h1>
+          <h1 className="text-3xl font-bold">לוח בקרה</h1>
           <p className="text-muted-foreground mt-1">
-            Welcome back! Here's an overview of your blog.
+            שלום! הנה סקירה כללית של העיתון שלך.
           </p>
         </div>
         <Link href="/admin/posts/new">
           <Button>
-            <PlusCircle className="h-4 w-4 mr-2" />
-            New Post
+            <PlusCircle className="h-4 w-4 me-2" />
+            כתבה חדשה
           </Button>
         </Link>
       </div>
@@ -57,78 +58,78 @@ export default function AdminDashboard() {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Posts</CardTitle>
+              <CardTitle className="text-sm font-medium">סך הכל כתבות</CardTitle>
               <FileText className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stats.total}</div>
               <p className="text-xs text-muted-foreground mt-1">
-                All posts in your blog
+                כל הכתבות בעיתון
               </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Published</CardTitle>
+              <CardTitle className="text-sm font-medium">פורסמו</CardTitle>
               <Eye className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stats.published}</div>
               <p className="text-xs text-muted-foreground mt-1">
-                Live on your site
+                מופיע באתר
               </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Drafts</CardTitle>
+              <CardTitle className="text-sm font-medium">טיוטות</CardTitle>
               <EyeOff className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stats.drafts}</div>
               <p className="text-xs text-muted-foreground mt-1">
-                Work in progress
+                בעבודה
               </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Today</CardTitle>
+              <CardTitle className="text-sm font-medium">היום</CardTitle>
               <Calendar className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stats.today}</div>
               <p className="text-xs text-muted-foreground mt-1">
-                Posts created today
+                כתבות שנוצרו היום
               </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">This Week</CardTitle>
+              <CardTitle className="text-sm font-medium">השבוע</CardTitle>
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stats.thisWeek}</div>
               <p className="text-xs text-muted-foreground mt-1">
-                Posts this week
+                כתבות השבוע
               </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">This Month</CardTitle>
+              <CardTitle className="text-sm font-medium">החודש</CardTitle>
               <Calendar className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stats.thisMonth}</div>
               <p className="text-xs text-muted-foreground mt-1">
-                Posts this month
+                כתבות החודש
               </p>
             </CardContent>
           </Card>
@@ -139,10 +140,10 @@ export default function AdminDashboard() {
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle>Recent Posts</CardTitle>
+            <CardTitle>כתבות אחרונות</CardTitle>
             <Link href="/admin/posts">
               <Button variant="outline" size="sm">
-                View All
+                הצג הכל
               </Button>
             </Link>
           </div>
@@ -150,7 +151,7 @@ export default function AdminDashboard() {
         <CardContent>
           {recentPosts.length === 0 ? (
             <p className="text-center text-muted-foreground py-8">
-              No posts yet. Create your first post to get started!
+              אין עדיין כתבות. צור את הכתבה הראשונה כדי להתחיל!
             </p>
           ) : (
             <div className="space-y-4">
@@ -167,19 +168,19 @@ export default function AdminDashboard() {
                       {post.title}
                     </Link>
                     <div className="flex items-center gap-3 mt-1 text-sm text-muted-foreground">
-                      <span>{format(new Date(post.createdAt), "MMM d, yyyy")}</span>
+                      <span>{format(new Date(post.createdAt), "d בMMMM yyyy", { locale: he })}</span>
                       <span className={`px-2 py-0.5 rounded-full text-xs ${
                         post.status === 'published'
                           ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
                           : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
                       }`}>
-                        {post.status}
+                        {post.status === 'published' ? 'פורסם' : 'טיוטה'}
                       </span>
                     </div>
                   </div>
                   <Link href={`/admin/posts/${post.id}`}>
                     <Button variant="ghost" size="sm">
-                      Edit
+                      ערוך
                     </Button>
                   </Link>
                 </div>

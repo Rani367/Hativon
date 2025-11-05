@@ -25,7 +25,7 @@ export default function NewPostPage() {
 
   const handleSubmit = async (status: "draft" | "published") => {
     if (!form.title || !form.content) {
-      alert("Title and content are required");
+      alert("כותרת ותוכן הם שדות חובה");
       return;
     }
 
@@ -47,11 +47,11 @@ export default function NewPostPage() {
       if (response.ok) {
         router.push("/admin/posts");
       } else {
-        alert("Failed to create post");
+        alert("יצירת הכתבה נכשלה");
       }
     } catch (error) {
       console.error("Failed to create post:", error);
-      alert("Failed to create post");
+      alert("יצירת הכתבה נכשלה");
     } finally {
       setLoading(false);
     }
@@ -60,35 +60,35 @@ export default function NewPostPage() {
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Create New Post</h1>
+        <h1 className="text-3xl font-bold">צור כתבה חדשה</h1>
         <p className="text-muted-foreground mt-1">
-          Write a new blog post
+          כתוב כתבה חדשה לעיתון
         </p>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Post Details</CardTitle>
+          <CardTitle>פרטי הכתבה</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="title">Title *</Label>
+            <Label htmlFor="title">כותרת *</Label>
             <Input
               id="title"
               value={form.title}
               onChange={(e) => setForm({ ...form, title: e.target.value })}
-              placeholder="Enter post title"
+              placeholder="הזן כותרת כתבה"
               required
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="content">Content * (Markdown)</Label>
+            <Label htmlFor="content">תוכן * (Markdown)</Label>
             <Textarea
               id="content"
               value={form.content}
               onChange={(e) => setForm({ ...form, content: e.target.value })}
-              placeholder="Write your post content in Markdown format..."
+              placeholder="כתוב את תוכן הכתבה בפורמט Markdown..."
               className="min-h-[400px] font-mono"
               required
             />
@@ -96,7 +96,7 @@ export default function NewPostPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="coverImage">Cover Image URL</Label>
+              <Label htmlFor="coverImage">כתובת תמונת שער</Label>
               <Input
                 id="coverImage"
                 value={form.coverImage}
@@ -106,34 +106,34 @@ export default function NewPostPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="author">Author</Label>
+              <Label htmlFor="author">כותב</Label>
               <Input
                 id="author"
                 value={form.author}
                 onChange={(e) => setForm({ ...form, author: e.target.value })}
-                placeholder="Author name"
+                placeholder="שם הכותב"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="category">Category</Label>
+              <Label htmlFor="category">קטגוריה</Label>
               <Input
                 id="category"
                 value={form.category}
                 onChange={(e) => setForm({ ...form, category: e.target.value })}
-                placeholder="e.g., Technology"
+                placeholder="למשל: ספורט, תרבות"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="tags">Tags (comma-separated)</Label>
+              <Label htmlFor="tags">תגיות (מופרדות בפסיקים)</Label>
               <Input
                 id="tags"
                 value={form.tags}
                 onChange={(e) => setForm({ ...form, tags: e.target.value })}
-                placeholder="e.g., React, JavaScript, Web Dev"
+                placeholder="למשל: כדורסל, משחק, תחרות"
               />
             </div>
           </div>
@@ -156,22 +156,22 @@ export default function NewPostPage() {
           onClick={() => router.back()}
           disabled={loading}
         >
-          Cancel
+          ביטול
         </Button>
         <Button
           variant="outline"
           onClick={() => handleSubmit("draft")}
           disabled={loading}
         >
-          <Save className="h-4 w-4 mr-2" />
-          Save as Draft
+          <Save className="h-4 w-4 me-2" />
+          שמור כטיוטה
         </Button>
         <Button
           onClick={() => handleSubmit("published")}
           disabled={loading}
         >
-          <Eye className="h-4 w-4 mr-2" />
-          Publish
+          <Eye className="h-4 w-4 me-2" />
+          פרסם
         </Button>
       </div>
     </div>

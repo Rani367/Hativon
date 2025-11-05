@@ -9,6 +9,7 @@ import { Card } from "@/components/ui/card";
 import { PlusCircle, Search, Download, Edit, Trash2 } from "lucide-react";
 import { Post } from "@/types/post.types";
 import { format } from "date-fns";
+import { he } from "date-fns/locale";
 
 export default function PostsListPage() {
   const [posts, setPosts] = useState<Post[]>([]);
@@ -54,7 +55,7 @@ export default function PostsListPage() {
   }
 
   async function handleDelete(id: string) {
-    if (!confirm("Are you sure you want to delete this post?")) return;
+    if (!confirm("האם אתה בטוח שברצונך למחוק את הכתבה הזו?")) return;
 
     try {
       const response = await fetch(`/api/admin/posts/${id}`, {
@@ -74,27 +75,27 @@ export default function PostsListPage() {
   }
 
   if (loading) {
-    return <div className="text-center py-8">Loading...</div>;
+    return <div className="text-center py-8">טוען...</div>;
   }
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">All Posts</h1>
+          <h1 className="text-3xl font-bold">כל הכתבות</h1>
           <p className="text-muted-foreground mt-1">
-            Manage your blog posts
+            נהל את כתבות העיתון
           </p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={handleExport}>
-            <Download className="h-4 w-4 mr-2" />
-            Export CSV
+            <Download className="h-4 w-4 me-2" />
+            ייצא CSV
           </Button>
           <Link href="/admin/posts/new">
             <Button>
-              <PlusCircle className="h-4 w-4 mr-2" />
-              New Post
+              <PlusCircle className="h-4 w-4 me-2" />
+              כתבה חדשה
             </Button>
           </Link>
         </div>
@@ -104,12 +105,12 @@ export default function PostsListPage() {
       <Card className="p-4">
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Search className="absolute start-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search posts..."
+              placeholder="חפש כתבות..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-10"
+              className="ps-10"
             />
           </div>
           <div className="flex gap-2">
@@ -118,21 +119,21 @@ export default function PostsListPage() {
               size="sm"
               onClick={() => setStatusFilter("all")}
             >
-              All
+              הכל
             </Button>
             <Button
               variant={statusFilter === "published" ? "default" : "outline"}
               size="sm"
               onClick={() => setStatusFilter("published")}
             >
-              Published
+              פורסמו
             </Button>
             <Button
               variant={statusFilter === "draft" ? "default" : "outline"}
               size="sm"
               onClick={() => setStatusFilter("draft")}
             >
-              Drafts
+              טיוטות
             </Button>
           </div>
         </div>
@@ -143,19 +144,19 @@ export default function PostsListPage() {
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="border-b">
-              <tr className="text-left">
-                <th className="p-4 font-medium">Title</th>
-                <th className="p-4 font-medium hidden md:table-cell">Category</th>
-                <th className="p-4 font-medium hidden lg:table-cell">Created</th>
-                <th className="p-4 font-medium">Status</th>
-                <th className="p-4 font-medium text-right">Actions</th>
+              <tr className="text-start">
+                <th className="p-4 font-medium">כותרת</th>
+                <th className="p-4 font-medium hidden md:table-cell">קטגוריה</th>
+                <th className="p-4 font-medium hidden lg:table-cell">נוצר</th>
+                <th className="p-4 font-medium">סטטוס</th>
+                <th className="p-4 font-medium text-end">פעולות</th>
               </tr>
             </thead>
             <tbody>
               {filteredPosts.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="p-8 text-center text-muted-foreground">
-                    No posts found.
+                    לא נמצאו כתבות.
                   </td>
                 </tr>
               ) : (
@@ -180,13 +181,13 @@ export default function PostsListPage() {
                       )}
                     </td>
                     <td className="p-4 text-sm text-muted-foreground hidden lg:table-cell">
-                      {format(new Date(post.createdAt), "MMM d, yyyy")}
+                      {format(new Date(post.createdAt), "d בMMMM yyyy", { locale: he })}
                     </td>
                     <td className="p-4">
                       <Badge
                         variant={post.status === "published" ? "default" : "secondary"}
                       >
-                        {post.status}
+                        {post.status === "published" ? "פורסם" : "טיוטה"}
                       </Badge>
                     </td>
                     <td className="p-4">

@@ -1,40 +1,79 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import Layout from "@/components/layout";
 import { ThemeProvider } from "@/components/theme-provider";
 
-const inter = Inter({ subsets: ["latin"] });
+const heebo = localFont({
+  src: [
+    {
+      path: "../../public/fonts/Heebo-Thin.ttf",
+      weight: "100",
+      style: "normal",
+    },
+    {
+      path: "../../public/fonts/Heebo-Light.ttf",
+      weight: "300",
+      style: "normal",
+    },
+    {
+      path: "../../public/fonts/Heebo-Regular.ttf",
+      weight: "400",
+      style: "normal",
+    },
+    {
+      path: "../../public/fonts/Heebo-Medium.ttf",
+      weight: "500",
+      style: "normal",
+    },
+    {
+      path: "../../public/fonts/Heebo-Bold.ttf",
+      weight: "700",
+      style: "normal",
+    },
+    {
+      path: "../../public/fonts/Heebo-ExtraBold.ttf",
+      weight: "800",
+      style: "normal",
+    },
+    {
+      path: "../../public/fonts/Heebo-Black.ttf",
+      weight: "900",
+      style: "normal",
+    },
+  ],
+  variable: "--font-heebo",
+});
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://your-site.com";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "Gesturs - The Notion Blog",
-    template: `%s | Gesturs`,
+    default: "חטיבון - עיתון בית הספר",
+    template: `%s | חטיבון`,
   },
-  description: "A blog built with Next.js and Notion",
+  description: "עיתון התלמידים של חטיבת הביניים - חדשות, כתבות ועדכונים מבית הספר",
   openGraph: {
-    title: "Gesturs - The Notion Blog",
-    description: "A blog built with Next.js and Notion",
+    title: "חטיבון - עיתון בית הספר",
+    description: "עיתון התלמידים של חטיבת הביניים - חדשות, כתבות ועדכונים מבית הספר",
     url: siteUrl,
-    siteName: "Gesturs",
+    siteName: "חטיבון",
     images: [
       {
         url: `${siteUrl}/opengraph-image.png`,
         width: 1200,
         height: 630,
-        alt: "Gesturs - The Notion Blog",
+        alt: "חטיבון - עיתון בית הספר",
       },
     ],
-    locale: "en_US",
+    locale: "he_IL",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Gesturs - The Notion Blog",
-    description: "A blog built with Next.js and Notion",
+    title: "חטיבון - עיתון בית הספר",
+    description: "עיתון התלמידים של חטיבת הביניים - חדשות, כתבות ועדכונים מבית הספר",
     images: [`${siteUrl}/opengraph-image.png`],
   },
   robots: {
@@ -69,8 +108,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={inter.className}>
+    <html lang="he" dir="rtl" suppressHydrationWarning>
+      <body className={heebo.className}>
         <ThemeProvider
           attribute="class"
           defaultTheme="light"

@@ -1,6 +1,10 @@
+'use client';
+
 import Link from "next/link";
 import { ReactNode } from "react";
 import { ModeToggle } from "@/components/mode-toggle";
+import { UserMenu } from "@/components/auth/user-menu";
+import { AuthProvider } from "@/components/auth/auth-provider";
 
 interface LayoutProps {
   children: ReactNode;
@@ -8,28 +12,31 @@ interface LayoutProps {
 
 export default function Layout({ children }: LayoutProps) {
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b">
-        <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex">
-              <Link
-                href="/"
-                className="flex items-center text-xl font-bold text-foreground"
-              >
-                My Blog
-              </Link>
+    <AuthProvider>
+      <div className="min-h-screen bg-background">
+        <header className="border-b">
+          <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between h-16">
+              <div className="flex">
+                <Link
+                  href="/"
+                  className="flex items-center text-xl font-bold text-foreground"
+                >
+                  חטיבון
+                </Link>
+              </div>
+              <div className="flex items-center gap-3">
+                <UserMenu />
+                <ModeToggle />
+              </div>
             </div>
-            <div className="flex items-center">
-              <ModeToggle />
-            </div>
-          </div>
-        </nav>
-      </header>
+          </nav>
+        </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {children}
-      </main>
-    </div>
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          {children}
+        </main>
+      </div>
+    </AuthProvider>
   );
 }

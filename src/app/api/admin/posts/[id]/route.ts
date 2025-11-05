@@ -1,30 +1,34 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
-import { getPostById, updatePost, deletePost } from '@/lib/posts-storage';
+import { getPostById, updatePost, deletePost, canUserEditPost, canUserDeletePost } from '@/lib/posts-storage';
 import { PostInput } from '@/types/post.types';
-
-// Helper to check authentication
-async function isAuthenticated() {
-  const cookieStore = await cookies();
-  const authToken = cookieStore.get('authToken');
-  return authToken?.value === 'authenticated';
-}
+import { getCurrentUser, isLegacyAdminAuthenticated } from '@/lib/auth/middleware';
 
 // GET /api/admin/posts/[id] - Get single post
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  if (!(await isAuthenticated())) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
   try {
+    const user = await getCurrentUser();
+    const legacyAdmin = await isLegacyAdminAuthenticated();
+
+    if (!user && !legacyAdmin) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { id } = await params;
     const post = await getPostById(id);
 
     if (!post) {
       return NextResponse.json({ error: 'Post not found' }, { status: 404 });
+    }
+
+    // Check if user can view this post (own post or admin)
+    const isAdmin = user?.role === 'admin' || legacyAdmin;
+    const isOwner = user && post.authorId === user.id;
+
+    if (!isAdmin && !isOwner) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     return NextResponse.json(post);
@@ -42,12 +46,27 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  if (!(await isAuthenticated())) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
   try {
+    const user = await getCurrentUser();
+    const legacyAdmin = await isLegacyAdminAuthenticated();
+
+    if (!user && !legacyAdmin) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { id } = await params;
+
+    // Check if user can edit this post
+    if (user) {
+      const isAdmin = user.role === 'admin';
+      const canEdit = await canUserEditPost(user.id, id, isAdmin);
+
+      if (!canEdit) {
+        return NextResponse.json({ error: 'Forbidden - You can only edit your own posts' }, { status: 403 });
+      }
+    }
+    // Legacy admin can edit all posts
+
     const body: Partial<PostInput> = await request.json();
 
     const updatedPost = await updatePost(id, body);
@@ -71,12 +90,27 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  if (!(await isAuthenticated())) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
   try {
+    const user = await getCurrentUser();
+    const legacyAdmin = await isLegacyAdminAuthenticated();
+
+    if (!user && !legacyAdmin) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { id } = await params;
+
+    // Check if user can delete this post
+    if (user) {
+      const isAdmin = user.role === 'admin';
+      const canDelete = await canUserDeletePost(user.id, id, isAdmin);
+
+      if (!canDelete) {
+        return NextResponse.json({ error: 'Forbidden - You can only delete your own posts' }, { status: 403 });
+      }
+    }
+    // Legacy admin can delete all posts
+
     const deleted = await deletePost(id);
 
     if (!deleted) {

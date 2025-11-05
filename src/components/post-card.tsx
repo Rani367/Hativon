@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { format } from "date-fns";
+import { he } from "date-fns/locale";
 import { Post } from "@/types/post.types";
 import { getWordCount } from "@/lib/posts";
 import { Badge } from "@/components/ui/badge";
@@ -40,7 +41,7 @@ export default function PostCard({ post }: PostCardProps) {
           <div className="absolute inset-0 bg-muted/80" />
         )}
         {post.category && (
-          <div className="absolute top-4 left-4 z-20">
+          <div className="absolute top-4 start-4 z-20">
             <Badge
               variant="secondary"
               className="backdrop-blur-sm bg-background/80 shadow-sm"
@@ -54,24 +55,24 @@ export default function PostCard({ post }: PostCardProps) {
         <div className="flex items-center gap-4 text-sm text-muted-foreground">
           <div className="flex items-center gap-1.5">
             <Calendar className="h-4 w-4" />
-            <span>{format(new Date(post.date), "MMM d, yyyy")}</span>
+            <span>{format(new Date(post.date), "d בMMMM yyyy", { locale: he })}</span>
           </div>
           <div className="flex items-center gap-1.5">
             <Clock className="h-4 w-4" />
             <span>{readingTime}</span>
           </div>
         </div>
-        <div className="group-hover:pr-8 transition-all duration-300">
+        <div className="group-hover:pe-8 transition-all duration-300">
           <h2 className="text-xl font-semibold text-foreground group-hover:text-primary transition-colors">
             {post.title}
           </h2>
-          <ArrowUpRight className="absolute top-[7.5rem] right-6 h-6 w-6 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 text-primary" />
+          <ArrowUpRight className="absolute top-[7.5rem] end-6 h-6 w-6 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 text-primary rtl:scale-x-[-1]" />
         </div>
         <p className="text-muted-foreground line-clamp-2">{post.description}</p>
       </CardHeader>
       <CardContent>
         {post.author && (
-          <p className="text-sm text-muted-foreground">By {post.author}</p>
+          <p className="text-sm text-muted-foreground">מאת {post.author}</p>
         )}
       </CardContent>
       {post.tags && post.tags.length > 0 && (

@@ -7,6 +7,7 @@ export interface Post {
   description: string;
   date: string;
   author?: string;
+  authorId?: string; // User ID reference for post ownership
   tags?: string[];
   category?: string;
   status: 'draft' | 'published';
@@ -19,6 +20,7 @@ export interface PostInput {
   content: string;
   coverImage?: string;
   author?: string;
+  authorId?: string; // User ID reference for post ownership
   tags?: string[];
   category?: string;
   status?: 'draft' | 'published';

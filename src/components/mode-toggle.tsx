@@ -58,7 +58,7 @@ export function ModeToggle({ className }: ThemeToggleProps) {
             "flex justify-center items-center w-6 h-6 rounded-full transition-transform duration-300",
             isDark
               ? "transform translate-x-0 bg-zinc-800"
-              : "transform translate-x-8 bg-gray-200"
+              : "transform ltr:translate-x-8 rtl:-translate-x-8 bg-gray-200"
           )}
         >
           {isDark ? (
@@ -70,7 +70,7 @@ export function ModeToggle({ className }: ThemeToggleProps) {
         <div
           className={cn(
             "flex justify-center items-center w-6 h-6 rounded-full transition-transform duration-300",
-            isDark ? "bg-transparent" : "transform -translate-x-8"
+            isDark ? "bg-transparent" : "transform ltr:-translate-x-8 rtl:translate-x-8"
           )}
         >
           {isDark ? (

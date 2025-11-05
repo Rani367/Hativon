@@ -1,28 +1,34 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
-import { getPosts, createPost, getPostStats } from '@/lib/posts-storage';
+import { getPosts, createPost, getPostStats, getPostsByAuthor } from '@/lib/posts-storage';
 import { PostInput } from '@/types/post.types';
+import { getCurrentUser, isLegacyAdminAuthenticated } from '@/lib/auth/middleware';
 
-// Helper to check authentication
-async function isAuthenticated() {
-  const cookieStore = await cookies();
-  const authToken = cookieStore.get('authToken');
-  return authToken?.value === 'authenticated';
-}
-
-// GET /api/admin/posts - Get all posts
+// GET /api/admin/posts - Get all posts (admin) or user's posts (regular user)
 export async function GET(request: NextRequest) {
-  if (!(await isAuthenticated())) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
   try {
+    // Check authentication (new JWT or legacy admin)
+    const user = await getCurrentUser();
+    const legacyAdmin = await isLegacyAdminAuthenticated();
+
+    if (!user && !legacyAdmin) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');
     const search = searchParams.get('search');
     const includeStats = searchParams.get('stats') === 'true';
 
-    let posts = await getPosts(false); // Get all posts (including drafts)
+    let posts;
+
+    // Admin sees all posts, regular user sees only their own
+    if (user?.role === 'admin' || legacyAdmin) {
+      posts = await getPosts(false); // Get all posts (including drafts)
+    } else if (user) {
+      posts = await getPostsByAuthor(user.id);
+    } else {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
     // Filter by status
     if (status && (status === 'published' || status === 'draft')) {
@@ -60,11 +66,15 @@ export async function GET(request: NextRequest) {
 
 // POST /api/admin/posts - Create new post
 export async function POST(request: NextRequest) {
-  if (!(await isAuthenticated())) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
   try {
+    // Check authentication
+    const user = await getCurrentUser();
+    const legacyAdmin = await isLegacyAdminAuthenticated();
+
+    if (!user && !legacyAdmin) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const body: PostInput = await request.json();
 
     // Validate required fields
@@ -73,6 +83,15 @@ export async function POST(request: NextRequest) {
         { error: 'Title and content are required' },
         { status: 400 }
       );
+    }
+
+    // Add authorId if user is authenticated via JWT
+    if (user) {
+      body.authorId = user.id;
+      // Also set author display name if not provided
+      if (!body.author) {
+        body.author = user.displayName;
+      }
     }
 
     const newPost = await createPost(body);
