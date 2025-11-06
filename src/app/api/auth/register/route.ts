@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
     const dbAvailable = await isDatabaseAvailable();
     if (!dbAvailable) {
       return NextResponse.json(
-        { success: false, message: 'מערכת המשתמשים אינה זמינה כרגע. יש להגדיר את מסד הנתונים תחילה.' },
+        { success: false, message: 'ההרשמה אינה זמינה במצב מקומי. אנא התחבר עם שם משתמש "admin" והסיסמה שהוגדרה.' },
         { status: 503 }
       );
     }

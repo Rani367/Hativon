@@ -2,6 +2,7 @@ import { cookies } from 'next/headers';
 import { User } from '@/types/user.types';
 import { verifyToken } from './jwt';
 import { getUserById } from '../users';
+import { isDatabaseAvailable } from '../db/client';
 
 /**
  * Get current user from auth token
@@ -19,6 +20,27 @@ export async function getCurrentUser(): Promise<User | null> {
     const payload = verifyToken(authToken.value);
 
     if (!payload) {
+      return null;
+    }
+
+    // Check if this is the legacy admin user
+    if (payload.userId === 'legacy-admin') {
+      // Return mock admin user for legacy mode
+      return {
+        id: 'legacy-admin',
+        username: 'admin',
+        displayName: 'Admin',
+        role: 'admin',
+        email: null,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        lastLogin: null,
+      };
+    }
+
+    // Check if database is available
+    const dbAvailable = await isDatabaseAvailable();
+    if (!dbAvailable) {
       return null;
     }
 

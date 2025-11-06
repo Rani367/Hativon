@@ -6,15 +6,6 @@ import { isDatabaseAvailable } from '@/lib/db/client';
 
 export async function POST(request: NextRequest) {
   try {
-    // Check if database is available
-    const dbAvailable = await isDatabaseAvailable();
-    if (!dbAvailable) {
-      return NextResponse.json(
-        { success: false, message: 'מערכת המשתמשים אינה זמינה כרגע. יש להגדיר את מסד הנתונים תחילה.' },
-        { status: 503 }
-      );
-    }
-
     const body: UserLogin = await request.json();
     const { username, password } = body;
 
@@ -26,7 +17,55 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate credentials
+    // Check if database is available
+    const dbAvailable = await isDatabaseAvailable();
+
+    if (!dbAvailable) {
+      // Fallback to legacy admin password authentication
+      const adminPassword = process.env.ADMIN_PASSWORD;
+
+      if (!adminPassword) {
+        return NextResponse.json(
+          { success: false, message: 'מערכת האימות לא מוגדרת כראוי' },
+          { status: 503 }
+        );
+      }
+
+      // Check if credentials match admin password
+      if (username === 'admin' && password === adminPassword) {
+        // Create a mock admin user for legacy mode
+        const legacyAdminUser = {
+          id: 'legacy-admin',
+          username: 'admin',
+          displayName: 'Admin',
+          role: 'admin' as const,
+          email: null,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          lastLogin: null,
+        };
+
+        // Generate auth cookie
+        const cookie = createAuthCookie(legacyAdminUser);
+
+        return NextResponse.json(
+          { success: true, user: legacyAdminUser },
+          {
+            status: 200,
+            headers: {
+              'Set-Cookie': cookie,
+            },
+          }
+        );
+      } else {
+        return NextResponse.json(
+          { success: false, message: 'שם משתמש או סיסמה שגויים' },
+          { status: 401 }
+        );
+      }
+    }
+
+    // Database is available - use normal authentication
     const user = await validatePassword(username, password);
 
     if (!user) {

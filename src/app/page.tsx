@@ -1,6 +1,7 @@
 import { getPosts } from "@/lib/posts";
 import { Post } from "@/types/post.types";
 import PostCard from "@/components/post-card";
+import { EmptyPostsState } from "@/components/empty-posts-state";
 
 export default async function Home() {
   const posts = await getPosts();
@@ -12,15 +13,19 @@ export default async function Home() {
           ברוכים הבאים לחטיבון
         </h1>
         <p className="text-lg text-muted-foreground">
-          עיתון התלמידים של חטיבת הביניים - כתבות, חדשות ועדכונים
+          עיתון התלמידים של חטיבת הנדסאים
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {posts.map((post) => (
-          <PostCard key={post.id} post={post} />
-        ))}
-      </div>
+      {posts.length === 0 ? (
+        <EmptyPostsState />
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {posts.map((post) => (
+            <PostCard key={post.id} post={post} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
