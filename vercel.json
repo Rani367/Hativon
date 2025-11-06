@@ -4,24 +4,6 @@
   "installCommand": "npm install",
   "framework": "nextjs",
   "regions": ["iad1"],
-  "env": {
-    "ADMIN_PASSWORD": {
-      "description": "Admin password for super admin access (legacy, still required)",
-      "required": true
-    },
-    "JWT_SECRET": {
-      "description": "Secret key for JWT token signing (min 32 chars). Generate with: openssl rand -base64 32",
-      "required": true
-    },
-    "NEXT_PUBLIC_SITE_URL": {
-      "description": "Full URL of your site (e.g., https://yourdomain.com)",
-      "required": true
-    },
-    "SESSION_DURATION": {
-      "description": "Session duration in seconds (default: 604800 = 7 days)",
-      "required": false
-    }
-  },
   "build": {
     "env": {
       "NODE_ENV": "production"
