@@ -31,10 +31,10 @@ export async function getCurrentUser(): Promise<User | null> {
         username: 'admin',
         displayName: 'Admin',
         role: 'admin',
-        email: null,
+        email: undefined,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-        lastLogin: null,
+        lastLogin: undefined,
       };
     }
 
