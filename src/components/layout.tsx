@@ -5,6 +5,7 @@ import { ReactNode } from "react";
 import { ModeToggle } from "@/components/mode-toggle";
 import { UserMenu } from "@/components/auth/user-menu";
 import { AuthProvider } from "@/components/auth/auth-provider";
+import { NewPostButton } from "@/components/new-post-button";
 
 interface LayoutProps {
   children: ReactNode;
@@ -16,8 +17,11 @@ export default function Layout({ children }: LayoutProps) {
       <div className="min-h-screen bg-background">
         <header className="border-b">
           <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between h-16">
-              <div className="flex">
+            <div className="flex justify-between items-center h-16 relative">
+              <div className="flex items-center gap-4">
+                <NewPostButton />
+              </div>
+              <div className="absolute left-1/2 transform -translate-x-1/2">
                 <Link
                   href="/"
                   className="flex items-center text-xl font-bold text-foreground"
