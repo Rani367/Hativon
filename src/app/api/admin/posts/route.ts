@@ -54,7 +54,14 @@ export async function GET(request: NextRequest) {
       response.stats = await getPostStats();
     }
 
-    return NextResponse.json(response);
+    // Add cache headers for GET requests
+    // Private cache: Only for this user, revalidate after 60 seconds
+    // stale-while-revalidate: Serve stale content while fetching fresh data
+    return NextResponse.json(response, {
+      headers: {
+        'Cache-Control': 'private, s-maxage=60, stale-while-revalidate=300',
+      },
+    });
   } catch (error) {
     console.error('Error fetching posts:', error);
     return NextResponse.json(

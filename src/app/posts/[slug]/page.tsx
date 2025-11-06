@@ -1,4 +1,4 @@
-import { getPost, getWordCount } from "@/lib/posts";
+import { getPosts, getPost, getWordCount } from "@/lib/posts";
 import { format } from "date-fns";
 import { he } from "date-fns/locale";
 import Image from "next/image";
@@ -14,6 +14,20 @@ import rehypeRaw from "rehype-raw";
 
 interface PostPageProps {
   params: Promise<{ slug: string }>;
+}
+
+// Enable ISR: Revalidate every 5 minutes (300 seconds)
+// This makes post pages statically generated with periodic updates
+export const revalidate = 300;
+
+// Generate static params for all posts at build time
+// This enables Static Site Generation (SSG) for all post pages
+export async function generateStaticParams() {
+  const posts = await getPosts();
+
+  return posts.map((post) => ({
+    slug: post.slug,
+  }));
 }
 
 export async function generateMetadata(
