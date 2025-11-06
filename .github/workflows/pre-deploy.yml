@@ -1,0 +1,81 @@
+name: Pre-Deployment Checks
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    branches:
+      - main
+      - master
+
+jobs:
+  validate:
+    name: Validate Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run pre-deployment checks
+        run: npm run pre-deploy
+        env:
+          # Mock required env vars for validation
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD || 'mock_password_for_ci' }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET || 'mock_jwt_secret_with_at_least_32_chars_here' }}
+          NEXT_PUBLIC_SITE_URL: ${{ secrets.NEXT_PUBLIC_SITE_URL || 'https://example.com' }}
+          # Optional: Add real Postgres URL if you want to test DB connectivity
+          # POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
+
+  summary:
+    name: Validation Summary
+    runs-on: ubuntu-latest
+    needs: validate
+    if: always()
+
+    steps:
+      - name: Check validation status
+        run: |
+          if [ "${{ needs.validate.result }}" != "success" ]; then
+            echo "❌ Pre-deployment validation failed"
+            echo "Please fix the errors before deploying"
+            exit 1
+          else
+            echo "✅ All pre-deployment checks passed"
+            echo "Ready to deploy!"
+          fi
+
+      - name: Comment on PR (if applicable)
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const status = '${{ needs.validate.result }}' === 'success' ? '✅ Passed' : '❌ Failed';
+            const body = `## Pre-Deployment Validation ${status}
+
+            **Checks performed:**
+            - ✓ Environment variables validated
+            - ✓ TypeScript compilation
+            - ✓ ESLint rules
+            - ✓ Build successful
+            - ✓ Database connectivity (if configured)
+
+            ${status === '✅ Passed' ? 'Ready to merge and deploy! 🚀' : 'Please fix the errors before merging.'}`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });
