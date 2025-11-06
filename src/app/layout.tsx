@@ -2,20 +2,10 @@ import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import Layout from "@/components/layout";
-import { ThemeProvider } from "@/components/theme-provider";
+import { ClientProviders } from "@/components/client-providers";
 
 const heebo = localFont({
   src: [
-    {
-      path: "../../public/fonts/Heebo-Thin.ttf",
-      weight: "100",
-      style: "normal",
-    },
-    {
-      path: "../../public/fonts/Heebo-Light.ttf",
-      weight: "300",
-      style: "normal",
-    },
     {
       path: "../../public/fonts/Heebo-Regular.ttf",
       weight: "400",
@@ -31,18 +21,11 @@ const heebo = localFont({
       weight: "700",
       style: "normal",
     },
-    {
-      path: "../../public/fonts/Heebo-ExtraBold.ttf",
-      weight: "800",
-      style: "normal",
-    },
-    {
-      path: "../../public/fonts/Heebo-Black.ttf",
-      weight: "900",
-      style: "normal",
-    },
   ],
   variable: "--font-heebo",
+  display: "swap",
+  preload: true,
+  fallback: ["system-ui", "arial"],
 });
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://your-site.com";
@@ -110,14 +93,9 @@ export default function RootLayout({
   return (
     <html lang="he" dir="rtl" suppressHydrationWarning>
       <body className={heebo.className}>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="light"
-          enableSystem
-          disableTransitionOnChange
-        >
+        <ClientProviders>
           <Layout>{children}</Layout>
-        </ThemeProvider>
+        </ClientProviders>
       </body>
     </html>
   );
