@@ -9,9 +9,34 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import { vscDarkPlus } from "react-syntax-highlighter/dist/cjs/styles/prism";
+// Use Light version for smaller bundle size (~300KB smaller)
+import { Light as SyntaxHighlighter } from "react-syntax-highlighter";
+// Use ESM version instead of CJS for better tree-shaking
+import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
+// Import only commonly used languages to reduce bundle size
+import javascript from "react-syntax-highlighter/dist/esm/languages/prism/javascript";
+import typescript from "react-syntax-highlighter/dist/esm/languages/prism/typescript";
+import python from "react-syntax-highlighter/dist/esm/languages/prism/python";
+import jsx from "react-syntax-highlighter/dist/esm/languages/prism/jsx";
+import tsx from "react-syntax-highlighter/dist/esm/languages/prism/tsx";
+import css from "react-syntax-highlighter/dist/esm/languages/prism/css";
+import json from "react-syntax-highlighter/dist/esm/languages/prism/json";
+import bash from "react-syntax-highlighter/dist/esm/languages/prism/bash";
 import { Badge } from "./ui/badge";
+
+// Register only the languages you need
+SyntaxHighlighter.registerLanguage('javascript', javascript);
+SyntaxHighlighter.registerLanguage('js', javascript);
+SyntaxHighlighter.registerLanguage('typescript', typescript);
+SyntaxHighlighter.registerLanguage('ts', typescript);
+SyntaxHighlighter.registerLanguage('python', python);
+SyntaxHighlighter.registerLanguage('py', python);
+SyntaxHighlighter.registerLanguage('jsx', jsx);
+SyntaxHighlighter.registerLanguage('tsx', tsx);
+SyntaxHighlighter.registerLanguage('css', css);
+SyntaxHighlighter.registerLanguage('json', json);
+SyntaxHighlighter.registerLanguage('bash', bash);
+SyntaxHighlighter.registerLanguage('sh', bash);
 
 const components = {
   h1: ({ children }: { children?: React.ReactNode }) => (
@@ -74,13 +99,15 @@ const components = {
         : URL.createObjectURL(src)
       : "";
     return (
-      <Image
-        src={imageUrl}
-        alt={alt || ""}
-        className="mb-4 h-auto w-full rounded-md"
-        width={1000}
-        height={1000}
-      />
+      <div className="relative mb-4 w-full aspect-video rounded-md overflow-hidden">
+        <Image
+          src={imageUrl}
+          alt={alt || ""}
+          fill
+          className="object-contain"
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 70vw"
+        />
+      </div>
     );
   },
   h2: ({ children }: { children?: React.ReactNode }) => (

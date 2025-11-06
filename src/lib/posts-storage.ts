@@ -11,6 +11,29 @@ const LOCAL_DATA_FILE = path.join(LOCAL_DATA_DIR, 'posts.json');
 // Check if running on Vercel
 const isVercel = !!process.env.BLOB_READ_WRITE_TOKEN;
 
+// In-memory cache for posts
+interface PostsCache {
+  data: Post[];
+  timestamp: number;
+}
+
+let postsCache: PostsCache | null = null;
+const CACHE_TTL = 60 * 1000; // 1 minute cache TTL
+
+/**
+ * Clear the posts cache (call after any write operation)
+ */
+function clearCache(): void {
+  postsCache = null;
+}
+
+/**
+ * Check if cache is valid
+ */
+function isCacheValid(): boolean {
+  return postsCache !== null && Date.now() - postsCache.timestamp < CACHE_TTL;
+}
+
 /**
  * Generate slug from title
  */
@@ -38,10 +61,17 @@ function generateDescription(content: string): string {
 }
 
 /**
- * Read posts from storage
+ * Read posts from storage (with in-memory caching)
  */
 async function readPosts(): Promise<Post[]> {
+  // Return cached data if valid
+  if (isCacheValid() && postsCache) {
+    return postsCache.data;
+  }
+
   try {
+    let posts: Post[] = [];
+
     if (isVercel) {
       // Read from Vercel Blob
       const blobUrl = `https://${process.env.BLOB_READ_WRITE_TOKEN!.split('_')[0]}.public.blob.vercel-storage.com/${BLOB_FILENAME}`;
@@ -49,11 +79,10 @@ async function readPosts(): Promise<Post[]> {
       try {
         await head(blobUrl);
         const response = await fetch(blobUrl);
-        const posts = await response.json();
-        return posts;
+        posts = await response.json();
       } catch (error) {
         // Blob doesn't exist yet, return empty array
-        return [];
+        posts = [];
       }
     } else {
       // Read from local file
@@ -63,12 +92,20 @@ async function readPosts(): Promise<Post[]> {
           fs.mkdirSync(LOCAL_DATA_DIR, { recursive: true });
         }
         fs.writeFileSync(LOCAL_DATA_FILE, JSON.stringify([], null, 2));
-        return [];
+        posts = [];
+      } else {
+        const data = fs.readFileSync(LOCAL_DATA_FILE, 'utf-8');
+        posts = JSON.parse(data);
       }
-
-      const data = fs.readFileSync(LOCAL_DATA_FILE, 'utf-8');
-      return JSON.parse(data);
     }
+
+    // Update cache
+    postsCache = {
+      data: posts,
+      timestamp: Date.now(),
+    };
+
+    return posts;
   } catch (error) {
     console.error('Error reading posts:', error);
     return [];
@@ -76,7 +113,7 @@ async function readPosts(): Promise<Post[]> {
 }
 
 /**
- * Write posts to storage
+ * Write posts to storage (clears cache after write)
  */
 async function writePosts(posts: Post[]): Promise<void> {
   try {
@@ -95,6 +132,9 @@ async function writePosts(posts: Post[]): Promise<void> {
       }
       fs.writeFileSync(LOCAL_DATA_FILE, jsonData);
     }
+
+    // Clear cache after successful write
+    clearCache();
   } catch (error) {
     console.error('Error writing posts:', error);
     throw error;
