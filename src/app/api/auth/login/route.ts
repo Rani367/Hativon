@@ -39,10 +39,10 @@ export async function POST(request: NextRequest) {
           username: 'admin',
           displayName: 'Admin',
           role: 'admin' as const,
-          email: null,
+          email: undefined,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
-          lastLogin: null,
+          lastLogin: undefined,
         };
 
         // Generate auth cookie
