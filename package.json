@@ -10,7 +10,7 @@
     "setup": "./scripts/setup-local-db.sh",
     "db:init": "tsx scripts/init-db.ts",
     "create-admin": "tsx scripts/create-admin.ts",
-    "pre-deploy": "tsx scripts/validate-env.ts && tsx scripts/validate-build.ts && npm run build"
+    "pre-deploy": "tsx scripts/validate-env.ts && tsx scripts/validate-build.ts && npm run build && tsx scripts/post-build-deploy.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.0.1",

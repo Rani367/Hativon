@@ -3,12 +3,15 @@
  */
 
 export type UserRole = 'user' | 'admin';
+export type Grade = 'ז' | 'ח' | 'ט' | 'י';
 
 export interface User {
   id: string;
   username: string;
   displayName: string;
   email?: string;
+  grade: Grade;
+  classNumber: number;
   role: UserRole;
   createdAt: string;
   updatedAt: string;
@@ -19,7 +22,8 @@ export interface UserRegistration {
   username: string;
   password: string;
   displayName: string;
-  email?: string;
+  grade: Grade;
+  classNumber: number;
 }
 
 export interface UserLogin {

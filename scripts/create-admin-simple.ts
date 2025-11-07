@@ -14,6 +14,8 @@ async function main() {
   const username = 'admin';
   const displayName = 'מנהל';
   const password = 'admin123';
+  const grade = 'ז';
+  const classNumber = 1;
 
   try {
     // Check if user already exists
@@ -29,6 +31,8 @@ async function main() {
       username,
       password,
       displayName,
+      grade: grade as any,
+      classNumber,
     });
 
     console.log('✅ Admin user created successfully!\n');
