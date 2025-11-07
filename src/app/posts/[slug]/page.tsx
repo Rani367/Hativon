@@ -5,7 +5,6 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import { Metadata } from "next";
 import ReactMarkdown from "react-markdown";
-import { ResolvingMetadata } from "next";
 import { Badge } from "@/components/ui/badge";
 import { calculateReadingTime } from "@/lib/utils";
 import { components } from "@/components/mdx-component";
@@ -31,8 +30,7 @@ export async function generateStaticParams() {
 }
 
 export async function generateMetadata(
-  { params }: PostPageProps,
-  parent: ResolvingMetadata
+  { params }: PostPageProps
 ): Promise<Metadata> {
   const { slug } = await params;
   const post = await getPost(slug);
@@ -134,6 +132,9 @@ export default async function PostPage({ params }: PostPageProps) {
               fill
               className="object-cover"
               priority
+              sizes="(max-width: 768px) 100vw, 768px"
+              placeholder="blur"
+              blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTkyMCIgaGVpZ2h0PSIxMDgwIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZlcnNpb249IjEuMSIvPg=="
             />
           </div>
         )}

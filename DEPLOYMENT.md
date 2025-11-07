@@ -2,7 +2,7 @@
 
 This guide covers the pre-deployment checks and validation system for the blog application.
 
-## 🚀 Quick Start
+## Quick Start
 
 Before deploying to Vercel, run:
 
@@ -12,7 +12,7 @@ npm run pre-deploy
 
 This will validate your environment and build the application.
 
-## 📋 Two Simple Commands
+## Two Simple Commands
 
 ### For Development (No Checks)
 
@@ -31,28 +31,28 @@ npm run pre-deploy
 Runs **all** validation checks and builds the application:
 
 **Environment Validation:**
-- ✓ `ADMIN_PASSWORD` is set and strong
-- ✓ `JWT_SECRET` is at least 32 characters
-- ✓ `NEXT_PUBLIC_SITE_URL` is a valid URL
-- ✓ `SESSION_DURATION` is reasonable (if set)
-- ✓ `POSTGRES_URL` configuration (warns if missing)
-- ✓ `BLOB_READ_WRITE_TOKEN` configuration
+- `ADMIN_PASSWORD` is set and strong
+- `JWT_SECRET` is at least 32 characters
+- `NEXT_PUBLIC_SITE_URL` is a valid URL
+- `SESSION_DURATION` is reasonable (if set)
+- `POSTGRES_URL` configuration (warns if missing)
+- `BLOB_READ_WRITE_TOKEN` configuration
 
 **Build Validation:**
-- ✓ Node modules are installed
-- ✓ All required dependencies present
-- ✓ Critical files exist
-- ✓ Database schema file present
-- ✓ TypeScript compiles without errors
-- ✓ ESLint passes (warnings only)
-- ✓ Git status (warns about uncommitted changes)
+- Node modules are installed
+- All required dependencies present
+- Critical files exist
+- Database schema file present
+- TypeScript compiles without errors
+- ESLint passes (warnings only)
+- Git status (warns about uncommitted changes)
 
 **Build:**
-- ✓ Next.js production build
+- Next.js production build
 
 If `npm run pre-deploy` succeeds locally, your deployment to Vercel will succeed!
 
-## 🔧 Setting Up Environment Variables
+## Setting Up Environment Variables
 
 ### Step 1: Copy the Example File
 
@@ -86,7 +86,7 @@ npm run pre-deploy
 
 This will validate everything and build. Fix any errors before proceeding.
 
-## 📦 Deploying to Vercel
+## Deploying to Vercel
 
 ### Initial Setup
 
@@ -155,7 +155,7 @@ This will validate everything and build. Fix any errors before proceeding.
    - Create a test post
    - Verify user registration works
 
-## 🔍 What Gets Validated on Deploy
+## What Gets Validated on Deploy
 
 When you deploy to Vercel, the `vercel.json` configuration runs:
 
@@ -189,7 +189,7 @@ This ensures:
 
 **If any check fails, the deployment will be blocked.**
 
-## 🔄 GitHub Actions (Optional)
+## GitHub Actions (Optional)
 
 The project includes a GitHub Actions workflow that runs on every push and pull request.
 
@@ -215,7 +215,7 @@ The workflow is automatically active if you push to GitHub. To use production en
 
 The workflow will use these for validation.
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 ### "ADMIN_PASSWORD is required"
 
@@ -256,7 +256,7 @@ Copy the output to your `JWT_SECRET` environment variable.
 3. Check Vercel build logs for specific errors
 4. Verify Node.js version matches (20.x recommended)
 
-## 📝 Best Practices
+## Best Practices
 
 1. **Always validate before pushing:**
    ```bash
@@ -283,7 +283,7 @@ Copy the output to your `JWT_SECRET` environment variable.
    - Reference `.env.example` for all variables
    - Document any custom variables you add
 
-## 🔐 Security Notes
+## Security Notes
 
 - Never commit `.env.local` or `.env` files
 - Use different secrets for dev and production
@@ -291,7 +291,7 @@ Copy the output to your `JWT_SECRET` environment variable.
 - Use strong admin passwords (16+ chars recommended)
 - Enable Vercel authentication for sensitive projects
 
-## 📚 Additional Resources
+## Additional Resources
 
 - [Vercel Documentation](https://vercel.com/docs)
 - [Next.js Deployment](https://nextjs.org/docs/deployment)

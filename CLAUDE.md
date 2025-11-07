@@ -1,6 +1,11 @@
+<!-- noinspection ALL -->
 # CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Critical Rules
+
+**NO EMOJIS**: Never use emojis in code, commit messages, comments, documentation, or any communication. Keep all text plain and professional.
 
 ## Project Overview
 
@@ -12,16 +17,22 @@ A Next.js 16 blog application with a self-hosted admin panel, designed for **Heb
 - Locale: `he_IL`
 - Custom font: Heebo (Hebrew typeface with full weight range: 100-900)
 
+**Package Manager:** This project uses **pnpm** (version 10.11.0). You can use `pnpm` instead of `npm` for all commands.
+
 ## Development Commands
 
 ```bash
-# Development
-npm run dev          # Starts dev server (Turbopack is default in Next.js 16)
+# Development (Fast - No Validation)
+npm run dev          # Starts dev server immediately without checks
+                     # Use this for fast iteration during development
 
-# Build
-npm run build        # Builds for production (Turbopack is default in Next.js 16)
+# Deployment (Full Validation)
+npm run pre-deploy   # Runs ALL validation checks + build
+                     # Use this before deploying to catch issues early
+                     # Validates: env vars, TypeScript, ESLint, dependencies, build
 
-# Production
+# Build & Production
+npm run build        # Builds for production only (no validation)
 npm start            # Starts production server
 
 # Lint
@@ -32,24 +43,30 @@ npm run db:init      # Initialize PostgreSQL database (run once)
 npm run create-admin # Create admin user account (after db:init)
 ```
 
-**Note:** This project uses pnpm as the package manager (configured in package.json). You can use `pnpm` instead of `npm` for all commands.
+**Important Workflow:**
+- Use `npm run dev` for development (fast, no checks)
+- Use `npm run pre-deploy` before deploying (catches issues early)
+- The `pre-deploy` command is automatically run on Vercel deployment (configured in `vercel.json`)
 
 ## User Authentication System
 
-The blog now supports multi-user authentication, allowing users to register, login, and manage their own posts.
+The blog supports **two authentication modes**:
+
+1. **Full User Authentication** (recommended): Requires PostgreSQL database. Supports multi-user registration, JWT sessions, and role-based access control.
+2. **Admin-Only Mode** (legacy fallback): No database required. Single admin account only, using simple cookie authentication. Activated when `POSTGRES_URL` is not set.
 
 ### User Roles
 
 1. **Admin**: Full access to all posts, user management, and admin panel
    - Can edit/delete ANY post
-   - Access to `/admin` panel
+   - Access to `/admin` panel (admin dashboard)
    - Can manage users via `/admin/users`
    - Legacy admin password still works for backward compatibility
 
 2. **Regular User**: Can create and manage their own posts
    - Can only edit/delete their own posts
-   - Access to `/dashboard` for personal post management
-   - Can register via the "הרשם" (Register) button in navbar
+   - Access to `/dashboard` for personal post management (not `/admin`)
+   - Can register via the "התחבר" (Login) button in navbar
 
 ### Getting Started with User Auth
 
@@ -170,6 +187,16 @@ Blog Pages (src/app/page.tsx, src/app/posts/[slug]/page.tsx)
 - [src/app/admin/posts/new/page.tsx](src/app/admin/posts/new/page.tsx): Create new post
 - [src/app/admin/posts/[id]/page.tsx](src/app/admin/posts/[id]/page.tsx): Edit existing post
 
+**User Dashboard:**
+- [src/app/dashboard/page.tsx](src/app/dashboard/page.tsx): Regular user dashboard (includes user's personal posts list)
+
+**Validation Scripts:**
+- [scripts/validate-env.ts](scripts/validate-env.ts): Environment variable validation (checks presence, format, strength)
+- [scripts/validate-build.ts](scripts/validate-build.ts): Build validation (TypeScript, ESLint, dependencies)
+- [scripts/check-db.ts](scripts/check-db.ts): Database connectivity and schema validation
+- [scripts/init-db.ts](scripts/init-db.ts): Database initialization script
+- [scripts/create-admin.ts](scripts/create-admin.ts): Admin user creation script
+
 **API Routes - Authentication:**
 - [src/app/api/authenticate/route.ts](src/app/api/authenticate/route.ts): Legacy admin password auth (upgraded to JWT)
 - [src/app/api/check-auth/route.ts](src/app/api/check-auth/route.ts): Session validation (JWT + legacy)
@@ -262,10 +289,46 @@ Posts are stored with the following structure:
 - **Syntax Highlighting**: `react-syntax-highlighter` with VS Code Dark+ theme
 - **Package Manager**: pnpm (version 10.11.0, configured in package.json)
 
+## Pre-Deployment Validation
+
+The project includes comprehensive validation to catch issues before deployment:
+
+**Environment Validation (`npm run pre-deploy`):**
+- Required environment variables are set (`ADMIN_PASSWORD`, `JWT_SECRET`, `NEXT_PUBLIC_SITE_URL`)
+- `JWT_SECRET` is at least 32 characters long
+- `ADMIN_PASSWORD` meets minimum strength requirements
+- `NEXT_PUBLIC_SITE_URL` is a valid URL
+- `SESSION_DURATION` is reasonable (if set)
+- Database configuration (warns if `POSTGRES_URL` is missing)
+
+**Build Validation:**
+- Node modules are installed
+- Required dependencies are present
+- Critical files exist (schema, types, etc.)
+- TypeScript compiles without errors
+- ESLint passes (warnings only, doesn't block)
+- Next.js build succeeds
+
+**When to Run Validation:**
+- Always run `npm run pre-deploy` before deploying to catch issues early
+- Validation automatically runs on Vercel deployment (configured in `vercel.json`)
+- Development mode (`npm run dev`) skips validation for fast iteration
+
+**Running Scripts Manually:**
+Scripts in the `scripts/` directory can be run directly using `tsx`:
+```bash
+tsx scripts/validate-env.ts     # Validate environment variables
+tsx scripts/validate-build.ts   # Validate build configuration
+tsx scripts/check-db.ts          # Check database connectivity
+tsx scripts/init-db.ts           # Initialize database
+tsx scripts/create-admin.ts      # Create admin user
+```
+
 ## Important Notes
 
 - **User Registration**: Click "התחבר" button in navbar to login or register
 - **Admin Access**: Go to `/admin` and enter your `ADMIN_PASSWORD`, or use admin user credentials
+- **User Dashboard**: Regular users access `/dashboard`, admins access `/admin`
 - **Session Duration**: 7 days (configurable via `SESSION_DURATION` env var)
 - **Permissions**: Users can only edit/delete their own posts; admins can manage all posts
 - **Auto-Generated Fields**: Slugs (from titles), descriptions (from content first 160 chars), authorId (from logged-in user)
@@ -274,7 +337,6 @@ Posts are stored with the following structure:
 - **Draft vs Published**: Only published posts appear on the public blog
 - **Hebrew & RTL**: The site is configured for Hebrew content with RTL layout. When adding UI elements, ensure proper RTL support using Tailwind's `rtl:` and `ltr:` modifiers
 - **Database Optional**: System works without database (legacy admin mode), but user authentication requires Postgres
-- **README Discrepancy**: The README.md describes a Notion-powered blog but this codebase uses a self-hosted admin panel. The CLAUDE.md (this file) reflects the actual implementation.
 
 ## Deployment to Vercel
 
