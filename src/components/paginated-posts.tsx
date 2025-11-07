@@ -31,7 +31,7 @@ export default function PaginatedPosts({
 
   return (
     <>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-8">
         {visiblePosts.map((post, index) => (
           <PostCard key={post.id} post={post} priority={index < 3} />
         ))}
@@ -47,7 +47,7 @@ export default function PaginatedPosts({
           >
             {loading ? (
               <>
-                <Loader2 className="h-4 w-4 me-2 animate-spin" />
+                <Loader2 className="me-2 animate-spin" />
                 טוען...
               </>
             ) : (
