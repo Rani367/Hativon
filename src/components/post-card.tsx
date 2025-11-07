@@ -3,7 +3,7 @@ import Image from "next/image";
 import { format } from "date-fns";
 import { he } from "date-fns/locale";
 import { Post } from "@/types/post.types";
-import { getWordCount } from "@/lib/posts";
+import { getWordCount } from "@/lib/text-utils";
 import { Badge } from "@/components/ui/badge";
 import { calculateReadingTime } from "@/lib/utils";
 import {
@@ -16,9 +16,10 @@ import { Clock, Calendar, ArrowUpRight } from "lucide-react";
 
 interface PostCardProps {
   post: Post;
+  priority?: boolean;
 }
 
-export default function PostCard({ post }: PostCardProps) {
+export default function PostCard({ post, priority = false }: PostCardProps) {
   const wordCount = post.content ? getWordCount(post.content) : 0;
   const readingTime = calculateReadingTime(wordCount);
 
@@ -35,7 +36,11 @@ export default function PostCard({ post }: PostCardProps) {
             src={post.coverImage}
             alt={post.title}
             fill
+            priority={priority}
+            sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
             className="object-cover transition-transform duration-300 group-hover:scale-105"
+            placeholder="blur"
+            blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNzAwIiBoZWlnaHQ9IjQ3NSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB2ZXJzaW9uPSIxLjEiLz4="
           />
         ) : (
           <div className="absolute inset-0 bg-muted/80" />

@@ -1,7 +1,7 @@
 'use client';
 
 import { cn } from "@/lib/utils";
-import Image, { type ImageProps } from "next/image";
+import Image from "next/image";
 import type React from "react";
 import {
   Table,
@@ -85,6 +85,8 @@ const components = {
           fill
           className="object-contain"
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 70vw"
+          placeholder="blur"
+          blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTkyMCIgaGVpZ2h0PSIxMDgwIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZlcnNpb249IjEuMSIvPg=="
         />
       </div>
     );

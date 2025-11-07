@@ -1,8 +1,7 @@
 import { getPosts } from "@/lib/posts";
-import { Post } from "@/types/post.types";
-import PostCard from "@/components/post-card";
 import { EmptyPostsState } from "@/components/empty-posts-state";
 import Image from "next/image";
+import PaginatedPosts from "@/components/paginated-posts";
 
 // Enable ISR: Revalidate every 5 minutes (300 seconds)
 // This makes the homepage statically generated with periodic updates
@@ -21,6 +20,9 @@ export default async function Home() {
           fill
           className="object-cover"
           priority
+          sizes="100vw"
+          placeholder="blur"
+          blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTkyMCIgaGVpZ2h0PSI2MDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgdmVyc2lvbj0iMS4xIi8+"
         />
         <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
           <div className="text-center text-white px-4">
@@ -37,11 +39,7 @@ export default async function Home() {
       {posts.length === 0 ? (
         <EmptyPostsState />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {posts.map((post) => (
-            <PostCard key={post.id} post={post} />
-          ))}
-        </div>
+        <PaginatedPosts initialPosts={posts} postsPerPage={12} />
       )}
     </div>
   );

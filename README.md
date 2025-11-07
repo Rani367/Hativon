@@ -2,20 +2,20 @@
 
 A modern Next.js 16 blog application with self-hosted admin panel, designed for Hebrew language content with RTL support. Features include user authentication, multi-author support, and comprehensive pre-deployment validation.
 
-## ✨ Features
+## Features
 
-- 🌐 **Hebrew & RTL Support** - Fully configured for Hebrew language with right-to-left layout
-- 👥 **Multi-User Authentication** - JWT-based auth with role-based access control (Admin & User roles)
-- 📝 **Rich Markdown Editor** - Full GitHub Flavored Markdown with syntax highlighting
-- 🔒 **Self-Hosted Admin Panel** - No external dependencies, complete control
-- ☁️ **Dual Storage** - Vercel Blob (production) + Local JSON (development)
-- 📊 **Admin Dashboard** - Statistics, user management, post management
-- 🎨 **Modern UI** - Built with Tailwind CSS 4 and shadcn/ui components
-- ✅ **Pre-Deployment Validation** - Automated checks for environment, types, and build
-- 🚀 **GitHub Actions** - Optional CI/CD with automated validation
-- 🗃️ **PostgreSQL Database** - User management with Vercel Postgres
+- **Hebrew & RTL Support** - Fully configured for Hebrew language with right-to-left layout
+- **Multi-User Authentication** - JWT-based auth with role-based access control (Admin & User roles)
+- **Rich Markdown Editor** - Full GitHub Flavored Markdown with syntax highlighting
+- **Self-Hosted Admin Panel** - No external dependencies, complete control
+- **Dual Storage** - Vercel Blob (production) + Local JSON (development)
+- **Admin Dashboard** - Statistics, user management, post management
+- **Modern UI** - Built with Tailwind CSS 4 and shadcn/ui components
+- **Pre-Deployment Validation** - Automated checks for environment, types, and build
+- **GitHub Actions** - Optional CI/CD with automated validation
+- **PostgreSQL Database** - User management with Vercel Postgres
 
-## 🚀 Quick Start
+## Quick Start
 
 ### 1. Clone and Install
 
@@ -71,7 +71,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 Visit [http://localhost:3000/admin](http://localhost:3000/admin) and login with your `ADMIN_PASSWORD`.
 
-## 📋 Available Scripts
+## Available Scripts
 
 ### Development
 ```bash
@@ -92,7 +92,7 @@ npm run db:init      # Initialize PostgreSQL database
 npm run create-admin # Create admin user account
 ```
 
-## 🔧 Technology Stack
+## Technology Stack
 
 - **Framework**: Next.js 16 (App Router)
 - **Language**: TypeScript
@@ -103,12 +103,12 @@ npm run create-admin # Create admin user account
 - **Markdown**: react-markdown + remark-gfm
 - **Package Manager**: pnpm
 
-## 📚 Documentation
+## Documentation
 
 - **[Deployment Guide](DEPLOYMENT.md)** - Complete guide for deploying to Vercel
 - **[Project Instructions](CLAUDE.md)** - Technical documentation for developers
 
-## 🎯 User Roles
+## User Roles
 
 ### Admin
 - Full access to all posts and users
@@ -122,7 +122,7 @@ npm run create-admin # Create admin user account
 - Can only edit/delete own posts
 - Register via "התחבר" (Login) button
 
-## 🔐 Authentication System
+## Authentication System
 
 The blog supports two authentication modes:
 
@@ -138,7 +138,7 @@ The blog supports two authentication modes:
 - Simple cookie authentication
 - Fallback when `POSTGRES_URL` is not set
 
-## 🚀 Deployment
+## Deployment
 
 ### Deploy to Vercel
 
@@ -164,21 +164,21 @@ The blog supports two authentication modes:
 
 See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed instructions.
 
-## ✅ Pre-Deployment Validation
+## Pre-Deployment Validation
 
 The project includes comprehensive validation to catch issues before deployment:
 
-- ✓ Environment variables (presence, format, strength)
-- ✓ TypeScript compilation
-- ✓ ESLint rules
-- ✓ Required dependencies
-- ✓ Critical files existence
-- ✓ Database connectivity and schema
-- ✓ Build success
+- Environment variables (presence, format, strength)
+- TypeScript compilation
+- ESLint rules
+- Required dependencies
+- Critical files existence
+- Database connectivity and schema
+- Build success
 
 **Validation runs automatically on Vercel deployment** via `vercel.json` configuration.
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 ### Build Fails Locally
 
@@ -209,7 +209,7 @@ npm run create-admin
 
 See [DEPLOYMENT.md](DEPLOYMENT.md) for more troubleshooting tips.
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 school-newpaper/
@@ -244,7 +244,7 @@ school-newpaper/
 └── README.md             # This file
 ```
 
-## 🤝 Contributing
+## Contributing
 
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
@@ -254,11 +254,11 @@ school-newpaper/
 6. Push to the branch (`git push origin feature/amazing-feature`)
 7. Open a Pull Request
 
-## 📄 License
+## License
 
 This project is open source and available under the MIT License.
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - Built with [Next.js](https://nextjs.org/)
 - UI components from [shadcn/ui](https://ui.shadcn.com/)

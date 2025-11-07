@@ -2,7 +2,7 @@
 
 ## Two Simple Commands
 
-### 🚀 Development (No Validation)
+### Development (No Validation)
 
 ```bash
 npm run dev
@@ -10,18 +10,18 @@ npm run dev
 
 Starts the development server immediately. No checks, fast startup.
 
-### ✅ Pre-Deployment (Full Validation)
+### Pre-Deployment (Full Validation)
 
 ```bash
 npm run pre-deploy
 ```
 
 Runs all checks and builds:
-- ✓ Environment variables validated
-- ✓ TypeScript compilation
-- ✓ ESLint (warnings only)
-- ✓ All critical files present
-- ✓ Production build
+- Environment variables validated
+- TypeScript compilation
+- ESLint (warnings only)
+- All critical files present
+- Production build
 
 **If this passes, your Vercel deployment will succeed!**
 
