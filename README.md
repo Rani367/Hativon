@@ -166,20 +166,20 @@ See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed instructions.
 
 ## Pre-Deployment Validation & Deployment
 
-The project includes a **one-command deployment workflow** that validates, builds, and deploys your code:
+The project includes a **streamlined deployment workflow** that validates, builds, and commits your code:
 
 ```bash
-npm run pre-deploy
+npm run pre-deploy   # Validate, build, and commit
+git push             # Push to GitHub and trigger Vercel deployment
 ```
 
-**This command does everything:**
+**What `npm run pre-deploy` does:**
 1. Validates environment variables (presence, format, strength)
 2. Validates build configuration (dependencies, files, etc.)
 3. Runs Next.js build (TypeScript compilation, ESLint rules)
 4. Shows git status and prompts for commit
 5. Asks for commit message
-6. Commits and pushes to GitHub
-7. Triggers Vercel deployment automatically
+6. Commits changes locally
 
 **Interactive workflow:**
 ```bash
@@ -194,17 +194,21 @@ Changes:
   Modified: 5 file(s)
   Added: 2 file(s)
 
-Do you want to commit and push these changes? (y/n): y
+Do you want to commit these changes? (y/n): y
 Enter commit message:
 > Add student grade display feature
 
 ✓ Changes staged
 ✓ Changes committed
-✓ Changes pushed to main
-✓ Deployment successful!
+✓ Commit successful!
+Your changes have been committed locally.
+To push to GitHub, run: git push
+
+$ git push
+# Deployment triggered on Vercel
 ```
 
-**Note:** The git deployment step is automatically skipped when running on Vercel (CI/CD environment).
+**Note:** The git commit step is automatically skipped when running on Vercel (CI/CD environment).
 
 **Validation runs automatically on Vercel deployment** via `vercel.json` configuration.
 

@@ -1,10 +1,11 @@
 #!/usr/bin/env tsx
 
 /**
- * Post-Build Deploy Script
+ * Post-Build Commit Script
  *
- * After successful build validation, prompts user to commit and push changes to GitHub.
- * This ensures only validated, working code gets pushed to the repository.
+ * After successful build validation, prompts user to commit changes locally.
+ * This ensures only validated, working code gets committed.
+ * User must manually run 'git push' to deploy to GitHub/Vercel.
  *
  * Usage:
  *   Automatically called after successful npm run pre-deploy
@@ -198,7 +199,7 @@ async function main() {
 
   // Ask for confirmation
   const confirm = await question(
-    `${colors.bold}Do you want to commit and push these changes? (y/n): ${colors.reset}`
+    `${colors.bold}Do you want to commit these changes? (y/n): ${colors.reset}`
   );
 
   if (confirm.toLowerCase() !== 'y' && confirm.toLowerCase() !== 'yes') {
@@ -230,15 +231,11 @@ async function main() {
     commitChanges(commitMessage.trim());
     console.log(`${colors.green}✓ Changes committed${colors.reset}\n`);
 
-    // Push changes
-    console.log(`${colors.cyan}Pushing to remote...${colors.reset}`);
-    pushChanges();
-    console.log(`${colors.green}✓ Changes pushed to ${branch}${colors.reset}\n`);
-
-    console.log(`${colors.green}${colors.bold}✓ Deployment successful!${colors.reset}`);
-    console.log(`${colors.cyan}Your changes have been pushed to GitHub and will be deployed by Vercel.${colors.reset}\n`);
+    console.log(`${colors.green}${colors.bold}✓ Commit successful!${colors.reset}`);
+    console.log(`${colors.cyan}Your changes have been committed locally.${colors.reset}`);
+    console.log(`${colors.cyan}To push to GitHub, run: ${colors.bold}git push${colors.reset}\n`);
   } catch (error: any) {
-    console.error(`\n${colors.red}${colors.bold}✗ Deployment failed${colors.reset}`);
+    console.error(`\n${colors.red}${colors.bold}✗ Commit failed${colors.reset}`);
     console.error(`${colors.red}${error.message}${colors.reset}\n`);
     rl.close();
     process.exit(1);
