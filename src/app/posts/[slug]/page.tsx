@@ -123,24 +123,24 @@ export default async function PostPage({ params }: PostPageProps) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <article className="max-w-3xl mx-auto prose dark:prose-invert">
+      <article className="max-w-4xl mx-auto prose prose-lg dark:prose-invert">
         {post.coverImage && (
-          <div className="relative aspect-video w-full mb-8 rounded-lg overflow-hidden">
+          <div className="relative aspect-video w-full mb-10 rounded-lg overflow-hidden">
             <Image
               src={post.coverImage}
               alt={post.title}
               fill
               className="object-cover"
               priority
-              sizes="(max-width: 768px) 100vw, 768px"
+              sizes="(max-width: 768px) 100vw, 896px"
               placeholder="blur"
               blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTkyMCIgaGVpZ2h0PSIxMDgwIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZlcnNpb249IjEuMSIvPg=="
             />
           </div>
         )}
 
-        <header className="mb-8">
-          <div className="flex items-center gap-4 text-muted-foreground mb-4">
+        <header className="mb-10">
+          <div className="flex items-center gap-4 text-base text-muted-foreground mb-6">
             <time>{format(new Date(post.date), "d בMMMM yyyy", { locale: he })}</time>
             {post.author && (
               <span>
@@ -152,17 +152,17 @@ export default async function PostPage({ params }: PostPageProps) {
             <span>{wordCount} מילים</span>
           </div>
 
-          <h1 className="text-4xl font-bold mb-4 text-foreground">
+          <h1 className="text-5xl font-bold mb-6 text-foreground leading-tight">
             {post.title}
           </h1>
 
-          <div className="flex gap-4 mb-4">
+          <div className="flex gap-3 mb-4">
             {post.category && (
-              <Badge variant="secondary">{post.category}</Badge>
+              <Badge variant="secondary" className="text-base px-4 py-1.5">{post.category}</Badge>
             )}
             {post.tags &&
               post.tags.map((tag) => (
-                <Badge key={tag} variant="outline">
+                <Badge key={tag} variant="outline" className="text-base px-4 py-1.5">
                   {tag}
                 </Badge>
               ))}
