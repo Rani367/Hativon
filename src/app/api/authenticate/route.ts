@@ -51,7 +51,8 @@ export async function POST(request: NextRequest) {
           username: 'admin',
           password: adminPassword,
           displayName: 'מנהל',
-          email: undefined,
+          grade: 'ז',
+          classNumber: 1,
         });
       } catch (error: any) {
         console.error('Error creating admin user:', error);

@@ -11,8 +11,8 @@ A modern Next.js 16 blog application with self-hosted admin panel, designed for 
 - **Dual Storage** - Vercel Blob (production) + Local JSON (development)
 - **Admin Dashboard** - Statistics, user management, post management
 - **Modern UI** - Built with Tailwind CSS 4 and shadcn/ui components
-- **Pre-Deployment Validation** - Automated checks for environment, types, and build
-- **GitHub Actions** - Optional CI/CD with automated validation
+- **Pre-Deployment Validation** - Automated checks matching Vercel's exact deployment process
+- **One-Command Deployment** - Validate, build, and push to GitHub with a single command
 - **PostgreSQL Database** - User management with Vercel Postgres
 
 ## Quick Start
@@ -164,17 +164,47 @@ The blog supports two authentication modes:
 
 See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed instructions.
 
-## Pre-Deployment Validation
+## Pre-Deployment Validation & Deployment
 
-The project includes comprehensive validation to catch issues before deployment:
+The project includes a **one-command deployment workflow** that validates, builds, and deploys your code:
 
-- Environment variables (presence, format, strength)
-- TypeScript compilation
-- ESLint rules
-- Required dependencies
-- Critical files existence
-- Database connectivity and schema
-- Build success
+```bash
+npm run pre-deploy
+```
+
+**This command does everything:**
+1. Validates environment variables (presence, format, strength)
+2. Validates build configuration (dependencies, files, etc.)
+3. Runs Next.js build (TypeScript compilation, ESLint rules)
+4. Shows git status and prompts for commit
+5. Asks for commit message
+6. Commits and pushes to GitHub
+7. Triggers Vercel deployment automatically
+
+**Interactive workflow:**
+```bash
+$ npm run pre-deploy
+
+# Validation passes...
+# Build succeeds...
+
+=== Git Deployment ===
+Current branch: main
+Changes:
+  Modified: 5 file(s)
+  Added: 2 file(s)
+
+Do you want to commit and push these changes? (y/n): y
+Enter commit message:
+> Add student grade display feature
+
+✓ Changes staged
+✓ Changes committed
+✓ Changes pushed to main
+✓ Deployment successful!
+```
+
+**Note:** The git deployment step is automatically skipped when running on Vercel (CI/CD environment).
 
 **Validation runs automatically on Vercel deployment** via `vercel.json` configuration.
 

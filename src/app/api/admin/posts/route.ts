@@ -92,13 +92,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Add authorId if user is authenticated via JWT
+    // Add authorId, grade, and class if user is authenticated via JWT
     if (user) {
       body.authorId = user.id;
       // Also set author display name if not provided
       if (!body.author) {
         body.author = user.displayName;
       }
+      // Set author grade and class
+      body.authorGrade = user.grade;
+      body.authorClass = user.classNumber;
     }
 
     const newPost = await createPost(body);

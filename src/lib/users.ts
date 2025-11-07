@@ -8,20 +8,22 @@ const SALT_ROUNDS = 12;
  * Create a new user
  */
 export async function createUser(data: UserRegistration): Promise<User> {
-  const { username, password, displayName, email } = data;
+  const { username, password, displayName, grade, classNumber } = data;
 
   // Hash password
   const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
 
   try {
     const result = await db.query`
-      INSERT INTO users (username, password_hash, display_name, email, role)
-      VALUES (${username}, ${passwordHash}, ${displayName}, ${email || null}, 'user')
+      INSERT INTO users (username, password_hash, display_name, email, grade, class_number, role)
+      VALUES (${username}, ${passwordHash}, ${displayName}, null, ${grade}, ${classNumber}, 'user')
       RETURNING
         id,
         username,
         display_name as "displayName",
         email,
+        grade,
+        class_number as "classNumber",
         role,
         created_at as "createdAt",
         updated_at as "updatedAt",
@@ -52,6 +54,8 @@ export async function getUserById(id: string): Promise<User | null> {
       username,
       display_name as "displayName",
       email,
+      grade,
+      class_number as "classNumber",
       role,
       created_at as "createdAt",
       updated_at as "updatedAt",
@@ -73,6 +77,8 @@ export async function getUserByUsername(username: string): Promise<User | null> 
       username,
       display_name as "displayName",
       email,
+      grade,
+      class_number as "classNumber",
       role,
       created_at as "createdAt",
       updated_at as "updatedAt",
@@ -95,6 +101,8 @@ async function getUserWithPassword(username: string): Promise<(User & { password
       password_hash as "passwordHash",
       display_name as "displayName",
       email,
+      grade,
+      class_number as "classNumber",
       role,
       created_at as "createdAt",
       updated_at as "updatedAt",
@@ -148,6 +156,8 @@ export async function getAllUsers(): Promise<User[]> {
       username,
       display_name as "displayName",
       email,
+      grade,
+      class_number as "classNumber",
       role,
       created_at as "createdAt",
       updated_at as "updatedAt",
@@ -177,6 +187,8 @@ export async function updateUser(userId: string, updates: UserUpdate): Promise<U
       username,
       display_name as "displayName",
       email,
+      grade,
+      class_number as "classNumber",
       role,
       created_at as "createdAt",
       updated_at as "updatedAt",
@@ -211,19 +223,21 @@ export async function usernameExists(username: string): Promise<boolean> {
  * Create admin user (for initial setup)
  */
 export async function createAdminUser(data: UserRegistration): Promise<User> {
-  const { username, password, displayName, email } = data;
+  const { username, password, displayName, grade, classNumber } = data;
 
   // Hash password
   const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
 
   const result = await db.query`
-    INSERT INTO users (username, password_hash, display_name, email, role)
-    VALUES (${username}, ${passwordHash}, ${displayName}, ${email || null}, 'admin')
+    INSERT INTO users (username, password_hash, display_name, email, grade, class_number, role)
+    VALUES (${username}, ${passwordHash}, ${displayName}, null, ${grade}, ${classNumber}, 'admin')
     RETURNING
       id,
       username,
       display_name as "displayName",
       email,
+      grade,
+      class_number as "classNumber",
       role,
       created_at as "createdAt",
       updated_at as "updatedAt",

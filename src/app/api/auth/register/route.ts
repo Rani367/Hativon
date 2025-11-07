@@ -16,12 +16,12 @@ export async function POST(request: NextRequest) {
     }
 
     const body: UserRegistration = await request.json();
-    const { username, password, displayName, email } = body;
+    const { username, password, displayName, grade, classNumber } = body;
 
     // Validation
-    if (!username || !password || !displayName) {
+    if (!username || !password || !displayName || !grade || !classNumber) {
       return NextResponse.json(
-        { success: false, message: 'שם משתמש, סיסמה ושם מלא הם שדות חובה' },
+        { success: false, message: 'שם משתמש, סיסמה, שם מלא, כיתה ומספר כיתה הם שדות חובה' },
         { status: 400 }
       );
     }
@@ -42,10 +42,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Email validation (if provided)
-    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    // Grade validation
+    const validGrades = ['ז', 'ח', 'ט', 'י'];
+    if (!validGrades.includes(grade)) {
       return NextResponse.json(
-        { success: false, message: 'כתובת האימייל אינה תקינה' },
+        { success: false, message: 'כיתה לא תקינה' },
+        { status: 400 }
+      );
+    }
+
+    // Class number validation
+    if (classNumber < 1 || classNumber > 4) {
+      return NextResponse.json(
+        { success: false, message: 'מספר כיתה חייב להיות בין 1 ל-4' },
         { status: 400 }
       );
     }

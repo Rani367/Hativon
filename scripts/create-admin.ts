@@ -51,7 +51,22 @@ async function main() {
     }
 
     const displayName = await question('Display Name (Hebrew, default: מנהל): ') || 'מנהל';
-    const email = await question('Email (optional): ') || undefined;
+    const gradeInput = await question('Grade (ז/ח/ט/י, default: ז): ') || 'ז';
+    const classNumberInput = await question('Class Number (1-4, default: 1): ') || '1';
+
+    const validGrades = ['ז', 'ח', 'ט', 'י'];
+    if (!validGrades.includes(gradeInput)) {
+      console.log('❌ Invalid grade. Must be one of: ז, ח, ט, י');
+      rl.close();
+      process.exit(1);
+    }
+
+    const classNumber = parseInt(classNumberInput);
+    if (isNaN(classNumber) || classNumber < 1 || classNumber > 4) {
+      console.log('❌ Invalid class number. Must be between 1 and 4');
+      rl.close();
+      process.exit(1);
+    }
 
     let password = '';
     let confirmPassword = '';
@@ -76,13 +91,16 @@ async function main() {
       username,
       password,
       displayName,
-      email,
+      grade: gradeInput as any,
+      classNumber,
     });
 
     console.log('\n✅ Admin user created successfully!');
     console.log('\n📋 User Details:');
     console.log(`   Username: ${user.username}`);
     console.log(`   Display Name: ${user.displayName}`);
+    console.log(`   Grade: ${user.grade}`);
+    console.log(`   Class Number: ${user.classNumber}`);
     console.log(`   Email: ${user.email || 'Not provided'}`);
     console.log(`   Role: ${user.role}`);
     console.log(`   Created: ${new Date(user.createdAt).toLocaleString()}`);

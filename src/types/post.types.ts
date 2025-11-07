@@ -8,6 +8,8 @@ export interface Post {
   date: string;
   author?: string;
   authorId?: string; // User ID reference for post ownership
+  authorGrade?: string; // Author's grade (ז, ח, ט, י)
+  authorClass?: number; // Author's class number (1-4)
   tags?: string[];
   category?: string;
   status: 'draft' | 'published';
@@ -21,6 +23,8 @@ export interface PostInput {
   coverImage?: string;
   author?: string;
   authorId?: string; // User ID reference for post ownership
+  authorGrade?: string; // Author's grade (ז, ח, ט, י)
+  authorClass?: number; // Author's class number (1-4)
   tags?: string[];
   category?: string;
   status?: 'draft' | 'published';

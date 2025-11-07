@@ -32,6 +32,8 @@ export async function getCurrentUser(): Promise<User | null> {
         displayName: 'Admin',
         role: 'admin',
         email: undefined,
+        grade: 'ז',
+        classNumber: 1,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         lastLogin: undefined,
