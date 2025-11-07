@@ -40,6 +40,8 @@ export async function POST(request: NextRequest) {
           displayName: 'Admin',
           role: 'admin' as const,
           email: undefined,
+          grade: 'ז' as const,
+          classNumber: 1,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
           lastLogin: undefined,

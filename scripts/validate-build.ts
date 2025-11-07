@@ -3,18 +3,23 @@
 /**
  * Build Validation Script
  *
- * Runs comprehensive checks before building the application.
- * This ensures the codebase is in a deployable state.
+ * Runs comprehensive pre-build checks to catch errors before deployment.
+ * This script runs BEFORE the actual build to catch configuration issues early.
  *
  * Checks:
- * - TypeScript compilation
- * - ESLint rules
- * - Critical file existence
- * - Package dependencies
- * - Environment variables
+ * - Node modules installed
+ * - Required dependencies present
+ * - Critical files exist
+ * - Database schema exists
+ * - Environment variables configured
+ * - Vercel configuration valid
+ * - Git status (warnings only)
+ *
+ * Note: TypeScript and ESLint are checked by Next.js during the actual build,
+ * not here, to ensure we use the exact same checks as Vercel deployment.
  *
  * Usage:
- *   npm run validate:build
+ *   npm run pre-deploy (runs this + build)
  *   tsx scripts/validate-build.ts
  */
 
@@ -74,35 +79,28 @@ function fileExists(filePath: string): boolean {
 }
 
 /**
- * Check TypeScript compilation
+ * Check TypeScript compilation (via Next.js build)
+ * Note: We don't run a separate tsc check because Next.js has its own TypeScript handling
+ * This check will be done by the actual build command
  */
 function checkTypeScript(): CheckResult {
-  const passed = runCommand('npx tsc --noEmit', 'TypeScript type checking');
-
   return {
     name: 'TypeScript',
-    passed,
-    message: passed
-      ? 'TypeScript compilation successful'
-      : 'TypeScript errors detected',
-    error: passed ? undefined : 'Run "npm run build" locally to see type errors',
+    passed: true,
+    message: 'Will be checked during Next.js build',
   };
 }
 
 /**
- * Check ESLint
+ * Check ESLint (via Next.js build)
+ * Note: ESLint is run during Next.js build if configured
+ * We don't run it separately to avoid duplicate checks
  */
 function checkESLint(): CheckResult {
-  const passed = runCommand('npx next lint', 'ESLint validation');
-
-  // Treat ESLint as warning only (don't fail the build)
   return {
     name: 'ESLint',
-    passed: true, // Always pass, but show message if there are issues
-    message: passed
-      ? 'No ESLint errors found'
-      : 'ESLint warnings detected',
-    error: passed ? undefined : 'Run "npm run lint" locally to see linting issues (non-blocking)',
+    passed: true,
+    message: 'Will be checked during Next.js build',
   };
 }
 
@@ -261,6 +259,48 @@ function checkDatabaseSchema(): CheckResult {
 }
 
 /**
+ * Check Vercel configuration validity
+ */
+function checkVercelConfig(): CheckResult {
+  if (!fileExists('vercel.json')) {
+    return {
+      name: 'Vercel Config',
+      passed: true, // Optional file
+      message: 'No vercel.json found (using defaults)',
+    };
+  }
+
+  try {
+    const vercelConfig = JSON.parse(
+      fs.readFileSync(path.join(process.cwd(), 'vercel.json'), 'utf-8')
+    );
+
+    // Check if buildCommand is set correctly
+    if (vercelConfig.buildCommand && vercelConfig.buildCommand !== 'npm run pre-deploy') {
+      return {
+        name: 'Vercel Config',
+        passed: false,
+        message: 'Invalid buildCommand in vercel.json',
+        error: `Expected "npm run pre-deploy", got "${vercelConfig.buildCommand}"`,
+      };
+    }
+
+    return {
+      name: 'Vercel Config',
+      passed: true,
+      message: 'Vercel configuration valid',
+    };
+  } catch (error) {
+    return {
+      name: 'Vercel Config',
+      passed: false,
+      message: 'Failed to parse vercel.json',
+      error: 'Ensure vercel.json is valid JSON',
+    };
+  }
+}
+
+/**
  * Check git repository status (warn about uncommitted changes)
  */
 function checkGitStatus(): CheckResult {
@@ -359,13 +399,15 @@ function printResults() {
  * Main validation function
  */
 function main() {
-  console.log(`${colors.cyan}${colors.bold}Starting build validation...${colors.reset}\n`);
+  console.log(`${colors.cyan}${colors.bold}Starting pre-build validation...${colors.reset}`);
+  console.log(`${colors.cyan}This matches what Vercel checks before running the build${colors.reset}\n`);
 
-  // Run all checks
+  // Run all checks in order of importance
   results.push(checkNodeModules());
   results.push(checkDependencies());
   results.push(checkCriticalFiles());
   results.push(checkDatabaseSchema());
+  results.push(checkVercelConfig());
   results.push(checkEnvironment());
   results.push(checkTypeScript());
   results.push(checkESLint());
@@ -373,6 +415,8 @@ function main() {
 
   // Print results
   const success = printResults();
+
+  console.log(`${colors.cyan}Next step: Running Next.js build (same as Vercel)...${colors.reset}\n`);
 
   // Exit with error code if validation failed
   if (!success) {

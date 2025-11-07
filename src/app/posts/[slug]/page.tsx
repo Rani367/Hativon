@@ -142,7 +142,12 @@ export default async function PostPage({ params }: PostPageProps) {
         <header className="mb-8">
           <div className="flex items-center gap-4 text-muted-foreground mb-4">
             <time>{format(new Date(post.date), "d בMMMM yyyy", { locale: he })}</time>
-            {post.author && <span>מאת {post.author}</span>}
+            {post.author && (
+              <span>
+                מאת {post.author}
+                {post.authorGrade && post.authorClass && ` (כיתה ${post.authorGrade}${post.authorClass})`}
+              </span>
+            )}
             <span>{calculateReadingTime(wordCount)}</span>
             <span>{wordCount} מילים</span>
           </div>

@@ -5,6 +5,8 @@ import { useAuth } from './auth-provider';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import type { Grade } from '@/types/user.types';
 
 interface RegisterFormProps {
   onSuccess?: () => void;
@@ -16,7 +18,8 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
-  const [email, setEmail] = useState('');
+  const [grade, setGrade] = useState<Grade | ''>('');
+  const [classNumber, setClassNumber] = useState<number | ''>('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -35,6 +38,16 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
       return;
     }
 
+    if (!grade) {
+      setError('יש לבחור כיתה');
+      return;
+    }
+
+    if (!classNumber) {
+      setError('יש לבחור מספר כיתה');
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -42,7 +55,8 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
         username,
         password,
         displayName,
-        email: email || undefined,
+        grade: grade as Grade,
+        classNumber: classNumber as number,
       });
 
       if (result.success) {
@@ -86,15 +100,33 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="register-email">אימייל (אופציונלי)</Label>
-        <Input
-          id="register-email"
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          disabled={loading}
-          placeholder="your@email.com"
-        />
+        <Label htmlFor="register-grade">כיתה</Label>
+        <Select value={grade} onValueChange={(value) => setGrade(value as Grade)} disabled={loading}>
+          <SelectTrigger id="register-grade">
+            <SelectValue placeholder="בחר כיתה" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="ז">כיתה ז</SelectItem>
+            <SelectItem value="ח">כיתה ח</SelectItem>
+            <SelectItem value="ט">כיתה ט</SelectItem>
+            <SelectItem value="י">כיתה י</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="register-classNumber">מספר כיתה</Label>
+        <Select value={classNumber.toString()} onValueChange={(value) => setClassNumber(Number(value))} disabled={loading}>
+          <SelectTrigger id="register-classNumber">
+            <SelectValue placeholder="בחר מספר" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="1">1</SelectItem>
+            <SelectItem value="2">2</SelectItem>
+            <SelectItem value="3">3</SelectItem>
+            <SelectItem value="4">4</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="space-y-2">
