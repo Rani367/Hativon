@@ -70,8 +70,39 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   // Show loading state
   if (checking) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-muted-foreground">טוען...</p>
+      <div className="min-h-screen bg-background">
+        {/* Header Skeleton */}
+        <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur">
+          <div className="container flex h-14 items-center">
+            <div className="flex flex-1 items-center justify-between">
+              <div className="h-6 w-24 rounded bg-muted animate-pulse" />
+              <div className="flex items-center gap-4">
+                <div className="h-9 w-20 rounded-md bg-muted animate-pulse" />
+                <div className="h-9 w-20 rounded-md bg-muted animate-pulse" />
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <div className="flex">
+          {/* Sidebar Skeleton */}
+          <aside className="hidden lg:block w-64 border-r bg-background">
+            <nav className="space-y-1 p-4">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="h-10 rounded-lg bg-muted animate-pulse" />
+              ))}
+            </nav>
+          </aside>
+
+          {/* Main Content Skeleton */}
+          <main className="flex-1 p-6 lg:p-8">
+            <div className="max-w-7xl mx-auto space-y-4">
+              <div className="h-8 w-48 rounded bg-muted animate-pulse" />
+              <div className="h-4 w-full rounded bg-muted animate-pulse" />
+              <div className="h-4 w-3/4 rounded bg-muted animate-pulse" />
+            </div>
+          </main>
+        </div>
       </div>
     );
   }
