@@ -20,7 +20,9 @@ export function UserMenu() {
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
 
   if (loading) {
-    return null;
+    return (
+      <div className="h-9 w-24 rounded-md bg-muted animate-pulse" />
+    );
   }
 
   if (!user) {
@@ -30,6 +32,7 @@ export function UserMenu() {
           variant="default"
           size="sm"
           onClick={() => setAuthDialogOpen(true)}
+          className="cursor-pointer"
         >
           התחבר
         </Button>
