@@ -38,7 +38,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="login-username">שם משתמש</Label>
+        <Label htmlFor="login-username" className="text-right block">שם משתמש</Label>
         <Input
           id="login-username"
           type="text"
@@ -47,11 +47,12 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
           required
           disabled={loading}
           placeholder="הזן שם משתמש"
+          className="text-right"
         />
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="login-password">סיסמה</Label>
+        <Label htmlFor="login-password" className="text-right block">סיסמה</Label>
         <Input
           id="login-password"
           type="password"
@@ -60,6 +61,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
           required
           disabled={loading}
           placeholder="הזן סיסמה"
+          className="text-right"
         />
       </div>
 

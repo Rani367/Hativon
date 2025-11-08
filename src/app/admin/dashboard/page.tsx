@@ -33,7 +33,59 @@ export default function AdminDashboard() {
   }, []);
 
   if (loading) {
-    return <div className="text-center py-8">טוען...</div>;
+    return (
+      <div className="space-y-8">
+        <div className="flex items-center justify-between">
+          <div className="space-y-2">
+            <div className="h-9 w-32 rounded bg-muted animate-pulse" />
+            <div className="h-4 w-64 rounded bg-muted animate-pulse" />
+          </div>
+          <div className="h-10 w-32 rounded-md bg-muted animate-pulse" />
+        </div>
+
+        {/* Stats Grid Skeleton */}
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <Card key={i}>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <div className="h-4 w-24 rounded bg-muted animate-pulse" />
+                <div className="h-4 w-4 rounded bg-muted animate-pulse" />
+              </CardHeader>
+              <CardContent>
+                <div className="h-8 w-16 rounded bg-muted animate-pulse" />
+                <div className="h-3 w-32 rounded bg-muted animate-pulse mt-2" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {/* Recent Posts Skeleton */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="h-6 w-32 rounded bg-muted animate-pulse" />
+              <div className="h-9 w-20 rounded-md bg-muted animate-pulse" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div key={i} className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0">
+                  <div className="flex-1 space-y-2">
+                    <div className="h-5 w-64 rounded bg-muted animate-pulse" />
+                    <div className="flex items-center gap-3">
+                      <div className="h-4 w-32 rounded bg-muted animate-pulse" />
+                      <div className="h-5 w-16 rounded-full bg-muted animate-pulse" />
+                    </div>
+                  </div>
+                  <div className="h-9 w-16 rounded-md bg-muted animate-pulse" />
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   return (

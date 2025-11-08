@@ -72,7 +72,7 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="register-username">שם משתמש</Label>
+        <Label htmlFor="register-username" className="text-right block">שם משתמש</Label>
         <Input
           id="register-username"
           type="text"
@@ -82,12 +82,13 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
           disabled={loading}
           placeholder="אותיות אנגליות ומספרים בלבד"
           pattern="[a-zA-Z0-9_]{3,50}"
+          className="text-right"
         />
-        <p className="text-xs text-muted-foreground">3-50 תווים (אותיות אנגליות, מספרים וקו תחתון)</p>
+        <p className="text-xs text-muted-foreground text-right">3-50 תווים (אותיות אנגליות, מספרים וקו תחתון)</p>
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="register-displayName">שם מלא</Label>
+        <Label htmlFor="register-displayName" className="text-right block">שם מלא</Label>
         <Input
           id="register-displayName"
           type="text"
@@ -96,41 +97,44 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
           required
           disabled={loading}
           placeholder="השם שיוצג בפוסטים שלך"
+          className="text-right"
         />
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="register-grade">כיתה</Label>
-        <Select value={grade} onValueChange={(value) => setGrade(value as Grade)} disabled={loading}>
-          <SelectTrigger id="register-grade">
-            <SelectValue placeholder="בחר כיתה" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="ז">כיתה ז</SelectItem>
-            <SelectItem value="ח">כיתה ח</SelectItem>
-            <SelectItem value="ט">כיתה ט</SelectItem>
-            <SelectItem value="י">כיתה י</SelectItem>
-          </SelectContent>
-        </Select>
+      <div className="flex gap-4">
+        <div className="flex-1 space-y-2">
+          <Label htmlFor="register-classNumber" className="text-right block">מספר כיתה</Label>
+          <Select value={classNumber.toString()} onValueChange={(value) => setClassNumber(Number(value))} disabled={loading}>
+            <SelectTrigger id="register-classNumber" className="w-full" dir="rtl">
+              <SelectValue placeholder="בחר מספר" />
+            </SelectTrigger>
+            <SelectContent className="text-right" dir="rtl">
+              <SelectItem value="1">1</SelectItem>
+              <SelectItem value="2">2</SelectItem>
+              <SelectItem value="3">3</SelectItem>
+              <SelectItem value="4">4</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="flex-1 space-y-2">
+          <Label htmlFor="register-grade" className="text-right block">כיתה</Label>
+          <Select value={grade} onValueChange={(value) => setGrade(value as Grade)} disabled={loading}>
+            <SelectTrigger id="register-grade" className="w-full" dir="rtl">
+              <SelectValue placeholder="בחר כיתה" />
+            </SelectTrigger>
+            <SelectContent className="text-right" dir="rtl">
+              <SelectItem value="ז">כיתה ז</SelectItem>
+              <SelectItem value="ח">כיתה ח</SelectItem>
+              <SelectItem value="ט">כיתה ט</SelectItem>
+              <SelectItem value="י">כיתה י</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="register-classNumber">מספר כיתה</Label>
-        <Select value={classNumber.toString()} onValueChange={(value) => setClassNumber(Number(value))} disabled={loading}>
-          <SelectTrigger id="register-classNumber">
-            <SelectValue placeholder="בחר מספר" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="1">1</SelectItem>
-            <SelectItem value="2">2</SelectItem>
-            <SelectItem value="3">3</SelectItem>
-            <SelectItem value="4">4</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="register-password">סיסמה</Label>
+        <Label htmlFor="register-password" className="text-right block">סיסמה</Label>
         <Input
           id="register-password"
           type="password"
@@ -140,11 +144,12 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
           disabled={loading}
           placeholder="לפחות 8 תווים"
           minLength={8}
+          className="text-right"
         />
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="register-confirmPassword">אימות סיסמה</Label>
+        <Label htmlFor="register-confirmPassword" className="text-right block">אימות סיסמה</Label>
         <Input
           id="register-confirmPassword"
           type="password"
@@ -153,6 +158,7 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
           required
           disabled={loading}
           placeholder="הזן את הסיסמה שוב"
+          className="text-right"
         />
       </div>
 
