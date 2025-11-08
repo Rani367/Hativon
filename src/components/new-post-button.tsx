@@ -24,7 +24,9 @@ export function NewPostButton() {
   };
 
   if (loading) {
-    return null;
+    return (
+      <div className="h-9 w-28 rounded-md bg-muted animate-pulse" />
+    );
   }
 
   return (

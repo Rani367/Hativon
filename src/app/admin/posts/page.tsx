@@ -75,7 +75,78 @@ export default function PostsListPage() {
   }
 
   if (loading) {
-    return <div className="text-center py-8">טוען...</div>;
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="space-y-2">
+            <div className="h-9 w-32 rounded bg-muted animate-pulse" />
+            <div className="h-4 w-48 rounded bg-muted animate-pulse" />
+          </div>
+          <div className="flex gap-2">
+            <div className="h-10 w-28 rounded-md bg-muted animate-pulse" />
+            <div className="h-10 w-32 rounded-md bg-muted animate-pulse" />
+          </div>
+        </div>
+
+        {/* Filters Skeleton */}
+        <Card className="p-4">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex-1">
+              <div className="h-10 w-full rounded-md bg-muted animate-pulse" />
+            </div>
+            <div className="flex gap-2">
+              <div className="h-9 w-16 rounded-md bg-muted animate-pulse" />
+              <div className="h-9 w-20 rounded-md bg-muted animate-pulse" />
+              <div className="h-9 w-20 rounded-md bg-muted animate-pulse" />
+            </div>
+          </div>
+        </Card>
+
+        {/* Table Skeleton */}
+        <Card>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="border-b">
+                <tr className="text-start">
+                  <th className="p-4"><div className="h-4 w-16 rounded bg-muted animate-pulse" /></th>
+                  <th className="p-4 hidden md:table-cell"><div className="h-4 w-20 rounded bg-muted animate-pulse" /></th>
+                  <th className="p-4 hidden lg:table-cell"><div className="h-4 w-16 rounded bg-muted animate-pulse" /></th>
+                  <th className="p-4"><div className="h-4 w-16 rounded bg-muted animate-pulse" /></th>
+                  <th className="p-4 text-end"><div className="h-4 w-16 rounded bg-muted animate-pulse ms-auto" /></th>
+                </tr>
+              </thead>
+              <tbody>
+                {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+                  <tr key={i} className="border-b last:border-0">
+                    <td className="p-4">
+                      <div className="space-y-2">
+                        <div className="h-5 w-48 rounded bg-muted animate-pulse" />
+                        <div className="h-4 w-32 rounded bg-muted animate-pulse" />
+                      </div>
+                    </td>
+                    <td className="p-4 hidden md:table-cell">
+                      <div className="h-5 w-16 rounded-full bg-muted animate-pulse" />
+                    </td>
+                    <td className="p-4 hidden lg:table-cell">
+                      <div className="h-4 w-24 rounded bg-muted animate-pulse" />
+                    </td>
+                    <td className="p-4">
+                      <div className="h-5 w-16 rounded-full bg-muted animate-pulse" />
+                    </td>
+                    <td className="p-4">
+                      <div className="flex justify-end gap-2">
+                        <div className="h-9 w-9 rounded-md bg-muted animate-pulse" />
+                        <div className="h-9 w-9 rounded-md bg-muted animate-pulse" />
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      </div>
+    );
   }
 
   return (
