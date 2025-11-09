@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
-import { getPostById, updatePost, deletePost, canUserEditPost, canUserDeletePost, getPosts } from '@/lib/posts-storage';
+import { getPostById, updatePost, deletePost, canUserEditPost, canUserDeletePost } from '@/lib/posts-storage';
 import { PostInput } from '@/types/post.types';
 import { getCurrentUser } from '@/lib/auth/middleware';
 import { isAdminAuthenticated } from '@/lib/auth/admin';
@@ -72,25 +72,6 @@ export async function PATCH(
       return NextResponse.json({ error: 'Post not found' }, { status: 404 });
     }
 
-    // Wait for Blob storage propagation to verify update is readable
-    let verified = false;
-    for (let attempt = 0; attempt < 20 && !verified; attempt++) {
-      if (attempt > 0) {
-        await new Promise(resolve => setTimeout(resolve, 150));
-      }
-      try {
-        const posts = await getPosts(false);
-        const post = posts.find(p => p.id === id);
-        // Verify the update propagated by checking updatedAt timestamp
-        if (post && post.updatedAt === updatedPost.updatedAt) {
-          verified = true;
-          break;
-        }
-      } catch (e) {
-        // Continue trying
-      }
-    }
-
     // Revalidate all pages to show the updated post immediately
     revalidatePath('/', 'layout');
 
@@ -130,24 +111,6 @@ export async function DELETE(
 
     if (!deleted) {
       return NextResponse.json({ error: 'Post not found' }, { status: 404 });
-    }
-
-    // Wait for Blob storage propagation to verify deletion is complete
-    let verified = false;
-    for (let attempt = 0; attempt < 20 && !verified; attempt++) {
-      if (attempt > 0) {
-        await new Promise(resolve => setTimeout(resolve, 150));
-      }
-      try {
-        const posts = await getPosts(false);
-        // Verify post is actually gone
-        if (!posts.some(p => p.id === id)) {
-          verified = true;
-          break;
-        }
-      } catch (e) {
-        // Continue trying
-      }
     }
 
     // Revalidate all pages to remove the deleted post immediately

@@ -103,24 +103,6 @@ export async function POST(request: NextRequest) {
 
     const newPost = await createPost(body);
 
-    // Wait for Blob storage propagation (Vercel Blob has eventual consistency)
-    // This prevents race condition where dashboard fetches before Blob replicates to edge
-    let verified = false;
-    for (let attempt = 0; attempt < 20 && !verified; attempt++) {
-      if (attempt > 0) {
-        await new Promise(resolve => setTimeout(resolve, 150));
-      }
-      try {
-        const posts = await getPosts(false);
-        if (posts.some(p => p.id === newPost.id)) {
-          verified = true;
-          break;
-        }
-      } catch (e) {
-        // Continue trying
-      }
-    }
-
     // Revalidate all pages to show the new post immediately
     revalidatePath('/', 'layout');
 
