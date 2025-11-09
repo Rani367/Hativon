@@ -13,6 +13,7 @@
     "db:init": "tsx scripts/init-db.ts",
     "db:migrate": "tsx scripts/migrate-add-grade.ts",
     "db:migrate-remove-role": "tsx scripts/migrate-remove-role.ts",
+    "migrate-posts": "tsx scripts/migrate-posts-to-db.ts",
     "create-admin": "tsx scripts/create-admin.ts",
     "pre-deploy": "tsx scripts/validate-env.ts && tsx scripts/validate-build.ts && pnpm run build && tsx scripts/post-build-deploy.ts"
   },

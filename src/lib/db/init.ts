@@ -43,18 +43,22 @@ export async function initializeDatabase() {
 }
 
 /**
- * Check if users table exists
+ * Check if database tables exist
  */
 export async function checkDatabaseSetup(): Promise<boolean> {
   try {
     const result = await db.query`
-      SELECT EXISTS (
-        SELECT FROM information_schema.tables
-        WHERE table_schema = 'public'
-        AND table_name = 'users'
-      );
+      SELECT
+        EXISTS (
+          SELECT FROM information_schema.tables
+          WHERE table_schema = 'public' AND table_name = 'users'
+        ) as users_exists,
+        EXISTS (
+          SELECT FROM information_schema.tables
+          WHERE table_schema = 'public' AND table_name = 'posts'
+        ) as posts_exists;
     ` as any;
-    return result.rows[0]?.exists || false;
+    return (result.rows[0]?.users_exists && result.rows[0]?.posts_exists) || false;
   } catch (error) {
     console.error('Error checking database setup:', error);
     return false;

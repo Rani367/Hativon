@@ -1,22 +1,6 @@
 import { Post, PostInput, PostStats } from '@/types/post.types';
-import { put, head } from '@vercel/blob';
-import fs from 'fs';
-import path from 'path';
+import { db } from './db/client';
 import { v4 as uuidv4 } from 'uuid';
-
-const BLOB_FILENAME = 'posts.json';
-const LOCAL_DATA_DIR = path.join(process.cwd(), 'data');
-const LOCAL_DATA_FILE = path.join(LOCAL_DATA_DIR, 'posts.json');
-
-// Check if running on Vercel
-const isVercel = !!process.env.BLOB_READ_WRITE_TOKEN;
-
-/**
- * Clear any caches (placeholder for future caching implementation)
- */
-function clearCache(): void {
-  // No-op for now - caching disabled for immediate updates
-}
 
 /**
  * Generate slug from title
@@ -45,225 +29,246 @@ function generateDescription(content: string): string {
 }
 
 /**
- * Read posts from storage (with in-memory caching)
+ * Convert database row to Post object
  */
-async function readPosts(): Promise<Post[]> {
-  try {
-    let posts: Post[] = [];
-
-    if (isVercel) {
-      // Read from Vercel Blob
-      try {
-        const metadata = await head(BLOB_FILENAME);
-
-        // Add cache-busting timestamp to force fresh data
-        const cacheBuster = `?t=${Date.now()}`;
-        const url = metadata.url + cacheBuster;
-
-        const response = await fetch(url, {
-          cache: 'no-store',
-          headers: {
-            'Cache-Control': 'no-cache, no-store, must-revalidate',
-            'Pragma': 'no-cache',
-            'Expires': '0',
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error(`Failed to fetch blob: ${response.status} ${response.statusText}`);
-        }
-
-        const text = await response.text();
-        posts = JSON.parse(text);
-      } catch (error) {
-        // Blob doesn't exist yet, return empty array
-        posts = [];
-      }
-    } else {
-      // Read from local file
-      if (!fs.existsSync(LOCAL_DATA_FILE)) {
-        // Create directory and file if they don't exist
-        if (!fs.existsSync(LOCAL_DATA_DIR)) {
-          fs.mkdirSync(LOCAL_DATA_DIR, { recursive: true });
-        }
-        fs.writeFileSync(LOCAL_DATA_FILE, JSON.stringify([], null, 2));
-        posts = [];
-      } else {
-        const data = fs.readFileSync(LOCAL_DATA_FILE, 'utf-8');
-        posts = JSON.parse(data);
-      }
-    }
-
-    return posts;
-  } catch (error) {
-    console.error('Error reading posts:', error);
-    return [];
-  }
-}
-
-/**
- * Write posts to storage (clears cache after write)
- */
-async function writePosts(posts: Post[]): Promise<void> {
-  try {
-    const jsonData = JSON.stringify(posts, null, 2);
-
-    if (isVercel) {
-      // Write to Vercel Blob
-      await put(BLOB_FILENAME, jsonData, {
-        access: 'public',
-        contentType: 'application/json',
-        addRandomSuffix: false,
-        allowOverwrite: true,
-        cacheControlMaxAge: 0,
-      });
-    } else {
-      // Write to local file
-      if (!fs.existsSync(LOCAL_DATA_DIR)) {
-        fs.mkdirSync(LOCAL_DATA_DIR, { recursive: true });
-      }
-      fs.writeFileSync(LOCAL_DATA_FILE, jsonData);
-    }
-
-    // Clear cache after successful write
-    clearCache();
-  } catch (error) {
-    console.error('Error writing posts:', error);
-    throw error;
-  }
+function rowToPost(row: any): Post {
+  return {
+    id: row.id,
+    title: row.title,
+    slug: row.slug,
+    content: row.content,
+    coverImage: row.cover_image || undefined,
+    description: row.description,
+    date: row.date.toISOString(),
+    author: row.author || undefined,
+    authorId: row.author_id || undefined,
+    authorGrade: row.author_grade || undefined,
+    authorClass: row.author_class || undefined,
+    tags: row.tags || [],
+    category: row.category || undefined,
+    status: row.status as 'draft' | 'published',
+    createdAt: row.created_at.toISOString(),
+    updatedAt: row.updated_at.toISOString(),
+  };
 }
 
 /**
  * Get all posts
  */
 export async function getPosts(filterPublished = false): Promise<Post[]> {
-  const posts = await readPosts();
+  try {
+    const result = filterPublished
+      ? await db.query`
+          SELECT * FROM posts
+          WHERE status = 'published'
+          ORDER BY date DESC, created_at DESC
+        `
+      : await db.query`
+          SELECT * FROM posts
+          ORDER BY date DESC, created_at DESC
+        `;
 
-  if (filterPublished) {
-    return posts.filter(post => post.status === 'published');
+    return (result as any).rows.map(rowToPost);
+  } catch (error) {
+    console.error('Error fetching posts:', error);
+    return [];
   }
-
-  return posts;
 }
 
 /**
  * Get post by ID
  */
 export async function getPostById(id: string): Promise<Post | null> {
-  const posts = await readPosts();
-  return posts.find(post => post.id === id) || null;
+  try {
+    const result = await db.query`
+      SELECT * FROM posts
+      WHERE id = ${id}
+    `;
+
+    if ((result as any).rows.length === 0) {
+      return null;
+    }
+
+    return rowToPost((result as any).rows[0]);
+  } catch (error) {
+    console.error('Error fetching post by ID:', error);
+    return null;
+  }
 }
 
 /**
  * Get post by slug
  */
 export async function getPostBySlug(slug: string): Promise<Post | null> {
-  const posts = await readPosts();
-  return posts.find(post => post.slug === slug && post.status === 'published') || null;
+  try {
+    const result = await db.query`
+      SELECT * FROM posts
+      WHERE slug = ${slug} AND status = 'published'
+    `;
+
+    if ((result as any).rows.length === 0) {
+      return null;
+    }
+
+    return rowToPost((result as any).rows[0]);
+  } catch (error) {
+    console.error('Error fetching post by slug:', error);
+    return null;
+  }
 }
 
 /**
  * Create new post
  */
 export async function createPost(input: PostInput): Promise<Post> {
-  const posts = await readPosts();
-
-  const now = new Date().toISOString();
+  const id = uuidv4();
+  const now = new Date();
   const slug = generateSlug(input.title);
   const description = generateDescription(input.content);
+  const status = input.status || 'draft';
 
-  const newPost: Post = {
-    id: uuidv4(),
-    title: input.title,
-    slug,
-    content: input.content,
-    coverImage: input.coverImage,
-    description,
-    date: now,
-    author: input.author,
-    authorId: input.authorId,
-    tags: input.tags || [],
-    category: input.category,
-    status: input.status || 'draft',
-    createdAt: now,
-    updatedAt: now,
-  };
+  try {
+    const result = await db.query`
+      INSERT INTO posts (
+        id, title, slug, content, cover_image, description,
+        date, author, author_id, author_grade, author_class,
+        tags, category, status, created_at, updated_at
+      )
+      VALUES (
+        ${id},
+        ${input.title},
+        ${slug},
+        ${input.content},
+        ${input.coverImage || null},
+        ${description},
+        ${now},
+        ${input.author || null},
+        ${input.authorId || null},
+        ${input.authorGrade || null},
+        ${input.authorClass || null},
+        ${input.tags || []},
+        ${input.category || null},
+        ${status},
+        ${now},
+        ${now}
+      )
+      RETURNING *
+    `;
 
-  posts.unshift(newPost);
-  await writePosts(posts);
-
-  return newPost;
+    return rowToPost((result as any).rows[0]);
+  } catch (error) {
+    console.error('Error creating post:', error);
+    throw error;
+  }
 }
 
 /**
  * Update existing post
  */
 export async function updatePost(id: string, input: Partial<PostInput>): Promise<Post | null> {
-  const posts = await readPosts();
-  const index = posts.findIndex(post => post.id === id);
+  try {
+    // First, get the existing post
+    const existing = await getPostById(id);
+    if (!existing) {
+      return null;
+    }
 
-  if (index === -1) {
-    return null;
+    // Build the update fields
+    const updates: any = {};
+
+    if (input.title !== undefined) {
+      updates.title = input.title;
+      updates.slug = generateSlug(input.title);
+    }
+
+    if (input.content !== undefined) {
+      updates.content = input.content;
+      updates.description = generateDescription(input.content);
+    }
+
+    if (input.coverImage !== undefined) updates.cover_image = input.coverImage;
+    if (input.author !== undefined) updates.author = input.author;
+    if (input.authorId !== undefined) updates.author_id = input.authorId;
+    if (input.authorGrade !== undefined) updates.author_grade = input.authorGrade;
+    if (input.authorClass !== undefined) updates.author_class = input.authorClass;
+    if (input.tags !== undefined) updates.tags = input.tags;
+    if (input.category !== undefined) updates.category = input.category;
+    if (input.status !== undefined) updates.status = input.status;
+
+    // Build dynamic query
+    const setters = Object.keys(updates).map((key, index) => `${key} = $${index + 2}`).join(', ');
+    const values = Object.values(updates);
+
+    const result = await db.query([
+      `UPDATE posts SET ${setters}, updated_at = CURRENT_TIMESTAMP WHERE id = $1 RETURNING *`,
+      id,
+      ...values
+    ] as any);
+
+    if ((result as any).rows.length === 0) {
+      return null;
+    }
+
+    return rowToPost((result as any).rows[0]);
+  } catch (error) {
+    console.error('Error updating post:', error);
+    throw error;
   }
-
-  const updatedPost = { ...posts[index] };
-
-  if (input.title) {
-    updatedPost.title = input.title;
-    updatedPost.slug = generateSlug(input.title);
-  }
-  if (input.content !== undefined) {
-    updatedPost.content = input.content;
-    updatedPost.description = generateDescription(input.content);
-  }
-  if (input.coverImage !== undefined) updatedPost.coverImage = input.coverImage;
-  if (input.author !== undefined) updatedPost.author = input.author;
-  if (input.authorId !== undefined) updatedPost.authorId = input.authorId;
-  if (input.tags !== undefined) updatedPost.tags = input.tags;
-  if (input.category !== undefined) updatedPost.category = input.category;
-  if (input.status !== undefined) updatedPost.status = input.status;
-
-  updatedPost.updatedAt = new Date().toISOString();
-
-  posts[index] = updatedPost;
-  await writePosts(posts);
-
-  return updatedPost;
 }
 
 /**
  * Delete post
  */
 export async function deletePost(id: string): Promise<boolean> {
-  const posts = await readPosts();
-  const filteredPosts = posts.filter(post => post.id !== id);
+  try {
+    const result = await db.query`
+      DELETE FROM posts
+      WHERE id = ${id}
+    `;
 
-  if (filteredPosts.length === posts.length) {
-    return false; // Post not found
+    return (result as any).rowCount > 0;
+  } catch (error) {
+    console.error('Error deleting post:', error);
+    return false;
   }
-
-  await writePosts(filteredPosts);
-  return true;
 }
 
 /**
  * Get post statistics
  */
 export async function getPostStats(): Promise<PostStats> {
-  const posts = await readPosts();
-  const now = new Date();
-  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const weekStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  try {
+    const result = await db.query`
+      SELECT
+        COUNT(*) as total,
+        SUM(CASE WHEN status = 'published' THEN 1 ELSE 0 END) as published,
+        SUM(CASE WHEN status = 'draft' THEN 1 ELSE 0 END) as drafts,
+        SUM(CASE WHEN created_at >= CURRENT_DATE THEN 1 ELSE 0 END) as today,
+        SUM(CASE WHEN created_at >= CURRENT_DATE - INTERVAL '7 days' THEN 1 ELSE 0 END) as this_week,
+        SUM(CASE WHEN created_at >= DATE_TRUNC('month', CURRENT_DATE) THEN 1 ELSE 0 END) as this_month
+      FROM posts
+    `;
 
-  return {
-    total: posts.length,
-    published: posts.filter(p => p.status === 'published').length,
-    drafts: posts.filter(p => p.status === 'draft').length,
-    today: posts.filter(p => new Date(p.createdAt) >= todayStart).length,
-    thisWeek: posts.filter(p => new Date(p.createdAt) >= weekStart).length,
-    thisMonth: posts.filter(p => new Date(p.createdAt) >= monthStart).length,
-  };
+    const row = (result as any).rows[0];
+    return {
+      total: parseInt(row.total) || 0,
+      published: parseInt(row.published) || 0,
+      drafts: parseInt(row.drafts) || 0,
+      today: parseInt(row.today) || 0,
+      thisWeek: parseInt(row.this_week) || 0,
+      thisMonth: parseInt(row.this_month) || 0,
+    };
+  } catch (error) {
+    console.error('Error fetching post stats:', error);
+    return {
+      total: 0,
+      published: 0,
+      drafts: 0,
+      today: 0,
+      thisWeek: 0,
+      thisMonth: 0,
+    };
+  }
 }
 
 /**
@@ -306,6 +311,16 @@ export async function canUserDeletePost(userId: string, postId: string, isAdmin:
  * Get posts by author ID
  */
 export async function getPostsByAuthor(authorId: string): Promise<Post[]> {
-  const posts = await readPosts();
-  return posts.filter(post => post.authorId === authorId);
+  try {
+    const result = await db.query`
+      SELECT * FROM posts
+      WHERE author_id = ${authorId}
+      ORDER BY date DESC, created_at DESC
+    `;
+
+    return (result as any).rows.map(rowToPost);
+  } catch (error) {
+    console.error('Error fetching posts by author:', error);
+    return [];
+  }
 }
