@@ -19,7 +19,7 @@
  * not here, to ensure we use the exact same checks as Vercel deployment.
  *
  * Usage:
- *   npm run pre-deploy (runs this + build)
+ *   pnpm run pre-deploy (runs this + build)
  *   tsx scripts/validate-build.ts
  */
 
@@ -172,7 +172,7 @@ function checkDependencies(): CheckResult {
         name: 'Dependencies',
         passed: false,
         message: `Missing ${missingDeps.length} required dependencies`,
-        error: `Missing:\n${missingDeps.map(d => `  - ${d}`).join('\n')}\nRun: npm install`,
+        error: `Missing:\n${missingDeps.map(d => `  - ${d}`).join('\n')}\nRun: pnpm install`,
       };
     }
 
@@ -200,7 +200,7 @@ function checkNodeModules(): CheckResult {
       name: 'Node Modules',
       passed: false,
       message: 'node_modules directory not found',
-      error: 'Run "npm install" to install dependencies',
+      error: 'Run "pnpm install" to install dependencies',
     };
   }
 
@@ -233,7 +233,7 @@ function checkEnvironment(): CheckResult {
       name: 'Environment Variables',
       passed: false,
       message: 'Environment validation failed',
-      error: 'Run "npm run validate:env" to see details',
+      error: 'Run "pnpm run validate:env" to see details',
     };
   }
 }
@@ -276,12 +276,12 @@ function checkVercelConfig(): CheckResult {
     );
 
     // Check if buildCommand is set correctly
-    if (vercelConfig.buildCommand && vercelConfig.buildCommand !== 'npm run pre-deploy') {
+    if (vercelConfig.buildCommand && vercelConfig.buildCommand !== 'pnpm run pre-deploy') {
       return {
         name: 'Vercel Config',
         passed: false,
         message: 'Invalid buildCommand in vercel.json',
-        error: `Expected "npm run pre-deploy", got "${vercelConfig.buildCommand}"`,
+        error: `Expected "pnpm run pre-deploy", got "${vercelConfig.buildCommand}"`,
       };
     }
 

@@ -4,13 +4,13 @@
  * Environment Variable Validation Script
  *
  * Validates all required environment variables before deployment.
- * This script runs as part of the Vercel deployment process via `npm run pre-deploy`.
+ * This script runs as part of the Vercel deployment process via `pnpm run pre-deploy`.
  *
  * Catches missing or invalid environment variables before the build starts,
  * preventing deployment failures and providing helpful error messages.
  *
  * Usage:
- *   npm run pre-deploy (runs this automatically)
+ *   pnpm run pre-deploy (runs this automatically)
  *   tsx scripts/validate-env.ts
  */
 

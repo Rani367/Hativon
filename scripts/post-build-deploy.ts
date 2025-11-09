@@ -8,7 +8,7 @@
  * User must manually run 'git push' to deploy to GitHub/Vercel.
  *
  * Usage:
- *   Automatically called after successful npm run pre-deploy
+ *   Automatically called after successful pnpm run pre-deploy
  *   tsx scripts/post-build-deploy.ts
  */
 

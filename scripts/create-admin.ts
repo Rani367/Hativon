@@ -8,11 +8,11 @@
  * All users can access the admin panel by providing the admin password.
  *
  * Usage:
- *   npm run create-admin
- *   or: npx ts-node scripts/create-admin.ts
+ *   pnpm run create-admin
+ *   or: pnpm exec tsx scripts/create-admin.ts
  *
  * Requirements:
- *   - Database must be initialized (run npm run db:init first)
+ *   - Database must be initialized (run pnpm run db:init first)
  *   - POSTGRES_URL environment variable must be set
  */
 
@@ -114,7 +114,7 @@ async function main() {
     console.error(error.message || error);
 
     console.log('\n💡 Troubleshooting:');
-    console.log('   - Make sure the database is initialized: npm run db:init');
+    console.log('   - Make sure the database is initialized: pnpm run db:init');
     console.log('   - Check that POSTGRES_URL is set in .env.local');
     console.log('   - Verify your database connection\n');
 

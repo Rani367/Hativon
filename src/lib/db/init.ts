@@ -8,7 +8,7 @@ import { Pool } from 'pg';
  * Run this once to create tables and indexes
  *
  * Usage:
- * - Development: Run `npm run db:init` or call this function
+ * - Development: Run `pnpm run db:init` or call this function
  * - Production: Run once after enabling Vercel Postgres
  */
 export async function initializeDatabase() {
