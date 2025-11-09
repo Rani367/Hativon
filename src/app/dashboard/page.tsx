@@ -23,9 +23,10 @@ export default function DashboardPage() {
     refreshInterval: 1000, // Auto-refresh every 1 second for instant updates
     revalidateOnFocus: true,
     revalidateOnReconnect: true,
-    dedupingInterval: 0, // Disable deduping to always fetch fresh data
-    revalidateIfStale: true,
-    revalidateOnMount: true,
+    dedupingInterval: 2000, // Prevent fetching multiple times within 2 seconds (allows optimistic updates to complete)
+    revalidateIfStale: false, // Don't revalidate stale data automatically
+    revalidateOnMount: false, // Don't fetch on mount - use cached data from optimistic updates
+    fallbackData: { posts: [] }, // Fallback to empty if no cache
   });
 
   const posts = data?.posts || [];

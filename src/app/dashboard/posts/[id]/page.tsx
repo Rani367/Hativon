@@ -102,8 +102,8 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
     setSaving(true);
 
     try {
-      // Optimistically update the post FIRST (synchronous cache update)
-      mutate(
+      // Optimistically update the post (cache updates immediately)
+      const mutatePromise = mutate(
         '/api/admin/posts',
         async (currentData: any) => {
           // Update on server
@@ -134,7 +134,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
           };
         },
         {
-          optimisticData: currentData => ({
+          optimisticData: (currentData: any) => ({
             posts: (currentData?.posts || []).map((p: Post) =>
               p.id === id
                 ? {
@@ -154,8 +154,14 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
         }
       );
 
-      // THEN navigate (cache already has optimistic data)
+      // Navigate immediately (optimistic data is already in cache)
       router.push("/dashboard");
+
+      // Let the mutation complete in the background
+      mutatePromise.catch((error) => {
+        console.error("Failed to update post:", error);
+        alert("עדכון הפוסט נכשל");
+      });
     } catch (error) {
       console.error("Failed to update post:", error);
       alert("עדכון הפוסט נכשל");
@@ -169,8 +175,8 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
     }
 
     try {
-      // Optimistically delete the post FIRST (synchronous cache update)
-      mutate(
+      // Optimistically delete the post (cache updates immediately)
+      const mutatePromise = mutate(
         '/api/admin/posts',
         async (currentData: any) => {
           // Delete from server
@@ -190,7 +196,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
           };
         },
         {
-          optimisticData: currentData => ({
+          optimisticData: (currentData: any) => ({
             posts: (currentData?.posts || []).filter((p: Post) => p.id !== id)
           }),
           rollbackOnError: true,
@@ -199,8 +205,14 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
         }
       );
 
-      // THEN navigate (cache already updated)
+      // Navigate immediately (optimistic data is already in cache)
       router.push("/dashboard");
+
+      // Let the mutation complete in the background
+      mutatePromise.catch((error) => {
+        console.error("Failed to delete post:", error);
+        alert(`מחיקת הפוסט נכשלה: ${error instanceof Error ? error.message : 'שגיאה לא ידועה'}`);
+      });
     } catch (error) {
       console.error("Failed to delete post:", error);
       alert(`מחיקת הפוסט נכשלה: ${error instanceof Error ? error.message : 'שגיאה לא ידועה'}`);
