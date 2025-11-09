@@ -20,9 +20,12 @@ export default function DashboardPage() {
 
   // Use SWR for data fetching with automatic revalidation
   const { data, error, isLoading } = useSWR('/api/admin/posts', fetcher, {
-    refreshInterval: 2000, // Auto-refresh every 2 seconds
+    refreshInterval: 1000, // Auto-refresh every 1 second for instant updates
     revalidateOnFocus: true,
     revalidateOnReconnect: true,
+    dedupingInterval: 0, // Disable deduping to always fetch fresh data
+    revalidateIfStale: true,
+    revalidateOnMount: true,
   });
 
   const posts = data?.posts || [];
