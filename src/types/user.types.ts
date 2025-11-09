@@ -32,6 +32,8 @@ export interface UserLogin {
 export interface UserUpdate {
   displayName?: string;
   email?: string;
+  grade?: Grade;
+  classNumber?: number;
 }
 
 /**
