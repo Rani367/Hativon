@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getUserById, updateUser, deleteUser } from '@/lib/users';
 import { requireAdminAuth } from '@/lib/auth/admin';
 import { UserUpdate } from '@/types/user.types';
+import { isDatabaseAvailable } from '@/lib/db/client';
 
 /**
  * GET /api/admin/users/[id] - Get single user (admin only)
@@ -12,6 +13,14 @@ export async function GET(
 ) {
   try {
     await requireAdminAuth();
+
+    const dbAvailable = await isDatabaseAvailable();
+    if (!dbAvailable) {
+      return NextResponse.json(
+        { error: 'Database not configured' },
+        { status: 503 }
+      );
+    }
 
     const { id } = await params;
     const user = await getUserById(id);
@@ -28,7 +37,7 @@ export async function GET(
 
     console.error('Error fetching user:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch user' },
+      { error: `Failed to fetch user: ${error.message}` },
       { status: 500 }
     );
   }
@@ -43,6 +52,14 @@ export async function PATCH(
 ) {
   try {
     await requireAdminAuth();
+
+    const dbAvailable = await isDatabaseAvailable();
+    if (!dbAvailable) {
+      return NextResponse.json(
+        { error: 'Database not configured' },
+        { status: 503 }
+      );
+    }
 
     const { id } = await params;
     const body: UserUpdate = await request.json();
@@ -61,7 +78,7 @@ export async function PATCH(
 
     console.error('Error updating user:', error);
     return NextResponse.json(
-      { error: 'Failed to update user' },
+      { error: `Failed to update user: ${error.message}` },
       { status: 500 }
     );
   }
@@ -76,6 +93,14 @@ export async function DELETE(
 ) {
   try {
     await requireAdminAuth();
+
+    const dbAvailable = await isDatabaseAvailable();
+    if (!dbAvailable) {
+      return NextResponse.json(
+        { error: 'Database not configured' },
+        { status: 503 }
+      );
+    }
 
     const { id } = await params;
 
@@ -95,7 +120,7 @@ export async function DELETE(
 
     console.error('Error deleting user:', error);
     return NextResponse.json(
-      { error: 'Failed to delete user' },
+      { error: `Failed to delete user: ${error.message}` },
       { status: 500 }
     );
   }
