@@ -69,8 +69,29 @@ export default function NewPostPage() {
 
     setLoading(true);
 
-    // Navigate immediately for instant feedback with syncing indicator
-    router.push("/dashboard?syncing=true");
+    // Create optimistic post for instant display
+    const optimisticPost = {
+      id: `temp-${Date.now()}`,
+      title: form.title,
+      slug: form.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''),
+      content: form.content,
+      coverImage: form.coverImage,
+      description: form.content.substring(0, 160),
+      date: new Date().toISOString(),
+      author: '',
+      authorId: '',
+      tags: [],
+      category: '',
+      status: status,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    // Store in localStorage for instant display
+    localStorage.setItem('optimisticPost', JSON.stringify(optimisticPost));
+
+    // Navigate immediately - post will appear instantly
+    router.push("/dashboard");
 
     // Create post in background
     try {
