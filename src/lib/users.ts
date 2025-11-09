@@ -168,13 +168,16 @@ export async function getAllUsers(): Promise<User[]> {
  * Update user information
  */
 export async function updateUser(userId: string, updates: UserUpdate): Promise<User> {
-  const { displayName, email } = updates;
+  const { displayName, email, grade, classNumber } = updates;
 
   const result = await db.query`
     UPDATE users
     SET
       display_name = COALESCE(${displayName}, display_name),
-      email = COALESCE(${email}, email)
+      email = COALESCE(${email}, email),
+      grade = COALESCE(${grade}, grade),
+      class_number = COALESCE(${classNumber}, class_number),
+      updated_at = CURRENT_TIMESTAMP
     WHERE id = ${userId}
     RETURNING
       id,
