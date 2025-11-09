@@ -13,7 +13,7 @@
  * - Basic query functionality
  *
  * Usage:
- *   npm run check:db
+ *   pnpm run check:db
  *   tsx scripts/check-db.ts
  */
 
@@ -88,7 +88,7 @@ async function checkUsersTable(): Promise<CheckResult> {
         name: 'Users Table',
         passed: false,
         message: 'Users table does not exist',
-        details: 'Run "npm run db:init" to initialize the database',
+        details: 'Run "pnpm run db:init" to initialize the database',
       };
     }
 
@@ -139,7 +139,7 @@ async function checkUsersTableSchema(): Promise<CheckResult> {
         name: 'Users Table Schema',
         passed: false,
         message: 'Users table schema is incomplete',
-        details: `Missing columns: ${missingColumns.map(c => c.name).join(', ')}\nRun "npm run db:init" to update schema`,
+        details: `Missing columns: ${missingColumns.map(c => c.name).join(', ')}\nRun "pnpm run db:init" to update schema`,
       };
     }
 
@@ -177,7 +177,7 @@ async function checkAdminUser(): Promise<CheckResult> {
         name: 'Admin User',
         passed: false,
         message: 'No admin user found',
-        details: 'Run "npm run create-admin" to create an admin account',
+        details: 'Run "pnpm run create-admin" to create an admin account',
       };
     }
 
@@ -220,7 +220,7 @@ async function checkIndexes(): Promise<CheckResult> {
         name: 'Database Indexes',
         passed: false,
         message: 'Missing username unique index',
-        details: 'Run "npm run db:init" to create required indexes',
+        details: 'Run "pnpm run db:init" to create required indexes',
       };
     }
 

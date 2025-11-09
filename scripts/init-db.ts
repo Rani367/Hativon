@@ -7,8 +7,8 @@
  * Run this once after enabling Vercel Postgres or setting up local Postgres.
  *
  * Usage:
- *   npm run db:init
- *   or: npx ts-node scripts/init-db.ts
+ *   pnpm run db:init
+ *   or: pnpm exec tsx scripts/init-db.ts
  *
  * Requirements:
  *   - POSTGRES_URL or POSTGRES_URL_NON_POOLING environment variable must be set
@@ -56,8 +56,8 @@ async function main() {
 
     console.log('\n✅ Database initialized successfully!');
     console.log('\n📝 Next steps:');
-    console.log('   1. Create an admin user: npm run create-admin');
-    console.log('   2. Start the development server: npm run dev');
+    console.log('   1. Create an admin user: pnpm run create-admin');
+    console.log('   2. Start the development server: pnpm run dev');
     console.log('   3. Visit /admin to log in\n');
 
     process.exit(0);
