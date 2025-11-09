@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,110 +10,51 @@ import { PlusCircle, Search, Edit, Trash2, FileText } from "lucide-react";
 import { Post } from "@/types/post.types";
 import { format } from "date-fns";
 import { he } from "date-fns/locale";
+import useSWR, { mutate } from 'swr';
+
+const fetcher = (url: string) => fetch(url, { cache: 'no-store' }).then(res => res.json());
 
 export default function DashboardPage() {
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [filteredPosts, setFilteredPosts] = useState<Post[]>([]);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "published" | "draft">("all");
-  const [loading, setLoading] = useState(true);
-  const [syncingPosts, setSyncingPosts] = useState<Set<string>>(new Set());
 
-  useEffect(() => {
-    fetchPosts();
+  // Use SWR for data fetching with automatic revalidation
+  const { data, error, isLoading } = useSWR('/api/admin/posts', fetcher, {
+    refreshInterval: 2000, // Auto-refresh every 2 seconds
+    revalidateOnFocus: true,
+    revalidateOnReconnect: true,
+  });
 
-    // Check for optimistic post from localStorage
-    const optimisticPost = localStorage.getItem('optimisticPost');
-    if (optimisticPost) {
-      try {
-        const newPost = JSON.parse(optimisticPost);
-        localStorage.removeItem('optimisticPost');
+  const posts = data?.posts || [];
 
-        // Check if this is an update (post ID exists) or new post
-        setPosts(prev => {
-          const existingIndex = prev.findIndex(p => p.id === newPost.id);
-          if (existingIndex >= 0) {
-            // Update existing post
-            const updated = [...prev];
-            updated[existingIndex] = newPost;
-            return updated;
-          } else {
-            // Add new post
-            return [newPost, ...prev];
-          }
-        });
-
-        setSyncingPosts(new Set([newPost.id]));
-
-        // Poll for server sync
-        const pollInterval = setInterval(async () => {
-          const response = await fetch("/api/admin/posts", { cache: "no-store" });
-          const data = await response.json();
-          const serverPost = data.posts.find((p: any) =>
-            p.id === newPost.id || p.title === newPost.title
-          );
-          if (serverPost) {
-            setPosts(data.posts);
-            setSyncingPosts(new Set());
-            clearInterval(pollInterval);
-          }
-        }, 500);
-
-        // Stop after 10 seconds max
-        setTimeout(() => {
-          clearInterval(pollInterval);
-          setSyncingPosts(new Set());
-        }, 10000);
-      } catch (e) {
-        console.error('Failed to parse optimistic post:', e);
-      }
-    }
-  }, []);
-
-  useEffect(() => {
+  const filteredPosts = useMemo(() => {
     let filtered = posts;
 
     if (statusFilter !== "all") {
-      filtered = filtered.filter((post) => post.status === statusFilter);
+      filtered = filtered.filter((post: Post) => post.status === statusFilter);
     }
 
     if (search) {
       const searchLower = search.toLowerCase();
       filtered = filtered.filter(
-        (post) =>
+        (post: Post) =>
           post.title.toLowerCase().includes(searchLower) ||
           post.slug.toLowerCase().includes(searchLower)
       );
     }
 
-    setFilteredPosts(filtered);
+    return filtered;
   }, [posts, search, statusFilter]);
-
-  async function fetchPosts() {
-    try {
-      const response = await fetch("/api/admin/posts", {
-        cache: "no-store",
-      });
-      const data = await response.json();
-      setPosts(data.posts);
-      setFilteredPosts(data.posts);
-    } catch (error) {
-      console.error("Failed to fetch posts:", error);
-    } finally {
-      setLoading(false);
-    }
-  }
 
   async function handleDelete(id: string) {
     if (!confirm("האם אתה בטוח שברצונך למחוק את הכתבה הזו?")) return;
 
     // Optimistic update - remove from UI INSTANTLY
-    const originalPosts = posts;
-    const originalFilteredPosts = filteredPosts;
-    setPosts(posts.filter(post => post.id !== id));
-    setFilteredPosts(filteredPosts.filter(post => post.id !== id));
+    mutate('/api/admin/posts', {
+      posts: posts.filter((post: Post) => post.id !== id)
+    }, false);
 
-    // Delete from server in background
+    // Delete from server
     try {
       const response = await fetch(`/api/admin/posts/${id}`, {
         method: "DELETE",
@@ -121,22 +62,23 @@ export default function DashboardPage() {
       });
 
       if (!response.ok) {
-        // Restore posts if delete failed
-        setPosts(originalPosts);
-        setFilteredPosts(originalFilteredPosts);
         const errorData = await response.json();
         alert(`שגיאה במחיקת הכתבה: ${errorData.error || 'שגיאה לא ידועה'}`);
+        // Revalidate to restore from server
+        mutate('/api/admin/posts');
+      } else {
+        // Revalidate to confirm deletion
+        mutate('/api/admin/posts');
       }
     } catch (error) {
-      // Restore posts if request failed
-      setPosts(originalPosts);
-      setFilteredPosts(originalFilteredPosts);
       console.error("Failed to delete post:", error);
       alert("שגיאה במחיקת הכתבה");
+      // Revalidate to restore from server
+      mutate('/api/admin/posts');
     }
   }
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
@@ -225,21 +167,6 @@ export default function DashboardPage() {
         </Link>
       </div>
 
-      {/* Syncing indicator */}
-      {syncingPosts.size > 0 && (
-        <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
-          <div className="flex items-center gap-2 text-blue-800 dark:text-blue-200">
-            <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            <span className="text-sm font-medium">
-              מסנכרן שינויים לשרת...
-            </span>
-          </div>
-        </div>
-      )}
-
       {/* Show empty state if no posts */}
       {posts.length === 0 ? (
         <Card className="p-12">
@@ -324,7 +251,7 @@ export default function DashboardPage() {
                       </td>
                     </tr>
                   ) : (
-                    filteredPosts.map((post) => (
+                    filteredPosts.map((post: Post) => (
                       <tr key={post.id} className="border-b last:border-0 hover:bg-muted/50">
                         <td className="p-4">
                           <div>
@@ -348,24 +275,11 @@ export default function DashboardPage() {
                           {format(new Date(post.createdAt), "d בMMMM yyyy", { locale: he })}
                         </td>
                         <td className="p-4">
-                          <div className="flex items-center gap-2">
-                            {syncingPosts.has(post.id) && (
-                              <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                                <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                </svg>
-                                <span>מוחק...</span>
-                              </div>
-                            )}
-                            {!syncingPosts.has(post.id) && (
-                              <Badge
-                                variant={post.status === "published" ? "default" : "secondary"}
-                              >
-                                {post.status === "published" ? "פורסם" : "טיוטה"}
-                              </Badge>
-                            )}
-                          </div>
+                          <Badge
+                            variant={post.status === "published" ? "default" : "secondary"}
+                          >
+                            {post.status === "published" ? "פורסם" : "טיוטה"}
+                          </Badge>
                         </td>
                         <td className="p-4">
                           <div className="flex justify-end gap-2">
