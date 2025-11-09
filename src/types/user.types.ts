@@ -2,7 +2,6 @@
  * User type definitions for authentication and authorization
  */
 
-export type UserRole = 'user' | 'admin';
 export type Grade = 'ז' | 'ח' | 'ט' | 'י';
 
 export interface User {
@@ -12,7 +11,6 @@ export interface User {
   email?: string;
   grade: Grade;
   classNumber: number;
-  role: UserRole;
   createdAt: string;
   updatedAt: string;
   lastLogin?: string;
@@ -34,7 +32,6 @@ export interface UserLogin {
 export interface UserUpdate {
   displayName?: string;
   email?: string;
-  role?: UserRole;
 }
 
 /**
@@ -49,7 +46,6 @@ export type SafeUser = Omit<User, 'passwordHash'>;
 export interface JWTPayload {
   userId: string;
   username: string;
-  role: UserRole;
   iat?: number;
   exp?: number;
 }

@@ -7,7 +7,6 @@ CREATE TABLE IF NOT EXISTS users (
   email VARCHAR(255),
   grade VARCHAR(10) NOT NULL CHECK (grade IN ('ז', 'ח', 'ט', 'י')),
   class_number INTEGER NOT NULL CHECK (class_number >= 1 AND class_number <= 4),
-  role VARCHAR(20) DEFAULT 'user' CHECK (role IN ('user', 'admin')),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   last_login TIMESTAMP
@@ -15,7 +14,6 @@ CREATE TABLE IF NOT EXISTS users (
 
 -- Indexes for performance
 CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
-CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
 
 -- Function to update updated_at timestamp
 CREATE OR REPLACE FUNCTION update_updated_at_column()

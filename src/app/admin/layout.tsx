@@ -4,17 +4,17 @@ import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Home, FileText, PlusCircle, LogOut, Menu } from "lucide-react";
+import { Home, FileText, LogOut, Menu } from "lucide-react";
+import { AdminPasswordGate } from "@/components/admin-password-gate";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const [checking, setChecking] = useState(true);
-  const [authenticated, setAuthenticated] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // Check authentication for all admin routes except login page
+  // Check admin password authentication
   useEffect(() => {
     async function checkAuth() {
       if (pathname === "/admin") {
@@ -26,25 +26,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         const response = await fetch("/api/check-auth");
         const data = await response.json();
 
-        if (data.authenticated) {
-          // Check if user is admin
-          if (data.user && data.user.role === 'admin') {
-            setAuthenticated(true);
-            setIsAdmin(true);
-          } else if (data.legacy) {
-            // Legacy admin authentication
-            setAuthenticated(true);
-            setIsAdmin(true);
-          } else {
-            // User is authenticated but not an admin - redirect to dashboard
-            router.push("/dashboard");
-          }
-        } else {
-          router.push("/admin");
-        }
+        setIsAdmin(data.isAdmin || false);
       } catch (error) {
         console.error("Auth check failed:", error);
-        router.push("/admin");
       } finally {
         setChecking(false);
       }
@@ -55,7 +39,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   const handleLogout = async () => {
     try {
-      await fetch("/api/logout", { method: "POST" });
+      await fetch("/api/admin/logout", { method: "POST" });
+      setIsAdmin(false);
       router.push("/admin");
     } catch (error) {
       console.error("Logout failed:", error);
@@ -107,15 +92,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     );
   }
 
-  // Only show admin layout if authenticated
-  if (!authenticated) {
-    return null;
+  // Show admin password gate if not admin authenticated
+  if (!isAdmin) {
+    return <AdminPasswordGate onSuccess={() => setIsAdmin(true)} />;
   }
 
   const navItems = [
     { href: "/admin/dashboard", label: "לוח בקרה", icon: Home },
     { href: "/admin/posts", label: "כל הכתבות", icon: FileText },
-    { href: "/admin/posts/new", label: "כתבה חדשה", icon: PlusCircle },
   ];
 
   return (
@@ -134,12 +118,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <div className="flex items-center gap-4">
               <Link href="/">
                 <Button variant="outline" size="sm">
-                  צפה באתר
+                  חזור לאתר
                 </Button>
               </Link>
               <Button variant="ghost" size="sm" onClick={handleLogout}>
-                <LogOut className="h-4 w-4 mr-2" />
-                התנתק
+                <LogOut className="h-4 w-4 me-2" />
+                התנתק מהניהול
               </Button>
             </div>
           </div>
