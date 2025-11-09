@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { getPosts, createPost, getPostStats, getPostsByAuthor } from '@/lib/posts-storage';
 import { PostInput } from '@/types/post.types';
 import { getCurrentUser } from '@/lib/auth/middleware';
@@ -101,6 +102,9 @@ export async function POST(request: NextRequest) {
     body.authorClass = user.classNumber;
 
     const newPost = await createPost(body);
+
+    // Revalidate all pages to show the new post immediately
+    revalidatePath('/', 'layout');
 
     return NextResponse.json(newPost, { status: 201 });
   } catch (error) {
