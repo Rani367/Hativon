@@ -13,7 +13,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { AuthDialog } from './auth-dialog';
-import { User, LogOut, FileText, LayoutDashboard } from 'lucide-react';
+import { User, LogOut, FileText, LayoutDashboard, UserCog } from 'lucide-react';
 
 export function UserMenu() {
   const { user, logout, loading } = useAuth();
@@ -72,6 +72,12 @@ export function UserMenu() {
           <Link href="/dashboard/posts/new" className="cursor-pointer">
             <FileText className="ltr:mr-2 rtl:ml-2 h-4 w-4" />
             <span>פוסט חדש</span>
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link href="/dashboard/profile" className="cursor-pointer">
+            <UserCog className="ltr:mr-2 rtl:ml-2 h-4 w-4" />
+            <span>הפרופיל שלי</span>
           </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
