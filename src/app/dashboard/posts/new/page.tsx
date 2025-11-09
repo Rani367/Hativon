@@ -7,8 +7,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Save, Eye, Upload, X } from "lucide-react";
+import { Save, Eye, Upload, X, Loader2 } from "lucide-react";
 import { mutate } from "swr";
+import { toast } from "sonner";
 
 export default function NewPostPage() {
   const router = useRouter();
@@ -64,11 +65,16 @@ export default function NewPostPage() {
 
   const handleSubmit = async (status: "draft" | "published") => {
     if (!form.title || !form.content) {
-      alert("כותרת ותוכן הם שדות חובה");
+      toast.error("כותרת ותוכן הם שדות חובה");
       return;
     }
 
     setLoading(true);
+
+    // Show loading toast
+    const loadingToast = toast.loading(
+      status === "published" ? "מפרסם פוסט..." : "שומר טיוטה..."
+    );
 
     // Create optimistic post data
     const now = new Date().toISOString();
@@ -133,11 +139,18 @@ export default function NewPostPage() {
       // This ensures the real post is in cache before dashboard mounts
       await mutatePromise;
 
+      // Dismiss loading toast and show success
+      toast.dismiss(loadingToast);
+      toast.success(
+        status === "published" ? "הפוסט פורסם בהצלחה!" : "הטיוטה נשמרה בהצלחה!"
+      );
+
       // Navigate after mutation completes
       router.push("/dashboard");
     } catch (error) {
       console.error("Failed to create post:", error);
-      alert("יצירת הפוסט נכשלה");
+      toast.dismiss(loadingToast);
+      toast.error("יצירת הפוסט נכשלה");
       setLoading(false);
     }
   };
@@ -251,14 +264,22 @@ export default function NewPostPage() {
           onClick={() => handleSubmit("draft")}
           disabled={loading}
         >
-          <Save className="h-4 w-4 me-2" />
+          {loading ? (
+            <Loader2 className="h-4 w-4 me-2 animate-spin" />
+          ) : (
+            <Save className="h-4 w-4 me-2" />
+          )}
           שמור כטיוטה
         </Button>
         <Button
           onClick={() => handleSubmit("published")}
           disabled={loading}
         >
-          <Eye className="h-4 w-4 me-2" />
+          {loading ? (
+            <Loader2 className="h-4 w-4 me-2 animate-spin" />
+          ) : (
+            <Eye className="h-4 w-4 me-2" />
+          )}
           פרסם
         </Button>
       </div>
