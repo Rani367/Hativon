@@ -74,14 +74,20 @@ async function readPosts(): Promise<Post[]> {
 
     if (isVercel) {
       // Read from Vercel Blob
-      const blobUrl = `https://${process.env.BLOB_READ_WRITE_TOKEN!.split('_')[0]}.public.blob.vercel-storage.com/${BLOB_FILENAME}`;
-
       try {
-        await head(blobUrl);
-        const response = await fetch(blobUrl);
+        // Use head() to check if blob exists and get metadata
+        const metadata = await head(BLOB_FILENAME);
+
+        // Fetch the blob content using the URL from metadata
+        const response = await fetch(metadata.url);
+        if (!response.ok) {
+          throw new Error(`Failed to fetch blob: ${response.statusText}`);
+        }
         posts = await response.json();
+        console.log('Successfully read posts from Vercel Blob:', posts.length, 'posts');
       } catch (error) {
         // Blob doesn't exist yet, return empty array
+        console.log('Blob does not exist or error reading:', error);
         posts = [];
       }
     } else {
@@ -121,12 +127,14 @@ async function writePosts(posts: Post[]): Promise<void> {
 
     if (isVercel) {
       // Write to Vercel Blob
-      await put(BLOB_FILENAME, jsonData, {
+      console.log('Writing posts to Vercel Blob:', posts.length, 'posts');
+      const result = await put(BLOB_FILENAME, jsonData, {
         access: 'public',
         contentType: 'application/json',
         addRandomSuffix: false,
         allowOverwrite: true, // Allow overwriting existing posts.json file
       });
+      console.log('Successfully wrote posts to Vercel Blob:', result.url);
     } else {
       // Write to local file
       if (!fs.existsSync(LOCAL_DATA_DIR)) {
