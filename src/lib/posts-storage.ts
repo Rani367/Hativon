@@ -55,10 +55,17 @@ async function readPosts(): Promise<Post[]> {
       // Read from Vercel Blob
       try {
         const metadata = await head(BLOB_FILENAME);
-        const response = await fetch(metadata.url, {
+
+        // Add cache-busting timestamp to force fresh data
+        const cacheBuster = `?t=${Date.now()}`;
+        const url = metadata.url + cacheBuster;
+
+        const response = await fetch(url, {
           cache: 'no-store',
           headers: {
             'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0',
           },
         });
 
