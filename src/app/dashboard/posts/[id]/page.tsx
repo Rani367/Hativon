@@ -154,14 +154,11 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
         }
       );
 
-      // Navigate immediately (optimistic data is already in cache)
-      router.push("/dashboard");
+      // Wait for mutation to complete BEFORE navigating
+      await mutatePromise;
 
-      // Let the mutation complete in the background
-      mutatePromise.catch((error) => {
-        console.error("Failed to update post:", error);
-        alert("עדכון הפוסט נכשל");
-      });
+      // Navigate after mutation completes
+      router.push("/dashboard");
     } catch (error) {
       console.error("Failed to update post:", error);
       alert("עדכון הפוסט נכשל");
@@ -205,14 +202,11 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
         }
       );
 
-      // Navigate immediately (optimistic data is already in cache)
-      router.push("/dashboard");
+      // Wait for mutation to complete BEFORE navigating
+      await mutatePromise;
 
-      // Let the mutation complete in the background
-      mutatePromise.catch((error) => {
-        console.error("Failed to delete post:", error);
-        alert(`מחיקת הפוסט נכשלה: ${error instanceof Error ? error.message : 'שגיאה לא ידועה'}`);
-      });
+      // Navigate after deletion completes
+      router.push("/dashboard");
     } catch (error) {
       console.error("Failed to delete post:", error);
       alert(`מחיקת הפוסט נכשלה: ${error instanceof Error ? error.message : 'שגיאה לא ידועה'}`);
