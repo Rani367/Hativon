@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Save, Eye, Upload, X } from "lucide-react";
+import { mutate } from "swr";
 
 export default function NewPostPage() {
   const router = useRouter();
@@ -69,30 +70,70 @@ export default function NewPostPage() {
 
     setLoading(true);
 
-    try {
-      const response = await fetch("/api/admin/posts", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          title: form.title,
-          content: form.content,
-          coverImage: form.coverImage,
-          status,
-        }),
-      });
+    // Create optimistic post data
+    const now = new Date().toISOString();
+    const optimisticPost = {
+      id: `temp-${Date.now()}`,
+      title: form.title,
+      slug: form.title.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+      content: form.content,
+      coverImage: form.coverImage,
+      description: form.content.substring(0, 160) + '...',
+      date: now,
+      author: 'You',
+      authorId: 'current-user',
+      tags: [],
+      category: undefined,
+      status,
+      createdAt: now,
+      updatedAt: now,
+    };
 
-      if (response.ok) {
-        // Navigate - SWR will auto-refresh
-        router.push("/dashboard");
-      } else {
-        alert("יצירת הפוסט נכשלה");
-      }
+    try {
+      // Update cache FIRST with optimistic data (synchronous)
+      mutate(
+        '/api/admin/posts',
+        async (currentData: any) => {
+          // Create the post on server
+          const response = await fetch("/api/admin/posts", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              title: form.title,
+              content: form.content,
+              coverImage: form.coverImage,
+              status,
+            }),
+          });
+
+          if (!response.ok) {
+            throw new Error("Failed to create post");
+          }
+
+          const newPost = await response.json();
+
+          // Return updated data with real post from server
+          return {
+            posts: [newPost, ...(currentData?.posts || [])]
+          };
+        },
+        {
+          optimisticData: {
+            posts: [optimisticPost, ...([] as any)]
+          },
+          rollbackOnError: true,
+          populateCache: true,
+          revalidate: false, // Don't revalidate immediately, server call will update
+        }
+      );
+
+      // THEN navigate (cache already has optimistic data)
+      router.push("/dashboard");
     } catch (error) {
       console.error("Failed to create post:", error);
       alert("יצירת הפוסט נכשלה");
-    } finally {
       setLoading(false);
     }
   };
