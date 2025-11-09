@@ -11,27 +11,11 @@ const LOCAL_DATA_FILE = path.join(LOCAL_DATA_DIR, 'posts.json');
 // Check if running on Vercel
 const isVercel = !!process.env.BLOB_READ_WRITE_TOKEN;
 
-// In-memory cache for posts
-interface PostsCache {
-  data: Post[];
-  timestamp: number;
-}
-
-let postsCache: PostsCache | null = null;
-const CACHE_TTL = 0; // No cache - immediate updates
-
 /**
- * Clear the posts cache (call after any write operation)
+ * Clear any caches (placeholder for future caching implementation)
  */
 function clearCache(): void {
-  postsCache = null;
-}
-
-/**
- * Check if cache is valid
- */
-function isCacheValid(): boolean {
-  return postsCache !== null && Date.now() - postsCache.timestamp < CACHE_TTL;
+  // No-op for now - caching disabled for immediate updates
 }
 
 /**
@@ -64,33 +48,28 @@ function generateDescription(content: string): string {
  * Read posts from storage (with in-memory caching)
  */
 async function readPosts(): Promise<Post[]> {
-  // Return cached data if valid
-  if (isCacheValid() && postsCache) {
-    return postsCache.data;
-  }
-
   try {
     let posts: Post[] = [];
 
     if (isVercel) {
       // Read from Vercel Blob
       try {
-        // Use head() to check if blob exists and get metadata
         const metadata = await head(BLOB_FILENAME);
-
-        // Fetch the blob content using the URL from metadata with cache-busting
-        const cacheBustingUrl = `${metadata.url}?t=${Date.now()}`;
-        const response = await fetch(cacheBustingUrl, {
-          cache: 'no-store', // Disable Next.js fetch caching
+        const response = await fetch(metadata.url, {
+          cache: 'no-store',
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+          },
         });
+
         if (!response.ok) {
-          throw new Error(`Failed to fetch blob: ${response.statusText}`);
+          throw new Error(`Failed to fetch blob: ${response.status} ${response.statusText}`);
         }
-        posts = await response.json();
-        console.log('Successfully read posts from Vercel Blob:', posts.length, 'posts');
+
+        const text = await response.text();
+        posts = JSON.parse(text);
       } catch (error) {
         // Blob doesn't exist yet, return empty array
-        console.log('Blob does not exist or error reading:', error);
         posts = [];
       }
     } else {
@@ -108,12 +87,6 @@ async function readPosts(): Promise<Post[]> {
       }
     }
 
-    // Update cache
-    postsCache = {
-      data: posts,
-      timestamp: Date.now(),
-    };
-
     return posts;
   } catch (error) {
     console.error('Error reading posts:', error);
@@ -130,15 +103,13 @@ async function writePosts(posts: Post[]): Promise<void> {
 
     if (isVercel) {
       // Write to Vercel Blob
-      console.log('Writing posts to Vercel Blob:', posts.length, 'posts');
-      const result = await put(BLOB_FILENAME, jsonData, {
+      await put(BLOB_FILENAME, jsonData, {
         access: 'public',
         contentType: 'application/json',
         addRandomSuffix: false,
-        allowOverwrite: true, // Allow overwriting existing posts.json file
-        cacheControlMaxAge: 0, // Disable edge caching for immediate updates
+        allowOverwrite: true,
+        cacheControlMaxAge: 0,
       });
-      console.log('Successfully wrote posts to Vercel Blob:', result.url);
     } else {
       // Write to local file
       if (!fs.existsSync(LOCAL_DATA_DIR)) {
@@ -211,7 +182,7 @@ export async function createPost(input: PostInput): Promise<Post> {
     updatedAt: now,
   };
 
-  posts.unshift(newPost); // Add to beginning
+  posts.unshift(newPost);
   await writePosts(posts);
 
   return newPost;
@@ -257,20 +228,14 @@ export async function updatePost(id: string, input: Partial<PostInput>): Promise
  * Delete post
  */
 export async function deletePost(id: string): Promise<boolean> {
-  console.log('Deleting post with ID:', id);
   const posts = await readPosts();
-  console.log('Current posts before delete:', posts.length);
-
   const filteredPosts = posts.filter(post => post.id !== id);
 
   if (filteredPosts.length === posts.length) {
-    console.log('Post not found for deletion:', id);
     return false; // Post not found
   }
 
-  console.log('Posts after filtering:', filteredPosts.length);
   await writePosts(filteredPosts);
-  console.log('Successfully deleted post:', id);
   return true;
 }
 
