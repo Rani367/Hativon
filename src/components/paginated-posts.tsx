@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Post } from "@/types/post.types";
 import PostCard from "@/components/post-card";
 import { Button } from "@/components/ui/button";
@@ -17,11 +17,6 @@ export default function PaginatedPosts({
 }: PaginatedPostsProps) {
   const [displayCount, setDisplayCount] = useState(postsPerPage);
   const [loading, setLoading] = useState(false);
-
-  // Reset display count when posts change
-  useEffect(() => {
-    setDisplayCount(postsPerPage);
-  }, [initialPosts, postsPerPage]);
 
   const visiblePosts = initialPosts.slice(0, displayCount);
   const hasMore = displayCount < initialPosts.length;
