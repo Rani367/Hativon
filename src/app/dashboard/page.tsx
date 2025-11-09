@@ -49,32 +49,39 @@ export default function DashboardPage() {
   async function handleDelete(id: string) {
     if (!confirm("האם אתה בטוח שברצונך למחוק את הכתבה הזו?")) return;
 
-    // Optimistic update - remove from UI INSTANTLY
-    mutate('/api/admin/posts', {
-      posts: posts.filter((post: Post) => post.id !== id)
-    }, false);
-
-    // Delete from server
     try {
-      const response = await fetch(`/api/admin/posts/${id}`, {
-        method: "DELETE",
-        cache: "no-store",
-      });
+      // Optimistic update - remove from UI INSTANTLY
+      await mutate(
+        '/api/admin/posts',
+        async () => {
+          // Delete from server
+          const response = await fetch(`/api/admin/posts/${id}`, {
+            method: "DELETE",
+            credentials: "include",
+          });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        alert(`שגיאה במחיקת הכתבה: ${errorData.error || 'שגיאה לא ידועה'}`);
-        // Revalidate to restore from server
-        mutate('/api/admin/posts');
-      } else {
-        // Revalidate to confirm deletion
-        mutate('/api/admin/posts');
-      }
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to delete post');
+          }
+
+          // Return updated data
+          return {
+            posts: posts.filter((post: Post) => post.id !== id)
+          };
+        },
+        {
+          optimisticData: {
+            posts: posts.filter((post: Post) => post.id !== id)
+          },
+          rollbackOnError: true,
+          populateCache: true,
+          revalidate: true,
+        }
+      );
     } catch (error) {
       console.error("Failed to delete post:", error);
-      alert("שגיאה במחיקת הכתבה");
-      // Revalidate to restore from server
-      mutate('/api/admin/posts');
+      alert(`שגיאה במחיקת הכתבה: ${error instanceof Error ? error.message : 'שגיאה לא ידועה'}`);
     }
   }
 
