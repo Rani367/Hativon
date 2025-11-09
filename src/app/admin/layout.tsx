@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Home, FileText, LogOut, Menu } from "lucide-react";
+import { Home, FileText, LogOut, Menu, Users } from "lucide-react";
 import { AdminPasswordGate } from "@/components/admin-password-gate";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -100,6 +100,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const navItems = [
     { href: "/admin/dashboard", label: "לוח בקרה", icon: Home },
     { href: "/admin/posts", label: "כל הכתבות", icon: FileText },
+    { href: "/admin/users", label: "משתמשים", icon: Users },
   ];
 
   return (
