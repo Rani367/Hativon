@@ -100,31 +100,6 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
 
     setSaving(true);
 
-    // Create optimistic updated post for instant display
-    const optimisticPost = {
-      id: id,
-      title: form.title,
-      slug: form.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''),
-      content: form.content,
-      coverImage: form.coverImage,
-      description: form.content.substring(0, 160),
-      date: post?.date || new Date().toISOString(),
-      author: post?.author || '',
-      authorId: post?.authorId || '',
-      tags: post?.tags || [],
-      category: post?.category || '',
-      status: status,
-      createdAt: post?.createdAt || new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-
-    // Store in localStorage for instant display
-    localStorage.setItem('optimisticPost', JSON.stringify(optimisticPost));
-
-    // Navigate immediately - changes will appear instantly
-    router.push("/dashboard");
-
-    // Update post in background
     try {
       const response = await fetch(`/api/admin/posts/${id}`, {
         method: "PATCH",
@@ -139,11 +114,17 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
         }),
       });
 
-      if (!response.ok) {
-        console.error("עדכון הפוסט נכשל");
+      if (response.ok) {
+        // Navigate - SWR will auto-refresh
+        router.push("/dashboard");
+      } else {
+        alert("עדכון הפוסט נכשל");
       }
     } catch (error) {
       console.error("Failed to update post:", error);
+      alert("עדכון הפוסט נכשל");
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -152,20 +133,20 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
       return;
     }
 
-    // Navigate immediately for instant feedback
-    router.push("/dashboard");
-
-    // Delete post in background
     try {
       const response = await fetch(`/api/admin/posts/${id}`, {
         method: "DELETE",
       });
 
-      if (!response.ok) {
-        console.error("מחיקת הפוסט נכשלה");
+      if (response.ok) {
+        // Navigate - SWR will auto-refresh
+        router.push("/dashboard");
+      } else {
+        alert("מחיקת הפוסט נכשלה");
       }
     } catch (error) {
       console.error("Failed to delete post:", error);
+      alert("מחיקת הפוסט נכשלה");
     }
   };
 
