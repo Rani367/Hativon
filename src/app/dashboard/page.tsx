@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -10,27 +11,33 @@ import { PlusCircle, Search, Edit, Trash2, FileText } from "lucide-react";
 import { Post } from "@/types/post.types";
 import { format } from "date-fns";
 import { he } from "date-fns/locale";
-import useSWR, { mutate } from 'swr';
 import { toast } from "sonner";
 
-const fetcher = (url: string) => fetch(url, { cache: 'no-store' }).then(res => res.json());
-
 export default function DashboardPage() {
+  const router = useRouter();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "published" | "draft">("all");
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Use SWR for data fetching with automatic revalidation
-  const { data, error, isLoading } = useSWR('/api/admin/posts', fetcher, {
-    refreshInterval: 1000, // Auto-refresh every 1 second for instant updates
-    revalidateOnFocus: true,
-    revalidateOnReconnect: true,
-    dedupingInterval: 2000, // Prevent fetching multiple times within 2 seconds (allows optimistic updates to complete)
-    revalidateIfStale: false, // Don't revalidate stale data automatically
-    revalidateOnMount: false, // Don't fetch on mount - use cached data from optimistic updates
-    fallbackData: { posts: [] }, // Fallback to empty if no cache
-  });
+  // Fetch posts on mount
+  useEffect(() => {
+    fetchPosts();
+  }, []);
 
-  const posts = data?.posts || [];
+  async function fetchPosts() {
+    try {
+      setIsLoading(true);
+      const response = await fetch('/api/admin/posts', { cache: 'no-store' });
+      const data = await response.json();
+      setPosts(data.posts || []);
+    } catch (error) {
+      console.error("Failed to fetch posts:", error);
+      toast.error("שגיאה בטעינת פוסטים");
+    } finally {
+      setIsLoading(false);
+    }
+  }
 
   const filteredPosts = useMemo(() => {
     let filtered = posts;
@@ -54,43 +61,25 @@ export default function DashboardPage() {
   async function handleDelete(id: string) {
     if (!confirm("האם אתה בטוח שברצונך למחוק את הכתבה הזו?")) return;
 
-    // Show loading toast
     const loadingToast = toast.loading("מוחק פוסט...");
 
     try {
-      // Optimistic update - remove from UI INSTANTLY and wait for completion
-      await mutate(
-        '/api/admin/posts',
-        async () => {
-          // Delete from server
-          const response = await fetch(`/api/admin/posts/${id}`, {
-            method: "DELETE",
-            credentials: "include",
-          });
+      const response = await fetch(`/api/admin/posts/${id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
 
-          if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || 'Failed to delete post');
-          }
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete post');
+      }
 
-          // Return updated data
-          return {
-            posts: posts.filter((post: Post) => post.id !== id)
-          };
-        },
-        {
-          optimisticData: {
-            posts: posts.filter((post: Post) => post.id !== id)
-          },
-          rollbackOnError: true,
-          populateCache: true,
-          revalidate: false, // Don't revalidate - we just got fresh data from server
-        }
-      );
-
-      // Dismiss loading toast and show success
       toast.dismiss(loadingToast);
       toast.success("הפוסט נמחק בהצלחה!");
+
+      // Refresh to get fresh data from server
+      router.refresh();
+      await fetchPosts();
     } catch (error) {
       console.error("Failed to delete post:", error);
       toast.dismiss(loadingToast);

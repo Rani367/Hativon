@@ -8,7 +8,6 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Save, Eye, Upload, X, Loader2 } from "lucide-react";
-import { mutate } from "swr";
 import { toast } from "sonner";
 
 export default function NewPostPage() {
@@ -71,81 +70,35 @@ export default function NewPostPage() {
 
     setLoading(true);
 
-    // Show loading toast
     const loadingToast = toast.loading(
       status === "published" ? "מפרסם פוסט..." : "שומר טיוטה..."
     );
 
-    // Create optimistic post data
-    const now = new Date().toISOString();
-    const optimisticPost = {
-      id: `temp-${Date.now()}`,
-      title: form.title,
-      slug: form.title.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
-      content: form.content,
-      coverImage: form.coverImage,
-      description: form.content.substring(0, 160) + '...',
-      date: now,
-      author: 'You',
-      authorId: 'current-user',
-      tags: [],
-      category: undefined,
-      status,
-      createdAt: now,
-      updatedAt: now,
-    };
-
     try {
-      // Start the mutation (this updates cache immediately with optimistic data)
-      const mutatePromise = mutate(
-        '/api/admin/posts',
-        async (currentData: any) => {
-          // Create the post on server
-          const response = await fetch("/api/admin/posts", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              title: form.title,
-              content: form.content,
-              coverImage: form.coverImage,
-              status,
-            }),
-          });
-
-          if (!response.ok) {
-            throw new Error("Failed to create post");
-          }
-
-          const newPost = await response.json();
-
-          // Return updated data with real post from server
-          return {
-            posts: [newPost, ...(currentData?.posts || [])]
-          };
+      const response = await fetch("/api/admin/posts", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
-        {
-          optimisticData: (currentData: any) => ({
-            posts: [optimisticPost, ...(currentData?.posts || [])]
-          }),
-          rollbackOnError: true,
-          populateCache: true,
-          revalidate: false, // Don't revalidate immediately, server call will update
-        }
-      );
+        body: JSON.stringify({
+          title: form.title,
+          content: form.content,
+          coverImage: form.coverImage,
+          status,
+        }),
+      });
 
-      // IMPORTANT: Wait for mutation to complete BEFORE navigating
-      // This ensures the real post is in cache before dashboard mounts
-      await mutatePromise;
+      if (!response.ok) {
+        throw new Error("Failed to create post");
+      }
 
-      // Dismiss loading toast and show success
       toast.dismiss(loadingToast);
       toast.success(
         status === "published" ? "הפוסט פורסם בהצלחה!" : "הטיוטה נשמרה בהצלחה!"
       );
 
-      // Navigate after mutation completes
+      // Refresh to invalidate cache and navigate
+      router.refresh();
       router.push("/dashboard");
     } catch (error) {
       console.error("Failed to create post:", error);
