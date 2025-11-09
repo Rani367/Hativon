@@ -3,9 +3,8 @@ import { EmptyPostsState } from "@/components/empty-posts-state";
 import Image from "next/image";
 import PaginatedPosts from "@/components/paginated-posts";
 
-// Enable ISR: Revalidate every 5 minutes (300 seconds)
-// This makes the homepage statically generated with periodic updates
-export const revalidate = 300;
+// Force dynamic rendering for immediate updates
+export const dynamic = 'force-dynamic';
 
 export default async function Home() {
   const posts = await getPosts();
