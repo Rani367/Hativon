@@ -11,6 +11,7 @@ import { Post } from "@/types/post.types";
 import { format } from "date-fns";
 import { he } from "date-fns/locale";
 import useSWR, { mutate } from 'swr';
+import { toast } from "sonner";
 
 const fetcher = (url: string) => fetch(url, { cache: 'no-store' }).then(res => res.json());
 
@@ -53,6 +54,9 @@ export default function DashboardPage() {
   async function handleDelete(id: string) {
     if (!confirm("האם אתה בטוח שברצונך למחוק את הכתבה הזו?")) return;
 
+    // Show loading toast
+    const loadingToast = toast.loading("מוחק פוסט...");
+
     try {
       // Optimistic update - remove from UI INSTANTLY and wait for completion
       await mutate(
@@ -83,9 +87,14 @@ export default function DashboardPage() {
           revalidate: false, // Don't revalidate - we just got fresh data from server
         }
       );
+
+      // Dismiss loading toast and show success
+      toast.dismiss(loadingToast);
+      toast.success("הפוסט נמחק בהצלחה!");
     } catch (error) {
       console.error("Failed to delete post:", error);
-      alert(`שגיאה במחיקת הכתבה: ${error instanceof Error ? error.message : 'שגיאה לא ידועה'}`);
+      toast.dismiss(loadingToast);
+      toast.error(`שגיאה במחיקת הכתבה: ${error instanceof Error ? error.message : 'שגיאה לא ידועה'}`);
     }
   }
 
