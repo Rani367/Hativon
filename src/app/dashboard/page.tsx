@@ -22,27 +22,51 @@ export default function DashboardPage() {
   useEffect(() => {
     fetchPosts();
 
-    // Check if we just created/updated a post
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('syncing') === 'true') {
-      // Show syncing indicator briefly
-      setSyncingPosts(new Set(['pending']));
+    // Check for optimistic post from localStorage
+    const optimisticPost = localStorage.getItem('optimisticPost');
+    if (optimisticPost) {
+      try {
+        const newPost = JSON.parse(optimisticPost);
+        localStorage.removeItem('optimisticPost');
 
-      // Poll for new posts
-      const pollInterval = setInterval(() => {
-        fetchPosts();
-      }, 1000);
+        // Check if this is an update (post ID exists) or new post
+        setPosts(prev => {
+          const existingIndex = prev.findIndex(p => p.id === newPost.id);
+          if (existingIndex >= 0) {
+            // Update existing post
+            const updated = [...prev];
+            updated[existingIndex] = newPost;
+            return updated;
+          } else {
+            // Add new post
+            return [newPost, ...prev];
+          }
+        });
 
-      // Stop polling after 5 seconds
-      setTimeout(() => {
-        clearInterval(pollInterval);
-        setSyncingPosts(new Set());
+        setSyncingPosts(new Set([newPost.id]));
 
-        // Clean up URL
-        window.history.replaceState({}, '', '/dashboard');
-      }, 5000);
+        // Poll for server sync
+        const pollInterval = setInterval(async () => {
+          const response = await fetch("/api/admin/posts", { cache: "no-store" });
+          const data = await response.json();
+          const serverPost = data.posts.find((p: any) =>
+            p.id === newPost.id || p.title === newPost.title
+          );
+          if (serverPost) {
+            setPosts(data.posts);
+            setSyncingPosts(new Set());
+            clearInterval(pollInterval);
+          }
+        }, 500);
 
-      return () => clearInterval(pollInterval);
+        // Stop after 10 seconds max
+        setTimeout(() => {
+          clearInterval(pollInterval);
+          setSyncingPosts(new Set());
+        }, 10000);
+      } catch (e) {
+        console.error('Failed to parse optimistic post:', e);
+      }
     }
   }, []);
 
@@ -83,17 +107,13 @@ export default function DashboardPage() {
   async function handleDelete(id: string) {
     if (!confirm("האם אתה בטוח שברצונך למחוק את הכתבה הזו?")) return;
 
-    // Mark as syncing
-    setSyncingPosts(prev => new Set(prev).add(id));
-
-    // Optimistic update - remove from UI after a brief moment
-    setTimeout(() => {
-      setPosts(posts.filter(post => post.id !== id));
-      setFilteredPosts(filteredPosts.filter(post => post.id !== id));
-    }, 300);
+    // Optimistic update - remove from UI INSTANTLY
+    const originalPosts = posts;
+    const originalFilteredPosts = filteredPosts;
+    setPosts(posts.filter(post => post.id !== id));
+    setFilteredPosts(filteredPosts.filter(post => post.id !== id));
 
     // Delete from server in background
-    const originalPosts = posts;
     try {
       const response = await fetch(`/api/admin/posts/${id}`, {
         method: "DELETE",
@@ -103,29 +123,14 @@ export default function DashboardPage() {
       if (!response.ok) {
         // Restore posts if delete failed
         setPosts(originalPosts);
-        setSyncingPosts(prev => {
-          const newSet = new Set(prev);
-          newSet.delete(id);
-          return newSet;
-        });
+        setFilteredPosts(originalFilteredPosts);
         const errorData = await response.json();
         alert(`שגיאה במחיקת הכתבה: ${errorData.error || 'שגיאה לא ידועה'}`);
-      } else {
-        // Remove from syncing set
-        setSyncingPosts(prev => {
-          const newSet = new Set(prev);
-          newSet.delete(id);
-          return newSet;
-        });
       }
     } catch (error) {
       // Restore posts if request failed
       setPosts(originalPosts);
-      setSyncingPosts(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(id);
-        return newSet;
-      });
+      setFilteredPosts(originalFilteredPosts);
       console.error("Failed to delete post:", error);
       alert("שגיאה במחיקת הכתבה");
     }
