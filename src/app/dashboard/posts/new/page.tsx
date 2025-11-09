@@ -129,14 +129,12 @@ export default function NewPostPage() {
         }
       );
 
-      // Navigate immediately (optimistic data is already in cache)
-      router.push("/dashboard");
+      // IMPORTANT: Wait for mutation to complete BEFORE navigating
+      // This ensures the real post is in cache before dashboard mounts
+      await mutatePromise;
 
-      // Let the mutation complete in the background
-      mutatePromise.catch((error) => {
-        console.error("Failed to create post:", error);
-        alert("יצירת הפוסט נכשלה");
-      });
+      // Navigate after mutation completes
+      router.push("/dashboard");
     } catch (error) {
       console.error("Failed to create post:", error);
       alert("יצירת הפוסט נכשלה");
