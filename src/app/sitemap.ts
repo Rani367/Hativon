@@ -2,6 +2,9 @@ import { getPosts } from "@/lib/posts";
 import { Post } from "@/types/post.types";
 import { MetadataRoute } from "next";
 
+// Force dynamic rendering for immediate updates
+export const dynamic = 'force-dynamic';
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://your-site.com";
 
