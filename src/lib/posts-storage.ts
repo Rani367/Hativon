@@ -78,8 +78,11 @@ async function readPosts(): Promise<Post[]> {
         // Use head() to check if blob exists and get metadata
         const metadata = await head(BLOB_FILENAME);
 
-        // Fetch the blob content using the URL from metadata
-        const response = await fetch(metadata.url);
+        // Fetch the blob content using the URL from metadata with cache-busting
+        const cacheBustingUrl = `${metadata.url}?t=${Date.now()}`;
+        const response = await fetch(cacheBustingUrl, {
+          cache: 'no-store', // Disable Next.js fetch caching
+        });
         if (!response.ok) {
           throw new Error(`Failed to fetch blob: ${response.statusText}`);
         }
@@ -133,6 +136,7 @@ async function writePosts(posts: Post[]): Promise<void> {
         contentType: 'application/json',
         addRandomSuffix: false,
         allowOverwrite: true, // Allow overwriting existing posts.json file
+        cacheControlMaxAge: 0, // Disable edge caching for immediate updates
       });
       console.log('Successfully wrote posts to Vercel Blob:', result.url);
     } else {
