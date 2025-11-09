@@ -30,7 +30,6 @@ export async function getCurrentUser(): Promise<User | null> {
         id: 'legacy-admin',
         username: 'admin',
         displayName: 'Admin',
-        role: 'admin',
         email: undefined,
         grade: 'ז',
         classNumber: 1,
@@ -71,57 +70,9 @@ export async function requireAuth(): Promise<User> {
 }
 
 /**
- * Require admin role for route
- * Throws error if not authenticated or not admin
- */
-export async function requireAdmin(): Promise<User> {
-  const user = await requireAuth();
-
-  if (user.role !== 'admin') {
-    throw new Error('Admin access required');
-  }
-
-  return user;
-}
-
-/**
  * Check if user is authenticated
  */
 export async function isAuthenticated(): Promise<boolean> {
   const user = await getCurrentUser();
   return user !== null;
-}
-
-/**
- * Check if user is admin
- */
-export async function isAdmin(): Promise<boolean> {
-  const user = await getCurrentUser();
-  return user?.role === 'admin';
-}
-
-/**
- * Legacy admin authentication check (for backward compatibility)
- * Checks both old admin password cookie and new JWT system
- */
-export async function isLegacyAdminAuthenticated(): Promise<boolean> {
-  try {
-    const cookieStore = await cookies();
-
-    // Check new JWT system
-    const user = await getCurrentUser();
-    if (user?.role === 'admin') {
-      return true;
-    }
-
-    // Check old admin password system (for backward compatibility during migration)
-    const legacyAuthToken = cookieStore.get('authToken');
-    if (legacyAuthToken?.value === 'authenticated') {
-      return true;
-    }
-
-    return false;
-  } catch (error) {
-    return false;
-  }
 }

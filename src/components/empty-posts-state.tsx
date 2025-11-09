@@ -18,8 +18,7 @@ export function EmptyPostsState() {
       setAuthDialogOpen(true);
     } else {
       // User is logged in, redirect to new post page
-      const newPostUrl = user.role === 'admin' ? '/admin/posts/new' : '/dashboard/posts/new';
-      router.push(newPostUrl);
+      router.push('/dashboard/posts/new');
     }
   };
 

@@ -1,10 +1,11 @@
 #!/usr/bin/env ts-node
 
 /**
- * Create Admin User Script
+ * Create User Script
  *
- * This script creates an admin user account.
+ * This script creates a user account.
  * Run this after initializing the database.
+ * All users can access the admin panel by providing the admin password.
  *
  * Usage:
  *   npm run create-admin
@@ -21,7 +22,7 @@ import { resolve } from 'path';
 // Load .env.local file
 config({ path: resolve(__dirname, '../.env.local') });
 
-import { createAdminUser, getUserByUsername } from '../src/lib/users';
+import { createUser, getUserByUsername } from '../src/lib/users';
 import * as readline from 'readline';
 
 const rl = readline.createInterface({
@@ -36,7 +37,7 @@ function question(query: string): Promise<string> {
 }
 
 async function main() {
-  console.log('👤 Admin User Creation\n');
+  console.log('👤 User Creation\n');
 
   try {
     // Get user input
@@ -84,10 +85,10 @@ async function main() {
       }
     } while (password !== confirmPassword || password.length < 8);
 
-    // Create admin user
-    console.log('\n🔄 Creating admin user...');
+    // Create user
+    console.log('\n🔄 Creating user...');
 
-    const user = await createAdminUser({
+    const user = await createUser({
       username,
       password,
       displayName,
@@ -95,22 +96,21 @@ async function main() {
       classNumber,
     });
 
-    console.log('\n✅ Admin user created successfully!');
+    console.log('\n✅ User created successfully!');
     console.log('\n📋 User Details:');
     console.log(`   Username: ${user.username}`);
     console.log(`   Display Name: ${user.displayName}`);
     console.log(`   Grade: ${user.grade}`);
     console.log(`   Class Number: ${user.classNumber}`);
     console.log(`   Email: ${user.email || 'Not provided'}`);
-    console.log(`   Role: ${user.role}`);
     console.log(`   Created: ${new Date(user.createdAt).toLocaleString()}`);
 
-    console.log('\n🎉 You can now log in to the admin panel at /admin\n');
+    console.log('\n🎉 You can now log in at the homepage or access /admin with the admin password\n');
 
     rl.close();
     process.exit(0);
   } catch (error: any) {
-    console.error('\n❌ Failed to create admin user:');
+    console.error('\n❌ Failed to create user:');
     console.error(error.message || error);
 
     console.log('\n💡 Troubleshooting:');

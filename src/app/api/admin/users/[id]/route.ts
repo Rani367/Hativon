@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getUserById, updateUser, deleteUser } from '@/lib/users';
-import { requireAdmin } from '@/lib/auth/middleware';
+import { requireAdminAuth } from '@/lib/auth/admin';
 import { UserUpdate } from '@/types/user.types';
 
 /**
@@ -11,7 +11,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await requireAdmin();
+    await requireAdminAuth();
 
     const { id } = await params;
     const user = await getUserById(id);
@@ -22,7 +22,7 @@ export async function GET(
 
     return NextResponse.json({ user });
   } catch (error: any) {
-    if (error.message === 'Authentication required' || error.message === 'Admin access required') {
+    if (error.message === 'Admin authentication required') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -42,7 +42,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await requireAdmin();
+    await requireAdminAuth();
 
     const { id } = await params;
     const body: UserUpdate = await request.json();
@@ -51,7 +51,7 @@ export async function PATCH(
 
     return NextResponse.json({ user: updatedUser });
   } catch (error: any) {
-    if (error.message === 'Authentication required' || error.message === 'Admin access required') {
+    if (error.message === 'Admin authentication required') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -75,7 +75,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await requireAdmin();
+    await requireAdminAuth();
 
     const { id } = await params;
 
@@ -85,19 +85,11 @@ export async function DELETE(
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    // Prevent deleting admin users (optional safety check)
-    if (user.role === 'admin') {
-      return NextResponse.json(
-        { error: 'Cannot delete admin users' },
-        { status: 403 }
-      );
-    }
-
     await deleteUser(id);
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
-    if (error.message === 'Authentication required' || error.message === 'Admin access required') {
+    if (error.message === 'Admin authentication required') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 

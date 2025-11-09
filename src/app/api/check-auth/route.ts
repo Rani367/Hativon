@@ -1,31 +1,30 @@
 import { NextResponse } from 'next/server';
-import { getCurrentUser, isLegacyAdminAuthenticated } from '@/lib/auth/middleware';
+import { getCurrentUser } from '@/lib/auth/middleware';
+import { isAdminAuthenticated } from '@/lib/auth/admin';
 
 /**
  * Check authentication status
- * Supports both new JWT system and legacy admin authentication
  */
 export async function GET() {
   try {
-    // Try new JWT system first
     const user = await getCurrentUser();
+    const adminAuth = await isAdminAuthenticated();
 
     if (user) {
       return NextResponse.json({
         authenticated: true,
         user,
+        isAdmin: adminAuth,
       });
     }
 
-    // Fall back to legacy admin authentication
-    const legacyAuth = await isLegacyAdminAuthenticated();
-
+    // Even without user login, check if admin password was entered
     return NextResponse.json({
-      authenticated: legacyAuth,
-      legacy: legacyAuth,
+      authenticated: false,
+      isAdmin: adminAuth,
     });
   } catch (error) {
     console.error('Check auth error:', error);
-    return NextResponse.json({ authenticated: false });
+    return NextResponse.json({ authenticated: false, isAdmin: false });
   }
 }

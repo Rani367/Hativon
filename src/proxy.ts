@@ -1,6 +1,22 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { verifyToken } from '@/lib/auth/jwt';
+import { jwtVerify } from 'jose';
+
+const JWT_SECRET = new TextEncoder().encode(
+  process.env.JWT_SECRET || 'your-secret-key-change-this-in-production'
+);
+
+/**
+ * Verify JWT token using jose (Edge Runtime compatible)
+ */
+async function verifyToken(token: string) {
+  try {
+    const { payload } = await jwtVerify(token, JWT_SECRET);
+    return payload;
+  } catch (error) {
+    return null;
+  }
+}
 
 /**
  * Authentication Proxy
@@ -11,53 +27,13 @@ import { verifyToken } from '@/lib/auth/jwt';
  * - Reduced server load
  * - Better security through early validation
  */
-export async function proxy(request: NextRequest) {
+export default async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Get JWT token from cookies
-  const token = request.cookies.get('token')?.value;
+  const token = request.cookies.get('authToken')?.value;
 
-  // Also check legacy admin cookie for backward compatibility
-  const legacyAuth = request.cookies.get('admin_authenticated')?.value;
-
-  // Protect admin routes (requires admin role)
-  if (pathname.startsWith('/admin')) {
-    // Allow access to login page
-    if (pathname === '/admin' || pathname === '/admin/') {
-      return NextResponse.next();
-    }
-
-    // Check legacy authentication first
-    if (legacyAuth === 'true') {
-      return NextResponse.next();
-    }
-
-    // Check JWT authentication
-    if (!token) {
-      return NextResponse.redirect(new URL('/admin', request.url));
-    }
-
-    try {
-      const user = await verifyToken(token);
-
-      if (!user || user.role !== 'admin') {
-        // Clear invalid token
-        const response = NextResponse.redirect(new URL('/admin', request.url));
-        response.cookies.delete('token');
-        return response;
-      }
-
-      // User is authenticated as admin
-      return NextResponse.next();
-    } catch (error) {
-      // Token verification failed
-      const response = NextResponse.redirect(new URL('/admin', request.url));
-      response.cookies.delete('token');
-      return response;
-    }
-  }
-
-  // Protect dashboard routes (requires any authenticated user)
+  // Protect dashboard routes (requires authenticated user)
   if (pathname.startsWith('/dashboard')) {
     if (!token) {
       return NextResponse.redirect(new URL('/', request.url));
@@ -68,7 +44,7 @@ export async function proxy(request: NextRequest) {
 
       if (!user) {
         const response = NextResponse.redirect(new URL('/', request.url));
-        response.cookies.delete('token');
+        response.cookies.delete('authToken');
         return response;
       }
 
@@ -77,7 +53,7 @@ export async function proxy(request: NextRequest) {
     } catch (error) {
       // Token verification failed
       const response = NextResponse.redirect(new URL('/', request.url));
-      response.cookies.delete('token');
+      response.cookies.delete('authToken');
       return response;
     }
   }
@@ -88,11 +64,8 @@ export async function proxy(request: NextRequest) {
 // Configure which routes to run proxy on
 export const config = {
   matcher: [
-    // Admin routes (except login page)
-    '/admin/dashboard/:path*',
-    '/admin/posts/:path*',
-    '/admin/users/:path*',
-    // Dashboard routes
+    // Dashboard routes (require user authentication)
+    '/dashboard',
     '/dashboard/:path*',
   ],
 };

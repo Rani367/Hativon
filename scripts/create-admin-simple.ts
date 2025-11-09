@@ -6,10 +6,10 @@ import { resolve } from 'path';
 // Load .env.local file
 config({ path: resolve(__dirname, '../.env.local') });
 
-import { createAdminUser, getUserByUsername } from '../src/lib/users';
+import { createUser, getUserByUsername } from '../src/lib/users';
 
 async function main() {
-  console.log('👤 Creating default admin user...\n');
+  console.log('👤 Creating default user...\n');
 
   const username = 'admin';
   const displayName = 'מנהל';
@@ -21,13 +21,13 @@ async function main() {
     // Check if user already exists
     const existingUser = await getUserByUsername(username);
     if (existingUser) {
-      console.log(`✅ Admin user "${username}" already exists.`);
+      console.log(`✅ User "${username}" already exists.`);
       console.log('   You can log in with these credentials.\n');
       process.exit(0);
     }
 
-    // Create admin user
-    const user = await createAdminUser({
+    // Create user
+    const user = await createUser({
       username,
       password,
       displayName,
@@ -35,17 +35,16 @@ async function main() {
       classNumber,
     });
 
-    console.log('✅ Admin user created successfully!\n');
+    console.log('✅ User created successfully!\n');
     console.log('📋 Login Credentials:');
     console.log(`   Username: ${username}`);
     console.log(`   Password: ${password}`);
-    console.log(`   Display Name: ${user.displayName}`);
-    console.log(`   Role: ${user.role}\n`);
-    console.log('🎉 You can now log in at /admin\n');
+    console.log(`   Display Name: ${user.displayName}\n`);
+    console.log('🎉 You can now log in at the homepage\n');
 
     process.exit(0);
   } catch (error: any) {
-    console.error('\n❌ Failed to create admin user:');
+    console.error('\n❌ Failed to create user:');
     console.error(error.message || error);
     process.exit(1);
   }

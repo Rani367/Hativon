@@ -16,7 +16,6 @@ export function generateToken(user: User): string {
   const payload: JWTPayload = {
     userId: user.id,
     username: user.username,
-    role: user.role,
   };
 
   return jwt.sign(payload, JWT_SECRET, {
