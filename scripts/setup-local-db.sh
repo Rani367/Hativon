@@ -45,9 +45,9 @@ echo "📝 Next steps:"
 echo "   1. The following has been added to your .env.local:"
 echo "      POSTGRES_URL=postgresql://handesaim:handesaim123@localhost:5432/handesaim_blog"
 echo ""
-echo "   2. Run: npm run db:init"
-echo "   3. Run: npm run create-admin"
-echo "   4. Run: npm run dev"
+echo "   2. Run: pnpm run db:init"
+echo "   3. Run: pnpm run create-admin"
+echo "   4. Run: pnpm run dev"
 echo ""
 
 # Add database URL to .env.local if not already there
@@ -61,4 +61,4 @@ else
 fi
 
 echo ""
-echo "🎉 Setup complete! You can now run: npm run db:init"
+echo "🎉 Setup complete! You can now run: pnpm run db:init"

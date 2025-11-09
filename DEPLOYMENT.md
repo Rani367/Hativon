@@ -7,17 +7,29 @@ This guide covers the pre-deployment checks and validation system for the blog a
 Before deploying to Vercel, run:
 
 ```bash
-npm run pre-deploy
+pnpm run pre-deploy
 ```
 
 This will validate your environment and build the application.
+
+## Local Setup First
+
+If this is your first time setting up the project:
+
+```bash
+pnpm install        # Automatic setup (creates .env.local, data/ directory)
+pnpm run setup      # Optional: interactive database configuration
+pnpm run dev        # Start development server
+```
+
+See [SETUP.md](SETUP.md) for detailed setup instructions.
 
 ## Two Simple Commands
 
 ### For Development (No Checks)
 
 ```bash
-npm run dev
+pnpm run dev
 ```
 
 Starts the development server immediately without any validation checks. Use this for fast iteration during development.
@@ -25,7 +37,7 @@ Starts the development server immediately without any validation checks. Use thi
 ### For Deployment (Full Validation)
 
 ```bash
-npm run pre-deploy
+pnpm run pre-deploy
 ```
 
 Runs **all** validation checks and builds the application:
@@ -50,7 +62,7 @@ Runs **all** validation checks and builds the application:
 **Build:**
 - Next.js production build
 
-If `npm run pre-deploy` succeeds locally, your deployment to Vercel will succeed!
+If `pnpm run pre-deploy` succeeds locally, your deployment to Vercel will succeed!
 
 ## Setting Up Environment Variables
 
@@ -81,7 +93,7 @@ NEXT_PUBLIC_SITE_URL=http://localhost:3000
 ### Step 4: Test Everything
 
 ```bash
-npm run pre-deploy
+pnpm run pre-deploy
 ```
 
 This will validate everything and build. Fix any errors before proceeding.
@@ -136,7 +148,7 @@ This will validate everything and build. Fix any errors before proceeding.
 
    ```bash
    # Using Vercel CLI (recommended)
-   npm run db:init
+   pnpm run db:init
    ```
 
    Or manually run the SQL from [src/lib/db/schema.sql](src/lib/db/schema.sql)
@@ -144,7 +156,7 @@ This will validate everything and build. Fix any errors before proceeding.
 8. **Create Admin User**
 
    ```bash
-   npm run create-admin
+   pnpm run create-admin
    ```
 
    Or login with `ADMIN_PASSWORD` at `/admin` (auto-creates admin user)
@@ -160,7 +172,7 @@ This will validate everything and build. Fix any errors before proceeding.
 When you deploy to Vercel, the `vercel.json` configuration runs:
 
 ```bash
-npm run validate && npm run build
+pnpm run validate && pnpm run build
 ```
 
 This ensures:
@@ -231,11 +243,11 @@ Copy the output to your `JWT_SECRET` environment variable.
 
 ### "TypeScript errors detected"
 
-**Solution:** The `npm run pre-deploy` command will show you the exact TypeScript errors. Fix them and run again.
+**Solution:** The `pnpm run pre-deploy` command will show you the exact TypeScript errors. Fix them and run again.
 
 ### "ESLint warnings"
 
-**Solution:** ESLint issues are warnings only and won't block deployment. Fix them if desired by running `npm run lint`.
+**Solution:** ESLint issues are warnings only and won't block deployment. Fix them if desired by running `pnpm run lint`.
 
 ### "Database not configured"
 
@@ -260,7 +272,7 @@ Copy the output to your `JWT_SECRET` environment variable.
 
 1. **Always validate before pushing:**
    ```bash
-   npm run validate
+   pnpm run validate
    ```
 
 2. **Use strong secrets:**
@@ -270,13 +282,13 @@ Copy the output to your `JWT_SECRET` environment variable.
 
 3. **Test locally first:**
    ```bash
-   npm run pre-deploy
+   pnpm run pre-deploy
    ```
    If this passes, deployment should succeed.
 
 4. **Check database after deploy:**
    ```bash
-   npm run check:db
+   pnpm run check:db
    ```
 
 5. **Keep .env.local updated:**

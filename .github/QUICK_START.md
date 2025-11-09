@@ -1,11 +1,29 @@
 # Quick Start
 
+## Prerequisites
+
+Install pnpm first:
+
+```bash
+npm install -g pnpm
+```
+
+Or using Homebrew (macOS):
+```bash
+brew install pnpm
+```
+
+Or enable corepack (Node.js 16.13+):
+```bash
+corepack enable
+```
+
 ## Two Simple Commands
 
 ### Development (No Validation)
 
 ```bash
-npm run dev
+pnpm run dev
 ```
 
 Starts the development server immediately. No checks, fast startup.
@@ -13,7 +31,7 @@ Starts the development server immediately. No checks, fast startup.
 ### Pre-Deployment (Full Validation)
 
 ```bash
-npm run pre-deploy
+pnpm run pre-deploy
 ```
 
 Runs all checks and builds:
@@ -48,12 +66,12 @@ Runs all checks and builds:
 
 4. Test everything:
    ```bash
-   npm run pre-deploy
+   pnpm run pre-deploy
    ```
 
 5. Start developing:
    ```bash
-   npm run dev
+   pnpm run dev
    ```
 
 ---

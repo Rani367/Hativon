@@ -17,79 +17,100 @@ A modern Next.js 16 blog application with self-hosted admin panel, designed for 
 
 ## Quick Start
 
-### 1. Clone and Install
+**TL;DR:** Install pnpm → `pnpm install` → `pnpm run dev` → Open http://localhost:3000
+
+---
+
+### 1. Install pnpm
+
+If you don't have pnpm installed:
+
+```bash
+npm install -g pnpm
+```
+
+Or using Homebrew (macOS):
+```bash
+brew install pnpm
+```
+
+Or enable corepack (Node.js 16.13+):
+```bash
+corepack enable
+```
+
+### 2. Clone and Install (Automated Setup)
 
 ```bash
 git clone <your-repo-url>
-cd school-newpaper
-npm install
+cd school-newspaper
+pnpm install
 ```
 
-### 2. Configure Environment
+**That's it!** `pnpm install` automatically:
+- Creates `data/` directory for local posts storage
+- Generates `.env.local` with secure JWT secret
+- Sets default admin password: `admin123` (⚠️ change this!)
+- Prepares your development environment
+
+### 3. Start Development Server
 
 ```bash
-cp .env.example .env.local
-```
-
-Edit `.env.local` and set:
-
-```bash
-# Generate JWT secret with: openssl rand -base64 32
-JWT_SECRET=your_generated_secret_here
-ADMIN_PASSWORD=your_secure_password
-NEXT_PUBLIC_SITE_URL=http://localhost:3000
-```
-
-### 3. Validate Configuration
-
-```bash
-npm run validate:env
-```
-
-Fix any errors before proceeding.
-
-### 4. Set Up Database (Optional)
-
-For user authentication:
-
-```bash
-npm run db:init
-npm run create-admin
-```
-
-Or skip this to use admin-only mode (no user registration).
-
-### 5. Run Development Server
-
-```bash
-npm run dev
+pnpm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-### 6. Access Admin Panel
+### 4. Access Admin Panel
 
-Visit [http://localhost:3000/admin](http://localhost:3000/admin) and login with your `ADMIN_PASSWORD`.
+Visit [http://localhost:3000/admin](http://localhost:3000/admin) and login with the admin password (`admin123` by default).
+
+---
+
+### Optional: Interactive Setup with Database
+
+For full features with PostgreSQL and multi-user authentication:
+
+```bash
+pnpm run setup
+```
+
+This interactive script will:
+- Prompt for custom admin password
+- Detect and configure PostgreSQL if available
+- Initialize database schema automatically
+- Create optimal development environment
+
+After setup, create your first user:
+```bash
+pnpm run create-admin
+```
 
 ## Available Scripts
 
+### Setup
+```bash
+pnpm run setup       # Interactive setup with database configuration
+pnpm run setup:db    # Legacy Arch Linux PostgreSQL setup
+```
+
 ### Development
 ```bash
-npm run dev          # Start development server (no checks, starts immediately)
-npm run build        # Build for production
-npm run start        # Start production server
-npm run lint         # Run ESLint
+pnpm run dev         # Start development server (no checks, starts immediately)
+pnpm run build       # Build for production
+pnpm run start       # Start production server
+pnpm run lint        # Run ESLint
 ```
 
 ### Deployment
 ```bash
-npm run pre-deploy   # Run ALL validation checks + build (use this before deploying!)
+pnpm run pre-deploy  # Run ALL validation checks + build (use this before deploying!)
 ```
 
 ### Database
 ```bash
-npm run db:init      # Initialize PostgreSQL database
-npm run create-admin # Create admin user account
+pnpm run db:init     # Initialize PostgreSQL database
+pnpm run create-admin # Create admin user account
 ```
 
 ## Technology Stack
@@ -159,8 +180,8 @@ The blog supports two authentication modes:
 
 4. **Deploy & Initialize**
    - Vercel will run validation automatically
-   - After deploy, run `npm run db:init`
-   - Create admin: `npm run create-admin`
+   - After deploy, run `pnpm run db:init`
+   - Create admin: `pnpm run create-admin`
 
 See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed instructions.
 
@@ -169,11 +190,11 @@ See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed instructions.
 The project includes a **streamlined deployment workflow** that validates, builds, and commits your code:
 
 ```bash
-npm run pre-deploy   # Validate, build, and commit
-git push             # Push to GitHub and trigger Vercel deployment
+pnpm run pre-deploy   # Validate, build, and commit
+git push              # Push to GitHub and trigger Vercel deployment
 ```
 
-**What `npm run pre-deploy` does:**
+**What `pnpm run pre-deploy` does:**
 1. Validates environment variables (presence, format, strength)
 2. Validates build configuration (dependencies, files, etc.)
 3. Runs Next.js build (TypeScript compilation, ESLint rules)
@@ -183,7 +204,7 @@ git push             # Push to GitHub and trigger Vercel deployment
 
 **Interactive workflow:**
 ```bash
-$ npm run pre-deploy
+$ pnpm run pre-deploy
 
 # Validation passes...
 # Build succeeds...
@@ -218,7 +239,7 @@ $ git push
 
 ```bash
 # Run full validation + build (shows all issues)
-npm run pre-deploy
+pnpm run pre-deploy
 ```
 
 ### Environment Variable Issues
@@ -228,17 +249,17 @@ npm run pre-deploy
 cat .env.example
 
 # Test configuration
-npm run pre-deploy
+pnpm run pre-deploy
 ```
 
 ### Database Issues
 
 ```bash
 # Reinitialize database
-npm run db:init
+pnpm run db:init
 
 # Create admin user
-npm run create-admin
+pnpm run create-admin
 ```
 
 See [DEPLOYMENT.md](DEPLOYMENT.md) for more troubleshooting tips.
@@ -283,7 +304,7 @@ school-newpaper/
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
 3. Make your changes
-4. Run validation: `npm run validate`
+4. Run validation: `pnpm run pre-deploy`
 5. Commit your changes (`git commit -m 'Add amazing feature'`)
 6. Push to the branch (`git push origin feature/amazing-feature`)
 7. Open a Pull Request
