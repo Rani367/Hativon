@@ -100,6 +100,10 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
 
     setSaving(true);
 
+    // Navigate immediately for instant feedback with syncing indicator
+    router.push("/dashboard?syncing=true");
+
+    // Update post in background
     try {
       const response = await fetch(`/api/admin/posts/${id}`, {
         method: "PATCH",
@@ -114,16 +118,11 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
         }),
       });
 
-      if (response.ok) {
-        router.push("/dashboard");
-      } else {
-        alert("עדכון הפוסט נכשל");
+      if (!response.ok) {
+        console.error("עדכון הפוסט נכשל");
       }
     } catch (error) {
       console.error("Failed to update post:", error);
-      alert("עדכון הפוסט נכשל");
-    } finally {
-      setSaving(false);
     }
   };
 
@@ -132,19 +131,20 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
       return;
     }
 
+    // Navigate immediately for instant feedback
+    router.push("/dashboard");
+
+    // Delete post in background
     try {
       const response = await fetch(`/api/admin/posts/${id}`, {
         method: "DELETE",
       });
 
-      if (response.ok) {
-        router.push("/dashboard");
-      } else {
-        alert("מחיקת הפוסט נכשלה");
+      if (!response.ok) {
+        console.error("מחיקת הפוסט נכשלה");
       }
     } catch (error) {
       console.error("Failed to delete post:", error);
-      alert("מחיקת הפוסט נכשלה");
     }
   };
 
