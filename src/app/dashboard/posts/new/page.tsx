@@ -90,8 +90,8 @@ export default function NewPostPage() {
     };
 
     try {
-      // Update cache FIRST with optimistic data (synchronous)
-      mutate(
+      // Start the mutation (this updates cache immediately with optimistic data)
+      const mutatePromise = mutate(
         '/api/admin/posts',
         async (currentData: any) => {
           // Create the post on server
@@ -120,17 +120,23 @@ export default function NewPostPage() {
           };
         },
         {
-          optimisticData: {
-            posts: [optimisticPost, ...([] as any)]
-          },
+          optimisticData: (currentData: any) => ({
+            posts: [optimisticPost, ...(currentData?.posts || [])]
+          }),
           rollbackOnError: true,
           populateCache: true,
           revalidate: false, // Don't revalidate immediately, server call will update
         }
       );
 
-      // THEN navigate (cache already has optimistic data)
+      // Navigate immediately (optimistic data is already in cache)
       router.push("/dashboard");
+
+      // Let the mutation complete in the background
+      mutatePromise.catch((error) => {
+        console.error("Failed to create post:", error);
+        alert("יצירת הפוסט נכשלה");
+      });
     } catch (error) {
       console.error("Failed to create post:", error);
       alert("יצירת הפוסט נכשלה");
