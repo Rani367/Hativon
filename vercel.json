@@ -1,7 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "npm run pre-deploy",
-  "installCommand": "npm install --include=dev",
+  "buildCommand": "pnpm run pre-deploy",
+  "installCommand": "pnpm install --include=dev",
   "framework": "nextjs",
   "regions": ["iad1"],
   "build": {
