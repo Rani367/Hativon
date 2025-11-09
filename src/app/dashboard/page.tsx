@@ -54,7 +54,7 @@ export default function DashboardPage() {
     if (!confirm("האם אתה בטוח שברצונך למחוק את הכתבה הזו?")) return;
 
     try {
-      // Optimistic update - remove from UI INSTANTLY
+      // Optimistic update - remove from UI INSTANTLY and wait for completion
       await mutate(
         '/api/admin/posts',
         async () => {
@@ -80,7 +80,7 @@ export default function DashboardPage() {
           },
           rollbackOnError: true,
           populateCache: true,
-          revalidate: true,
+          revalidate: false, // Don't revalidate - we just got fresh data from server
         }
       );
     } catch (error) {
