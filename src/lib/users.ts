@@ -15,8 +15,8 @@ export async function createUser(data: UserRegistration): Promise<User> {
 
   try {
     const result = await db.query`
-      INSERT INTO users (username, password_hash, display_name, email, grade, class_number, role)
-      VALUES (${username}, ${passwordHash}, ${displayName}, null, ${grade}, ${classNumber}, 'user')
+      INSERT INTO users (username, password_hash, display_name, email, grade, class_number)
+      VALUES (${username}, ${passwordHash}, ${displayName}, null, ${grade}, ${classNumber})
       RETURNING
         id,
         username,
@@ -24,7 +24,6 @@ export async function createUser(data: UserRegistration): Promise<User> {
         email,
         grade,
         class_number as "classNumber",
-        role,
         created_at as "createdAt",
         updated_at as "updatedAt",
         last_login as "lastLogin"
@@ -56,7 +55,6 @@ export async function getUserById(id: string): Promise<User | null> {
       email,
       grade,
       class_number as "classNumber",
-      role,
       created_at as "createdAt",
       updated_at as "updatedAt",
       last_login as "lastLogin"
@@ -79,7 +77,6 @@ export async function getUserByUsername(username: string): Promise<User | null> 
       email,
       grade,
       class_number as "classNumber",
-      role,
       created_at as "createdAt",
       updated_at as "updatedAt",
       last_login as "lastLogin"
@@ -103,7 +100,6 @@ async function getUserWithPassword(username: string): Promise<(User & { password
       email,
       grade,
       class_number as "classNumber",
-      role,
       created_at as "createdAt",
       updated_at as "updatedAt",
       last_login as "lastLogin"
@@ -158,7 +154,6 @@ export async function getAllUsers(): Promise<User[]> {
       email,
       grade,
       class_number as "classNumber",
-      role,
       created_at as "createdAt",
       updated_at as "updatedAt",
       last_login as "lastLogin"
@@ -173,14 +168,13 @@ export async function getAllUsers(): Promise<User[]> {
  * Update user information
  */
 export async function updateUser(userId: string, updates: UserUpdate): Promise<User> {
-  const { displayName, email, role } = updates;
+  const { displayName, email } = updates;
 
   const result = await db.query`
     UPDATE users
     SET
       display_name = COALESCE(${displayName}, display_name),
-      email = COALESCE(${email}, email),
-      role = COALESCE(${role}, role)
+      email = COALESCE(${email}, email)
     WHERE id = ${userId}
     RETURNING
       id,
@@ -189,7 +183,6 @@ export async function updateUser(userId: string, updates: UserUpdate): Promise<U
       email,
       grade,
       class_number as "classNumber",
-      role,
       created_at as "createdAt",
       updated_at as "updatedAt",
       last_login as "lastLogin"
@@ -219,30 +212,3 @@ export async function usernameExists(username: string): Promise<boolean> {
   return result.rows[0].exists;
 }
 
-/**
- * Create admin user (for initial setup)
- */
-export async function createAdminUser(data: UserRegistration): Promise<User> {
-  const { username, password, displayName, grade, classNumber } = data;
-
-  // Hash password
-  const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
-
-  const result = await db.query`
-    INSERT INTO users (username, password_hash, display_name, email, grade, class_number, role)
-    VALUES (${username}, ${passwordHash}, ${displayName}, null, ${grade}, ${classNumber}, 'admin')
-    RETURNING
-      id,
-      username,
-      display_name as "displayName",
-      email,
-      grade,
-      class_number as "classNumber",
-      role,
-      created_at as "createdAt",
-      updated_at as "updatedAt",
-      last_login as "lastLogin"
-  ` as any;
-
-  return result.rows[0] as User;
-}

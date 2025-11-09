@@ -1,12 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { PlusCircle, Search, Download, Edit, Trash2 } from "lucide-react";
+import { Search, Download, Trash2 } from "lucide-react";
 import { Post } from "@/types/post.types";
 import { format } from "date-fns";
 import { he } from "date-fns/locale";
@@ -45,8 +44,8 @@ export default function PostsListPage() {
     try {
       const response = await fetch("/api/admin/posts");
       const data = await response.json();
-      setPosts(data.posts);
-      setFilteredPosts(data.posts);
+      setPosts(data.posts || []);
+      setFilteredPosts(data.posts || []);
     } catch (error) {
       console.error("Failed to fetch posts:", error);
     } finally {
@@ -158,18 +157,10 @@ export default function PostsListPage() {
             נהל את כתבות העיתון
           </p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={handleExport}>
-            <Download className="h-4 w-4 me-2" />
-            ייצא CSV
-          </Button>
-          <Link href="/admin/posts/new">
-            <Button>
-              <PlusCircle className="h-4 w-4 me-2" />
-              כתבה חדשה
-            </Button>
-          </Link>
-        </div>
+        <Button variant="outline" onClick={handleExport}>
+          <Download className="h-4 w-4 me-2" />
+          ייצא CSV
+        </Button>
       </div>
 
       {/* Filters */}
@@ -235,12 +226,9 @@ export default function PostsListPage() {
                   <tr key={post.id} className="border-b last:border-0 hover:bg-muted/50">
                     <td className="p-4">
                       <div>
-                        <Link
-                          href={`/admin/posts/${post.id}`}
-                          className="font-medium hover:underline"
-                        >
+                        <div className="font-medium">
                           {post.title}
-                        </Link>
+                        </div>
                         <p className="text-sm text-muted-foreground mt-1">
                           {post.slug}
                         </p>
@@ -263,11 +251,6 @@ export default function PostsListPage() {
                     </td>
                     <td className="p-4">
                       <div className="flex justify-end gap-2">
-                        <Link href={`/admin/posts/${post.id}`}>
-                          <Button variant="ghost" size="sm">
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                        </Link>
                         <Button
                           variant="ghost"
                           size="sm"

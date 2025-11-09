@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FileText, PlusCircle, Eye, EyeOff, Calendar, TrendingUp } from "lucide-react";
+import { FileText, Eye, EyeOff, Calendar, TrendingUp } from "lucide-react";
 import { PostStats, Post } from "@/types/post.types";
 import { format } from "date-fns";
 import { he } from "date-fns/locale";
@@ -21,7 +21,7 @@ export default function AdminDashboard() {
         const data = await response.json();
 
         setStats(data.stats);
-        setRecentPosts(data.posts.slice(0, 5)); // Get 5 most recent
+        setRecentPosts(data.posts ? data.posts.slice(0, 5) : []); // Get 5 most recent
       } catch (error) {
         console.error("Failed to fetch data:", error);
       } finally {
@@ -90,19 +90,11 @@ export default function AdminDashboard() {
 
   return (
     <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">לוח בקרה</h1>
-          <p className="text-muted-foreground mt-1">
-            שלום! הנה סקירה כללית של העיתון שלך.
-          </p>
-        </div>
-        <Link href="/admin/posts/new">
-          <Button>
-            <PlusCircle className="h-4 w-4 me-2" />
-            כתבה חדשה
-          </Button>
-        </Link>
+      <div>
+        <h1 className="text-3xl font-bold">לוח בקרה</h1>
+        <p className="text-muted-foreground mt-1">
+          שלום! הנה סקירה כללית של העיתון שלך.
+        </p>
       </div>
 
       {/* Stats Grid */}
@@ -213,12 +205,9 @@ export default function AdminDashboard() {
                   className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0"
                 >
                   <div className="flex-1">
-                    <Link
-                      href={`/admin/posts/${post.id}`}
-                      className="font-medium hover:underline"
-                    >
+                    <div className="font-medium">
                       {post.title}
-                    </Link>
+                    </div>
                     <div className="flex items-center gap-3 mt-1 text-sm text-muted-foreground">
                       <span>{format(new Date(post.createdAt), "d בMMMM yyyy", { locale: he })}</span>
                       <span className={`px-2 py-0.5 rounded-full text-xs ${
@@ -230,11 +219,6 @@ export default function AdminDashboard() {
                       </span>
                     </div>
                   </div>
-                  <Link href={`/admin/posts/${post.id}`}>
-                    <Button variant="ghost" size="sm">
-                      ערוך
-                    </Button>
-                  </Link>
                 </div>
               ))}
             </div>

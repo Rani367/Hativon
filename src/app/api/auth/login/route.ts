@@ -38,7 +38,6 @@ export async function POST(request: NextRequest) {
           id: 'legacy-admin',
           username: 'admin',
           displayName: 'Admin',
-          role: 'admin' as const,
           email: undefined,
           grade: 'ז' as const,
           classNumber: 1,

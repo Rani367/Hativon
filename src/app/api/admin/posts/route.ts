@@ -1,16 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getPosts, createPost, getPostStats, getPostsByAuthor } from '@/lib/posts-storage';
 import { PostInput } from '@/types/post.types';
-import { getCurrentUser, isLegacyAdminAuthenticated } from '@/lib/auth/middleware';
+import { getCurrentUser } from '@/lib/auth/middleware';
+import { isAdminAuthenticated } from '@/lib/auth/admin';
 
 // GET /api/admin/posts - Get all posts (admin) or user's posts (regular user)
 export async function GET(request: NextRequest) {
   try {
-    // Check authentication (new JWT or legacy admin)
+    // Check authentication
     const user = await getCurrentUser();
-    const legacyAdmin = await isLegacyAdminAuthenticated();
+    const isAdmin = await isAdminAuthenticated();
 
-    if (!user && !legacyAdmin) {
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -22,12 +23,10 @@ export async function GET(request: NextRequest) {
     let posts;
 
     // Admin sees all posts, regular user sees only their own
-    if (user?.role === 'admin' || legacyAdmin) {
+    if (isAdmin) {
       posts = await getPosts(false); // Get all posts (including drafts)
-    } else if (user) {
-      posts = await getPostsByAuthor(user.id);
     } else {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      posts = await getPostsByAuthor(user.id);
     }
 
     // Filter by status
@@ -76,9 +75,8 @@ export async function POST(request: NextRequest) {
   try {
     // Check authentication
     const user = await getCurrentUser();
-    const legacyAdmin = await isLegacyAdminAuthenticated();
 
-    if (!user && !legacyAdmin) {
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -92,17 +90,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Add authorId, grade, and class if user is authenticated via JWT
-    if (user) {
-      body.authorId = user.id;
-      // Also set author display name if not provided
-      if (!body.author) {
-        body.author = user.displayName;
-      }
-      // Set author grade and class
-      body.authorGrade = user.grade;
-      body.authorClass = user.classNumber;
+    // Add authorId, grade, and class from authenticated user
+    body.authorId = user.id;
+    // Also set author display name if not provided
+    if (!body.author) {
+      body.author = user.displayName;
     }
+    // Set author grade and class
+    body.authorGrade = user.grade;
+    body.authorClass = user.classNumber;
 
     const newPost = await createPost(body);
 

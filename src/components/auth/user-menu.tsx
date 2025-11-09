@@ -62,23 +62,14 @@ export function UserMenu() {
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        {user.role === 'admin' ? (
-          <DropdownMenuItem asChild>
-            <Link href="/admin/dashboard" className="cursor-pointer">
-              <LayoutDashboard className="ltr:mr-2 rtl:ml-2 h-4 w-4" />
-              <span>לוח בקרה מנהל</span>
-            </Link>
-          </DropdownMenuItem>
-        ) : (
-          <DropdownMenuItem asChild>
-            <Link href="/dashboard" className="cursor-pointer">
-              <LayoutDashboard className="ltr:mr-2 rtl:ml-2 h-4 w-4" />
-              <span>הפוסטים שלי</span>
-            </Link>
-          </DropdownMenuItem>
-        )}
         <DropdownMenuItem asChild>
-          <Link href={user.role === 'admin' ? '/admin/posts/new' : '/dashboard/posts/new'} className="cursor-pointer">
+          <Link href="/dashboard" className="cursor-pointer">
+            <LayoutDashboard className="ltr:mr-2 rtl:ml-2 h-4 w-4" />
+            <span>הפוסטים שלי</span>
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link href="/dashboard/posts/new" className="cursor-pointer">
             <FileText className="ltr:mr-2 rtl:ml-2 h-4 w-4" />
             <span>פוסט חדש</span>
           </Link>

@@ -10,6 +10,7 @@
     "setup": "./scripts/setup-local-db.sh",
     "db:init": "tsx scripts/init-db.ts",
     "db:migrate": "tsx scripts/migrate-add-grade.ts",
+    "db:migrate-remove-role": "tsx scripts/migrate-remove-role.ts",
     "create-admin": "tsx scripts/create-admin.ts",
     "pre-deploy": "tsx scripts/validate-env.ts && tsx scripts/validate-build.ts && npm run build && tsx scripts/post-build-deploy.ts"
   },
@@ -39,6 +40,7 @@
     "cookie": "^1.0.2",
     "date-fns": "^4.1.0",
     "dotenv": "^17.2.3",
+    "jose": "^6.1.0",
     "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.513.0",
     "next": "latest",
