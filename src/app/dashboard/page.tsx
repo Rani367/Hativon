@@ -43,8 +43,11 @@ export default function DashboardPage() {
 
   async function fetchPosts() {
     try {
-      const response = await fetch("/api/admin/posts");
+      const response = await fetch("/api/admin/posts", {
+        cache: "no-store", // Disable caching for immediate updates
+      });
       const data = await response.json();
+      console.log('Fetched posts:', data.posts.length);
       // Posts are already filtered by the API for non-admin users
       setPosts(data.posts);
       setFilteredPosts(data.posts);
@@ -59,14 +62,22 @@ export default function DashboardPage() {
     if (!confirm("האם אתה בטוח שברצונך למחוק את הכתבה הזו?")) return;
 
     try {
+      console.log('Deleting post:', id);
       const response = await fetch(`/api/admin/posts/${id}`, {
         method: "DELETE",
+        cache: "no-store", // Ensure we're not using cached responses
       });
 
+      console.log('Delete response status:', response.status);
+
       if (response.ok) {
-        fetchPosts();
+        console.log('Delete successful, refreshing posts...');
+        await fetchPosts(); // Wait for posts to refresh
+        console.log('Posts refreshed after delete');
       } else {
-        alert("שגיאה במחיקת הכתבה");
+        const errorData = await response.json();
+        console.error('Delete failed:', errorData);
+        alert(`שגיאה במחיקת הכתבה: ${errorData.error || 'Unknown error'}`);
       }
     } catch (error) {
       console.error("Failed to delete post:", error);
