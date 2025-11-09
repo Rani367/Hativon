@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getAllUsers } from '@/lib/users';
-import { requireAdmin } from '@/lib/auth/middleware';
+import { requireAdminAuth } from '@/lib/auth/admin';
 
 /**
  * GET /api/admin/users - Get all users (admin only)
@@ -8,13 +8,13 @@ import { requireAdmin } from '@/lib/auth/middleware';
 export async function GET() {
   try {
     // Require admin authentication
-    await requireAdmin();
+    await requireAdminAuth();
 
     const users = await getAllUsers();
 
     return NextResponse.json({ users });
   } catch (error: any) {
-    if (error.message === 'Authentication required' || error.message === 'Admin access required') {
+    if (error.message === 'Admin authentication required') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
