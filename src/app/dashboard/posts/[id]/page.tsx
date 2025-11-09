@@ -9,7 +9,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Save, Eye, Trash2, Upload, X } from "lucide-react";
 import { Post } from "@/types/post.types";
-import { mutate } from "swr";
 
 export default function EditPostPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -102,62 +101,25 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
     setSaving(true);
 
     try {
-      // Optimistically update the post (cache updates immediately)
-      const mutatePromise = mutate(
-        '/api/admin/posts',
-        async (currentData: any) => {
-          // Update on server
-          const response = await fetch(`/api/admin/posts/${id}`, {
-            method: "PATCH",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              title: form.title,
-              content: form.content,
-              coverImage: form.coverImage,
-              status,
-            }),
-          });
-
-          if (!response.ok) {
-            throw new Error("Failed to update post");
-          }
-
-          const updatedPost = await response.json();
-
-          // Return updated data
-          return {
-            posts: (currentData?.posts || []).map((p: Post) =>
-              p.id === id ? updatedPost : p
-            )
-          };
+      const response = await fetch(`/api/admin/posts/${id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
         },
-        {
-          optimisticData: (currentData: any) => ({
-            posts: (currentData?.posts || []).map((p: Post) =>
-              p.id === id
-                ? {
-                    ...p,
-                    title: form.title,
-                    content: form.content,
-                    coverImage: form.coverImage,
-                    status,
-                    updatedAt: new Date().toISOString(),
-                  }
-                : p
-            )
-          }),
-          rollbackOnError: true,
-          populateCache: true,
-          revalidate: false, // Server call will update
-        }
-      );
+        body: JSON.stringify({
+          title: form.title,
+          content: form.content,
+          coverImage: form.coverImage,
+          status,
+        }),
+      });
 
-      // Wait for mutation to complete BEFORE navigating
-      await mutatePromise;
+      if (!response.ok) {
+        throw new Error("Failed to update post");
+      }
 
-      // Navigate after mutation completes
+      // Refresh to invalidate cache and navigate
+      router.refresh();
       router.push("/dashboard");
     } catch (error) {
       console.error("Failed to update post:", error);
@@ -172,40 +134,18 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
     }
 
     try {
-      // Optimistically delete the post (cache updates immediately)
-      const mutatePromise = mutate(
-        '/api/admin/posts',
-        async (currentData: any) => {
-          // Delete from server
-          const response = await fetch(`/api/admin/posts/${id}`, {
-            method: "DELETE",
-            credentials: "include",
-          });
+      const response = await fetch(`/api/admin/posts/${id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
 
-          if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || 'Failed to delete post');
-          }
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete post');
+      }
 
-          // Return updated data
-          return {
-            posts: (currentData?.posts || []).filter((p: Post) => p.id !== id)
-          };
-        },
-        {
-          optimisticData: (currentData: any) => ({
-            posts: (currentData?.posts || []).filter((p: Post) => p.id !== id)
-          }),
-          rollbackOnError: true,
-          populateCache: true,
-          revalidate: false, // Server call will update
-        }
-      );
-
-      // Wait for mutation to complete BEFORE navigating
-      await mutatePromise;
-
-      // Navigate after deletion completes
+      // Refresh to invalidate cache and navigate
+      router.refresh();
       router.push("/dashboard");
     } catch (error) {
       console.error("Failed to delete post:", error);
