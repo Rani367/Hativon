@@ -69,6 +69,10 @@ export default function NewPostPage() {
 
     setLoading(true);
 
+    // Navigate immediately for instant feedback with syncing indicator
+    router.push("/dashboard?syncing=true");
+
+    // Create post in background
     try {
       const response = await fetch("/api/admin/posts", {
         method: "POST",
@@ -83,16 +87,11 @@ export default function NewPostPage() {
         }),
       });
 
-      if (response.ok) {
-        router.push("/dashboard");
-      } else {
-        alert("יצירת הפוסט נכשלה");
+      if (!response.ok) {
+        console.error("יצירת הפוסט נכשלה");
       }
     } catch (error) {
       console.error("Failed to create post:", error);
-      alert("יצירת הפוסט נכשלה");
-    } finally {
-      setLoading(false);
     }
   };
 

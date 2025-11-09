@@ -17,9 +17,33 @@ export default function DashboardPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "published" | "draft">("all");
   const [loading, setLoading] = useState(true);
+  const [syncingPosts, setSyncingPosts] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     fetchPosts();
+
+    // Check if we just created/updated a post
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('syncing') === 'true') {
+      // Show syncing indicator briefly
+      setSyncingPosts(new Set(['pending']));
+
+      // Poll for new posts
+      const pollInterval = setInterval(() => {
+        fetchPosts();
+      }, 1000);
+
+      // Stop polling after 5 seconds
+      setTimeout(() => {
+        clearInterval(pollInterval);
+        setSyncingPosts(new Set());
+
+        // Clean up URL
+        window.history.replaceState({}, '', '/dashboard');
+      }, 5000);
+
+      return () => clearInterval(pollInterval);
+    }
   }, []);
 
   useEffect(() => {
@@ -59,19 +83,49 @@ export default function DashboardPage() {
   async function handleDelete(id: string) {
     if (!confirm("האם אתה בטוח שברצונך למחוק את הכתבה הזו?")) return;
 
+    // Mark as syncing
+    setSyncingPosts(prev => new Set(prev).add(id));
+
+    // Optimistic update - remove from UI after a brief moment
+    setTimeout(() => {
+      setPosts(posts.filter(post => post.id !== id));
+      setFilteredPosts(filteredPosts.filter(post => post.id !== id));
+    }, 300);
+
+    // Delete from server in background
+    const originalPosts = posts;
     try {
       const response = await fetch(`/api/admin/posts/${id}`, {
         method: "DELETE",
         cache: "no-store",
       });
 
-      if (response.ok) {
-        await fetchPosts();
-      } else {
+      if (!response.ok) {
+        // Restore posts if delete failed
+        setPosts(originalPosts);
+        setSyncingPosts(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(id);
+          return newSet;
+        });
         const errorData = await response.json();
         alert(`שגיאה במחיקת הכתבה: ${errorData.error || 'שגיאה לא ידועה'}`);
+      } else {
+        // Remove from syncing set
+        setSyncingPosts(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(id);
+          return newSet;
+        });
       }
     } catch (error) {
+      // Restore posts if request failed
+      setPosts(originalPosts);
+      setSyncingPosts(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(id);
+        return newSet;
+      });
       console.error("Failed to delete post:", error);
       alert("שגיאה במחיקת הכתבה");
     }
@@ -165,6 +219,21 @@ export default function DashboardPage() {
           </Button>
         </Link>
       </div>
+
+      {/* Syncing indicator */}
+      {syncingPosts.size > 0 && (
+        <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+          <div className="flex items-center gap-2 text-blue-800 dark:text-blue-200">
+            <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <span className="text-sm font-medium">
+              מסנכרן שינויים לשרת...
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* Show empty state if no posts */}
       {posts.length === 0 ? (
@@ -274,11 +343,24 @@ export default function DashboardPage() {
                           {format(new Date(post.createdAt), "d בMMMM yyyy", { locale: he })}
                         </td>
                         <td className="p-4">
-                          <Badge
-                            variant={post.status === "published" ? "default" : "secondary"}
-                          >
-                            {post.status === "published" ? "פורסם" : "טיוטה"}
-                          </Badge>
+                          <div className="flex items-center gap-2">
+                            {syncingPosts.has(post.id) && (
+                              <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                                <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                <span>מוחק...</span>
+                              </div>
+                            )}
+                            {!syncingPosts.has(post.id) && (
+                              <Badge
+                                variant={post.status === "published" ? "default" : "secondary"}
+                              >
+                                {post.status === "published" ? "פורסם" : "טיוטה"}
+                              </Badge>
+                            )}
+                          </div>
                         </td>
                         <td className="p-4">
                           <div className="flex justify-end gap-2">
