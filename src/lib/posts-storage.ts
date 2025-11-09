@@ -124,7 +124,8 @@ async function writePosts(posts: Post[]): Promise<void> {
       await put(BLOB_FILENAME, jsonData, {
         access: 'public',
         contentType: 'application/json',
-        addRandomSuffix: false, // Allow overwriting existing posts.json file
+        addRandomSuffix: false,
+        allowOverwrite: true, // Allow overwriting existing posts.json file
       });
     } else {
       // Write to local file
