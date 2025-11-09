@@ -100,8 +100,29 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
 
     setSaving(true);
 
-    // Navigate immediately for instant feedback with syncing indicator
-    router.push("/dashboard?syncing=true");
+    // Create optimistic updated post for instant display
+    const optimisticPost = {
+      id: id,
+      title: form.title,
+      slug: form.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''),
+      content: form.content,
+      coverImage: form.coverImage,
+      description: form.content.substring(0, 160),
+      date: post?.date || new Date().toISOString(),
+      author: post?.author || '',
+      authorId: post?.authorId || '',
+      tags: post?.tags || [],
+      category: post?.category || '',
+      status: status,
+      createdAt: post?.createdAt || new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    // Store in localStorage for instant display
+    localStorage.setItem('optimisticPost', JSON.stringify(optimisticPost));
+
+    // Navigate immediately - changes will appear instantly
+    router.push("/dashboard");
 
     // Update post in background
     try {
