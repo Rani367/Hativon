@@ -257,14 +257,20 @@ export async function updatePost(id: string, input: Partial<PostInput>): Promise
  * Delete post
  */
 export async function deletePost(id: string): Promise<boolean> {
+  console.log('Deleting post with ID:', id);
   const posts = await readPosts();
+  console.log('Current posts before delete:', posts.length);
+
   const filteredPosts = posts.filter(post => post.id !== id);
 
   if (filteredPosts.length === posts.length) {
+    console.log('Post not found for deletion:', id);
     return false; // Post not found
   }
 
+  console.log('Posts after filtering:', filteredPosts.length);
   await writePosts(filteredPosts);
+  console.log('Successfully deleted post:', id);
   return true;
 }
 
