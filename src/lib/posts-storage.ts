@@ -18,7 +18,7 @@ interface PostsCache {
 }
 
 let postsCache: PostsCache | null = null;
-const CACHE_TTL = 60 * 1000; // 1 minute cache TTL
+const CACHE_TTL = 0; // No cache - immediate updates
 
 /**
  * Clear the posts cache (call after any write operation)
@@ -124,6 +124,7 @@ async function writePosts(posts: Post[]): Promise<void> {
       await put(BLOB_FILENAME, jsonData, {
         access: 'public',
         contentType: 'application/json',
+        addRandomSuffix: false, // Allow overwriting existing posts.json file
       });
     } else {
       // Write to local file

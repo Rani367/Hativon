@@ -18,7 +18,7 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: 'https',
-        hostname: 'images.unsplin ash.com',
+        hostname: 'images.unsplash.com',
       },
     ],
     // Use modern image formats for better compression
