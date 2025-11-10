@@ -27,7 +27,7 @@ async function migrateRemoveRole() {
     const roleColumnExists = checkColumn.rows[0]?.exists;
 
     if (!roleColumnExists) {
-      console.log('✓ Role column does not exist. Migration not needed.');
+      console.log('[OK] Role column does not exist. Migration not needed.');
       return;
     }
 
@@ -36,18 +36,18 @@ async function migrateRemoveRole() {
 
     // Drop the index first (if it exists)
     await db.query`DROP INDEX IF EXISTS idx_users_role;` as any;
-    console.log('✓ Dropped idx_users_role index');
+    console.log('[OK] Dropped idx_users_role index');
 
     // Drop the role column
     await db.query`ALTER TABLE users DROP COLUMN IF EXISTS role;` as any;
-    console.log('✓ Dropped role column from users table');
+    console.log('[OK] Dropped role column from users table');
 
-    console.log('\n✅ Migration completed successfully!');
+    console.log('\n[OK] Migration completed successfully!');
     console.log('\nAll users now have equal permissions.');
     console.log('Access to admin panel is controlled by ADMIN_PASSWORD environment variable.\n');
 
   } catch (error) {
-    console.error('❌ Migration failed:', error);
+    console.error('[ERROR] Migration failed:', error);
     throw error;
   }
 }

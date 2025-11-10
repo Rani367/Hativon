@@ -13,14 +13,14 @@ config({ path: resolve(__dirname, '../.env.local') });
 import { createUser, getUserByUsername } from '../src/lib/users';
 
 async function main() {
-  console.log('👤 Creating test user...\n');
+  console.log('[USER] Creating test user...\n');
 
   try {
     // Check if user already exists
     const existingUser = await getUserByUsername('testuser');
     if (existingUser) {
-      console.log('✓ Test user already exists');
-      console.log('\n📋 Login credentials:');
+      console.log('[OK] Test user already exists');
+      console.log('\n[INFO] Login credentials:');
       console.log('   Username: testuser');
       console.log('   Password: password123');
       console.log('   Admin Password (for /admin): admin123\n');
@@ -36,15 +36,15 @@ async function main() {
       classNumber: 1,
     });
 
-    console.log('✅ Test user created successfully!\n');
-    console.log('📋 Login credentials:');
+    console.log('[OK] Test user created successfully!\n');
+    console.log('[INFO] Login credentials:');
     console.log('   Username: testuser');
     console.log('   Password: password123');
     console.log('   Admin Password (for /admin): admin123\n');
 
     process.exit(0);
   } catch (error: any) {
-    console.error('❌ Failed to create test user:', error.message || error);
+    console.error('[ERROR] Failed to create test user:', error.message || error);
     process.exit(1);
   }
 }

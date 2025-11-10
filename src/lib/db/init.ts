@@ -11,9 +11,11 @@ import { Pool } from 'pg';
  * - Development: Run `pnpm run db:init` or call this function
  * - Production: Run once after enabling Vercel Postgres
  */
-export async function initializeDatabase() {
+export async function initializeDatabase(silent = false) {
   try {
-    console.log('Initializing database...');
+    if (!silent) {
+      console.log('Initializing database...');
+    }
 
     // Read schema file
     const schemaPath = join(process.cwd(), 'src', 'lib', 'db', 'schema.sql');
@@ -34,10 +36,14 @@ export async function initializeDatabase() {
       }
     }
 
-    console.log('✓ Database initialized successfully');
+    if (!silent) {
+      console.log('✓ Database initialized successfully');
+    }
     return { success: true };
   } catch (error) {
-    console.error('✗ Database initialization failed:', error);
+    if (!silent) {
+      console.error('✗ Database initialization failed:', error);
+    }
     throw error;
   }
 }
