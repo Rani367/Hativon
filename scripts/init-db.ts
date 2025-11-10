@@ -24,14 +24,23 @@ config({ path: resolve(__dirname, '../.env.local') });
 import { initializeDatabase, checkDatabaseSetup } from '../src/lib/db/init';
 
 async function main() {
-  console.log('🚀 Starting database initialization...\n');
+  const isSilent = process.argv.includes('--silent');
+
+  if (!isSilent) {
+    console.log('[INFO] Starting database initialization...\n');
+  }
 
   try {
     // Check if database is already set up
     const isSetup = await checkDatabaseSetup();
 
     if (isSetup) {
-      console.log('ℹ️  Database tables already exist.');
+      if (isSilent) {
+        // In silent mode, skip if already set up
+        process.exit(0);
+      }
+
+      console.log('[INFO] Database tables already exist.');
       console.log('   If you want to recreate them, drop the tables manually first.\n');
 
       const readline = require('readline').createInterface({
@@ -43,7 +52,7 @@ async function main() {
         readline.question('Continue anyway? (y/N): ', (answer: string) => {
           readline.close();
           if (answer.toLowerCase() !== 'y') {
-            console.log('❌ Aborted.');
+            console.log('[INFO] Aborted.');
             process.exit(0);
           }
           resolve();
@@ -52,22 +61,26 @@ async function main() {
     }
 
     // Initialize database
-    await initializeDatabase();
+    await initializeDatabase(isSilent);
 
-    console.log('\n✅ Database initialized successfully!');
-    console.log('\n📝 Next steps:');
-    console.log('   1. Create an admin user: pnpm run create-admin');
-    console.log('   2. Start the development server: pnpm run dev');
-    console.log('   3. Visit /admin to log in\n');
+    if (!isSilent) {
+      console.log('\n[OK] Database initialized successfully!');
+      console.log('\n[INFO] Next steps:');
+      console.log('   1. Create an admin user: pnpm run create-admin');
+      console.log('   2. Start the development server: pnpm run dev');
+      console.log('   3. Visit /admin to log in\n');
+    }
 
     process.exit(0);
   } catch (error) {
-    console.error('\n❌ Database initialization failed:');
-    console.error(error);
-    console.log('\n💡 Troubleshooting:');
-    console.log('   - Make sure POSTGRES_URL is set in .env.local');
-    console.log('   - Check that your database is accessible');
-    console.log('   - Verify your Vercel Postgres is enabled (in production)\n');
+    if (!isSilent) {
+      console.error('\n[ERROR] Database initialization failed:');
+      console.error(error);
+      console.log('\n[INFO] Troubleshooting:');
+      console.log('   - Make sure POSTGRES_URL is set in .env.local');
+      console.log('   - Check that your database is accessible');
+      console.log('   - Verify your Vercel Postgres is enabled (in production)\n');
+    }
     process.exit(1);
   }
 }

@@ -261,7 +261,7 @@ function printResults() {
   console.log(`\n${colors.bold}${colors.cyan}=== Environment Variable Validation ===${colors.reset}\n`);
 
   if (errors.length === 0 && warnings.length === 0) {
-    console.log(`${colors.green}✓ All environment variables are valid!${colors.reset}\n`);
+    console.log(`${colors.green}[OK] All environment variables are valid!${colors.reset}\n`);
     return true;
   }
 
@@ -272,7 +272,7 @@ function printResults() {
       console.log(`\n${colors.red}${index + 1}. ${err.variable}${colors.reset}`);
       console.log(`   ${err.message}`);
       if (err.hint) {
-        console.log(`   ${colors.cyan}💡 ${err.hint}${colors.reset}`);
+        console.log(`   ${colors.cyan}[INFO] ${err.hint}${colors.reset}`);
       }
     });
     console.log();
@@ -285,7 +285,7 @@ function printResults() {
       console.log(`\n${colors.yellow}${index + 1}. ${warn.variable}${colors.reset}`);
       console.log(`   ${warn.message}`);
       if (warn.hint) {
-        console.log(`   ${colors.cyan}💡 ${warn.hint}${colors.reset}`);
+        console.log(`   ${colors.cyan}[INFO] ${warn.hint}${colors.reset}`);
       }
     });
     console.log();
@@ -293,11 +293,11 @@ function printResults() {
 
   // Print summary
   if (errors.length > 0) {
-    console.log(`${colors.red}${colors.bold}✗ Validation failed with ${errors.length} error(s)${colors.reset}`);
+    console.log(`${colors.red}${colors.bold}[ERROR] Validation failed with ${errors.length} error(s)${colors.reset}`);
     console.log(`${colors.cyan}See .env.example for configuration guidance${colors.reset}\n`);
     return false;
   } else {
-    console.log(`${colors.yellow}⚠ Validation passed with ${warnings.length} warning(s)${colors.reset}`);
+    console.log(`${colors.yellow}[WARNING] Validation passed with ${warnings.length} warning(s)${colors.reset}`);
     console.log(`${colors.cyan}Consider addressing warnings before deploying${colors.reset}\n`);
     return true;
   }

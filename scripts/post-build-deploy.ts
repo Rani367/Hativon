@@ -169,7 +169,7 @@ async function main() {
 
   // Check if there are uncommitted changes
   if (!hasUncommittedChanges()) {
-    console.log(`${colors.green}✓ No uncommitted changes. Nothing to deploy.${colors.reset}\n`);
+    console.log(`${colors.green}[OK] No uncommitted changes. Nothing to deploy.${colors.reset}\n`);
     rl.close();
     process.exit(0);
   }
@@ -224,14 +224,14 @@ async function main() {
     // Stage changes
     console.log(`${colors.cyan}Staging changes...${colors.reset}`);
     stageChanges();
-    console.log(`${colors.green}✓ Changes staged${colors.reset}\n`);
+    console.log(`${colors.green}[OK] Changes staged${colors.reset}\n`);
 
     // Commit changes
     console.log(`${colors.cyan}Committing changes...${colors.reset}`);
     commitChanges(commitMessage.trim());
-    console.log(`${colors.green}✓ Changes committed${colors.reset}\n`);
+    console.log(`${colors.green}[OK] Changes committed${colors.reset}\n`);
 
-    console.log(`${colors.green}${colors.bold}✓ Commit successful!${colors.reset}`);
+    console.log(`${colors.green}${colors.bold}[OK] Commit successful!${colors.reset}`);
     console.log(`${colors.cyan}Your changes have been committed locally.${colors.reset}`);
     console.log(`${colors.cyan}To push to GitHub, run: ${colors.bold}git push${colors.reset}\n`);
   } catch (error: any) {
