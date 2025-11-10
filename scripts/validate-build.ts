@@ -353,7 +353,7 @@ function printResults() {
   let warnings = 0;
 
   results.forEach((result, index) => {
-    const icon = result.passed ? '✓' : '✗';
+    const icon = result.passed ? '[OK]' : '[FAIL]';
     const color = result.passed ? colors.green : colors.red;
 
     console.log(`${color}${icon} ${result.name}${colors.reset}`);
@@ -362,10 +362,10 @@ function printResults() {
     if (result.error) {
       if (result.passed) {
         warnings++;
-        console.log(`  ${colors.yellow}⚠ ${result.error}${colors.reset}`);
+        console.log(`  ${colors.yellow}[WARNING] ${result.error}${colors.reset}`);
       } else {
         failures++;
-        console.log(`  ${colors.red}✗ ${result.error}${colors.reset}`);
+        console.log(`  ${colors.red}[ERROR] ${result.error}${colors.reset}`);
       }
     }
 
@@ -377,19 +377,19 @@ function printResults() {
   console.log();
 
   if (failures > 0) {
-    console.log(`${colors.red}${colors.bold}✗ Build validation failed with ${failures} error(s)${colors.reset}`);
+    console.log(`${colors.red}${colors.bold}[ERROR] Build validation failed with ${failures} error(s)${colors.reset}`);
     if (warnings > 0) {
-      console.log(`${colors.yellow}⚠ Also found ${warnings} warning(s)${colors.reset}`);
+      console.log(`${colors.yellow}[WARNING] Also found ${warnings} warning(s)${colors.reset}`);
     }
     console.log();
     return false;
   } else if (warnings > 0) {
-    console.log(`${colors.yellow}${colors.bold}⚠ Build validation passed with ${warnings} warning(s)${colors.reset}`);
+    console.log(`${colors.yellow}${colors.bold}[WARNING] Build validation passed with ${warnings} warning(s)${colors.reset}`);
     console.log(`${colors.cyan}Consider addressing warnings before deploying${colors.reset}`);
     console.log();
     return true;
   } else {
-    console.log(`${colors.green}${colors.bold}✓ All checks passed! Ready to build.${colors.reset}`);
+    console.log(`${colors.green}${colors.bold}[OK] All checks passed! Ready to build.${colors.reset}`);
     console.log();
     return true;
   }

@@ -17,11 +17,20 @@ A modern Next.js 16 blog application with self-hosted admin panel, designed for 
 
 ## Quick Start
 
-**TL;DR:** Install pnpm → `pnpm install` → `pnpm run dev` → Open http://localhost:3000
+**TL;DR:** Just two commands and you're ready to go!
+
+```bash
+pnpm install    # One-command setup - configures EVERYTHING automatically
+pnpm run dev    # Start developing immediately
+```
+
+Then open http://localhost:3000
 
 ---
 
-### 1. Install pnpm
+### Complete Setup Guide
+
+#### 1. Install pnpm
 
 If you don't have pnpm installed:
 
@@ -39,7 +48,7 @@ Or enable corepack (Node.js 16.13+):
 corepack enable
 ```
 
-### 2. Clone and Install (Automated Setup)
+#### 2. Clone and Install (One-Command Setup)
 
 ```bash
 git clone <your-repo-url>
@@ -47,13 +56,18 @@ cd school-newspaper
 pnpm install
 ```
 
-**That's it!** `pnpm install` automatically:
+**That's literally it!** `pnpm install` automatically:
 - Creates `data/` directory for local posts storage
 - Generates `.env.local` with secure JWT secret
-- Sets default admin password: `admin123` (⚠️ change this!)
-- Prepares your development environment
+- Detects PostgreSQL on your system
+- Creates and configures `school_newspaper` database
+- Initializes database schema with tables and indexes
+- Creates default admin user (username: `admin`, password: `admin123`)
+- Sets up everything needed for full-featured development
 
-### 3. Start Development Server
+No extra steps. No manual configuration. Everything just works.
+
+#### 3. Start Development Server
 
 ```bash
 pnpm run dev
@@ -61,29 +75,25 @@ pnpm run dev
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-### 4. Access Admin Panel
+#### 4. Login and Start Creating
 
-Visit [http://localhost:3000/admin](http://localhost:3000/admin) and login with the admin password (`admin123` by default).
+Click "התחבר" (Login) button or visit `/admin` and login with:
+- **Username:** `admin`
+- **Password:** `admin123` (WARNING: change this in `.env.local` for production!)
 
 ---
 
-### Optional: Interactive Setup with Database
+### What if I don't have PostgreSQL?
 
-For full features with PostgreSQL and multi-user authentication:
+No problem! The setup script detects this automatically:
+- App runs in **admin-only mode** (no database required)
+- Posts stored in local `data/posts.json` file
+- Admin panel accessible with password from `.env.local`
+- All core features work, just without multi-user support
 
+To enable full features later, install PostgreSQL and run:
 ```bash
 pnpm run setup
-```
-
-This interactive script will:
-- Prompt for custom admin password
-- Detect and configure PostgreSQL if available
-- Initialize database schema automatically
-- Create optimal development environment
-
-After setup, create your first user:
-```bash
-pnpm run create-admin
 ```
 
 ## Available Scripts
@@ -102,10 +112,26 @@ pnpm run start       # Start production server
 pnpm run lint        # Run ESLint
 ```
 
-### Deployment
+### Validation & Deployment
 ```bash
-pnpm run pre-deploy  # Run ALL validation checks + build (use this before deploying!)
+pnpm run validate    # Run comprehensive validation (100+ checks)
+pnpm run pre-deploy  # Validate + build + commit (EXTREMELY thorough)
+                     # Catches ALL errors before production
 ```
+
+The validation system performs:
+- TypeScript strict compilation
+- ESLint with zero tolerance (errors + warnings)
+- Security scanning (secrets, vulnerabilities, dangerous patterns)
+- Import validation (circular deps, unused imports)
+- Database schema validation
+- Configuration validation (all config files)
+- Runtime validation (API routes, module resolution)
+- Dependency validation (versions, vulnerabilities)
+- Code quality checks (TODOs, error handling)
+- Build size validation
+
+**NO ERROR should make it to production.**
 
 ### Database
 ```bash
@@ -219,9 +245,9 @@ Do you want to commit these changes? (y/n): y
 Enter commit message:
 > Add student grade display feature
 
-✓ Changes staged
-✓ Changes committed
-✓ Commit successful!
+[OK] Changes staged
+[OK] Changes committed
+[OK] Commit successful!
 Your changes have been committed locally.
 To push to GitHub, run: git push
 

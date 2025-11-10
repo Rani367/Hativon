@@ -37,7 +37,7 @@ function question(query: string): Promise<string> {
 }
 
 async function main() {
-  console.log('👤 User Creation\n');
+  console.log('[USER] User Creation\n');
 
   try {
     // Get user input
@@ -46,7 +46,7 @@ async function main() {
     // Check if user already exists
     const existingUser = await getUserByUsername(username);
     if (existingUser) {
-      console.log(`\n❌ User "${username}" already exists.`);
+      console.log(`\n[ERROR] User "${username}" already exists.`);
       rl.close();
       process.exit(1);
     }
@@ -57,14 +57,14 @@ async function main() {
 
     const validGrades = ['ז', 'ח', 'ט', 'י'];
     if (!validGrades.includes(gradeInput)) {
-      console.log('❌ Invalid grade. Must be one of: ז, ח, ט, י');
+      console.log('[ERROR] Invalid grade. Must be one of: ז, ח, ט, י');
       rl.close();
       process.exit(1);
     }
 
     const classNumber = parseInt(classNumberInput);
     if (isNaN(classNumber) || classNumber < 1 || classNumber > 4) {
-      console.log('❌ Invalid class number. Must be between 1 and 4');
+      console.log('[ERROR] Invalid class number. Must be between 1 and 4');
       rl.close();
       process.exit(1);
     }
@@ -75,18 +75,18 @@ async function main() {
     do {
       password = await question('Password (min 8 characters): ');
       if (password.length < 8) {
-        console.log('❌ Password must be at least 8 characters long.');
+        console.log('[ERROR] Password must be at least 8 characters long.');
         continue;
       }
 
       confirmPassword = await question('Confirm Password: ');
       if (password !== confirmPassword) {
-        console.log('❌ Passwords do not match. Try again.\n');
+        console.log('[ERROR] Passwords do not match. Try again.\n');
       }
     } while (password !== confirmPassword || password.length < 8);
 
     // Create user
-    console.log('\n🔄 Creating user...');
+    console.log('\n[INFO] Creating user...');
 
     const user = await createUser({
       username,
@@ -96,8 +96,8 @@ async function main() {
       classNumber,
     });
 
-    console.log('\n✅ User created successfully!');
-    console.log('\n📋 User Details:');
+    console.log('\n[OK] User created successfully!');
+    console.log('\n[INFO] User Details:');
     console.log(`   Username: ${user.username}`);
     console.log(`   Display Name: ${user.displayName}`);
     console.log(`   Grade: ${user.grade}`);
@@ -105,15 +105,15 @@ async function main() {
     console.log(`   Email: ${user.email || 'Not provided'}`);
     console.log(`   Created: ${new Date(user.createdAt).toLocaleString()}`);
 
-    console.log('\n🎉 You can now log in at the homepage or access /admin with the admin password\n');
+    console.log('\n[OK] You can now log in at the homepage or access /admin with the admin password\n');
 
     rl.close();
     process.exit(0);
   } catch (error: any) {
-    console.error('\n❌ Failed to create user:');
+    console.error('\n[ERROR] Failed to create user:');
     console.error(error.message || error);
 
-    console.log('\n💡 Troubleshooting:');
+    console.log('\n[INFO] Troubleshooting:');
     console.log('   - Make sure the database is initialized: pnpm run db:init');
     console.log('   - Check that POSTGRES_URL is set in .env.local');
     console.log('   - Verify your database connection\n');

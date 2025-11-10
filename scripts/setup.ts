@@ -34,14 +34,14 @@ const envPath = join(projectRoot, '.env.local');
 const envExamplePath = join(projectRoot, '.env.example');
 const dataDir = join(projectRoot, 'data');
 
-console.log('🚀 Setting up local development environment...\n');
+console.log('[SETUP] Setting up local development environment...\n');
 
 // Step 1: Create data directory for local posts storage
 if (!existsSync(dataDir)) {
   mkdirSync(dataDir, { recursive: true });
-  console.log('✅ Created data/ directory for local posts storage');
+  console.log('[OK] Created data/ directory for local posts storage');
 } else {
-  console.log('✓ data/ directory already exists');
+  console.log('[OK] data/ directory already exists');
 }
 
 // Step 2: Check if .env.local exists
@@ -49,18 +49,18 @@ let envExists = existsSync(envPath);
 let shouldSetup = true;
 
 if (envExists) {
-  console.log('\n⚠️  .env.local already exists');
+  console.log('\n[WARNING]  .env.local already exists');
   const answer = await question('Do you want to regenerate it? This will overwrite existing values. (y/N): ');
   shouldSetup = answer.toLowerCase() === 'y';
 
   if (!shouldSetup) {
-    console.log('✓ Keeping existing .env.local');
+    console.log('[OK] Keeping existing .env.local');
   }
 }
 
 // Step 3: Generate or update .env.local
 if (shouldSetup) {
-  console.log('\n📝 Creating .env.local with secure defaults...');
+  console.log('\n[INFO] Creating .env.local with secure defaults...');
 
   // Generate secure JWT secret
   const jwtSecret = randomBytes(32).toString('base64');
@@ -80,11 +80,11 @@ if (shouldSetup) {
     .replace(/POSTGRES_URL=$/gm, `POSTGRES_URL=`);
 
   writeFileSync(envPath, envContent);
-  console.log('✅ Created .env.local with secure JWT secret');
+  console.log('[OK] Created .env.local with secure JWT secret');
 }
 
 // Step 4: Check for PostgreSQL and offer to set up database
-console.log('\n🔍 Checking for PostgreSQL...');
+console.log('\n[INFO] Checking for PostgreSQL...');
 
 let hasPostgres = false;
 let dbUrl = '';
@@ -112,12 +112,12 @@ try {
   }
 
   if (hasPostgres) {
-    console.log('✅ PostgreSQL detected');
+    console.log('[OK] PostgreSQL detected');
 
     const setupDb = await question('\nDo you want to set up the database now? (Y/n): ');
     if (setupDb.toLowerCase() !== 'n') {
       // Prompt for database details
-      console.log('\n📝 Database configuration:');
+      console.log('\n[INFO] Database configuration:');
       const dbHost = await question('  Host [localhost]: ') || 'localhost';
       const dbPort = await question('  Port [5432]: ') || '5432';
       const dbUser = await question('  Username [postgres]: ') || 'postgres';
@@ -139,36 +139,36 @@ try {
       }
 
       writeFileSync(envPath, envContent);
-      console.log('✅ Added database configuration to .env.local');
+      console.log('[OK] Added database configuration to .env.local');
 
       // Initialize database
-      console.log('\n🔄 Initializing database schema...');
+      console.log('\n[INFO] Initializing database schema...');
       try {
         execSync('pnpm run db:init', {
           stdio: 'inherit',
           cwd: projectRoot
         });
-        console.log('✅ Database schema initialized');
+        console.log('[OK] Database schema initialized');
       } catch (error) {
-        console.log('⚠️  Database initialization failed. You may need to create the database first.');
+        console.log('[WARNING]  Database initialization failed. You may need to create the database first.');
         console.log(`   Run: createdb ${dbName}`);
       }
     }
   } else {
-    console.log('⚠️  PostgreSQL not detected');
+    console.log('[WARNING]  PostgreSQL not detected');
     console.log('   The app will run in local-only mode (posts stored in data/posts.json)');
     console.log('   To enable full features, install PostgreSQL and run: pnpm run setup');
   }
 } catch (error) {
-  console.log('⚠️  Could not detect PostgreSQL');
+  console.log('[WARNING]  Could not detect PostgreSQL');
 }
 
 // Step 5: Summary and next steps
 console.log('\n');
 console.log('═'.repeat(60));
-console.log('✅ Setup complete!');
+console.log('[OK] Setup complete!');
 console.log('═'.repeat(60));
-console.log('\n📋 Next steps:\n');
+console.log('\n[INFO] Next steps:\n');
 
 if (hasPostgres && dbUrl) {
   console.log('   1. Create your first admin user:');
@@ -181,10 +181,10 @@ if (hasPostgres && dbUrl) {
   console.log('   2. Start the development server:');
   console.log('      pnpm run dev\n');
   console.log('   3. Open http://localhost:3000 in your browser\n');
-  console.log('   ℹ️  Without PostgreSQL, posts will be stored in data/posts.json\n');
+  console.log('   [INFO]  Without PostgreSQL, posts will be stored in data/posts.json\n');
 }
 
-console.log('📚 For more information, see CLAUDE.md\n');
+console.log('[INFO] For more information, see CLAUDE.md\n');
 
 readline.close();
 process.exit(0);
