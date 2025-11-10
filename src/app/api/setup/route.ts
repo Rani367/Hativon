@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
     }
 
     const logs: string[] = [];
-    logs.push('🚀 Starting database setup...\n');
+    logs.push('[SETUP] Starting database setup...\n');
 
     // Step 1: Check if already initialized
     try {
@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
       const { posts_exists, users_exists } = checkResult.rows[0];
 
       if (posts_exists && users_exists) {
-        logs.push('ℹ️  Database already initialized');
+        logs.push('[INFO]  Database already initialized');
 
         // Check if posts exist
         const countResult = await db.query`SELECT COUNT(*) as count FROM posts` as any;
@@ -66,11 +66,11 @@ export async function GET(request: NextRequest) {
         });
       }
     } catch (error) {
-      logs.push('📝 Tables do not exist yet, will create them...');
+      logs.push('[INFO] Tables do not exist yet, will create them...');
     }
 
     // Step 2: Initialize database schema
-    logs.push('\n📦 Creating database tables...');
+    logs.push('\n[INFO] Creating database tables...');
 
     // Create users table
     await db.query`
@@ -146,7 +146,7 @@ export async function GET(request: NextRequest) {
       FOR EACH ROW EXECUTE FUNCTION update_updated_at_column()
     `;
 
-    logs.push('✅ Database tables created successfully');
+    logs.push('[OK] Database tables created successfully');
 
     // Step 3: Migrate posts from Blob storage (if exists)
     logs.push('\n📥 Checking for existing posts in Blob storage...');
@@ -163,7 +163,7 @@ export async function GET(request: NextRequest) {
         logs.push(`Found ${posts.length} posts in Blob storage`);
 
         if (posts.length > 0) {
-          logs.push('📝 Migrating posts to PostgreSQL...');
+          logs.push('[INFO] Migrating posts to PostgreSQL...');
 
           for (const post of posts) {
             try {
@@ -194,24 +194,24 @@ export async function GET(request: NextRequest) {
                 ON CONFLICT (id) DO NOTHING
               `;
               migratedCount++;
-              logs.push(`  ✓ ${post.title}`);
+              logs.push(`  [OK] ${post.title}`);
             } catch (error: any) {
-              logs.push(`  ⚠️  Skipped "${post.title}": ${error.message}`);
+              logs.push(`  [WARNING]  Skipped "${post.title}": ${error.message}`);
             }
           }
 
-          logs.push(`\n✅ Migrated ${migratedCount} posts successfully`);
+          logs.push(`\n[OK] Migrated ${migratedCount} posts successfully`);
         }
       } else {
-        logs.push('ℹ️  No posts found in Blob storage');
+        logs.push('[INFO]  No posts found in Blob storage');
       }
     } catch (error) {
-      logs.push('ℹ️  No Blob storage configured or no posts to migrate');
+      logs.push('[INFO]  No Blob storage configured or no posts to migrate');
     }
 
     // Step 4: Summary
-    logs.push('\n✅ Setup complete!');
-    logs.push('\n📝 Next steps:');
+    logs.push('\n[OK] Setup complete!');
+    logs.push('\n[INFO] Next steps:');
     logs.push('  1. You can now delete this /api/setup route (optional)');
     logs.push('  2. Users can register at /register');
     logs.push('  3. Access admin panel at /admin');

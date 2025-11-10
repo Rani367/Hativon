@@ -15,7 +15,10 @@
     "db:migrate-remove-role": "tsx scripts/migrate-remove-role.ts",
     "migrate-posts": "tsx scripts/migrate-posts-to-db.ts",
     "create-admin": "tsx scripts/create-admin.ts",
-    "pre-deploy": "tsx scripts/validate-env.ts && tsx scripts/validate-build.ts && pnpm run build && tsx scripts/post-build-deploy.ts"
+    "validate": "tsx scripts/validate-comprehensive.ts",
+    "validate:env": "tsx scripts/validate-env.ts",
+    "validate:build": "tsx scripts/validate-build.ts",
+    "pre-deploy": "tsx scripts/validate-comprehensive.ts && pnpm run build && tsx scripts/post-build-deploy.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -47,11 +50,11 @@
     "jose": "^6.1.0",
     "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.553.0",
-    "next": "latest",
+    "next": "16.0.1",
     "next-themes": "^0.4.6",
     "pg": "^8.16.3",
-    "react": "latest",
-    "react-dom": "latest",
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
     "react-hook-form": "^7.66.0",
     "react-markdown": "^10.1.0",
     "react-syntax-highlighter": "^16.1.0",

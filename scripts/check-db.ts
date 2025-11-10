@@ -250,7 +250,7 @@ function printResults() {
   let warnings = 0;
 
   results.forEach((result, index) => {
-    const icon = result.passed ? '✓' : '✗';
+    const icon = result.passed ? '[OK]' : '✗';
     const color = result.passed ? colors.green : colors.red;
 
     console.log(`${color}${icon} ${result.name}${colors.reset}`);
@@ -278,7 +278,7 @@ function printResults() {
     console.log();
     return false;
   } else {
-    console.log(`${colors.green}${colors.bold}✓ Database is healthy!${colors.reset}`);
+    console.log(`${colors.green}${colors.bold}[OK] Database is healthy!${colors.reset}`);
     console.log();
     return true;
   }
