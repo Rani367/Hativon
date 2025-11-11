@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { put } from '@vercel/blob';
 import { getCurrentUser } from '@/lib/auth/middleware';
+import { logError } from '@/lib/logger';
 
 /**
  * Upload image to Vercel Blob
@@ -60,7 +61,7 @@ export async function POST(request: NextRequest) {
       filename: filename,
     });
   } catch (error) {
-    console.error('Image upload error:', error);
+    logError('Image upload error:', error);
     return NextResponse.json(
       { error: 'Failed to upload image' },
       { status: 500 }

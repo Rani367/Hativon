@@ -3,6 +3,7 @@ import { validatePassword, updateLastLogin } from '@/lib/users';
 import { createAuthCookie } from '@/lib/auth/jwt';
 import { UserLogin } from '@/types/user.types';
 import { isDatabaseAvailable } from '@/lib/db/client';
+import { logError } from '@/lib/logger';
 
 export async function POST(request: NextRequest) {
   try {
@@ -93,7 +94,7 @@ export async function POST(request: NextRequest) {
       }
     );
   } catch (error: any) {
-    console.error('Login error:', error);
+    logError('Login error:', error);
     return NextResponse.json(
       { success: false, message: 'שגיאה בהתחברות. אנא נסה שנית.' },
       { status: 500 }

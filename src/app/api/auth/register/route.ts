@@ -3,6 +3,7 @@ import { createUser, usernameExists } from '@/lib/users';
 import { createAuthCookie } from '@/lib/auth/jwt';
 import { UserRegistration } from '@/types/user.types';
 import { isDatabaseAvailable } from '@/lib/db/client';
+import { logError } from '@/lib/logger';
 
 export async function POST(request: NextRequest) {
   try {
@@ -85,7 +86,7 @@ export async function POST(request: NextRequest) {
       }
     );
   } catch (error: any) {
-    console.error('Registration error:', error);
+    logError('Registration error:', error);
 
     // Handle specific errors
     if (error.message?.includes('כבר קיים')) {

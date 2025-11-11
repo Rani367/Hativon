@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { clearAuthCookie } from '@/lib/auth/jwt';
+import { logError } from '@/lib/logger';
 
 export async function POST() {
   try {
@@ -16,7 +17,7 @@ export async function POST() {
       }
     );
   } catch (error) {
-    console.error('Logout error:', error);
+    logError('Logout error:', error);
     return NextResponse.json(
       { success: false, message: 'שגיאה בהתנתקות' },
       { status: 500 }

@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Save, Eye, Upload, X } from "lucide-react";
+import { logError } from '@/lib/logger';
 
 export default function NewPostPage() {
   const router = useRouter();
@@ -54,7 +55,7 @@ export default function NewPostPage() {
         alert("העלאת התמונה נכשלה");
       }
     } catch (error) {
-      console.error("Failed to upload image:", error);
+      logError("Failed to upload image:", error);
       alert("העלאת התמונה נכשלה");
     } finally {
       setUploading(false);
@@ -89,7 +90,7 @@ export default function NewPostPage() {
         alert("יצירת הכתבה נכשלה");
       }
     } catch (error) {
-      console.error("Failed to create post:", error);
+      logError("Failed to create post:", error);
       alert("יצירת הכתבה נכשלה");
     } finally {
       setLoading(false);

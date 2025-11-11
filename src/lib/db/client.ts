@@ -24,12 +24,37 @@ function getLocalPool(): Pool {
 
 /**
  * Database query function that adapts to environment
+ * Supports both template literal and array syntax
  */
 export const db = {
-  query: async (strings: TemplateStringsArray, ...values: any[]) => {
+  query: async (strings: TemplateStringsArray | any[], ...values: any[]) => {
+    // Handle array syntax: [query, ...params]
+    if (Array.isArray(strings) && typeof strings[0] === 'string' && !('raw' in strings)) {
+      const [queryString, ...params] = strings;
+
+      if (isVercelProduction) {
+        // For Vercel, we need to use parameterized query
+        const pool = getLocalPool();
+        if (!pool) {
+          throw new Error('Database connection not configured');
+        }
+        return pool.query(queryString, params);
+      }
+
+      // For local, use pg directly
+      const pool = getLocalPool();
+      if (!pool) {
+        throw new Error('Database connection not configured. Set POSTGRES_URL in .env.local');
+      }
+      return pool.query(queryString, params);
+    }
+
+    // Handle template literal syntax
+    const templateStrings = strings as TemplateStringsArray;
+
     // In Vercel production, use @vercel/postgres
     if (isVercelProduction) {
-      return sql(strings, ...values);
+      return sql(templateStrings, ...values);
     }
 
     // In local development, use standard pg
@@ -39,7 +64,7 @@ export const db = {
     }
 
     // Convert template literal to SQL query
-    const query = strings.reduce((acc, str, i) => {
+    const query = templateStrings.reduce((acc, str, i) => {
       return acc + str + (i < values.length ? `$${i + 1}` : '');
     }, '');
 

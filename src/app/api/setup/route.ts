@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db/client';
 import { head } from '@vercel/blob';
+import { logError } from '@/lib/logger';
 
 /**
  * One-time setup endpoint for Vercel production
@@ -225,7 +226,7 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error: any) {
-    console.error('Setup error:', error);
+    logError('Setup error:', error);
     return NextResponse.json(
       {
         success: false,

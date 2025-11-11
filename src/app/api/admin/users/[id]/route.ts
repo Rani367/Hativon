@@ -3,6 +3,7 @@ import { getUserById, updateUser, deleteUser } from '@/lib/users';
 import { requireAdminAuth } from '@/lib/auth/admin';
 import { UserUpdate } from '@/types/user.types';
 import { isDatabaseAvailable } from '@/lib/db/client';
+import { logError } from '@/lib/logger';
 
 /**
  * GET /api/admin/users/[id] - Get single user (admin only)
@@ -35,7 +36,7 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    console.error('Error fetching user:', error);
+    logError('Error fetching user:', error);
     return NextResponse.json(
       { error: `Failed to fetch user: ${error.message}` },
       { status: 500 }
@@ -76,7 +77,7 @@ export async function PATCH(
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    console.error('Error updating user:', error);
+    logError('Error updating user:', error);
     return NextResponse.json(
       { error: `Failed to update user: ${error.message}` },
       { status: 500 }
@@ -118,7 +119,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    console.error('Error deleting user:', error);
+    logError('Error deleting user:', error);
     return NextResponse.json(
       { error: `Failed to delete user: ${error.message}` },
       { status: 500 }
