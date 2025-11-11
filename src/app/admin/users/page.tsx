@@ -11,6 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { logError } from '@/lib/logger';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -55,14 +56,14 @@ export default function UsersManagementPage() {
           return;
         }
 
-        console.error("API Error:", response.status, errorData);
+        logError("API Error:", response.status, errorData);
         throw new Error(errorData.error || "Failed to fetch users");
       }
 
       const data = await response.json();
       setUsers(data.users || []);
     } catch (error: any) {
-      console.error("Failed to fetch users:", error);
+      logError("Failed to fetch users:", error);
       toast.error(`שגיאה בטעינת משתמשים: ${error.message}`);
     } finally {
       setLoading(false);
@@ -94,7 +95,7 @@ export default function UsersManagementPage() {
       setDeleteDialogOpen(false);
       setUserToDelete(null);
     } catch (error) {
-      console.error("Failed to delete user:", error);
+      logError("Failed to delete user:", error);
       toast.error("שגיאה במחיקת המשתמש");
     } finally {
       setDeleting(false);

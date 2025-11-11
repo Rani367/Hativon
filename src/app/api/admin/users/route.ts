@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getAllUsers } from '@/lib/users';
 import { requireAdminAuth } from '@/lib/auth/admin';
 import { isDatabaseAvailable } from '@/lib/db/client';
+import { logError } from '@/lib/logger';
 
 /**
  * GET /api/admin/users - Get all users (admin only)
@@ -35,7 +36,7 @@ export async function GET() {
       );
     }
 
-    console.error('Error fetching users:', error);
+    logError('Error fetching users:', error);
     return NextResponse.json(
       { error: `Failed to fetch users: ${error.message}` },
       { status: 500 }

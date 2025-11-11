@@ -9,6 +9,7 @@ import { Search, Trash2 } from "lucide-react";
 import { Post } from "@/types/post.types";
 import { format } from "date-fns";
 import { he } from "date-fns/locale";
+import { logError } from '@/lib/logger';
 
 export default function PostsListPage() {
   const [posts, setPosts] = useState<Post[]>([]);
@@ -47,7 +48,7 @@ export default function PostsListPage() {
       setPosts(data.posts || []);
       setFilteredPosts(data.posts || []);
     } catch (error) {
-      console.error("Failed to fetch posts:", error);
+      logError("Failed to fetch posts:", error);
     } finally {
       setLoading(false);
     }
@@ -65,7 +66,7 @@ export default function PostsListPage() {
         fetchPosts();
       }
     } catch (error) {
-      console.error("Failed to delete post:", error);
+      logError("Failed to delete post:", error);
     }
   }
 

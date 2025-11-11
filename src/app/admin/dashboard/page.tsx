@@ -8,6 +8,7 @@ import { FileText, Eye, EyeOff, Calendar, TrendingUp } from "lucide-react";
 import { PostStats, Post } from "@/types/post.types";
 import { format } from "date-fns";
 import { he } from "date-fns/locale";
+import { logError } from '@/lib/logger';
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState<PostStats | null>(null);
@@ -23,7 +24,7 @@ export default function AdminDashboard() {
         setStats(data.stats);
         setRecentPosts(data.posts ? data.posts.slice(0, 5) : []); // Get 5 most recent
       } catch (error) {
-        console.error("Failed to fetch data:", error);
+        logError("Failed to fetch data:", error);
       } finally {
         setLoading(false);
       }

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAdminPassword, setAdminAuth } from '@/lib/auth/admin';
+import { logError } from '@/lib/logger';
 
 /**
  * POST /api/admin/verify-password - Verify admin password
@@ -32,7 +33,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Error verifying admin password:', error);
+    logError('Error verifying admin password:', error);
     return NextResponse.json(
       { error: 'Failed to verify password' },
       { status: 500 }
