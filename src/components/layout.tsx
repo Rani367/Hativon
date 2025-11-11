@@ -13,19 +13,19 @@ export default function Layout({ children }: LayoutProps) {
     <div className="min-h-screen bg-background">
       <header className="border-b">
         <nav className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12">
-          <div className="flex justify-between items-center h-20 relative">
-            <div className="flex items-center gap-4">
+          <div className="grid grid-cols-3 items-center h-16 sm:h-20 gap-2 sm:gap-4">
+            <div className="flex items-center gap-2 sm:gap-4 justify-start">
               <NewPostButton />
             </div>
-            <div className="absolute left-1/2 transform -translate-x-1/2">
+            <div className="flex items-center justify-center">
               <Link
                 href="/"
-                className="flex items-center text-2xl font-bold text-foreground"
+                className="flex items-center text-lg sm:text-xl md:text-2xl font-bold text-foreground"
               >
                 חטיבון
               </Link>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 sm:gap-4 justify-end">
               <UserMenu />
               <ModeToggle />
             </div>

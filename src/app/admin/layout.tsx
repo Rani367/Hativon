@@ -71,7 +71,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
         <div className="flex">
           {/* Sidebar Skeleton */}
-          <aside className="hidden lg:block w-64 border-r bg-background">
+          <aside className="hidden lg:block w-64 border-l bg-background">
             <nav className="space-y-1 p-4">
               {[1, 2, 3].map((i) => (
                 <div key={i} className="h-10 rounded-lg bg-muted animate-pulse" />
@@ -110,7 +110,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <div className="container flex h-14 items-center">
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="mr-4 lg:hidden"
+            className="ms-4 lg:hidden"
           >
             <Menu className="h-6 w-6" />
           </button>
@@ -135,8 +135,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         {/* Sidebar */}
         <aside
           className={`${
-            sidebarOpen ? "translate-x-0" : "-translate-x-full"
-          } fixed inset-y-0 left-0 z-40 w-64 border-r bg-background transition-transform lg:translate-x-0 lg:static`}
+            sidebarOpen ? "translate-x-0" : "translate-x-full"
+          } fixed inset-y-0 right-0 z-[60] w-64 border-l bg-background transition-transform lg:translate-x-0 lg:static`}
         >
           <nav className="space-y-1 p-4 pt-20 lg:pt-4">
             {navItems.map((item) => {
@@ -171,7 +171,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       {/* Overlay for mobile sidebar */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 z-30 bg-black/50 lg:hidden"
+          className="fixed inset-0 z-50 bg-black/50 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}

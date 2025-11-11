@@ -51,7 +51,7 @@ export function UserMenu() {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="sm" className="gap-2">
           <User className="h-4 w-4" />
-          <span>{user.displayName}</span>
+          <span className="hidden sm:inline max-w-[120px] truncate">{user.displayName}</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
