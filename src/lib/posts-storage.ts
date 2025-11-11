@@ -1,6 +1,7 @@
 import { Post, PostInput, PostStats } from '@/types/post.types';
 import { db } from './db/client';
 import { v4 as uuidv4 } from 'uuid';
+import type { PostQueryResult, DbPostRow, DbMutationResult, StatsQueryResult } from '@/types/database.types';
 
 /**
  * Generate slug from title
@@ -31,7 +32,7 @@ function generateDescription(content: string): string {
 /**
  * Convert database row to Post object
  */
-function rowToPost(row: any): Post {
+function rowToPost(row: DbPostRow): Post {
   return {
     id: row.id,
     title: row.title,
@@ -62,13 +63,13 @@ export async function getPosts(filterPublished = false): Promise<Post[]> {
           SELECT * FROM posts
           WHERE status = 'published'
           ORDER BY date DESC, created_at DESC
-        `
+        ` as PostQueryResult
       : await db.query`
           SELECT * FROM posts
           ORDER BY date DESC, created_at DESC
-        `;
+        ` as PostQueryResult;
 
-    return (result as any).rows.map(rowToPost);
+    return result.rows.map(rowToPost);
   } catch (error) {
     console.error('Error fetching posts:', error);
     return [];
@@ -83,13 +84,13 @@ export async function getPostById(id: string): Promise<Post | null> {
     const result = await db.query`
       SELECT * FROM posts
       WHERE id = ${id}
-    `;
+    ` as PostQueryResult;
 
-    if ((result as any).rows.length === 0) {
+    if (result.rows.length === 0) {
       return null;
     }
 
-    return rowToPost((result as any).rows[0]);
+    return rowToPost(result.rows[0]);
   } catch (error) {
     console.error('Error fetching post by ID:', error);
     return null;
@@ -104,13 +105,13 @@ export async function getPostBySlug(slug: string): Promise<Post | null> {
     const result = await db.query`
       SELECT * FROM posts
       WHERE slug = ${slug} AND status = 'published'
-    `;
+    ` as PostQueryResult;
 
-    if ((result as any).rows.length === 0) {
+    if (result.rows.length === 0) {
       return null;
     }
 
-    return rowToPost((result as any).rows[0]);
+    return rowToPost(result.rows[0]);
   } catch (error) {
     console.error('Error fetching post by slug:', error);
     return null;
@@ -153,9 +154,9 @@ export async function createPost(input: PostInput): Promise<Post> {
         ${now}
       )
       RETURNING *
-    `;
+    ` as PostQueryResult;
 
-    return rowToPost((result as any).rows[0]);
+    return rowToPost(result.rows[0]);
   } catch (error) {
     console.error('Error creating post:', error);
     throw error;
@@ -174,7 +175,7 @@ export async function updatePost(id: string, input: Partial<PostInput>): Promise
     }
 
     // Build the update fields
-    const updates: any = {};
+    const updates: Record<string, string | number | string[] | null> = {};
 
     if (input.title !== undefined) {
       updates.title = input.title;
@@ -199,17 +200,17 @@ export async function updatePost(id: string, input: Partial<PostInput>): Promise
     const setters = Object.keys(updates).map((key, index) => `${key} = $${index + 2}`).join(', ');
     const values = Object.values(updates);
 
-    const result = await db.query([
+    const result = (await db.query([
       `UPDATE posts SET ${setters}, updated_at = CURRENT_TIMESTAMP WHERE id = $1 RETURNING *`,
       id,
       ...values
-    ] as any);
+    ])) as PostQueryResult;
 
-    if ((result as any).rows.length === 0) {
+    if (result.rows.length === 0) {
       return null;
     }
 
-    return rowToPost((result as any).rows[0]);
+    return rowToPost(result.rows[0]);
   } catch (error) {
     console.error('Error updating post:', error);
     throw error;
@@ -224,9 +225,9 @@ export async function deletePost(id: string): Promise<boolean> {
     const result = await db.query`
       DELETE FROM posts
       WHERE id = ${id}
-    `;
+    ` as unknown as DbMutationResult;
 
-    return (result as any).rowCount > 0;
+    return result.rowCount > 0;
   } catch (error) {
     console.error('Error deleting post:', error);
     return false;
@@ -247,9 +248,9 @@ export async function getPostStats(): Promise<PostStats> {
         SUM(CASE WHEN created_at >= CURRENT_DATE - INTERVAL '7 days' THEN 1 ELSE 0 END) as this_week,
         SUM(CASE WHEN created_at >= DATE_TRUNC('month', CURRENT_DATE) THEN 1 ELSE 0 END) as this_month
       FROM posts
-    `;
+    ` as StatsQueryResult;
 
-    const row = (result as any).rows[0];
+    const row = result.rows[0];
     return {
       total: parseInt(row.total) || 0,
       published: parseInt(row.published) || 0,
@@ -316,9 +317,9 @@ export async function getPostsByAuthor(authorId: string): Promise<Post[]> {
       SELECT * FROM posts
       WHERE author_id = ${authorId}
       ORDER BY date DESC, created_at DESC
-    `;
+    ` as PostQueryResult;
 
-    return (result as any).rows.map(rowToPost);
+    return result.rows.map(rowToPost);
   } catch (error) {
     console.error('Error fetching posts by author:', error);
     return [];

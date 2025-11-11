@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { User, UserLogin, UserRegistration } from '@/types/user.types';
+import { logError } from '@/lib/logger';
 
 interface AuthContextType {
   user: User | null;
@@ -30,7 +31,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(null);
       }
     } catch (error) {
-      console.error('Auth check failed:', error);
+      logError('Auth check failed:', error);
       setUser(null);
     } finally {
       setLoading(false);
@@ -55,7 +56,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return { success: false, message: data.message || 'התחברות נכשלה' };
       }
     } catch (error) {
-      console.error('Login failed:', error);
+      logError('Login failed:', error);
       return { success: false, message: 'שגיאה בהתחברות' };
     }
   }, []);
@@ -78,7 +79,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return { success: false, message: result.message || 'הרשמה נכשלה' };
       }
     } catch (error) {
-      console.error('Registration failed:', error);
+      logError('Registration failed:', error);
       return { success: false, message: 'שגיאה בהרשמה' };
     }
   }, []);
@@ -91,7 +92,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
       setUser(null);
     } catch (error) {
-      console.error('Logout failed:', error);
+      logError('Logout failed:', error);
     }
   }, []);
 

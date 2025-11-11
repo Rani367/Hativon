@@ -4,6 +4,7 @@ import { getPostById, updatePost, deletePost, canUserEditPost, canUserDeletePost
 import { PostInput } from '@/types/post.types';
 import { getCurrentUser } from '@/lib/auth/middleware';
 import { isAdminAuthenticated } from '@/lib/auth/admin';
+import { logError } from '@/lib/logger';
 
 // GET /api/admin/posts/[id] - Get single post
 export async function GET(
@@ -34,7 +35,7 @@ export async function GET(
 
     return NextResponse.json(post);
   } catch (error) {
-    console.error('Error fetching post:', error);
+    logError('Error fetching post:', error);
     return NextResponse.json(
       { error: 'Failed to fetch post' },
       { status: 500 }
@@ -77,7 +78,7 @@ export async function PATCH(
 
     return NextResponse.json(updatedPost);
   } catch (error) {
-    console.error('Error updating post:', error);
+    logError('Error updating post:', error);
     return NextResponse.json(
       { error: 'Failed to update post' },
       { status: 500 }
@@ -118,7 +119,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Error deleting post:', error);
+    logError('Error deleting post:', error);
     return NextResponse.json(
       { error: 'Failed to delete post' },
       { status: 500 }

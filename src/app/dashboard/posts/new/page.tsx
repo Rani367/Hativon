@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Save, Eye, Upload, X, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { logError } from '@/lib/logger';
 
 export default function NewPostPage() {
   const router = useRouter();
@@ -55,7 +56,7 @@ export default function NewPostPage() {
         alert("העלאת התמונה נכשלה");
       }
     } catch (error) {
-      console.error("Failed to upload image:", error);
+      logError("Failed to upload image:", error);
       alert("העלאת התמונה נכשלה");
     } finally {
       setUploading(false);
@@ -101,7 +102,7 @@ export default function NewPostPage() {
       router.refresh();
       router.push("/dashboard");
     } catch (error) {
-      console.error("Failed to create post:", error);
+      logError("Failed to create post:", error);
       toast.dismiss(loadingToast);
       toast.error("יצירת הפוסט נכשלה");
       setLoading(false);

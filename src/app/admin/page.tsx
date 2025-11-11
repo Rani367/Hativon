@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { logError } from '@/lib/logger';
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -17,7 +18,7 @@ export default function AdminLoginPage() {
           router.push("/admin/dashboard");
         }
       } catch (error) {
-        console.error("Auth check failed:", error);
+        logError("Auth check failed:", error);
       }
     }
 

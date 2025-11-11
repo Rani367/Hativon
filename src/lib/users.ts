@@ -1,6 +1,7 @@
 import { db } from './db/client';
 import bcrypt from 'bcryptjs';
 import { User, UserRegistration, UserUpdate } from '@/types/user.types';
+import type { UserQueryResult, DbMutationResult, ExistsQueryResult } from '@/types/database.types';
 
 const SALT_ROUNDS = 12;
 
@@ -27,15 +28,16 @@ export async function createUser(data: UserRegistration): Promise<User> {
         created_at as "createdAt",
         updated_at as "updatedAt",
         last_login as "lastLogin"
-    ` as any;
+    ` as UserQueryResult;
 
     return result.rows[0] as User;
-  } catch (error: any) {
-    if (error.message?.includes('duplicate key')) {
-      if (error.message.includes('username')) {
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    if (errorMessage.includes('duplicate key')) {
+      if (errorMessage.includes('username')) {
         throw new Error('שם המשתמש כבר קיים במערכת');
       }
-      if (error.message.includes('email')) {
+      if (errorMessage.includes('email')) {
         throw new Error('כתובת האימייל כבר קיימת במערכת');
       }
     }
@@ -60,7 +62,7 @@ export async function getUserById(id: string): Promise<User | null> {
       last_login as "lastLogin"
     FROM users
     WHERE id = ${id}
-  ` as any;
+  ` as UserQueryResult;
 
   return (result.rows[0] as User) || null;
 }
@@ -82,7 +84,7 @@ export async function getUserByUsername(username: string): Promise<User | null> 
       last_login as "lastLogin"
     FROM users
     WHERE username = ${username}
-  ` as any;
+  ` as UserQueryResult;
 
   return (result.rows[0] as User) || null;
 }
@@ -105,7 +107,7 @@ async function getUserWithPassword(username: string): Promise<(User & { password
       last_login as "lastLogin"
     FROM users
     WHERE username = ${username}
-  ` as any;
+  ` as UserQueryResult;
 
   return (result.rows[0] as (User & { passwordHash: string })) || null;
 }
@@ -139,7 +141,7 @@ export async function updateLastLogin(userId: string): Promise<void> {
     UPDATE users
     SET last_login = CURRENT_TIMESTAMP
     WHERE id = ${userId}
-  ` as any;
+  ` as unknown as DbMutationResult;
 }
 
 /**
@@ -159,7 +161,7 @@ export async function getAllUsers(): Promise<User[]> {
       last_login as "lastLogin"
     FROM users
     ORDER BY created_at DESC
-  ` as any;
+  ` as UserQueryResult;
 
   return result.rows as User[];
 }
@@ -189,7 +191,7 @@ export async function updateUser(userId: string, updates: UserUpdate): Promise<U
       created_at as "createdAt",
       updated_at as "updatedAt",
       last_login as "lastLogin"
-  ` as any;
+  ` as UserQueryResult;
 
   if (result.rows.length === 0) {
     throw new Error('משתמש לא נמצא');
@@ -202,7 +204,7 @@ export async function updateUser(userId: string, updates: UserUpdate): Promise<U
  * Delete user
  */
 export async function deleteUser(userId: string): Promise<void> {
-  await db.query`DELETE FROM users WHERE id = ${userId}` as any;
+  await db.query`DELETE FROM users WHERE id = ${userId}` as unknown as DbMutationResult;
 }
 
 /**
@@ -211,7 +213,7 @@ export async function deleteUser(userId: string): Promise<void> {
 export async function usernameExists(username: string): Promise<boolean> {
   const result = await db.query`
     SELECT EXISTS(SELECT 1 FROM users WHERE username = ${username}) as exists
-  ` as any;
+  ` as ExistsQueryResult;
   return result.rows[0].exists;
 }
 

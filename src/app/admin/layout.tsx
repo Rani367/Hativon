@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Home, FileText, LogOut, Menu, Users } from "lucide-react";
 import { AdminPasswordGate } from "@/components/admin-password-gate";
+import { logError } from '@/lib/logger';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -28,7 +29,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
         setIsAdmin(data.isAdmin || false);
       } catch (error) {
-        console.error("Auth check failed:", error);
+        logError("Auth check failed:", error);
       } finally {
         setChecking(false);
       }
@@ -43,7 +44,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       setIsAdmin(false);
       router.push("/admin");
     } catch (error) {
-      console.error("Logout failed:", error);
+      logError("Logout failed:", error);
     }
   };
 

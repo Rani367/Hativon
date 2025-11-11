@@ -12,6 +12,7 @@ import { Post } from "@/types/post.types";
 import { format } from "date-fns";
 import { he } from "date-fns/locale";
 import { toast } from "sonner";
+import { logError } from '@/lib/logger';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -32,7 +33,7 @@ export default function DashboardPage() {
       const data = await response.json();
       setPosts(data.posts || []);
     } catch (error) {
-      console.error("Failed to fetch posts:", error);
+      logError("Failed to fetch posts:", error);
       toast.error("שגיאה בטעינת פוסטים");
     } finally {
       setIsLoading(false);
@@ -81,7 +82,7 @@ export default function DashboardPage() {
       router.refresh();
       await fetchPosts();
     } catch (error) {
-      console.error("Failed to delete post:", error);
+      logError("Failed to delete post:", error);
       toast.dismiss(loadingToast);
       toast.error(`שגיאה במחיקת הכתבה: ${error instanceof Error ? error.message : 'שגיאה לא ידועה'}`);
     }
