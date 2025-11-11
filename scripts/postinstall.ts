@@ -98,7 +98,7 @@ if (hasPostgresUrl) {
 }
 
 // Step 4: Auto-configure database if PostgreSQL is available and not already configured
-if (hasPostgres && !dbConfigured && isNewEnv) {
+if (hasPostgres && !dbConfigured) {
   console.log('\n[INFO] Configuring local database...');
 
   const dbName = 'school_newspaper';
@@ -164,39 +164,54 @@ if (hasPostgres && !dbConfigured && isNewEnv) {
 }
 
 // Step 5: Initialize database schema if database is configured
-if (dbConfigured && isNewEnv) {
-  console.log('\n[INFO] Initializing database schema...');
+if (dbConfigured) {
+  console.log('\n[INFO] Checking database schema...');
   try {
     // Re-read .env.local to get POSTGRES_URL
     const envContent = readFileSync(envPath, 'utf-8');
     const postgresUrlMatch = envContent.match(/POSTGRES_URL=(.+)/);
 
     if (postgresUrlMatch) {
-      // Set environment variable for child process
-      process.env.POSTGRES_URL = postgresUrlMatch[1];
+      const dbUrl = postgresUrlMatch[1];
+      process.env.POSTGRES_URL = dbUrl;
 
-      // Run db:init using tsx directly
-      execSync('npx tsx scripts/init-db.ts --silent', {
-        stdio: 'pipe',
-        cwd: projectRoot,
-        env: { ...process.env, POSTGRES_URL: postgresUrlMatch[1] },
-        timeout: 10000
-      });
-
-      console.log('[OK] Database schema initialized');
-
-      // Step 6: Create default admin user
-      console.log('\n[INFO] Creating default admin user...');
+      // Check if schema is already initialized
+      let schemaExists = false;
       try {
-        execSync('npx tsx scripts/create-admin-simple.ts', {
+        const checkSchema = `psql "${dbUrl}" -c "SELECT 1 FROM users LIMIT 1" -t 2>&1`;
+        execSync(checkSchema, { stdio: 'pipe', timeout: 5000 });
+        console.log('[OK] Database schema already initialized');
+        schemaExists = true;
+      } catch {
+        // Schema doesn't exist, initialize it
+        console.log('[INFO] Initializing database schema...');
+
+        // Run db:init using tsx directly
+        execSync('npx tsx scripts/init-db.ts --silent', {
           stdio: 'pipe',
           cwd: projectRoot,
-          env: { ...process.env, POSTGRES_URL: postgresUrlMatch[1] },
+          env: { ...process.env, POSTGRES_URL: dbUrl },
           timeout: 10000
         });
-        console.log('[OK] Admin user created (username: admin, password: admin123)');
-      } catch (userError) {
-        console.log('[WARNING] Could not create admin user (may already exist)');
+
+        console.log('[OK] Database schema initialized');
+        schemaExists = true;
+      }
+
+      // Step 6: Create test user (always check)
+      if (schemaExists) {
+        console.log('\n[INFO] Checking test user...');
+        try {
+          execSync('npx tsx scripts/create-test-user-simple.ts', {
+            stdio: 'pipe',
+            cwd: projectRoot,
+            env: { ...process.env, POSTGRES_URL: dbUrl },
+            timeout: 10000
+          });
+          console.log('[OK] Test user created (username: user, password: 12345678)');
+        } catch (userError) {
+          console.log('[OK] Test user already exists');
+        }
       }
     }
   } catch (error: any) {
@@ -205,7 +220,7 @@ if (dbConfigured && isNewEnv) {
   }
 }
 
-// Step 7: Show completion message
+// Step 8: Show completion message
 console.log('\n' + '═'.repeat(60));
 console.log('[OK] Setup complete! Everything is ready to go.');
 console.log('═'.repeat(60));
@@ -214,10 +229,13 @@ console.log('   pnpm run dev');
 console.log('\n   Then open http://localhost:3000\n');
 
 if (dbConfigured) {
-  console.log('[INFO] Login credentials:');
-  console.log('   Username: admin');
-  console.log('   Password: admin123\n');
-  console.log('[WARNING] Change the password in production!\n');
+  console.log('[INFO] Test user credentials:');
+  console.log('   Username: user');
+  console.log('   Password: 12345678\n');
+  console.log('[INFO] Admin panel access:');
+  console.log('   URL: http://localhost:3000/admin');
+  console.log('   Password: admin123 (from ADMIN_PASSWORD in .env.local)\n');
+  console.log('[WARNING] Change passwords in production!\n');
 } else {
   console.log('[INFO] Running in admin-only mode');
   console.log('   Access admin panel at: http://localhost:3000/admin');

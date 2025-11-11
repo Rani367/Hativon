@@ -136,7 +136,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <aside
           className={`${
             sidebarOpen ? "translate-x-0" : "translate-x-full"
-          } fixed inset-y-0 right-0 z-40 w-64 border-l bg-background transition-transform lg:translate-x-0 lg:static`}
+          } fixed inset-y-0 right-0 z-[60] w-64 border-l bg-background transition-transform lg:translate-x-0 lg:static`}
         >
           <nav className="space-y-1 p-4 pt-20 lg:pt-4">
             {navItems.map((item) => {
@@ -171,7 +171,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       {/* Overlay for mobile sidebar */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 z-30 bg-black/50 lg:hidden"
+          className="fixed inset-0 z-50 bg-black/50 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
