@@ -101,7 +101,7 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
         />
       </div>
 
-      <div className="flex gap-4">
+      <div className="flex flex-col sm:flex-row gap-4">
         <div className="flex-1 space-y-2">
           <Label htmlFor="register-classNumber" className="text-right block">מספר כיתה</Label>
           <Select value={classNumber.toString()} onValueChange={(value) => setClassNumber(Number(value))} disabled={loading}>

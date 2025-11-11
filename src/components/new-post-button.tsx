@@ -37,7 +37,7 @@ export function NewPostButton() {
         className="gap-2 cursor-pointer"
       >
         <PenSquare className="h-4 w-4" />
-        <span>פוסט חדש</span>
+        <span className="hidden sm:inline">פוסט חדש</span>
       </Button>
       <AuthDialog open={authDialogOpen} onOpenChange={setAuthDialogOpen} />
     </>
