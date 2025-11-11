@@ -719,11 +719,11 @@ function validateCodeQuality() {
     }
 
     if (missingErrorHandling > 0) {
-      addResult('Quality', 'Error Handling', false, false,
-        `${missingErrorHandling} API routes missing error handling`,
+      addResult('Quality', 'Exception Handling', false, false,
+        `${missingErrorHandling} API routes missing exception handling`,
         'Add try-catch blocks or .catch() handlers');
     } else {
-      addResult('Quality', 'Error Handling', true, false, 'All API routes have error handling');
+      addResult('Quality', 'Exception Handling', true, false, 'All API routes have exception handling');
     }
   }
 
