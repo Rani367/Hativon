@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { Search, Download, Trash2 } from "lucide-react";
+import { Search, Trash2 } from "lucide-react";
 import { Post } from "@/types/post.types";
 import { format } from "date-fns";
 import { he } from "date-fns/locale";
@@ -69,22 +69,12 @@ export default function PostsListPage() {
     }
   }
 
-  async function handleExport() {
-    window.location.href = "/api/admin/posts/export";
-  }
-
   if (loading) {
     return (
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div className="space-y-2">
-            <div className="h-9 w-32 rounded bg-muted animate-pulse" />
-            <div className="h-4 w-48 rounded bg-muted animate-pulse" />
-          </div>
-          <div className="flex gap-2">
-            <div className="h-10 w-28 rounded-md bg-muted animate-pulse" />
-            <div className="h-10 w-32 rounded-md bg-muted animate-pulse" />
-          </div>
+        <div>
+          <div className="h-9 w-32 rounded bg-muted animate-pulse" />
+          <div className="h-4 w-48 rounded bg-muted animate-pulse mt-2" />
         </div>
 
         {/* Filters Skeleton */}
@@ -150,17 +140,11 @@ export default function PostsListPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">כל הכתבות</h1>
-          <p className="text-muted-foreground mt-1">
-            נהל את כתבות העיתון
-          </p>
-        </div>
-        <Button variant="outline" onClick={handleExport}>
-          <Download className="h-4 w-4 me-2" />
-          ייצא CSV
-        </Button>
+      <div>
+        <h1 className="text-3xl font-bold">כל הכתבות</h1>
+        <p className="text-muted-foreground mt-1">
+          נהל את כתבות העיתון
+        </p>
       </div>
 
       {/* Filters */}
