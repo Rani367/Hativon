@@ -694,7 +694,7 @@ function validateCodeQuality() {
   }
 
   // Check for proper error handling in API routes
-  console.log('  Checking error handling...');
+  console.log('  Validating API exception handling...');
   if (fs.existsSync('src/app/api')) {
     const apiFiles = runCommand(`find src/app/api -name "route.ts"`, true).output.trim().split('\n').filter(f => f);
 
@@ -722,7 +722,7 @@ function validateCodeQuality() {
   }
 
   // Check file/folder naming conventions
-  console.log('  Checking naming conventions...');
+  console.log('  Validating naming conventions...');
   const badNames = runCommand(`find src -name "*[A-Z]*" -type f | grep -v ".tsx\\|.ts\\|node_modules" || true`, true);
 
   if (badNames.output.trim()) {
@@ -845,7 +845,7 @@ async function main() {
   console.log(`${colors.bold}${colors.cyan}`);
   console.log(`${'='.repeat(80)}`);
   console.log(`COMPREHENSIVE PRE-DEPLOYMENT VALIDATION`);
-  console.log(`No error should make it to production!`);
+  console.log(`Ensuring production-ready code quality`);
   console.log(`${'='.repeat(80)}`);
   console.log(`${colors.reset}\n`);
 
