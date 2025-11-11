@@ -4,6 +4,7 @@ import { getPosts, createPost, getPostStats, getPostsByAuthor } from '@/lib/post
 import { PostInput } from '@/types/post.types';
 import { getCurrentUser } from '@/lib/auth/middleware';
 import { isAdminAuthenticated } from '@/lib/auth/admin';
+import { logError } from '@/lib/logger';
 
 // GET /api/admin/posts - Get all posts (admin) or user's posts (regular user)
 export async function GET(request: NextRequest) {
@@ -63,7 +64,7 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('Error fetching posts:', error);
+    logError('Error fetching posts:', error);
     return NextResponse.json(
       { error: 'Failed to fetch posts' },
       { status: 500 }
@@ -108,7 +109,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(newPost, { status: 201 });
   } catch (error) {
-    console.error('Error creating post:', error);
+    logError('Error creating post:', error);
     return NextResponse.json(
       { error: 'Failed to create post' },
       { status: 500 }

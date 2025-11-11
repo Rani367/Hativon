@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth/middleware';
+import { logError } from '@/lib/logger';
 
 export async function GET() {
   try {
@@ -16,7 +17,7 @@ export async function GET() {
       user,
     });
   } catch (error) {
-    console.error('Session check error:', error);
+    logError('Session check error:', error);
     return NextResponse.json({
       authenticated: false,
     });

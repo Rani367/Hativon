@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth/middleware';
 import { updateUser } from '@/lib/users';
 import { UserUpdate } from '@/types/user.types';
+import { logError } from '@/lib/logger';
 
 /**
  * PATCH /api/user/profile - Update current user's profile
@@ -38,7 +39,7 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    console.error('Error updating profile:', error);
+    logError('Error updating profile:', error);
     return NextResponse.json(
       { error: `Failed to update profile: ${error.message}` },
       { status: 500 }

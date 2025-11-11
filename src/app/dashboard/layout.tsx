@@ -5,6 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { FileText, PlusCircle, LogOut, Menu } from "lucide-react";
+import { logError } from '@/lib/logger';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -30,7 +31,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           router.push("/");
         }
       } catch (error) {
-        console.error("Auth check failed:", error);
+        logError("Auth check failed:", error);
         router.push("/");
       } finally {
         setChecking(false);
@@ -45,7 +46,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       await fetch("/api/auth/logout", { method: "POST" });
       router.push("/");
     } catch (error) {
-      console.error("Logout failed:", error);
+      logError("Logout failed:", error);
     }
   };
 

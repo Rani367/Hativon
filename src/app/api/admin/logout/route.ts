@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { clearAdminAuth } from '@/lib/auth/admin';
+import { logError } from '@/lib/logger';
 
 /**
  * Logout admin (clear admin password session)
@@ -13,7 +14,7 @@ export async function POST() {
       { status: 200 }
     );
   } catch (error) {
-    console.error('Admin logout error:', error);
+    logError('Admin logout error:', error);
     return NextResponse.json(
       { success: false, message: 'שגיאה בהתנתקות' },
       { status: 500 }

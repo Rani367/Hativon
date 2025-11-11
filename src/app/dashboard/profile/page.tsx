@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import { logError } from '@/lib/logger';
 import { User as UserIcon, Save, Loader2 } from "lucide-react";
 import { Grade } from "@/types/user.types";
 
@@ -75,7 +76,7 @@ export default function ProfilePage() {
       toast.success("הפרופיל עודכן בהצלחה");
       router.push("/dashboard");
     } catch (error: any) {
-      console.error("Failed to update profile:", error);
+      logError("Failed to update profile:", error);
       toast.error(`שגיאה בעדכון הפרופיל: ${error.message}`);
     } finally {
       setSaving(false);

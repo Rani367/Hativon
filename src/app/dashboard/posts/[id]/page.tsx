@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Save, Eye, Trash2, Upload, X } from "lucide-react";
 import { Post } from "@/types/post.types";
+import { logError } from '@/lib/logger';
 
 export default function EditPostPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -42,7 +43,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
           router.push("/dashboard");
         }
       } catch (error) {
-        console.error("Failed to fetch post:", error);
+        logError("Failed to fetch post:", error);
       } finally {
         setLoading(false);
       }
@@ -85,7 +86,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
         alert("העלאת התמונה נכשלה");
       }
     } catch (error) {
-      console.error("Failed to upload image:", error);
+      logError("Failed to upload image:", error);
       alert("העלאת התמונה נכשלה");
     } finally {
       setUploading(false);
@@ -122,7 +123,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
       router.refresh();
       router.push("/dashboard");
     } catch (error) {
-      console.error("Failed to update post:", error);
+      logError("Failed to update post:", error);
       alert("עדכון הפוסט נכשל");
       setSaving(false);
     }
@@ -148,7 +149,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
       router.refresh();
       router.push("/dashboard");
     } catch (error) {
-      console.error("Failed to delete post:", error);
+      logError("Failed to delete post:", error);
       alert(`מחיקת הפוסט נכשלה: ${error instanceof Error ? error.message : 'שגיאה לא ידועה'}`);
     }
   };

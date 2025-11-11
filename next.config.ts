@@ -27,6 +27,32 @@ const nextConfig: NextConfig = {
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
   },
+
+  // Optimize bundle size with better code splitting
+  experimental: {
+    optimizePackageImports: [
+      'lucide-react',
+      '@radix-ui/react-dialog',
+      '@radix-ui/react-dropdown-menu',
+      '@radix-ui/react-select',
+      '@radix-ui/react-toast',
+      'react-markdown',
+      'react-syntax-highlighter',
+      'remark-gfm',
+      'remark-math',
+    ],
+  },
+
+  // Production optimizations
+  compiler: {
+    removeConsole: process.env.NODE_ENV === 'production' ? {
+      exclude: ['error', 'warn'],
+    } : false,
+  },
+
+  // Empty turbopack config to silence the warning
+  // Turbopack handles most optimizations automatically
+  turbopack: {},
 };
 
 export default nextConfig;
