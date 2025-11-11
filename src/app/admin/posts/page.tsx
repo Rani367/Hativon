@@ -207,11 +207,11 @@ export default function PostsListPage() {
           <table className="w-full">
             <thead className="border-b">
               <tr className="text-start">
-                <th className="p-4 font-medium">כותרת</th>
-                <th className="p-4 font-medium hidden md:table-cell">קטגוריה</th>
-                <th className="p-4 font-medium hidden lg:table-cell">נוצר</th>
-                <th className="p-4 font-medium">סטטוס</th>
-                <th className="p-4 font-medium text-end">פעולות</th>
+                <th className="p-3 sm:p-4 font-medium">כותרת</th>
+                <th className="p-3 sm:p-4 font-medium hidden md:table-cell">קטגוריה</th>
+                <th className="p-3 sm:p-4 font-medium hidden lg:table-cell">נוצר</th>
+                <th className="p-3 sm:p-4 font-medium">סטטוס</th>
+                <th className="p-3 sm:p-4 font-medium text-end">פעולות</th>
               </tr>
             </thead>
             <tbody>
@@ -224,7 +224,7 @@ export default function PostsListPage() {
               ) : (
                 filteredPosts.map((post) => (
                   <tr key={post.id} className="border-b last:border-0 hover:bg-muted/50">
-                    <td className="p-4">
+                    <td className="p-3 sm:p-4">
                       <div>
                         <div className="font-medium">
                           {post.title}
@@ -234,27 +234,28 @@ export default function PostsListPage() {
                         </p>
                       </div>
                     </td>
-                    <td className="p-4 hidden md:table-cell">
+                    <td className="p-3 sm:p-4 hidden md:table-cell">
                       {post.category && (
                         <Badge variant="secondary">{post.category}</Badge>
                       )}
                     </td>
-                    <td className="p-4 text-sm text-muted-foreground hidden lg:table-cell">
+                    <td className="p-3 sm:p-4 text-sm text-muted-foreground hidden lg:table-cell">
                       {format(new Date(post.createdAt), "d בMMMM yyyy", { locale: he })}
                     </td>
-                    <td className="p-4">
+                    <td className="p-3 sm:p-4">
                       <Badge
                         variant={post.status === "published" ? "default" : "secondary"}
                       >
                         {post.status === "published" ? "פורסם" : "טיוטה"}
                       </Badge>
                     </td>
-                    <td className="p-4">
+                    <td className="p-2 sm:p-4">
                       <div className="flex justify-end gap-2">
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => handleDelete(post.id)}
+                          className="h-10 w-10 sm:h-9 sm:w-9"
                         >
                           <Trash2 className="h-4 w-4 text-destructive" />
                         </Button>

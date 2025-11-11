@@ -140,7 +140,7 @@ export default function NewPostPage() {
               value={form.content}
               onChange={(e) => setForm({ ...form, content: e.target.value })}
               placeholder="כתוב את תוכן הפוסט בפורמט Markdown..."
-              className="min-h-[400px] font-mono"
+              className="min-h-[250px] sm:min-h-[400px] font-mono"
               required
             />
           </div>
@@ -153,7 +153,7 @@ export default function NewPostPage() {
                   <img
                     src={form.coverImage}
                     alt="תצוגה מקדימה"
-                    className="w-full h-48 object-cover"
+                    className="w-full h-40 sm:h-48 object-cover"
                   />
                   <Button
                     type="button"
@@ -204,11 +204,12 @@ export default function NewPostPage() {
         </CardContent>
       </Card>
 
-      <div className="flex justify-end gap-3">
+      <div className="flex flex-wrap justify-end gap-2 sm:gap-3">
         <Button
           variant="outline"
           onClick={() => router.back()}
           disabled={loading}
+          className="flex-1 sm:flex-initial"
         >
           ביטול
         </Button>
@@ -216,6 +217,7 @@ export default function NewPostPage() {
           variant="outline"
           onClick={() => handleSubmit("draft")}
           disabled={loading}
+          className="flex-1 sm:flex-initial"
         >
           {loading ? (
             <Loader2 className="h-4 w-4 me-2 animate-spin" />
@@ -227,6 +229,7 @@ export default function NewPostPage() {
         <Button
           onClick={() => handleSubmit("published")}
           disabled={loading}
+          className="flex-1 sm:flex-initial"
         >
           {loading ? (
             <Loader2 className="h-4 w-4 me-2 animate-spin" />
