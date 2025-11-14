@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
-import { getPosts, createPost, getPostStats, getPostsByAuthor } from '@/lib/posts-storage';
+import { getAllPosts, createPost, getPostStats, getPostsByAuthor } from '@/lib/posts';
 import { PostInput } from '@/types/post.types';
 import { getCurrentUser } from '@/lib/auth/middleware';
 import { isAdminAuthenticated } from '@/lib/auth/admin';
@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
 
     // Admin sees all posts, regular user sees only their own
     if (isAdmin) {
-      posts = await getPosts(false); // Get all posts (including drafts)
+      posts = await getAllPosts(false); // Get all posts (including drafts)
     } else {
       posts = await getPostsByAuthor(user.id);
     }

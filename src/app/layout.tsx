@@ -1,8 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
-import Layout from "@/components/layout";
-import { ClientProviders } from "@/components/client-providers";
+import Layout from "@/components/layout/layout";
+import { ClientProviders } from "@/components/shared/client-providers";
 
 const heebo = localFont({
   src: [

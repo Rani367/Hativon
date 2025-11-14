@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
-import { getPostById, updatePost, deletePost, canUserEditPost, canUserDeletePost } from '@/lib/posts-storage';
+import { getPostById, updatePost, deletePost, canUserEditPost, canUserDeletePost } from '@/lib/posts';
 import { PostInput } from '@/types/post.types';
 import { getCurrentUser } from '@/lib/auth/middleware';
 import { isAdminAuthenticated } from '@/lib/auth/admin';

@@ -29,7 +29,7 @@ yarn.lock
 *.pem
 
 # development documentation
-CLAUDE.md
+# CLAUDE.md - Now tracked in git for team reference
 
 # debug
 npm-debug.log*
