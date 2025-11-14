@@ -112,8 +112,8 @@ function validateTypeScript() {
   const criticalFiles = [
     'src/lib/auth/**/*.ts',
     'src/lib/db/**/*.ts',
-    'src/lib/users.ts',
-    'src/lib/posts-storage.ts',
+    'src/lib/users/**/*.ts',
+    'src/lib/posts/**/*.ts',
   ];
 
   for (const pattern of criticalFiles) {
@@ -595,11 +595,20 @@ function validateRuntime() {
   ];
 
   for (const modulePath of criticalModules) {
-    const tsPath = `src/${modulePath.replace('@/', '')}.ts`;
-    if (!fs.existsSync(tsPath)) {
+    const basePath = `src/${modulePath.replace('@/', '')}`;
+    const tsPath = `${basePath}.ts`;
+    const indexPath = `${basePath}/index.ts`;
+
+    const moduleExists = fs.existsSync(tsPath) || fs.existsSync(indexPath);
+    const actualPath = fs.existsSync(tsPath) ? tsPath : (fs.existsSync(indexPath) ? indexPath : tsPath);
+
+    if (!moduleExists) {
       addResult('Runtime', `Module ${modulePath}`, false, true,
-        `Critical module not found: ${tsPath}`,
+        `Critical module not found: ${actualPath}`,
         'This module is imported by other files and must exist');
+    } else {
+      addResult('Runtime', `Module ${modulePath}`, true, true,
+        `Module found at ${actualPath}`);
     }
   }
 
@@ -729,7 +738,7 @@ function validateCodeQuality() {
 
   // Check file/folder naming conventions
   console.log('  Validating naming conventions...');
-  const badNames = runCommand(`find src -name "*[A-Z]*" -type f | grep -v ".tsx\\|.ts\\|node_modules" || true`, true);
+  const badNames = runCommand(`find src -name "*[A-Z]*" -type f | grep -v ".tsx\\|.ts\\|node_modules\\|.DS_Store" || true`, true);
 
   if (badNames.output.trim()) {
     addResult('Quality', 'Naming Conventions', false, false,

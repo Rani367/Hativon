@@ -1,4 +1,4 @@
-import { getPosts as getStoragePosts, getPostBySlug as getStoragePostBySlug } from './posts-storage';
+import { getPosts as getStoragePosts, getPostBySlug as getStoragePostBySlug } from './queries';
 import { Post } from '@/types/post.types';
 
 /**
@@ -16,4 +16,4 @@ export async function getPost(slug: string): Promise<Post | null> {
 }
 
 // Re-export for backward compatibility
-export { getWordCount } from './text-utils';
+export { getWordCount } from '../utils/text-utils';

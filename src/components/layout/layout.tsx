@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { ReactNode } from "react";
-import { ModeToggle } from "@/components/mode-toggle";
-import { UserMenu } from "@/components/auth/user-menu";
-import { NewPostButton } from "@/components/new-post-button";
+import { ModeToggle } from "@/components/shared/mode-toggle";
+import { UserMenu } from "@/components/features/auth/user-menu";
+import { NewPostButton } from "@/components/features/posts/new-post-button";
 
 interface LayoutProps {
   children: ReactNode;

@@ -1,8 +1,8 @@
 'use client';
 
 import { ReactNode } from "react";
-import { AuthProvider } from "@/components/auth/auth-provider";
-import { ThemeProvider } from "@/components/theme-provider";
+import { AuthProvider } from "@/components/features/auth/auth-provider";
+import { ThemeProvider } from "@/components/shared/theme-provider";
 
 interface ClientProvidersProps {
   children: ReactNode;

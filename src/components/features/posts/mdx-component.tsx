@@ -15,7 +15,7 @@ import {
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 // Use ESM version instead of CJS for better tree-shaking
 import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
-import { Badge } from "./ui/badge";
+import { Badge } from "@/components/ui/badge";
 
 const components = {
   h1: ({ children }: { children?: React.ReactNode }) => (
