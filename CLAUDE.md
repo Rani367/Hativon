@@ -21,9 +21,25 @@ This is a strict project requirement. Instead:
 - CORRECT: `console.log('[WARNING] Warning!')`
 - CORRECT: `## Getting Started`
 
+## CRITICAL RULE: Git Workflow
+
+**NEVER commit directly using `git commit`. NEVER push to GitHub.**
+
+**ONLY use `pnpm run pre-deploy` to commit changes.**
+
+This command:
+1. Runs comprehensive validation (100+ checks)
+2. Runs production build
+3. Prompts for commit message (if validation passes)
+4. Creates the commit
+
+**The user will push to GitHub manually. DO NOT run `git push`.**
+
 ## Commit Message Guidelines
 
-**After completing a logical chunk of work, provide a single concise commit message in imperative mood.**
+**After completing a logical chunk of work, the user will run `pnpm run pre-deploy`.**
+
+When prompted, provide a single concise commit message in imperative mood.
 
 Examples:
 - CORRECT: "Reorganize components into feature folders"
