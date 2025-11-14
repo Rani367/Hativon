@@ -92,6 +92,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="he" dir="rtl" suppressHydrationWarning>
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://vercel-storage.com" />
+        <link rel="dns-prefetch" href="https://vercel-storage.com" />
+      </head>
       <body className={heebo.className}>
         <ClientProviders>
           <Layout>{children}</Layout>
