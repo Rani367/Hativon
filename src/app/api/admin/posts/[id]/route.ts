@@ -12,10 +12,12 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const user = await getCurrentUser();
+    // Check authentication - Admin panel auth takes priority over user JWT auth
     const isAdmin = await isAdminAuthenticated();
+    const user = await getCurrentUser();
 
-    if (!user) {
+    // Require either admin auth OR user auth
+    if (!isAdmin && !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -27,7 +29,7 @@ export async function GET(
     }
 
     // Check if user can view this post (own post or admin)
-    const isOwner = post.authorId === user.id;
+    const isOwner = user && post.authorId === user.id;
 
     if (!isAdmin && !isOwner) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
@@ -49,17 +51,19 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const user = await getCurrentUser();
+    // Check authentication - Admin panel auth takes priority over user JWT auth
     const isAdmin = await isAdminAuthenticated();
+    const user = await getCurrentUser();
 
-    if (!user) {
+    // Require either admin auth OR user auth
+    if (!isAdmin && !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const { id } = await params;
 
     // Check if user can edit this post
-    const canEdit = await canUserEditPost(user.id, id, isAdmin);
+    const canEdit = await canUserEditPost(user?.id || 'legacy-admin', id, isAdmin);
 
     if (!canEdit) {
       return NextResponse.json({ error: 'Forbidden - You can only edit your own posts' }, { status: 403 });
@@ -92,17 +96,19 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const user = await getCurrentUser();
+    // Check authentication - Admin panel auth takes priority over user JWT auth
     const isAdmin = await isAdminAuthenticated();
+    const user = await getCurrentUser();
 
-    if (!user) {
+    // Require either admin auth OR user auth
+    if (!isAdmin && !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const { id } = await params;
 
     // Check if user can delete this post
-    const canDelete = await canUserDeletePost(user.id, id, isAdmin);
+    const canDelete = await canUserDeletePost(user?.id || 'legacy-admin', id, isAdmin);
 
     if (!canDelete) {
       return NextResponse.json({ error: 'Forbidden - You can only delete your own posts' }, { status: 403 });

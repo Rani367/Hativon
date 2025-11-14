@@ -9,11 +9,12 @@ import { logError } from '@/lib/logger';
 // GET /api/admin/posts - Get all posts (admin) or user's posts (regular user)
 export async function GET(request: NextRequest) {
   try {
-    // Check authentication
-    const user = await getCurrentUser();
+    // Check authentication - Admin panel auth takes priority over user JWT auth
     const isAdmin = await isAdminAuthenticated();
+    const user = await getCurrentUser();
 
-    if (!user) {
+    // Require either admin auth OR user auth
+    if (!isAdmin && !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -27,8 +28,11 @@ export async function GET(request: NextRequest) {
     // Admin sees all posts, regular user sees only their own
     if (isAdmin) {
       posts = await getAllPosts(false); // Get all posts (including drafts)
-    } else {
+    } else if (user) {
       posts = await getPostsByAuthor(user.id);
+    } else {
+      // This shouldn't happen due to auth check above, but for type safety
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Filter by status
@@ -75,10 +79,12 @@ export async function GET(request: NextRequest) {
 // POST /api/admin/posts - Create new post
 export async function POST(request: NextRequest) {
   try {
-    // Check authentication
+    // Check authentication - Admin panel auth takes priority over user JWT auth
+    const isAdmin = await isAdminAuthenticated();
     const user = await getCurrentUser();
 
-    if (!user) {
+    // Require either admin auth OR user auth
+    if (!isAdmin && !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -92,15 +98,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Add authorId, grade, and class from authenticated user
-    body.authorId = user.id;
-    // Also set author display name if not provided
-    if (!body.author) {
-      body.author = user.displayName;
+    // Add authorId, grade, and class from authenticated user (if available)
+    if (user) {
+      body.authorId = user.id;
+      // Also set author display name if not provided
+      if (!body.author) {
+        body.author = user.displayName;
+      }
+      // Set author grade and class
+      body.authorGrade = user.grade;
+      body.authorClass = user.classNumber;
+    } else if (isAdmin) {
+      // Admin creating post without user context - use provided values or defaults
+      if (!body.authorId) {
+        body.authorId = 'legacy-admin';
+      }
+      if (!body.author) {
+        body.author = 'מנהל המערכת'; // "System Admin" in Hebrew
+      }
     }
-    // Set author grade and class
-    body.authorGrade = user.grade;
-    body.authorClass = user.classNumber;
 
     const newPost = await createPost(body);
 
