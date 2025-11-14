@@ -7,6 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import type { Grade } from '@/types/user.types';
+import { motion } from 'framer-motion';
+import { buttonVariants } from '@/lib/utils';
 
 interface RegisterFormProps {
   onSuccess?: () => void;
@@ -27,7 +29,6 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
     e.preventDefault();
     setError('');
 
-    // Validation
     if (password !== confirmPassword) {
       setError('הסיסמאות אינן תואמות');
       return;
@@ -71,7 +72,12 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="space-y-2">
+      <motion.div
+        className="space-y-2"
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.05, duration: 0.3 }}
+      >
         <Label htmlFor="register-username" className="text-right block">שם משתמש</Label>
         <Input
           id="register-username"
@@ -82,12 +88,17 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
           disabled={loading}
           placeholder="אותיות אנגליות ומספרים בלבד"
           pattern="[a-zA-Z0-9_]{3,50}"
-          className="text-right"
+          className="text-right transition-all duration-200 focus:scale-[1.01]"
         />
         <p className="text-xs text-muted-foreground text-right">3-50 תווים (אותיות אנגליות, מספרים וקו תחתון)</p>
-      </div>
+      </motion.div>
 
-      <div className="space-y-2">
+      <motion.div
+        className="space-y-2"
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1, duration: 0.3 }}
+      >
         <Label htmlFor="register-displayName" className="text-right block">שם מלא</Label>
         <Input
           id="register-displayName"
@@ -97,11 +108,16 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
           required
           disabled={loading}
           placeholder="השם שיוצג בפוסטים שלך"
-          className="text-right"
+          className="text-right transition-all duration-200 focus:scale-[1.01]"
         />
-      </div>
+      </motion.div>
 
-      <div className="flex flex-col sm:flex-row gap-4">
+      <motion.div
+        className="flex flex-col sm:flex-row gap-4"
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.15, duration: 0.3 }}
+      >
         <div className="flex-1 space-y-2">
           <Label htmlFor="register-classNumber" className="text-right block">מספר כיתה</Label>
           <Select value={classNumber.toString()} onValueChange={(value) => setClassNumber(Number(value))} disabled={loading}>
@@ -131,9 +147,14 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
             </SelectContent>
           </Select>
         </div>
-      </div>
+      </motion.div>
 
-      <div className="space-y-2">
+      <motion.div
+        className="space-y-2"
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2, duration: 0.3 }}
+      >
         <Label htmlFor="register-password" className="text-right block">סיסמה</Label>
         <Input
           id="register-password"
@@ -144,11 +165,16 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
           disabled={loading}
           placeholder="לפחות 8 תווים"
           minLength={8}
-          className="text-right"
+          className="text-right transition-all duration-200 focus:scale-[1.01]"
         />
-      </div>
+      </motion.div>
 
-      <div className="space-y-2">
+      <motion.div
+        className="space-y-2"
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.25, duration: 0.3 }}
+      >
         <Label htmlFor="register-confirmPassword" className="text-right block">אימות סיסמה</Label>
         <Input
           id="register-confirmPassword"
@@ -157,20 +183,35 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
           onChange={(e) => setConfirmPassword(e.target.value)}
           required
           disabled={loading}
-          placeholder="הזן את הסיסמה שוב"
-          className="text-right"
+          placeholder="הזן סיסמה שוב"
+          minLength={8}
+          className="text-right transition-all duration-200 focus:scale-[1.01]"
         />
-      </div>
+      </motion.div>
 
       {error && (
-        <div className="text-sm text-red-600 dark:text-red-400 text-center">
+        <motion.div
+          className="text-sm text-red-600 dark:text-red-400 text-center"
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.2 }}
+        >
           {error}
-        </div>
+        </motion.div>
       )}
 
-      <Button type="submit" className="w-full" disabled={loading}>
-        {loading ? 'נרשם...' : 'הרשם'}
-      </Button>
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3, duration: 0.3 }}
+        whileHover="hover"
+        whileTap="tap"
+        variants={buttonVariants}
+      >
+        <Button type="submit" className="w-full" disabled={loading}>
+          {loading ? 'נרשם...' : 'הרשם'}
+        </Button>
+      </motion.div>
     </form>
   );
 }
