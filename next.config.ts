@@ -26,6 +26,10 @@ const nextConfig: NextConfig = {
     // Define responsive image sizes
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+    // Minimize cumulative layout shift
+    minimumCacheTTL: 60 * 60 * 24 * 30, // 30 days
+    // Enable unoptimized for faster local development
+    unoptimized: process.env.NODE_ENV === 'development',
   },
 
   // Optimize bundle size with better code splitting
@@ -40,7 +44,10 @@ const nextConfig: NextConfig = {
       'react-syntax-highlighter',
       'remark-gfm',
       'remark-math',
+      'date-fns',
     ],
+    // Enable optimistic client cache
+    optimisticClientCache: true,
   },
 
   // Production optimizations
@@ -49,6 +56,12 @@ const nextConfig: NextConfig = {
       exclude: ['error', 'warn'],
     } : false,
   },
+
+  // Enable compression
+  compress: true,
+
+  // Optimize power consumption
+  poweredByHeader: false,
 
   // Empty turbopack config to silence the warning
   // Turbopack handles most optimizations automatically

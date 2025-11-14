@@ -15,8 +15,8 @@ interface PostPageProps {
   params: Promise<{ slug: string }>;
 }
 
-// Force dynamic rendering for immediate updates
-export const dynamic = 'force-dynamic';
+// Use ISR for instant loading with periodic revalidation
+export const revalidate = 300; // Revalidate every 5 minutes
 
 export async function generateMetadata(
   { params }: PostPageProps
