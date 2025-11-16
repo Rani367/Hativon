@@ -6,6 +6,7 @@ import { logError } from '@/lib/logger';
 /**
  * Upload image to Vercel Blob
  * Requires authentication
+ * Falls back to base64 data URL in development without BLOB_READ_WRITE_TOKEN
  */
 export async function POST(request: NextRequest) {
   try {
@@ -43,6 +44,19 @@ export async function POST(request: NextRequest) {
         { error: 'File size must be less than 5MB' },
         { status: 400 }
       );
+    }
+
+    // Check if Vercel Blob token is available
+    if (!process.env.BLOB_READ_WRITE_TOKEN) {
+      // Fallback to base64 data URL for local development
+      const arrayBuffer = await file.arrayBuffer();
+      const base64 = Buffer.from(arrayBuffer).toString('base64');
+      const dataUrl = `data:${file.type};base64,${base64}`;
+
+      return NextResponse.json({
+        url: dataUrl,
+        filename: file.name,
+      });
     }
 
     // Generate unique filename

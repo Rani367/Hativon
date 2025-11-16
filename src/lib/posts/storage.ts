@@ -22,7 +22,10 @@ export async function createPost(input: PostInput): Promise<Post> {
   const id = uuidv4();
   const now = new Date();
   const slug = generateSlug(input.title);
-  const description = generateDescription(input.content);
+  // Use custom description if provided, otherwise auto-generate from content
+  const description = input.description && input.description.trim()
+    ? input.description.trim()
+    : generateDescription(input.content);
   const status = input.status || DEFAULT_POST_STATUS;
 
   try {
@@ -37,7 +40,7 @@ export async function createPost(input: PostInput): Promise<Post> {
         ${input.title},
         ${slug},
         ${input.content},
-        ${input.coverImage || null},
+        ${input.coverImage},
         ${description},
         ${now},
         ${input.author || null},
