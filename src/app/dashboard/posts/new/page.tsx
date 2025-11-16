@@ -3,13 +3,13 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Save, Eye, Upload, X, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { logError } from '@/lib/logger';
+import { Input } from "@/components/ui/input";
 
 export default function NewPostPage() {
   const router = useRouter();
@@ -17,10 +17,17 @@ export default function NewPostPage() {
   const [uploading, setUploading] = useState(false);
   const [form, setForm] = useState({
     title: "",
+    description: "",
     content: "",
     coverImage: "",
     status: "draft" as "draft" | "published",
   });
+  const [errors, setErrors] = useState<{
+    title?: string;
+    description?: string;
+    content?: string;
+    coverImage?: string;
+  }>({});
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -28,13 +35,13 @@ export default function NewPostPage() {
 
     // Validate file type
     if (!file.type.startsWith('image/')) {
-      alert("נא להעלות קובץ תמונה בלבד");
+      toast.error("נא להעלות קובץ תמונה בלבד");
       return;
     }
 
     // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      alert("גודל התמונה חייב להיות קטן מ-5MB");
+      toast.error("גודל התמונה חייב להיות קטן מ-5MB");
       return;
     }
 
@@ -52,20 +59,41 @@ export default function NewPostPage() {
       if (response.ok) {
         const data = await response.json();
         setForm({ ...form, coverImage: data.url });
+        if (errors.coverImage) setErrors({ ...errors, coverImage: undefined });
+        toast.success("התמונה הועלתה בהצלחה");
       } else {
-        alert("העלאת התמונה נכשלה");
+        toast.error("העלאת התמונה נכשלה");
       }
     } catch (error) {
       logError("Failed to upload image:", error);
-      alert("העלאת התמונה נכשלה");
+      toast.error("העלאת התמונה נכשלה");
     } finally {
       setUploading(false);
     }
   };
 
+  const validateForm = (): boolean => {
+    const newErrors: typeof errors = {};
+
+    if (!form.title || form.title.trim() === "") {
+      newErrors.title = "נא להזין כותרת לפוסט";
+    } else if (form.title.trim().length < 3) {
+      newErrors.title = "הכותרת חייבת להכיל לפחות 3 תווים";
+    }
+
+    if (!form.content || form.content.trim() === "") {
+      newErrors.content = "נא להזין תוכן לפוסט";
+    } else if (form.content.trim().length < 10) {
+      newErrors.content = "התוכן חייב להכיל לפחות 10 תווים";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSubmit = async (status: "draft" | "published") => {
-    if (!form.title || !form.content) {
-      toast.error("כותרת ותוכן הם שדות חובה");
+    if (!validateForm()) {
+      toast.error("נא למלא את כל השדות הנדרשים");
       return;
     }
 
@@ -83,14 +111,16 @@ export default function NewPostPage() {
         },
         body: JSON.stringify({
           title: form.title,
+          description: form.description || undefined,
           content: form.content,
-          coverImage: form.coverImage,
+          coverImage: form.coverImage || undefined,
           status,
         }),
       });
 
       if (!response.ok) {
-        throw new Error("Failed to create post");
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to create post");
       }
 
       toast.dismiss(loadingToast);
@@ -104,7 +134,7 @@ export default function NewPostPage() {
     } catch (error) {
       logError("Failed to create post:", error);
       toast.dismiss(loadingToast);
-      toast.error("יצירת הפוסט נכשלה");
+      toast.error(error instanceof Error ? error.message : "יצירת הפוסט נכשלה");
       setLoading(false);
     }
   };
@@ -128,10 +158,34 @@ export default function NewPostPage() {
             <Input
               id="title"
               value={form.title}
-              onChange={(e) => setForm({ ...form, title: e.target.value })}
+              onChange={(e) => {
+                setForm({ ...form, title: e.target.value });
+                if (errors.title) setErrors({ ...errors, title: undefined });
+              }}
               placeholder="הזן כותרת פוסט"
               required
+              className={errors.title ? "border-destructive" : ""}
             />
+            {errors.title && (
+              <p className="text-sm text-destructive">{errors.title}</p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="description">תיאור (אופציונלי)</Label>
+            <Textarea
+              id="description"
+              value={form.description}
+              onChange={(e) => {
+                setForm({ ...form, description: e.target.value });
+                if (errors.description) setErrors({ ...errors, description: undefined });
+              }}
+              placeholder="תיאור קצר של הפוסט שיוצג בקרוסלה וברשימת הפוסטים. אם לא יוזן, התיאור ייווצר אוטומטית מהתוכן."
+              className="min-h-[100px]"
+            />
+            <p className="text-xs text-muted-foreground">
+              התיאור יוצג בקרוסלה ובכרטיסי הפוסטים. מומלץ עד 200 תווים.
+            </p>
           </div>
 
           <div className="space-y-2">
@@ -139,15 +193,24 @@ export default function NewPostPage() {
             <Textarea
               id="content"
               value={form.content}
-              onChange={(e) => setForm({ ...form, content: e.target.value })}
+              onChange={(e) => {
+                setForm({ ...form, content: e.target.value });
+                if (errors.content) setErrors({ ...errors, content: undefined });
+              }}
               placeholder="כתוב את תוכן הפוסט בפורמט Markdown..."
-              className="min-h-[250px] sm:min-h-[400px] font-mono"
+              className={`min-h-[250px] sm:min-h-[400px] font-mono ${errors.content ? "border-destructive" : ""}`}
               required
             />
+            {errors.content && (
+              <p className="text-sm text-destructive">{errors.content}</p>
+            )}
           </div>
 
           <div className="space-y-2">
-            <Label>תמונת שער</Label>
+            <Label>תמונת שער (אופציונלי)</Label>
+            <p className="text-xs text-muted-foreground">
+              פוסטים עם תמונת שער יופיעו בקרוסלה בעמוד הראשי.
+            </p>
             {form.coverImage ? (
               <div className="space-y-2">
                 <div className="relative rounded-lg overflow-hidden border">
@@ -166,38 +229,25 @@ export default function NewPostPage() {
                     <X className="h-4 w-4" />
                   </Button>
                 </div>
-                <Input
-                  value={form.coverImage}
-                  onChange={(e) => setForm({ ...form, coverImage: e.target.value })}
-                  placeholder="או הזן כתובת URL"
-                  className="text-sm"
-                />
               </div>
             ) : (
               <div className="space-y-2">
-                <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="flex-1"
-                    onClick={() => document.getElementById('imageUpload')?.click()}
-                    disabled={uploading}
-                  >
-                    <Upload className="h-4 w-4 me-2" />
-                    {uploading ? "מעלה..." : "העלה תמונה"}
-                  </Button>
-                  <input
-                    id="imageUpload"
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handleImageUpload}
-                  />
-                </div>
-                <Input
-                  placeholder="או הזן כתובת URL של תמונה"
-                  value={form.coverImage}
-                  onChange={(e) => setForm({ ...form, coverImage: e.target.value })}
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => document.getElementById('imageUpload')?.click()}
+                  disabled={uploading}
+                >
+                  <Upload className="h-4 w-4 me-2" />
+                  {uploading ? "מעלה..." : "העלה תמונה"}
+                </Button>
+                <input
+                  id="imageUpload"
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleImageUpload}
                 />
               </div>
             )}

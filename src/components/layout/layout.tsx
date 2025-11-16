@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { ReactNode } from "react";
-import { ModeToggle } from "@/components/shared/mode-toggle";
 import { UserMenu } from "@/components/features/auth/user-menu";
 import { NewPostButton } from "@/components/features/posts/new-post-button";
 
@@ -27,7 +26,6 @@ export default function Layout({ children }: LayoutProps) {
             </div>
             <div className="flex items-center gap-2 sm:gap-4 justify-end">
               <UserMenu />
-              <ModeToggle />
             </div>
           </div>
         </nav>
