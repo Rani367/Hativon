@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Save, Eye, Upload, X } from "lucide-react";
+import { Save, Eye, Upload, X, Loader2 } from "lucide-react";
 import { logError } from '@/lib/logger';
 
 export default function NewPostPage() {
@@ -16,10 +16,17 @@ export default function NewPostPage() {
   const [uploading, setUploading] = useState(false);
   const [form, setForm] = useState({
     title: "",
+    description: "",
     content: "",
     coverImage: "",
     status: "draft" as "draft" | "published",
   });
+  const [errors, setErrors] = useState<{
+    title?: string;
+    description?: string;
+    content?: string;
+    coverImage?: string;
+  }>({});
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -51,6 +58,7 @@ export default function NewPostPage() {
       if (response.ok) {
         const data = await response.json();
         setForm({ ...form, coverImage: data.url });
+        if (errors.coverImage) setErrors({ ...errors, coverImage: undefined });
       } else {
         alert("העלאת התמונה נכשלה");
       }
@@ -62,9 +70,28 @@ export default function NewPostPage() {
     }
   };
 
+  const validateForm = (): boolean => {
+    const newErrors: typeof errors = {};
+
+    if (!form.title || form.title.trim() === "") {
+      newErrors.title = "נא להזין כותרת לכתבה";
+    } else if (form.title.trim().length < 3) {
+      newErrors.title = "הכותרת חייבת להכיל לפחות 3 תווים";
+    }
+
+    if (!form.content || form.content.trim() === "") {
+      newErrors.content = "נא להזין תוכן לכתבה";
+    } else if (form.content.trim().length < 10) {
+      newErrors.content = "התוכן חייב להכיל לפחות 10 תווים";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSubmit = async (status: "draft" | "published") => {
-    if (!form.title || !form.content) {
-      alert("כותרת ותוכן הם שדות חובה");
+    if (!validateForm()) {
+      alert("נא למלא את כל השדות הנדרשים");
       return;
     }
 
@@ -78,8 +105,9 @@ export default function NewPostPage() {
         },
         body: JSON.stringify({
           title: form.title,
+          description: form.description || undefined,
           content: form.content,
-          coverImage: form.coverImage,
+          coverImage: form.coverImage || undefined,
           status,
         }),
       });
@@ -87,7 +115,8 @@ export default function NewPostPage() {
       if (response.ok) {
         router.push("/admin/posts");
       } else {
-        alert("יצירת הכתבה נכשלה");
+        const errorData = await response.json();
+        alert(errorData.error || "יצירת הכתבה נכשלה");
       }
     } catch (error) {
       logError("Failed to create post:", error);
@@ -116,10 +145,34 @@ export default function NewPostPage() {
             <Input
               id="title"
               value={form.title}
-              onChange={(e) => setForm({ ...form, title: e.target.value })}
+              onChange={(e) => {
+                setForm({ ...form, title: e.target.value });
+                if (errors.title) setErrors({ ...errors, title: undefined });
+              }}
               placeholder="הזן כותרת כתבה"
               required
+              className={errors.title ? "border-destructive" : ""}
             />
+            {errors.title && (
+              <p className="text-sm text-destructive">{errors.title}</p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="description">תיאור (אופציונלי)</Label>
+            <Textarea
+              id="description"
+              value={form.description}
+              onChange={(e) => {
+                setForm({ ...form, description: e.target.value });
+                if (errors.description) setErrors({ ...errors, description: undefined });
+              }}
+              placeholder="תיאור קצר של הכתבה שיוצג בקרוסלה וברשימת הכתבות. אם לא יוזן, התיאור ייווצר אוטומטית מהתוכן."
+              className="min-h-[100px]"
+            />
+            <p className="text-xs text-muted-foreground">
+              התיאור יוצג בקרוסלה ובכרטיסי הכתבות. מומלץ עד 200 תווים.
+            </p>
           </div>
 
           <div className="space-y-2">
@@ -127,15 +180,24 @@ export default function NewPostPage() {
             <Textarea
               id="content"
               value={form.content}
-              onChange={(e) => setForm({ ...form, content: e.target.value })}
+              onChange={(e) => {
+                setForm({ ...form, content: e.target.value });
+                if (errors.content) setErrors({ ...errors, content: undefined });
+              }}
               placeholder="כתוב את תוכן הכתבה בפורמט Markdown..."
-              className="min-h-[400px] font-mono"
+              className={`min-h-[400px] font-mono ${errors.content ? "border-destructive" : ""}`}
               required
             />
+            {errors.content && (
+              <p className="text-sm text-destructive">{errors.content}</p>
+            )}
           </div>
 
           <div className="space-y-2">
-            <Label>תמונת שער</Label>
+            <Label>תמונת שער (אופציונלי)</Label>
+            <p className="text-xs text-muted-foreground">
+              כתבות עם תמונת שער יופיעו בקרוסלה בעמוד הראשי.
+            </p>
             {form.coverImage ? (
               <div className="space-y-2">
                 <div className="relative rounded-lg overflow-hidden border">
@@ -154,38 +216,25 @@ export default function NewPostPage() {
                     <X className="h-4 w-4" />
                   </Button>
                 </div>
-                <Input
-                  value={form.coverImage}
-                  onChange={(e) => setForm({ ...form, coverImage: e.target.value })}
-                  placeholder="או הזן כתובת URL"
-                  className="text-sm"
-                />
               </div>
             ) : (
               <div className="space-y-2">
-                <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="flex-1"
-                    onClick={() => document.getElementById('imageUpload')?.click()}
-                    disabled={uploading}
-                  >
-                    <Upload className="h-4 w-4 me-2" />
-                    {uploading ? "מעלה..." : "העלה תמונה"}
-                  </Button>
-                  <input
-                    id="imageUpload"
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handleImageUpload}
-                  />
-                </div>
-                <Input
-                  placeholder="או הזן כתובת URL של תמונה"
-                  value={form.coverImage}
-                  onChange={(e) => setForm({ ...form, coverImage: e.target.value })}
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => document.getElementById('imageUpload')?.click()}
+                  disabled={uploading}
+                >
+                  <Upload className="h-4 w-4 me-2" />
+                  {uploading ? "מעלה..." : "העלה תמונה"}
+                </Button>
+                <input
+                  id="imageUpload"
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleImageUpload}
                 />
               </div>
             )}
@@ -206,14 +255,22 @@ export default function NewPostPage() {
           onClick={() => handleSubmit("draft")}
           disabled={loading}
         >
-          <Save className="h-4 w-4 me-2" />
+          {loading ? (
+            <Loader2 className="h-4 w-4 me-2 animate-spin" />
+          ) : (
+            <Save className="h-4 w-4 me-2" />
+          )}
           שמור כטיוטה
         </Button>
         <Button
           onClick={() => handleSubmit("published")}
           disabled={loading}
         >
-          <Eye className="h-4 w-4 me-2" />
+          {loading ? (
+            <Loader2 className="h-4 w-4 me-2 animate-spin" />
+          ) : (
+            <Eye className="h-4 w-4 me-2" />
+          )}
           פרסם
         </Button>
       </div>
