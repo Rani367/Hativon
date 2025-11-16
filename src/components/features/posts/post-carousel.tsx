@@ -163,22 +163,9 @@ export function PostCarousel({ posts }: PostCarouselProps) {
     }
   };
 
-  // Empty state
+  // Empty state - return null to hide carousel entirely
   if (carouselPosts.length === 0) {
-    return (
-      <div className="carousel-container">
-        <div className="carousel-empty">
-          <h3>אין פוסטים זמינים</h3>
-          <p>אין עדיין פוסטים עם תמונות שער. צור פוסט חדש כדי להתחיל!</p>
-          <button
-            onClick={handleCreatePost}
-            disabled={checkingAuth}
-          >
-            {checkingAuth ? 'טוען...' : isAuthenticated ? 'צור פוסט חדש' : 'התחבר כדי ליצור פוסט'}
-          </button>
-        </div>
-      </div>
-    );
+    return null;
   }
 
   return (
