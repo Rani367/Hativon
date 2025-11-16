@@ -35,6 +35,40 @@ This command:
 
 **The user will push to GitHub manually. DO NOT run `git push`.**
 
+## CRITICAL RULE: Never Edit Validation/Tests Without Permission
+
+**NEVER modify validation scripts, tests, or checks unless explicitly instructed to do so.**
+
+This includes:
+- Files in `scripts/` directory (especially `validate-*.ts`, `check-*.ts`)
+- Test files (`*.test.ts`, `*.spec.ts`)
+- ESLint configuration (`.eslintrc.json`, `eslint.config.*`)
+- TypeScript configuration (`tsconfig.json`)
+- Build validation logic
+
+**Why this matters:**
+- Editing checks to make them pass is HIDING problems, not fixing them
+- This is a form of technical debt that leads to production bugs
+- The validation system exists to catch real issues - respect it
+
+**If validation fails:**
+1. Fix the actual code that's causing the failure
+2. Do NOT weaken or remove the check
+3. If you believe a check is wrong, ask the user first
+4. Document why a check might need adjustment
+
+**Examples of what NOT to do:**
+- WRONG: Removing a TypeScript strict check because code doesn't compile
+- WRONG: Disabling an ESLint rule to silence warnings
+- WRONG: Commenting out a validation step that's failing
+- WRONG: Modifying test assertions to match buggy behavior
+
+**Correct approach:**
+- CORRECT: Fix the type error in the source code
+- CORRECT: Refactor code to follow ESLint rules
+- CORRECT: Fix the bug that's causing validation to fail
+- CORRECT: Ask user if a check seems incorrect before changing it
+
 ## Commit Message Guidelines
 
 **After completing a logical chunk of work, the user will run `pnpm run pre-deploy`.**

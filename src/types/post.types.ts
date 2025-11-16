@@ -20,7 +20,8 @@ export interface Post {
 export interface PostInput {
   title: string;
   content: string;
-  coverImage?: string;
+  description?: string; // Optional custom description - if not provided, auto-generated from content
+  coverImage?: string; // Optional - posts with cover images will appear in carousel
   author?: string;
   authorId?: string; // User ID reference for post ownership
   authorGrade?: string; // Author's grade (ז, ח, ט, י)
