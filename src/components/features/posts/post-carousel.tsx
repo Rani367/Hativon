@@ -170,7 +170,7 @@ export function PostCarousel({ posts }: PostCarouselProps) {
 
   return (
     <div
-      className="carousel-container"
+      className="carousel-container hidden lg:block"
       ref={containerRef}
     >
       <div className="carousel">
@@ -221,15 +221,15 @@ export function PostCarousel({ posts }: PostCarouselProps) {
         <>
           <button
             className="carousel-nav carousel-nav-prev"
-            onClick={handleNext}
-            aria-label="הפוסט הבא"
+            onClick={handlePrevious}
+            aria-label="הפוסט הקודם"
           >
             <ChevronLeft />
           </button>
           <button
             className="carousel-nav carousel-nav-next"
-            onClick={handlePrevious}
-            aria-label="הפוסט הקודם"
+            onClick={handleNext}
+            aria-label="הפוסט הבא"
           >
             <ChevronRight />
           </button>
