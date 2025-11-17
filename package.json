@@ -16,7 +16,11 @@
     "validate": "tsx scripts/validate-comprehensive.ts",
     "validate:env": "tsx scripts/validate-env.ts",
     "validate:build": "tsx scripts/validate-build.ts",
-    "pre-deploy": "tsx scripts/validate-comprehensive.ts && pnpm run build && tsx scripts/post-build-deploy.ts"
+    "pre-deploy": "vitest run && tsx scripts/validate-comprehensive.ts && pnpm run build && tsx scripts/post-build-deploy.ts",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:ui": "vitest --ui"
   },
   "dependencies": {
     "@radix-ui/react-alert-dialog": "^1.1.15",
@@ -43,7 +47,6 @@
     "date-fns": "^4.1.0",
     "dotenv": "^17.2.3",
     "framer-motion": "^12.23.24",
-    "jose": "^6.1.0",
     "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.553.0",
     "next": "16.0.1",
@@ -63,14 +66,22 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.17",
     "@tailwindcss/typography": "^0.5.19",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.1",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^24.10.0",
     "@types/react": "latest",
     "@types/react-dom": "latest",
+    "@vitejs/plugin-react": "^5.1.1",
+    "@vitest/coverage-v8": "^4.0.9",
+    "@vitest/ui": "^4.0.9",
     "glob": "^11.0.3",
+    "jsdom": "^27.2.0",
     "tailwindcss": "^4.1.17",
     "tsx": "^4.20.6",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.9"
   },
   "packageManager": "pnpm"
 }
