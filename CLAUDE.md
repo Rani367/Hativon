@@ -28,10 +28,11 @@ This is a strict project requirement. Instead:
 **ONLY use `pnpm run pre-deploy` to commit changes.**
 
 This command:
-1. Runs comprehensive validation (100+ checks)
-2. Runs production build
-3. Prompts for commit message (if validation passes)
-4. Creates the commit
+1. Runs all tests (162 tests must pass)
+2. Runs comprehensive validation (100+ checks)
+3. Runs production build
+4. Prompts for commit message (if all above pass)
+5. Creates the commit
 
 **The user will push to GitHub manually. DO NOT run `git push`.**
 
@@ -116,11 +117,46 @@ pnpm run create-test-user # Create test user (username: user, password: 12345678
 # Note: Admin panel access uses ADMIN_PASSWORD from .env.local, NOT user accounts
 ```
 
+### Testing
+```bash
+pnpm test                 # Run tests in watch mode (interactive development)
+pnpm test:run             # Run tests once (for CI/CD)
+pnpm test:coverage        # Run tests with coverage report
+pnpm test:ui              # Open Vitest UI for visual test exploration
+```
+
+**Testing Stack**: Vitest, Testing Library (React), jsdom
+
+**Test File Locations**:
+- `src/lib/auth/__tests__/` - Authentication tests (JWT, middleware, admin)
+- `src/lib/posts/__tests__/` - Post permissions and utilities tests
+- `src/lib/users/__tests__/` - User authentication tests
+- `src/app/api/__tests__/` - API route tests (login, register, admin verify)
+- `src/test/setup.ts` - Global test setup and mocks
+
+**Test File Naming Convention**: `*.test.ts` or `*.spec.ts`
+
+**Coverage Targets** (security-critical areas):
+- `src/lib/auth/` - 90% minimum
+- `src/lib/posts/permissions.ts` - 100% minimum
+- `src/lib/users/auth.ts` - 90% minimum
+
+**Important Notes**:
+- Tests can run without a database connection (all DB calls are mocked)
+- Environment variables are set in `src/test/setup.ts`
+- Next.js navigation and headers are automatically mocked
+- Use `vi.mock()` to mock dependencies before imports
+- API route tests use absolute imports (`@/app/api/...`)
+
 ### Deployment
 ```bash
 pnpm run validate         # Run comprehensive validation (all checks below)
-pnpm run pre-deploy       # Run comprehensive validation + build + git commit
-                          # This is EXTREMELY thorough - catches ALL errors
+pnpm run pre-deploy       # ONE COMMAND that runs:
+                          # 1. All tests (162 tests must pass)
+                          # 2. Comprehensive validation (100+ checks)
+                          # 3. Production build
+                          # 4. Git commit (prompts for message)
+                          # This is EXTREMELY thorough - catches ALL issues
                           # NO ERROR should make it to production
 git push                  # After pre-deploy, push to trigger Vercel deployment
 ```
