@@ -63,6 +63,7 @@ export interface DbPostRow {
   author_id: string | null;
   author_grade: string | null;
   author_class: number | null;
+  author_deleted?: boolean; // Computed field from LEFT JOIN with users table
   tags: string[] | null;
   category: string | null;
   status: string;
