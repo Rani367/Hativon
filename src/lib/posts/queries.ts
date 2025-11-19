@@ -13,13 +13,21 @@ export async function getPosts(filterPublished = false): Promise<Post[]> {
   try {
     const result = filterPublished
       ? await db.query`
-          SELECT * FROM posts
-          WHERE status = 'published'
-          ORDER BY date DESC, created_at DESC
+          SELECT
+            p.*,
+            CASE WHEN u.id IS NULL AND p.author_id IS NOT NULL AND p.author_id != 'legacy-admin' THEN true ELSE false END as author_deleted
+          FROM posts p
+          LEFT JOIN users u ON p.author_id = u.id::text
+          WHERE p.status = 'published'
+          ORDER BY p.date DESC, p.created_at DESC
         ` as PostQueryResult
       : await db.query`
-          SELECT * FROM posts
-          ORDER BY date DESC, created_at DESC
+          SELECT
+            p.*,
+            CASE WHEN u.id IS NULL AND p.author_id IS NOT NULL AND p.author_id != 'legacy-admin' THEN true ELSE false END as author_deleted
+          FROM posts p
+          LEFT JOIN users u ON p.author_id = u.id::text
+          ORDER BY p.date DESC, p.created_at DESC
         ` as PostQueryResult;
 
     return result.rows.map(rowToPost);
@@ -38,8 +46,12 @@ export async function getPosts(filterPublished = false): Promise<Post[]> {
 export async function getPostById(id: string): Promise<Post | null> {
   try {
     const result = await db.query`
-      SELECT * FROM posts
-      WHERE id = ${id}
+      SELECT
+        p.*,
+        CASE WHEN u.id IS NULL AND p.author_id IS NOT NULL AND p.author_id != 'legacy-admin' THEN true ELSE false END as author_deleted
+      FROM posts p
+      LEFT JOIN users u ON p.author_id = u.id::text
+      WHERE p.id = ${id}
     ` as PostQueryResult;
 
     if (result.rows.length === 0) {
@@ -63,8 +75,12 @@ export async function getPostById(id: string): Promise<Post | null> {
 export async function getPostBySlug(slug: string): Promise<Post | null> {
   try {
     const result = await db.query`
-      SELECT * FROM posts
-      WHERE slug = ${slug} AND status = 'published'
+      SELECT
+        p.*,
+        CASE WHEN u.id IS NULL AND p.author_id IS NOT NULL AND p.author_id != 'legacy-admin' THEN true ELSE false END as author_deleted
+      FROM posts p
+      LEFT JOIN users u ON p.author_id = u.id::text
+      WHERE p.slug = ${slug} AND p.status = 'published'
     ` as PostQueryResult;
 
     if (result.rows.length === 0) {
@@ -87,9 +103,13 @@ export async function getPostBySlug(slug: string): Promise<Post | null> {
 export async function getPostsByAuthor(authorId: string): Promise<Post[]> {
   try {
     const result = await db.query`
-      SELECT * FROM posts
-      WHERE author_id = ${authorId}
-      ORDER BY date DESC, created_at DESC
+      SELECT
+        p.*,
+        CASE WHEN u.id IS NULL AND p.author_id IS NOT NULL AND p.author_id != 'legacy-admin' THEN true ELSE false END as author_deleted
+      FROM posts p
+      LEFT JOIN users u ON p.author_id = u.id::text
+      WHERE p.author_id = ${authorId}
+      ORDER BY p.date DESC, p.created_at DESC
     ` as PostQueryResult;
 
     return result.rows.map(rowToPost);

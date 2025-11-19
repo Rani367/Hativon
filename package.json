@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "predev": "tsx scripts/auto-update.ts && tsx scripts/kill-port.ts 3000",
+    "predev": "tsx scripts/kill-port.ts 3000",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",

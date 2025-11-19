@@ -133,7 +133,7 @@ export default async function PostPage({ params }: PostPageProps) {
             <time>{format(new Date(post.date), "d בMMMM yyyy", { locale: he })}</time>
             {post.author && (
               <span>
-                מאת {post.author}
+                מאת {post.author}{post.authorDeleted && ' (נמחק)'}
                 {post.authorGrade && post.authorClass && ` (כיתה ${post.authorGrade}${post.authorClass})`}
               </span>
             )}

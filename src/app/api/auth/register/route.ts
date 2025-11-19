@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createUser, usernameExists } from '@/lib/users';
 import { createAuthCookie } from '@/lib/auth/jwt';
+import { getAdminClearCookie } from '@/lib/auth/admin';
 import { UserRegistration } from '@/types/user.types';
 import { isDatabaseAvailable } from '@/lib/db/client';
 import { logError } from '@/lib/logger';
@@ -72,17 +73,21 @@ export async function POST(request: NextRequest) {
     // Create user
     const user = await createUser(body);
 
-    // Generate auth cookie
-    const cookie = createAuthCookie(user);
+    // Generate auth cookie and clear admin cookie
+    // Clear admin authentication when user registers to prevent privilege escalation
+    const authCookie = createAuthCookie(user);
+    const clearAdminCookie = getAdminClearCookie();
+
+    const headers = new Headers();
+    headers.append('Set-Cookie', authCookie);
+    headers.append('Set-Cookie', clearAdminCookie);
 
     // Return success with user data
     return NextResponse.json(
       { success: true, user },
       {
         status: 201,
-        headers: {
-          'Set-Cookie': cookie,
-        },
+        headers,
       }
     );
   } catch (error: any) {

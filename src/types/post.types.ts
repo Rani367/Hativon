@@ -10,6 +10,7 @@ export interface Post {
   authorId?: string; // User ID reference for post ownership
   authorGrade?: string; // Author's grade (ז, ח, ט, י)
   authorClass?: number; // Author's class number (1-4)
+  authorDeleted?: boolean; // True if the author user has been deleted
   tags?: string[];
   category?: string;
   status: 'draft' | 'published';
