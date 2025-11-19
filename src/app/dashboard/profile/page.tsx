@@ -16,25 +16,28 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { logError } from '@/lib/logger';
-import { User as UserIcon, Save, Loader2 } from "lucide-react";
+import { User as UserIcon, Save, Loader2, AlertCircle } from "lucide-react";
 import { Grade } from "@/types/user.types";
+
+interface ProfileFormData {
+  displayName: string;
+  grade: Grade | null;
+  classNumber: number;
+}
 
 export default function ProfilePage() {
   const { user, checkAuth } = useAuth();
   const router = useRouter();
   const [saving, setSaving] = useState(false);
-  const [formData, setFormData] = useState({
-    displayName: "",
-    grade: "" as Grade,
-    classNumber: 1,
-  });
+  const [formData, setFormData] = useState<ProfileFormData | null>(null);
 
+  // Initialize form data only when user data is available
   useEffect(() => {
     if (user) {
       setFormData({
         displayName: user.displayName || "",
-        grade: user.grade,
-        classNumber: user.classNumber,
+        grade: user.grade || null,
+        classNumber: user.classNumber || 1,
       });
     }
   }, [user]);
@@ -42,11 +45,21 @@ export default function ProfilePage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (!formData) return;
+
+    // Validate display name
     if (!formData.displayName.trim()) {
       toast.error("שם התצוגה הוא שדה חובה");
       return;
     }
 
+    // Validate grade selection
+    if (!formData.grade) {
+      toast.error("יש לבחור כיתה");
+      return;
+    }
+
+    // Validate class number
     if (formData.classNumber < 1 || formData.classNumber > 4) {
       toast.error("מספר כיתה חייב להיות בין 1 ל-4");
       return;
@@ -60,15 +73,17 @@ export default function ProfilePage() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          displayName: formData.displayName.trim(),
+          grade: formData.grade,
+          classNumber: formData.classNumber,
+        }),
       });
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.error || "Failed to update profile");
       }
-
-      const data = await response.json();
 
       // Refresh user data in auth context
       await checkAuth();
@@ -83,13 +98,26 @@ export default function ProfilePage() {
     }
   };
 
-  if (!user) {
+  // Show loading state while user data is loading
+  if (!user || !formData) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     );
   }
+
+  // Helper to get grade display text
+  const getGradeDisplay = (grade: Grade | null) => {
+    if (!grade) return null;
+    const gradeMap: Record<Grade, string> = {
+      'ז': 'כיתה ז',
+      'ח': 'כיתה ח',
+      'ט': 'כיתה ט',
+      'י': 'כיתה י',
+    };
+    return gradeMap[grade];
+  };
 
   return (
     <div className="container max-w-2xl py-8">
@@ -114,7 +142,9 @@ export default function ProfilePage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Display Name */}
             <div className="space-y-2">
-              <Label htmlFor="displayName" className="text-right block">שם תצוגה *</Label>
+              <Label htmlFor="displayName" className="text-right block">
+                שם תצוגה <span className="text-destructive">*</span>
+              </Label>
               <Input
                 id="displayName"
                 type="text"
@@ -134,7 +164,9 @@ export default function ProfilePage() {
             {/* Grade and Class Number - Side by Side */}
             <div className="flex gap-4">
               <div className="flex-1 space-y-2">
-                <Label htmlFor="classNumber" className="text-right block">מספר כיתה *</Label>
+                <Label htmlFor="classNumber" className="text-right block">
+                  מספר כיתה <span className="text-destructive">*</span>
+                </Label>
                 <Select
                   value={formData.classNumber.toString()}
                   onValueChange={(value) =>
@@ -154,15 +186,23 @@ export default function ProfilePage() {
               </div>
 
               <div className="flex-1 space-y-2">
-                <Label htmlFor="grade" className="text-right block">כיתה *</Label>
+                <Label htmlFor="grade" className="text-right block">
+                  כיתה <span className="text-destructive">*</span>
+                </Label>
                 <Select
-                  value={formData.grade}
+                  value={formData.grade || ""}
                   onValueChange={(value) =>
                     setFormData({ ...formData, grade: value as Grade })
                   }
                 >
-                  <SelectTrigger id="grade" className="w-full" dir="rtl">
-                    <SelectValue placeholder="בחר כיתה" />
+                  <SelectTrigger
+                    id="grade"
+                    className="w-full"
+                    dir="rtl"
+                  >
+                    <SelectValue placeholder="בחר כיתה">
+                      {formData.grade ? getGradeDisplay(formData.grade) : "בחר כיתה"}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent className="text-right" dir="rtl">
                     <SelectItem value="ז">כיתה ז</SelectItem>
@@ -174,16 +214,34 @@ export default function ProfilePage() {
               </div>
             </div>
 
+            {/* Warning if grade not selected */}
+            {!formData.grade && (
+              <div className="flex items-center gap-2 rounded-lg border border-amber-500/50 bg-amber-500/10 p-3 text-amber-600 dark:text-amber-400">
+                <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                <p className="text-sm">יש לבחור כיתה לפני שמירה</p>
+              </div>
+            )}
+
             {/* Preview */}
             <div className="rounded-lg border bg-muted/50 p-4">
               <p className="text-sm font-medium mb-2">תצוגה מקדימה:</p>
               <p className="text-sm text-muted-foreground">
                 הכתבות שלך יוצגו כ:{" "}
                 <strong>
-                  {formData.displayName || "שם תצוגה"} - {formData.grade}'
-                  {formData.classNumber}
+                  {formData.displayName || "שם תצוגה"}
+                  {formData.grade ? ` - ${formData.grade}'${formData.classNumber}` : " - [כיתה לא נבחרה]"}
                 </strong>
               </p>
+            </div>
+
+            {/* Current Values Display */}
+            <div className="rounded-lg border bg-blue-500/10 border-blue-500/50 p-4">
+              <p className="text-sm font-medium mb-2 text-blue-600 dark:text-blue-400">ערכים נוכחיים:</p>
+              <div className="text-sm text-muted-foreground space-y-1">
+                <p>שם תצוגה: <strong>{user.displayName || "לא הוגדר"}</strong></p>
+                <p>כיתה: <strong>{user.grade ? getGradeDisplay(user.grade) : "לא הוגדר"}</strong></p>
+                <p>מספר כיתה: <strong>{user.classNumber || "לא הוגדר"}</strong></p>
+              </div>
             </div>
 
             {/* Buttons */}
@@ -196,7 +254,10 @@ export default function ProfilePage() {
               >
                 ביטול
               </Button>
-              <Button type="submit" disabled={saving}>
+              <Button
+                type="submit"
+                disabled={saving || !formData.grade}
+              >
                 {saving ? (
                   <>
                     <Loader2 className="h-4 w-4 me-2 animate-spin" />
