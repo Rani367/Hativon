@@ -5,7 +5,7 @@ import { Post } from '@/types/post.types';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react';
 
 interface PostCarouselProps {
   posts: Post[];
@@ -15,6 +15,7 @@ export function PostCarousel({ posts }: PostCarouselProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [checkingAuth, setCheckingAuth] = useState(true);
+  const [scrollIndicatorOpacity, setScrollIndicatorOpacity] = useState(1);
   const containerRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
@@ -42,6 +43,19 @@ export function PostCarousel({ posts }: PostCarouselProps) {
   }, []);
 
   // Auto-rotation disabled - carousel only moves on user interaction
+
+  // Fade out scroll indicator on scroll
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollY = window.scrollY;
+      const maxScroll = 200; // Fully fade out at 200px scroll
+      const opacity = Math.max(0, 1 - (scrollY / maxScroll));
+      setScrollIndicatorOpacity(opacity);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // Keyboard navigation
   useEffect(() => {
@@ -196,7 +210,7 @@ export function PostCarousel({ posts }: PostCarouselProps) {
                   <h3 className="carousel-card-title">{post.title}</h3>
                   <p className="carousel-card-description">{post.description}</p>
                   <div className="carousel-card-meta">
-                    <span>{post.author || 'אנונימי'}</span>
+                    <span>{post.author || 'אנונימי'}{post.authorDeleted && ' (נמחק)'}</span>
                     {post.authorGrade && post.authorClass && (
                       <span>כיתה {post.authorGrade}{post.authorClass}</span>
                     )}
@@ -259,6 +273,15 @@ export function PostCarousel({ posts }: PostCarouselProps) {
           ))}
         </div>
       )}
+
+      {/* Scroll Indicator */}
+      <div
+        className="absolute bottom-0 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-muted-foreground animate-bounce transition-opacity duration-300"
+        style={{ opacity: scrollIndicatorOpacity }}
+      >
+        <p className="text-sm font-medium">גלול למטה לראות עוד כתבות</p>
+        <ChevronDown className="h-6 w-6" />
+      </div>
     </div>
   );
 }

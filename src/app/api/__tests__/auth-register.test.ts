@@ -357,13 +357,14 @@ describe('POST /api/auth/register', () => {
       expect(data.user).toEqual(mockUser);
     });
 
-    it('sets auth cookie in response headers', async () => {
+    it('sets auth cookie and clears admin cookie in response headers', async () => {
       const request = createRequest(validRegistrationData);
       const response = await POST(request);
 
-      expect(response.headers.get('Set-Cookie')).toBe(
-        'authToken=test; HttpOnly'
-      );
+      const setCookie = response.headers.get('Set-Cookie');
+      expect(setCookie).toContain('authToken=test; HttpOnly');
+      expect(setCookie).toContain('adminAuth=');
+      expect(setCookie).toContain('Max-Age=0');
     });
 
     it('calls createUser with registration data', async () => {

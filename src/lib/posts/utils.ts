@@ -61,6 +61,7 @@ export function rowToPost(row: DbPostRow): Post {
     authorId: row.author_id || undefined,
     authorGrade: row.author_grade || undefined,
     authorClass: row.author_class || undefined,
+    authorDeleted: row.author_deleted || false,
     tags: row.tags || [],
     category: row.category || undefined,
     status: row.status as 'draft' | 'published',

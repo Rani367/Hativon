@@ -88,7 +88,7 @@ export default function PostCard({ post, priority = false }: PostCardProps) {
       <CardContent>
         {post.author && (
           <p className="text-base text-muted-foreground">
-            מאת {post.author}
+            מאת {post.author}{post.authorDeleted && ' (נמחק)'}
             {post.authorGrade && post.authorClass && ` (כיתה ${post.authorGrade}${post.authorClass})`}
           </p>
         )}

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { validatePassword, updateLastLogin } from '@/lib/users';
 import { createAuthCookie } from '@/lib/auth/jwt';
+import { getAdminClearCookie } from '@/lib/auth/admin';
 import { UserLogin } from '@/types/user.types';
 import { isDatabaseAvailable } from '@/lib/db/client';
 import { logError } from '@/lib/logger';
@@ -47,16 +48,19 @@ export async function POST(request: NextRequest) {
           lastLogin: undefined,
         };
 
-        // Generate auth cookie
-        const cookie = createAuthCookie(legacyAdminUser);
+        // Generate auth cookie and clear admin cookie
+        const authCookie = createAuthCookie(legacyAdminUser);
+        const clearAdminCookie = getAdminClearCookie();
+
+        const headers = new Headers();
+        headers.append('Set-Cookie', authCookie);
+        headers.append('Set-Cookie', clearAdminCookie);
 
         return NextResponse.json(
           { success: true, user: legacyAdminUser },
           {
             status: 200,
-            headers: {
-              'Set-Cookie': cookie,
-            },
+            headers,
           }
         );
       } else {
@@ -80,17 +84,23 @@ export async function POST(request: NextRequest) {
     // Update last login timestamp
     await updateLastLogin(user.id);
 
-    // Generate auth cookie
-    const cookie = createAuthCookie(user);
+    // Generate auth cookie and clear admin cookie
+    // CRITICAL: Clear admin authentication when user logs in to prevent
+    // privilege escalation (user shouldn't see all posts if they previously
+    // accessed admin panel)
+    const authCookie = createAuthCookie(user);
+    const clearAdminCookie = getAdminClearCookie();
+
+    const headers = new Headers();
+    headers.append('Set-Cookie', authCookie);
+    headers.append('Set-Cookie', clearAdminCookie);
 
     // Return success with user data
     return NextResponse.json(
       { success: true, user },
       {
         status: 200,
-        headers: {
-          'Set-Cookie': cookie,
-        },
+        headers,
       }
     );
   } catch (error: any) {
