@@ -4,6 +4,7 @@ import { PostCarousel } from "@/components/features/posts/post-carousel";
 import PaginatedPosts from "@/components/features/posts/paginated-posts";
 import { Suspense } from "react";
 import { PostGridSkeleton } from "@/components/shared/loading-skeletons";
+import RevealFx from "@/components/ui/RevealFx";
 
 // Use ISR for instant loading with periodic revalidation
 export const revalidate = 60; // Revalidate every 60 seconds
@@ -13,12 +14,18 @@ async function HomeContent() {
 
   return (
     <>
-      <PostCarousel posts={posts} />
+      <RevealFx translateY="4" delay={0}>
+        <PostCarousel posts={posts} />
+      </RevealFx>
       <div className="container mx-auto px-4 pt-24 pb-12">
         {posts.length === 0 ? (
-          <EmptyPostsState />
+          <RevealFx translateY="6" delay={0.2}>
+            <EmptyPostsState />
+          </RevealFx>
         ) : (
-          <PaginatedPosts initialPosts={posts} postsPerPage={12} />
+          <RevealFx translateY="8" delay={0.2}>
+            <PaginatedPosts initialPosts={posts} postsPerPage={12} />
+          </RevealFx>
         )}
       </div>
     </>
