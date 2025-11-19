@@ -1,4 +1,5 @@
 import { cookies } from 'next/headers';
+import { serialize } from 'cookie';
 import jwt from 'jsonwebtoken';
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '';
@@ -73,6 +74,20 @@ export async function setAdminAuth(): Promise<void> {
 export async function clearAdminAuth(): Promise<void> {
   const cookieStore = await cookies();
   cookieStore.delete(ADMIN_COOKIE_NAME);
+}
+
+/**
+ * Get serialized cookie string to clear admin authentication
+ * Use this when setting cookies via NextResponse headers
+ */
+export function getAdminClearCookie(): string {
+  return serialize(ADMIN_COOKIE_NAME, '', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 0,
+    path: '/',
+  });
 }
 
 /**

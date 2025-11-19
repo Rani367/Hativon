@@ -142,14 +142,12 @@ pnpm install              # ONE-COMMAND SETUP - Automatically configures everyth
                           # Test user: username=user, password=12345678
                           # Admin panel: /admin with ADMIN_PASSWORD from .env.local
 
-pnpm run dev              # Start dev server
-                          # - Automatically updates all dependencies to latest versions
-                          # - Starts development server (no validation)
+pnpm run dev              # Start dev server (no validation)
 pnpm run build            # Production build
 pnpm run lint             # ESLint check
 ```
 
-**Auto-Update Feature**: The `pnpm run dev` and `pnpm run pre-deploy` commands automatically update all project dependencies to their latest versions before running. This ensures you're always working with the latest packages and security patches.
+**Auto-Update Feature**: The `pnpm run pre-deploy` command automatically updates pnpm itself (via npm) and all project dependencies to their latest versions before running. This ensures you're always deploying with the latest package manager and security patches.
 
 ### Manual Database Setup (if needed)
 ```bash
@@ -195,13 +193,13 @@ pnpm test:ui              # Open Vitest UI for visual test exploration
 ```bash
 pnpm run validate         # Run comprehensive validation (all checks below)
 pnpm run pre-deploy       # ONE COMMAND that runs:
-                          # 1. Auto-update all dependencies to latest versions
+                          # 1. Auto-update pnpm and all dependencies to latest versions
                           # 2. All tests (162 tests must pass)
                           # 3. Comprehensive validation (100+ checks)
                           # 4. Production build
                           # 5. Git commit (prompts for message)
                           # This is EXTREMELY thorough - catches ALL issues
-                          # Ensures latest packages and security patches
+                          # Ensures latest package manager and security patches
 git push                  # After pre-deploy, push to trigger Vercel deployment
 ```
 
@@ -611,7 +609,7 @@ All utility scripts are in `scripts/`:
 
 | Script | Purpose |
 |--------|---------|
-| `auto-update.ts` | Auto-update all dependencies to latest versions (runs before dev and pre-deploy) |
+| `auto-update.ts` | Auto-update pnpm and all dependencies to latest versions (runs before pre-deploy) |
 | `postinstall.ts` | Auto-setup on `pnpm install` (creates .env.local, configures DB, creates test user) |
 | `setup.ts` | Interactive setup with database configuration |
 | `init-db.ts` | Initialize database schema (runs schema.sql) |
