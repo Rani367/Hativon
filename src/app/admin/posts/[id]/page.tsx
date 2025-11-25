@@ -7,11 +7,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Save, Eye, Trash2, Upload, X } from "lucide-react";
+import { Save, Eye, Trash2, Upload, X, Loader2 } from "lucide-react";
 import { Post } from "@/types/post.types";
-import { logError } from '@/lib/logger';
+import { logError } from "@/lib/logger";
+import { toast } from "sonner";
 
-export default function EditPostPage({ params }: { params: Promise<{ id: string }> }) {
+export default function EditPostPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const { id } = use(params);
   const router = useRouter();
   const [loading, setLoading] = useState(true);
@@ -20,6 +25,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
   const [post, setPost] = useState<Post | null>(null);
   const [form, setForm] = useState({
     title: "",
+    description: "",
     content: "",
     coverImage: "",
     status: "draft" as "draft" | "published",
@@ -34,12 +40,13 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
           setPost(data);
           setForm({
             title: data.title,
+            description: data.description || "",
             content: data.content,
             coverImage: data.coverImage || "",
             status: data.status,
           });
         } else {
-          alert("הכתבה לא נמצאה");
+          toast.error("הכתבה לא נמצאה");
           router.push("/admin/posts");
         }
       } catch (error) {
@@ -57,14 +64,14 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
     if (!file) return;
 
     // Validate file type
-    if (!file.type.startsWith('image/')) {
-      alert("נא להעלות קובץ תמונה בלבד");
+    if (!file.type.startsWith("image/")) {
+      toast.error("נא להעלות קובץ תמונה בלבד");
       return;
     }
 
     // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      alert("גודל התמונה חייב להיות קטן מ-5MB");
+      toast.error("גודל התמונה חייב להיות קטן מ-5MB");
       return;
     }
 
@@ -72,10 +79,10 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
 
     try {
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append("file", file);
 
-      const response = await fetch('/api/upload', {
-        method: 'POST',
+      const response = await fetch("/api/upload", {
+        method: "POST",
         body: formData,
       });
 
@@ -83,11 +90,11 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
         const data = await response.json();
         setForm({ ...form, coverImage: data.url });
       } else {
-        alert("העלאת התמונה נכשלה");
+        toast.error("העלאת התמונה נכשלה");
       }
     } catch (error) {
       logError("Failed to upload image:", error);
-      alert("העלאת התמונה נכשלה");
+      toast.error("העלאת התמונה נכשלה");
     } finally {
       setUploading(false);
     }
@@ -95,7 +102,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
 
   const handleUpdate = async (status: "draft" | "published") => {
     if (!form.title || !form.content) {
-      alert("כותרת ותוכן הם שדות חובה");
+      toast.error("כותרת ותוכן הם שדות חובה");
       return;
     }
 
@@ -109,6 +116,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
         },
         body: JSON.stringify({
           title: form.title,
+          description: form.description || undefined,
           content: form.content,
           coverImage: form.coverImage,
           status,
@@ -116,20 +124,25 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
       });
 
       if (response.ok) {
+        toast.success("הכתבה עודכנה בהצלחה");
         router.push("/admin/posts");
       } else {
-        alert("עדכון הכתבה נכשל");
+        toast.error("עדכון הכתבה נכשל");
       }
     } catch (error) {
       logError("Failed to update post:", error);
-      alert("עדכון הכתבה נכשל");
+      toast.error("עדכון הכתבה נכשל");
     } finally {
       setSaving(false);
     }
   };
 
   const handleDelete = async () => {
-    if (!confirm("האם אתה בטוח שברצונך למחוק את הכתבה הזו? פעולה זו לא ניתנת לביטול.")) {
+    if (
+      !confirm(
+        "האם אתה בטוח שברצונך למחוק את הכתבה הזו? פעולה זו לא ניתנת לביטול.",
+      )
+    ) {
       return;
     }
 
@@ -139,13 +152,14 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
       });
 
       if (response.ok) {
+        toast.success("הכתבה נמחקה בהצלחה");
         router.push("/admin/posts");
       } else {
-        alert("מחיקת הכתבה נכשלה");
+        toast.error("מחיקת הכתבה נכשלה");
       }
     } catch (error) {
       logError("Failed to delete post:", error);
-      alert("מחיקת הכתבה נכשלה");
+      toast.error("מחיקת הכתבה נכשלה");
     }
   };
 
@@ -162,9 +176,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">ערוך כתבה</h1>
-          <p className="text-muted-foreground mt-1">
-            עדכן את הכתבה שלך
-          </p>
+          <p className="text-muted-foreground mt-1">עדכן את הכתבה שלך</p>
         </div>
         <Button variant="destructive" onClick={handleDelete}>
           <Trash2 className="h-4 w-4 me-2" />
@@ -186,6 +198,22 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
               placeholder="הזן כותרת כתבה"
               required
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="description">תיאור (אופציונלי)</Label>
+            <Textarea
+              id="description"
+              value={form.description}
+              onChange={(e) =>
+                setForm({ ...form, description: e.target.value })
+              }
+              placeholder="תיאור קצר של הכתבה שיוצג בקרוסלה וברשימת הכתבות. אם לא יוזן, התיאור ייווצר אוטומטית מהתוכן."
+              className="min-h-[100px]"
+            />
+            <p className="text-xs text-muted-foreground">
+              התיאור יוצג בקרוסלה ובכרטיסי הכתבות. מומלץ עד 200 תווים.
+            </p>
           </div>
 
           <div className="space-y-2">
@@ -222,7 +250,9 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                 </div>
                 <Input
                   value={form.coverImage}
-                  onChange={(e) => setForm({ ...form, coverImage: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, coverImage: e.target.value })
+                  }
                   placeholder="או הזן כתובת URL"
                   className="text-sm"
                 />
@@ -234,10 +264,16 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                     type="button"
                     variant="outline"
                     className="flex-1"
-                    onClick={() => document.getElementById('imageUpload')?.click()}
+                    onClick={() =>
+                      document.getElementById("imageUpload")?.click()
+                    }
                     disabled={uploading}
                   >
-                    <Upload className="h-4 w-4 me-2" />
+                    {uploading ? (
+                      <Loader2 className="h-4 w-4 me-2 animate-spin" />
+                    ) : (
+                      <Upload className="h-4 w-4 me-2" />
+                    )}
                     {uploading ? "מעלה..." : "העלה תמונה"}
                   </Button>
                   <input
@@ -251,7 +287,9 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                 <Input
                   placeholder="או הזן כתובת URL של תמונה"
                   value={form.coverImage}
-                  onChange={(e) => setForm({ ...form, coverImage: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, coverImage: e.target.value })
+                  }
                 />
               </div>
             )}
@@ -275,10 +313,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
           <Save className="h-4 w-4 me-2" />
           שמור כטיוטה
         </Button>
-        <Button
-          onClick={() => handleUpdate("published")}
-          disabled={saving}
-        >
+        <Button onClick={() => handleUpdate("published")} disabled={saving}>
           <Eye className="h-4 w-4 me-2" />
           {form.status === "published" ? "עדכן" : "פרסם"}
         </Button>
