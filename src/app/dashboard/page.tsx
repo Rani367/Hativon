@@ -12,14 +12,28 @@ import { Post } from "@/types/post.types";
 import { format } from "date-fns";
 import { he } from "date-fns/locale";
 import { toast } from "sonner";
-import { logError } from '@/lib/logger';
+import { logError } from "@/lib/logger";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export default function DashboardPage() {
   const router = useRouter();
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"all" | "published" | "draft">("all");
+  const [statusFilter, setStatusFilter] = useState<
+    "all" | "published" | "draft"
+  >("all");
   const [posts, setPosts] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [postToDelete, setPostToDelete] = useState<string | null>(null);
 
   // Fetch posts on mount
   useEffect(() => {
@@ -29,12 +43,12 @@ export default function DashboardPage() {
   async function fetchPosts() {
     try {
       setIsLoading(true);
-      const response = await fetch('/api/admin/posts', { cache: 'no-store' });
+      const response = await fetch("/api/admin/posts", { cache: "no-store" });
       const data = await response.json();
       setPosts(data.posts || []);
     } catch (error) {
       logError("Failed to fetch posts:", error);
-      toast.error("שגיאה בטעינת פוסטים");
+      toast.error("שגיאה בטעינת כתבות");
     } finally {
       setIsLoading(false);
     }
@@ -52,31 +66,37 @@ export default function DashboardPage() {
       filtered = filtered.filter(
         (post: Post) =>
           post.title.toLowerCase().includes(searchLower) ||
-          post.slug.toLowerCase().includes(searchLower)
+          post.slug.toLowerCase().includes(searchLower),
       );
     }
 
     return filtered;
   }, [posts, search, statusFilter]);
 
-  async function handleDelete(id: string) {
-    if (!confirm("האם אתה בטוח שברצונך למחוק את הכתבה הזו?")) return;
+  function openDeleteDialog(id: string) {
+    setPostToDelete(id);
+    setDeleteDialogOpen(true);
+  }
 
-    const loadingToast = toast.loading("מוחק פוסט...");
+  async function confirmDelete() {
+    if (!postToDelete) return;
+
+    setDeleteDialogOpen(false);
+    const loadingToast = toast.loading("מוחק כתבה...");
 
     try {
-      const response = await fetch(`/api/admin/posts/${id}`, {
+      const response = await fetch(`/api/admin/posts/${postToDelete}`, {
         method: "DELETE",
         credentials: "include",
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to delete post');
+        throw new Error(errorData.error || "Failed to delete post");
       }
 
       toast.dismiss(loadingToast);
-      toast.success("הפוסט נמחק בהצלחה!");
+      toast.success("הכתבה נמחקה בהצלחה!");
 
       // Refresh to get fresh data from server
       router.refresh();
@@ -84,7 +104,11 @@ export default function DashboardPage() {
     } catch (error) {
       logError("Failed to delete post:", error);
       toast.dismiss(loadingToast);
-      toast.error(`שגיאה במחיקת הכתבה: ${error instanceof Error ? error.message : 'שגיאה לא ידועה'}`);
+      toast.error(
+        `שגיאה במחיקת הכתבה: ${error instanceof Error ? error.message : "שגיאה לא ידועה"}`,
+      );
+    } finally {
+      setPostToDelete(null);
     }
   }
 
@@ -119,11 +143,21 @@ export default function DashboardPage() {
             <table className="w-full">
               <thead className="border-b">
                 <tr className="text-start">
-                  <th className="p-4"><div className="h-4 w-16 rounded bg-muted animate-pulse" /></th>
-                  <th className="p-4 hidden md:table-cell"><div className="h-4 w-20 rounded bg-muted animate-pulse" /></th>
-                  <th className="p-4 hidden lg:table-cell"><div className="h-4 w-16 rounded bg-muted animate-pulse" /></th>
-                  <th className="p-4"><div className="h-4 w-16 rounded bg-muted animate-pulse" /></th>
-                  <th className="p-4 text-end"><div className="h-4 w-16 rounded bg-muted animate-pulse ms-auto" /></th>
+                  <th className="p-4">
+                    <div className="h-4 w-16 rounded bg-muted animate-pulse" />
+                  </th>
+                  <th className="p-4 hidden md:table-cell">
+                    <div className="h-4 w-20 rounded bg-muted animate-pulse" />
+                  </th>
+                  <th className="p-4 hidden lg:table-cell">
+                    <div className="h-4 w-16 rounded bg-muted animate-pulse" />
+                  </th>
+                  <th className="p-4">
+                    <div className="h-4 w-16 rounded bg-muted animate-pulse" />
+                  </th>
+                  <th className="p-4 text-end">
+                    <div className="h-4 w-16 rounded bg-muted animate-pulse ms-auto" />
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -164,15 +198,13 @@ export default function DashboardPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">הפוסטים שלי</h1>
-          <p className="text-muted-foreground mt-1">
-            נהל את הכתבות שלך
-          </p>
+          <h1 className="text-3xl font-bold">הכתבות שלי</h1>
+          <p className="text-muted-foreground mt-1">נהל את הכתבות שלך</p>
         </div>
         <Link href="/dashboard/posts/new">
           <Button>
             <PlusCircle className="h-4 w-4 me-2" />
-            פוסט חדש
+            כתבה חדשה
           </Button>
         </Link>
       </div>
@@ -187,14 +219,14 @@ export default function DashboardPage() {
               </div>
             </div>
             <div>
-              <h3 className="text-xl font-semibold mb-2">אין לך פוסטים עדיין</h3>
+              <h3 className="text-xl font-semibold mb-2">אין לך כתבות עדיין</h3>
               <p className="text-muted-foreground mb-4">
                 התחל לכתוב ולשתף את הסיפורים שלך עם הקהילה
               </p>
               <Link href="/dashboard/posts/new">
                 <Button>
                   <PlusCircle className="h-4 w-4 me-2" />
-                  צור פוסט ראשון
+                  צור כתבה ראשונה
                 </Button>
               </Link>
             </div>
@@ -208,7 +240,7 @@ export default function DashboardPage() {
               <div className="flex-1 relative">
                 <Search className="absolute start-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="חפש פוסטים..."
+                  placeholder="חפש כתבות..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   className="ps-10"
@@ -247,8 +279,12 @@ export default function DashboardPage() {
                 <thead className="border-b">
                   <tr className="text-start">
                     <th className="p-3 sm:p-4 font-medium">כותרת</th>
-                    <th className="p-3 sm:p-4 font-medium hidden md:table-cell">קטגוריה</th>
-                    <th className="p-3 sm:p-4 font-medium hidden lg:table-cell">נוצר</th>
+                    <th className="p-3 sm:p-4 font-medium hidden md:table-cell">
+                      קטגוריה
+                    </th>
+                    <th className="p-3 sm:p-4 font-medium hidden lg:table-cell">
+                      נוצר
+                    </th>
                     <th className="p-3 sm:p-4 font-medium">סטטוס</th>
                     <th className="p-3 sm:p-4 font-medium text-end">פעולות</th>
                   </tr>
@@ -256,13 +292,19 @@ export default function DashboardPage() {
                 <tbody>
                   {filteredPosts.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="p-8 text-center text-muted-foreground">
-                        לא נמצאו פוסטים התואמים את החיפוש.
+                      <td
+                        colSpan={5}
+                        className="p-8 text-center text-muted-foreground"
+                      >
+                        לא נמצאו כתבות התואמות את החיפוש.
                       </td>
                     </tr>
                   ) : (
                     filteredPosts.map((post: Post) => (
-                      <tr key={post.id} className="border-b last:border-0 hover:bg-muted/50">
+                      <tr
+                        key={post.id}
+                        className="border-b last:border-0 hover:bg-muted/50"
+                      >
                         <td className="p-3 sm:p-4">
                           <div>
                             <Link
@@ -282,11 +324,17 @@ export default function DashboardPage() {
                           )}
                         </td>
                         <td className="p-3 sm:p-4 text-sm text-muted-foreground hidden lg:table-cell">
-                          {format(new Date(post.createdAt), "d בMMMM yyyy", { locale: he })}
+                          {format(new Date(post.createdAt), "d בMMMM yyyy", {
+                            locale: he,
+                          })}
                         </td>
                         <td className="p-3 sm:p-4">
                           <Badge
-                            variant={post.status === "published" ? "default" : "secondary"}
+                            variant={
+                              post.status === "published"
+                                ? "default"
+                                : "secondary"
+                            }
                           >
                             {post.status === "published" ? "פורסם" : "טיוטה"}
                           </Badge>
@@ -294,14 +342,18 @@ export default function DashboardPage() {
                         <td className="p-2 sm:p-4">
                           <div className="flex justify-end gap-2">
                             <Link href={`/dashboard/posts/${post.id}`}>
-                              <Button variant="ghost" size="sm" className="h-10 w-10 sm:h-9 sm:w-9">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-10 w-10 sm:h-9 sm:w-9"
+                              >
                                 <Edit className="h-4 w-4" />
                               </Button>
                             </Link>
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => handleDelete(post.id)}
+                              onClick={() => openDeleteDialog(post.id)}
                               className="h-10 w-10 sm:h-9 sm:w-9"
                             >
                               <Trash2 className="h-4 w-4 text-destructive" />
@@ -317,6 +369,26 @@ export default function DashboardPage() {
           </Card>
         </>
       )}
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>מחיקת כתבה</AlertDialogTitle>
+            <AlertDialogDescription>
+              האם אתה בטוח שברצונך למחוק את הכתבה הזו? פעולה זו לא ניתנת לביטול.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>ביטול</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              מחק
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

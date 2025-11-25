@@ -11,7 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { logError } from '@/lib/logger';
+import { logError } from "@/lib/logger";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,7 +23,14 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { User } from "@/types/user.types";
-import { Trash2, Users, Database, AlertCircle } from "lucide-react";
+import {
+  Trash2,
+  Users,
+  Database,
+  AlertCircle,
+  UserPlus,
+  Terminal,
+} from "lucide-react";
 import { format } from "date-fns";
 import { he } from "date-fns/locale";
 import { toast } from "sonner";
@@ -142,8 +149,8 @@ export default function UsersManagementPage() {
           <AlertTitle>מסד נתונים לא מוגדר</AlertTitle>
           <AlertDescription className="mt-2 space-y-2">
             <p>
-              ניהול משתמשים דורש חיבור למסד נתונים PostgreSQL. התכונה הזו
-              פועלת רק כאשר המערכת מחוברת למסד נתונים.
+              ניהול משתמשים דורש חיבור למסד נתונים PostgreSQL. התכונה הזו פועלת
+              רק כאשר המערכת מחוברת למסד נתונים.
             </p>
             <div className="mt-4 space-y-2">
               <p className="font-medium">אפשרויות:</p>
@@ -153,11 +160,14 @@ export default function UsersManagementPage() {
                   <code className="bg-muted px-1 py-0.5 rounded">
                     POSTGRES_URL
                   </code>{" "}
-                  בקובץ <code className="bg-muted px-1 py-0.5 rounded">.env.local</code>
+                  בקובץ{" "}
+                  <code className="bg-muted px-1 py-0.5 rounded">
+                    .env.local
+                  </code>
                 </li>
                 <li>
-                  <strong>ייצור (מומלץ):</strong> פרוס לVercel - מסד הנתונים יוגדר
-                  אוטומטית עם Vercel Postgres
+                  <strong>ייצור (מומלץ):</strong> פרוס לVercel - מסד הנתונים
+                  יוגדר אוטומטית עם Vercel Postgres
                 </li>
               </ul>
             </div>
@@ -180,12 +190,20 @@ export default function UsersManagementPage() {
               <ol className="list-decimal list-inside space-y-1 text-sm mr-4">
                 <li>התקן PostgreSQL במחשב שלך</li>
                 <li>
-                  הוסף <code className="bg-muted px-1 py-0.5 rounded">POSTGRES_URL</code>{" "}
-                  לקובץ <code className="bg-muted px-1 py-0.5 rounded">.env.local</code>
+                  הוסף{" "}
+                  <code className="bg-muted px-1 py-0.5 rounded">
+                    POSTGRES_URL
+                  </code>{" "}
+                  לקובץ{" "}
+                  <code className="bg-muted px-1 py-0.5 rounded">
+                    .env.local
+                  </code>
                 </li>
                 <li>
                   הרץ{" "}
-                  <code className="bg-muted px-1 py-0.5 rounded">pnpm run db:init</code>{" "}
+                  <code className="bg-muted px-1 py-0.5 rounded">
+                    pnpm run db:init
+                  </code>{" "}
                   ליצירת הטבלאות
                 </li>
                 <li>
@@ -230,8 +248,27 @@ export default function UsersManagementPage() {
         </CardHeader>
         <CardContent>
           {users.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              אין משתמשים במערכת
+            <div className="flex flex-col items-center justify-center py-12 px-4">
+              <div className="rounded-full bg-muted p-6 mb-4">
+                <UserPlus className="h-12 w-12 text-muted-foreground" />
+              </div>
+              <h3 className="text-lg font-semibold mb-2">אין משתמשים במערכת</h3>
+              <p className="text-sm text-muted-foreground text-center mb-6 max-w-md">
+                עדיין לא נרשמו משתמשים למערכת. ניתן ליצור משתמש לבדיקה באמצעות
+                הפקודה הבאה:
+              </p>
+              <div className="bg-muted rounded-lg p-4 mb-4 w-full max-w-md">
+                <div className="flex items-start gap-2">
+                  <Terminal className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
+                  <code className="text-sm font-mono break-all">
+                    pnpm run create-test-user
+                  </code>
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground text-center max-w-md">
+                הפקודה תיצור משתמש בדיקה עם שם משתמש: <strong>user</strong>{" "}
+                וסיסמה: <strong>12345678</strong>
+              </p>
             </div>
           ) : (
             <div className="rounded-md border">
@@ -294,7 +331,9 @@ export default function UsersManagementPage() {
             <AlertDialogTitle>האם אתה בטוח?</AlertDialogTitle>
             <AlertDialogDescription className="text-right">
               פעולה זו תמחק את המשתמש{" "}
-              <strong className="text-foreground">{userToDelete?.username}</strong>{" "}
+              <strong className="text-foreground">
+                {userToDelete?.username}
+              </strong>{" "}
               ({userToDelete?.displayName}) לצמיתות. לא ניתן לבטל פעולה זו.
             </AlertDialogDescription>
           </AlertDialogHeader>

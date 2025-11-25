@@ -18,9 +18,9 @@ interface PostPageProps {
 // Use ISR for instant loading with periodic revalidation
 export const revalidate = 300; // Revalidate every 5 minutes
 
-export async function generateMetadata(
-  { params }: PostPageProps
-): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: PostPageProps): Promise<Metadata> {
   const { slug } = await params;
   const post = await getPost(slug);
 
@@ -130,11 +130,18 @@ export default async function PostPage({ params }: PostPageProps) {
 
         <header className="mb-10">
           <div className="flex items-center gap-4 text-base text-muted-foreground mb-6">
-            <time>{format(new Date(post.date), "d בMMMM yyyy", { locale: he })}</time>
+            <time>
+              {format(new Date(post.date), "d בMMMM yyyy", { locale: he })}
+            </time>
             {post.author && (
               <span>
-                מאת {post.author}{post.authorDeleted && ' (נמחק)'}
-                {post.authorGrade && post.authorClass && ` (כיתה ${post.authorGrade}${post.authorClass})`}
+                מאת {post.author}
+                {post.authorDeleted && (
+                  <span className="text-muted-foreground"> (נמחק)</span>
+                )}
+                {post.authorGrade &&
+                  post.authorClass &&
+                  ` (כיתה ${post.authorGrade}${post.authorClass})`}
               </span>
             )}
             <span>{calculateReadingTime(wordCount)}</span>
@@ -147,11 +154,17 @@ export default async function PostPage({ params }: PostPageProps) {
 
           <div className="flex gap-3 mb-4">
             {post.category && (
-              <Badge variant="secondary" className="text-base px-4 py-1.5">{post.category}</Badge>
+              <Badge variant="secondary" className="text-base px-4 py-1.5">
+                {post.category}
+              </Badge>
             )}
             {post.tags &&
               post.tags.map((tag) => (
-                <Badge key={tag} variant="outline" className="text-base px-4 py-1.5">
+                <Badge
+                  key={tag}
+                  variant="outline"
+                  className="text-base px-4 py-1.5"
+                >
                   {tag}
                 </Badge>
               ))}
