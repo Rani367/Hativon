@@ -8,7 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Save, Eye, Upload, X, Loader2 } from "lucide-react";
-import { logError } from '@/lib/logger';
+import { logError } from "@/lib/logger";
+import { toast } from "sonner";
 
 export default function NewPostPage() {
   const router = useRouter();
@@ -33,14 +34,14 @@ export default function NewPostPage() {
     if (!file) return;
 
     // Validate file type
-    if (!file.type.startsWith('image/')) {
-      alert("נא להעלות קובץ תמונה בלבד");
+    if (!file.type.startsWith("image/")) {
+      toast.error("נא להעלות קובץ תמונה בלבד");
       return;
     }
 
     // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      alert("גודל התמונה חייב להיות קטן מ-5MB");
+      toast.error("גודל התמונה חייב להיות קטן מ-5MB");
       return;
     }
 
@@ -48,10 +49,10 @@ export default function NewPostPage() {
 
     try {
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append("file", file);
 
-      const response = await fetch('/api/upload', {
-        method: 'POST',
+      const response = await fetch("/api/upload", {
+        method: "POST",
         body: formData,
       });
 
@@ -60,11 +61,11 @@ export default function NewPostPage() {
         setForm({ ...form, coverImage: data.url });
         if (errors.coverImage) setErrors({ ...errors, coverImage: undefined });
       } else {
-        alert("העלאת התמונה נכשלה");
+        toast.error("העלאת התמונה נכשלה");
       }
     } catch (error) {
       logError("Failed to upload image:", error);
-      alert("העלאת התמונה נכשלה");
+      toast.error("העלאת התמונה נכשלה");
     } finally {
       setUploading(false);
     }
@@ -91,7 +92,7 @@ export default function NewPostPage() {
 
   const handleSubmit = async (status: "draft" | "published") => {
     if (!validateForm()) {
-      alert("נא למלא את כל השדות הנדרשים");
+      toast.error("נא למלא את כל השדות הנדרשים");
       return;
     }
 
@@ -113,14 +114,15 @@ export default function NewPostPage() {
       });
 
       if (response.ok) {
+        toast.success("הכתבה נוצרה בהצלחה");
         router.push("/admin/posts");
       } else {
         const errorData = await response.json();
-        alert(errorData.error || "יצירת הכתבה נכשלה");
+        toast.error(errorData.error || "יצירת הכתבה נכשלה");
       }
     } catch (error) {
       logError("Failed to create post:", error);
-      alert("יצירת הכתבה נכשלה");
+      toast.error("יצירת הכתבה נכשלה");
     } finally {
       setLoading(false);
     }
@@ -130,9 +132,7 @@ export default function NewPostPage() {
     <div className="max-w-4xl mx-auto space-y-6">
       <div>
         <h1 className="text-3xl font-bold">צור כתבה חדשה</h1>
-        <p className="text-muted-foreground mt-1">
-          כתוב כתבה חדשה לעיתון
-        </p>
+        <p className="text-muted-foreground mt-1">כתוב כתבה חדשה לעיתון</p>
       </div>
 
       <Card>
@@ -165,7 +165,8 @@ export default function NewPostPage() {
               value={form.description}
               onChange={(e) => {
                 setForm({ ...form, description: e.target.value });
-                if (errors.description) setErrors({ ...errors, description: undefined });
+                if (errors.description)
+                  setErrors({ ...errors, description: undefined });
               }}
               placeholder="תיאור קצר של הכתבה שיוצג בקרוסלה וברשימת הכתבות. אם לא יוזן, התיאור ייווצר אוטומטית מהתוכן."
               className="min-h-[100px]"
@@ -182,7 +183,8 @@ export default function NewPostPage() {
               value={form.content}
               onChange={(e) => {
                 setForm({ ...form, content: e.target.value });
-                if (errors.content) setErrors({ ...errors, content: undefined });
+                if (errors.content)
+                  setErrors({ ...errors, content: undefined });
               }}
               placeholder="כתוב את תוכן הכתבה בפורמט Markdown..."
               className={`min-h-[400px] font-mono ${errors.content ? "border-destructive" : ""}`}
@@ -223,10 +225,16 @@ export default function NewPostPage() {
                   type="button"
                   variant="outline"
                   className="w-full"
-                  onClick={() => document.getElementById('imageUpload')?.click()}
+                  onClick={() =>
+                    document.getElementById("imageUpload")?.click()
+                  }
                   disabled={uploading}
                 >
-                  <Upload className="h-4 w-4 me-2" />
+                  {uploading ? (
+                    <Loader2 className="h-4 w-4 me-2 animate-spin" />
+                  ) : (
+                    <Upload className="h-4 w-4 me-2" />
+                  )}
                   {uploading ? "מעלה..." : "העלה תמונה"}
                 </Button>
                 <input
@@ -262,10 +270,7 @@ export default function NewPostPage() {
           )}
           שמור כטיוטה
         </Button>
-        <Button
-          onClick={() => handleSubmit("published")}
-          disabled={loading}
-        >
+        <Button onClick={() => handleSubmit("published")} disabled={loading}>
           {loading ? (
             <Loader2 className="h-4 w-4 me-2 animate-spin" />
           ) : (

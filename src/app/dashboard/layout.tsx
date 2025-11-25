@@ -4,10 +4,14 @@ import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { FileText, PlusCircle, LogOut, Menu } from "lucide-react";
-import { logError } from '@/lib/logger';
+import { FileText, PlusCircle, LogOut, Menu, UserCog } from "lucide-react";
+import { logError } from "@/lib/logger";
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+export default function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const router = useRouter();
   const pathname = usePathname();
   const [checking, setChecking] = useState(true);
@@ -73,7 +77,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <aside className="hidden lg:block w-64 border-l bg-background">
             <nav className="space-y-1 p-4">
               {[1, 2].map((i) => (
-                <div key={i} className="h-10 rounded-lg bg-muted animate-pulse" />
+                <div
+                  key={i}
+                  className="h-10 rounded-lg bg-muted animate-pulse"
+                />
               ))}
             </nav>
           </aside>
@@ -97,8 +104,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }
 
   const navItems = [
-    { href: "/dashboard", label: "הפוסטים שלי", icon: FileText },
-    { href: "/dashboard/posts/new", label: "פוסט חדש", icon: PlusCircle },
+    { href: "/dashboard", label: "הכתבות שלי", icon: FileText },
+    { href: "/dashboard/posts/new", label: "כתבה חדשה", icon: PlusCircle },
+    { href: "/dashboard/profile", label: "הפרופיל שלי", icon: UserCog },
   ];
 
   return (
