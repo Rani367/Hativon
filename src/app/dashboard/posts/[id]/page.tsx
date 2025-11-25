@@ -8,11 +8,12 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Save, Eye, Trash2, Upload, X, Edit } from "lucide-react";
+import { Save, Eye, Trash2, Upload, X, Edit, Loader2 } from "lucide-react";
 import { Post } from "@/types/post.types";
 import { logError } from "@/lib/logger";
 import { PostPreview } from "@/components/features/posts/post-preview";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
+import { toast } from "sonner";
 
 export default function EditPostPage({
   params,
@@ -27,6 +28,7 @@ export default function EditPostPage({
   const [post, setPost] = useState<Post | null>(null);
   const [form, setForm] = useState({
     title: "",
+    description: "",
     content: "",
     coverImage: "",
     status: "draft" as "draft" | "published",
@@ -40,18 +42,19 @@ export default function EditPostPage({
   useEffect(() => {
     async function fetchPost() {
       try {
-        const response = await fetch(`/api/admin/posts/${id}`);
+        const response = await fetch(`/api/user/posts/${id}`);
         if (response.ok) {
           const data = await response.json();
           setPost(data);
           setForm({
             title: data.title,
+            description: data.description || "",
             content: data.content,
             coverImage: data.coverImage || "",
             status: data.status,
           });
         } else {
-          alert("הפוסט לא נמצא");
+          toast.error("הכתבה לא נמצאה");
           router.push("/dashboard");
         }
       } catch (error) {
@@ -70,13 +73,13 @@ export default function EditPostPage({
 
     // Validate file type
     if (!file.type.startsWith("image/")) {
-      alert("נא להעלות קובץ תמונה בלבד");
+      toast.error("נא להעלות קובץ תמונה בלבד");
       return;
     }
 
     // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      alert("גודל התמונה חייב להיות קטן מ-5MB");
+      toast.error("גודל התמונה חייב להיות קטן מ-5MB");
       return;
     }
 
@@ -95,11 +98,11 @@ export default function EditPostPage({
         const data = await response.json();
         setForm({ ...form, coverImage: data.url });
       } else {
-        alert("העלאת התמונה נכשלה");
+        toast.error("העלאת התמונה נכשלה");
       }
     } catch (error) {
       logError("Failed to upload image:", error);
-      alert("העלאת התמונה נכשלה");
+      toast.error("העלאת התמונה נכשלה");
     } finally {
       setUploading(false);
     }
@@ -107,20 +110,21 @@ export default function EditPostPage({
 
   const handleUpdate = async (status: "draft" | "published") => {
     if (!form.title || !form.content) {
-      alert("כותרת ותוכן הם שדות חובה");
+      toast.error("כותרת ותוכן הם שדות חובה");
       return;
     }
 
     setSaving(true);
 
     try {
-      const response = await fetch(`/api/admin/posts/${id}`, {
+      const response = await fetch(`/api/user/posts/${id}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
           title: form.title,
+          description: form.description || undefined,
           content: form.content,
           coverImage: form.coverImage,
           status,
@@ -131,12 +135,13 @@ export default function EditPostPage({
         throw new Error("Failed to update post");
       }
 
+      toast.success("הכתבה עודכנה בהצלחה");
       // Refresh to invalidate cache and navigate
       router.refresh();
       router.push("/dashboard");
     } catch (error) {
       logError("Failed to update post:", error);
-      alert("עדכון הפוסט נכשל");
+      toast.error("עדכון הכתבה נכשל");
       setSaving(false);
     }
   };
@@ -144,14 +149,14 @@ export default function EditPostPage({
   const handleDelete = async () => {
     if (
       !confirm(
-        "האם אתה בטוח שברצונך למחוק את הפוסט הזה? פעולה זו לא ניתנת לביטול.",
+        "האם אתה בטוח שברצונך למחוק את הכתבה הזו? פעולה זו לא ניתנת לביטול.",
       )
     ) {
       return;
     }
 
     try {
-      const response = await fetch(`/api/admin/posts/${id}`, {
+      const response = await fetch(`/api/user/posts/${id}`, {
         method: "DELETE",
         credentials: "include",
       });
@@ -161,13 +166,14 @@ export default function EditPostPage({
         throw new Error(errorData.error || "Failed to delete post");
       }
 
+      toast.success("הכתבה נמחקה בהצלחה");
       // Refresh to invalidate cache and navigate
       router.refresh();
       router.push("/dashboard");
     } catch (error) {
       logError("Failed to delete post:", error);
-      alert(
-        `מחיקת הפוסט נכשלה: ${error instanceof Error ? error.message : "שגיאה לא ידועה"}`,
+      toast.error(
+        `מחיקת הכתבה נכשלה: ${error instanceof Error ? error.message : "שגיאה לא ידועה"}`,
       );
     }
   };
@@ -177,15 +183,15 @@ export default function EditPostPage({
   }
 
   if (!post) {
-    return <div className="text-center py-8">הפוסט לא נמצא</div>;
+    return <div className="text-center py-8">הכתבה לא נמצאה</div>;
   }
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">ערוך פוסט</h1>
-          <p className="text-muted-foreground mt-1">עדכן את הפוסט שלך</p>
+          <h1 className="text-3xl font-bold">ערוך כתבה</h1>
+          <p className="text-muted-foreground mt-1">עדכן את הכתבה שלך</p>
         </div>
         <Button variant="destructive" onClick={handleDelete}>
           <Trash2 className="h-4 w-4 me-2" />
@@ -209,7 +215,7 @@ export default function EditPostPage({
         <TabsContent value="edit" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>פרטי הפוסט</CardTitle>
+              <CardTitle>פרטי הכתבה</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
@@ -218,9 +224,25 @@ export default function EditPostPage({
                   id="title"
                   value={form.title}
                   onChange={(e) => setForm({ ...form, title: e.target.value })}
-                  placeholder="הזן כותרת פוסט"
+                  placeholder="הזן כותרת כתבה"
                   required
                 />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="description">תיאור (אופציונלי)</Label>
+                <Textarea
+                  id="description"
+                  value={form.description}
+                  onChange={(e) =>
+                    setForm({ ...form, description: e.target.value })
+                  }
+                  placeholder="תיאור קצר של הכתבה שיוצג בקרוסלה וברשימת הכתבות. אם לא יוזן, התיאור ייווצר אוטומטית מהתוכן."
+                  className="min-h-[100px]"
+                />
+                <p className="text-xs text-muted-foreground">
+                  התיאור יוצג בקרוסלה ובכרטיסי הכתבות. מומלץ עד 200 תווים.
+                </p>
               </div>
 
               <div className="space-y-2">
@@ -231,7 +253,7 @@ export default function EditPostPage({
                   onChange={(e) =>
                     setForm({ ...form, content: e.target.value })
                   }
-                  placeholder="כתוב את תוכן הפוסט בפורמט Markdown..."
+                  placeholder="כתוב את תוכן הכתבה בפורמט Markdown..."
                   className="min-h-[400px] font-mono"
                   required
                 />
@@ -278,7 +300,11 @@ export default function EditPostPage({
                         }
                         disabled={uploading}
                       >
-                        <Upload className="h-4 w-4 me-2" />
+                        {uploading ? (
+                          <Loader2 className="h-4 w-4 me-2 animate-spin" />
+                        ) : (
+                          <Upload className="h-4 w-4 me-2" />
+                        )}
                         {uploading ? "מעלה..." : "העלה תמונה"}
                       </Button>
                       <input
@@ -347,7 +373,7 @@ export default function EditPostPage({
         <div className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>פרטי הפוסט</CardTitle>
+              <CardTitle>פרטי הכתבה</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
@@ -356,9 +382,25 @@ export default function EditPostPage({
                   id="title-desktop"
                   value={form.title}
                   onChange={(e) => setForm({ ...form, title: e.target.value })}
-                  placeholder="הזן כותרת פוסט"
+                  placeholder="הזן כותרת כתבה"
                   required
                 />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="description-desktop">תיאור (אופציונלי)</Label>
+                <Textarea
+                  id="description-desktop"
+                  value={form.description}
+                  onChange={(e) =>
+                    setForm({ ...form, description: e.target.value })
+                  }
+                  placeholder="תיאור קצר של הכתבה שיוצג בקרוסלה וברשימת הכתבות. אם לא יוזן, התיאור ייווצר אוטומטית מהתוכן."
+                  className="min-h-[100px]"
+                />
+                <p className="text-xs text-muted-foreground">
+                  התיאור יוצג בקרוסלה ובכרטיסי הכתבות. מומלץ עד 200 תווים.
+                </p>
               </div>
 
               <div className="space-y-2">
@@ -369,7 +411,7 @@ export default function EditPostPage({
                   onChange={(e) =>
                     setForm({ ...form, content: e.target.value })
                   }
-                  placeholder="כתוב את תוכן הפוסט בפורמט Markdown..."
+                  placeholder="כתוב את תוכן הכתבה בפורמט Markdown..."
                   className="min-h-[400px] font-mono"
                   required
                 />
@@ -418,7 +460,11 @@ export default function EditPostPage({
                         }
                         disabled={uploading}
                       >
-                        <Upload className="h-4 w-4 me-2" />
+                        {uploading ? (
+                          <Loader2 className="h-4 w-4 me-2 animate-spin" />
+                        ) : (
+                          <Upload className="h-4 w-4 me-2" />
+                        )}
                         {uploading ? "מעלה..." : "העלה תמונה"}
                       </Button>
                       <input

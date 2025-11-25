@@ -1,14 +1,20 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useAuth } from './auth-provider';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import type { Grade } from '@/types/user.types';
-import { motion } from 'framer-motion';
-import { buttonVariants } from '@/lib/utils';
+import { useState } from "react";
+import { useAuth } from "./auth-provider";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import type { Grade } from "@/types/user.types";
+import { motion } from "framer-motion";
+import { buttonVariants } from "@/lib/utils";
 
 interface RegisterFormProps {
   onSuccess?: () => void;
@@ -16,36 +22,75 @@ interface RegisterFormProps {
 
 export function RegisterForm({ onSuccess }: RegisterFormProps) {
   const { register } = useAuth();
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [displayName, setDisplayName] = useState('');
-  const [grade, setGrade] = useState<Grade | ''>('');
-  const [classNumber, setClassNumber] = useState<number | ''>('');
-  const [error, setError] = useState('');
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [displayName, setDisplayName] = useState("");
+  const [grade, setGrade] = useState<Grade | "">("");
+  const [classNumber, setClassNumber] = useState<number | "">("");
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [usernameError, setUsernameError] = useState("");
+
+  const validateUsername = (value: string) => {
+    if (!value) {
+      setUsernameError("");
+      return;
+    }
+
+    if (value.length < 3) {
+      setUsernameError("שם משתמש חייב להכיל לפחות 3 תווים");
+      return;
+    }
+
+    if (value.length > 50) {
+      setUsernameError("שם משתמש לא יכול להיות ארוך מ-50 תווים");
+      return;
+    }
+
+    const usernamePattern = /^[a-zA-Z0-9_]+$/;
+    if (!usernamePattern.test(value)) {
+      setUsernameError(
+        "שם משתמש יכול להכיל רק אותיות אנגליות, מספרים וקו תחתון",
+      );
+      return;
+    }
+
+    setUsernameError("");
+  };
+
+  const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setUsername(value);
+    validateUsername(value);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setError("");
+
+    // Check username validation first
+    if (usernameError) {
+      return;
+    }
 
     if (password !== confirmPassword) {
-      setError('הסיסמאות אינן תואמות');
+      setError("הסיסמאות אינן תואמות");
       return;
     }
 
     if (password.length < 8) {
-      setError('הסיסמה חייבת להכיל לפחות 8 תווים');
+      setError("הסיסמה חייבת להכיל לפחות 8 תווים");
       return;
     }
 
     if (!grade) {
-      setError('יש לבחור כיתה');
+      setError("יש לבחור כיתה");
       return;
     }
 
     if (!classNumber) {
-      setError('יש לבחור מספר כיתה');
+      setError("יש לבחור מספר כיתה");
       return;
     }
 
@@ -63,7 +108,7 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
       if (result.success) {
         onSuccess?.();
       } else {
-        setError(result.message || 'הרשמה נכשלה');
+        setError(result.message || "הרשמה נכשלה");
       }
     } finally {
       setLoading(false);
@@ -78,19 +123,38 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.05, duration: 0.3 }}
       >
-        <Label htmlFor="register-username" className="text-right block">שם משתמש</Label>
+        <Label htmlFor="register-username" className="text-right block">
+          שם משתמש
+        </Label>
         <Input
           id="register-username"
           type="text"
           value={username}
-          onChange={(e) => setUsername(e.target.value)}
+          onChange={handleUsernameChange}
           required
           disabled={loading}
           placeholder="אותיות אנגליות ומספרים בלבד"
           pattern="[a-zA-Z0-9_]{3,50}"
-          className="text-right transition-all duration-200 focus:scale-[1.01]"
+          className={`text-right transition-all duration-200 focus:scale-[1.01] ${usernameError ? "border-destructive" : ""}`}
+          aria-invalid={!!usernameError}
+          aria-describedby={usernameError ? "username-error" : "username-help"}
         />
-        <p className="text-xs text-muted-foreground text-right">3-50 תווים (אותיות אנגליות, מספרים וקו תחתון)</p>
+        {usernameError ? (
+          <p
+            id="username-error"
+            className="text-xs text-destructive text-right"
+            role="alert"
+          >
+            {usernameError}
+          </p>
+        ) : (
+          <p
+            id="username-help"
+            className="text-xs text-muted-foreground text-right"
+          >
+            3-50 תווים (אותיות אנגליות, מספרים וקו תחתון)
+          </p>
+        )}
       </motion.div>
 
       <motion.div
@@ -99,7 +163,9 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1, duration: 0.3 }}
       >
-        <Label htmlFor="register-displayName" className="text-right block">שם מלא</Label>
+        <Label htmlFor="register-displayName" className="text-right block">
+          שם מלא
+        </Label>
         <Input
           id="register-displayName"
           type="text"
@@ -119,9 +185,19 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
         transition={{ delay: 0.15, duration: 0.3 }}
       >
         <div className="flex-1 space-y-2">
-          <Label htmlFor="register-classNumber" className="text-right block">מספר כיתה</Label>
-          <Select value={classNumber.toString()} onValueChange={(value) => setClassNumber(Number(value))} disabled={loading}>
-            <SelectTrigger id="register-classNumber" className="w-full" dir="rtl">
+          <Label htmlFor="register-classNumber" className="text-right block">
+            מספר כיתה
+          </Label>
+          <Select
+            value={classNumber.toString()}
+            onValueChange={(value) => setClassNumber(Number(value))}
+            disabled={loading}
+          >
+            <SelectTrigger
+              id="register-classNumber"
+              className="w-full"
+              dir="rtl"
+            >
               <SelectValue placeholder="בחר מספר" />
             </SelectTrigger>
             <SelectContent className="text-right" dir="rtl">
@@ -134,8 +210,14 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
         </div>
 
         <div className="flex-1 space-y-2">
-          <Label htmlFor="register-grade" className="text-right block">כיתה</Label>
-          <Select value={grade} onValueChange={(value) => setGrade(value as Grade)} disabled={loading}>
+          <Label htmlFor="register-grade" className="text-right block">
+            כיתה
+          </Label>
+          <Select
+            value={grade}
+            onValueChange={(value) => setGrade(value as Grade)}
+            disabled={loading}
+          >
             <SelectTrigger id="register-grade" className="w-full" dir="rtl">
               <SelectValue placeholder="בחר כיתה" />
             </SelectTrigger>
@@ -155,7 +237,9 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2, duration: 0.3 }}
       >
-        <Label htmlFor="register-password" className="text-right block">סיסמה</Label>
+        <Label htmlFor="register-password" className="text-right block">
+          סיסמה
+        </Label>
         <Input
           id="register-password"
           type="password"
@@ -175,7 +259,9 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.25, duration: 0.3 }}
       >
-        <Label htmlFor="register-confirmPassword" className="text-right block">אימות סיסמה</Label>
+        <Label htmlFor="register-confirmPassword" className="text-right block">
+          אימות סיסמה
+        </Label>
         <Input
           id="register-confirmPassword"
           type="password"
@@ -209,7 +295,7 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
         variants={buttonVariants}
       >
         <Button type="submit" className="w-full" disabled={loading}>
-          {loading ? 'נרשם...' : 'הרשם'}
+          {loading ? "נרשם..." : "הרשם"}
         </Button>
       </motion.div>
     </form>
