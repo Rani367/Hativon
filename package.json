@@ -49,7 +49,7 @@
     "framer-motion": "^12.23.24",
     "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.554.0",
-    "next": "16.0.3",
+    "next": "16.0.4",
     "next-themes": "^0.4.6",
     "pg": "^8.16.3",
     "react": "19.2.0",
@@ -59,7 +59,7 @@
     "react-syntax-highlighter": "^16.1.0",
     "rehype-raw": "^7.0.0",
     "remark-gfm": "^4.0.1",
-    "sass": "^1.94.1",
+    "sass": "^1.94.2",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.4.0",
     "uuid": "^13.0.0"
@@ -75,14 +75,14 @@
     "@types/react": "latest",
     "@types/react-dom": "latest",
     "@vitejs/plugin-react": "^5.1.1",
-    "@vitest/coverage-v8": "^4.0.10",
-    "@vitest/ui": "^4.0.10",
-    "glob": "^12.0.0",
+    "@vitest/coverage-v8": "^4.0.14",
+    "@vitest/ui": "^4.0.14",
+    "glob": "^13.0.0",
     "jsdom": "^27.2.0",
     "tailwindcss": "^4.1.17",
     "tsx": "^4.20.6",
     "typescript": "^5.9.3",
-    "vitest": "^4.0.10"
+    "vitest": "^4.0.14"
   },
-  "packageManager": "pnpm"
+  "packageManager": "pnpm@10.23.0"
 }
