@@ -1,10 +1,10 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { createUser, usernameExists } from '@/lib/users';
-import { createAuthCookie } from '@/lib/auth/jwt';
-import { getAdminClearCookie } from '@/lib/auth/admin';
-import { UserRegistration } from '@/types/user.types';
-import { isDatabaseAvailable } from '@/lib/db/client';
-import { logError } from '@/lib/logger';
+import { NextRequest, NextResponse } from "next/server";
+import { createUser, usernameExists } from "@/lib/users";
+import { createAuthCookie } from "@/lib/auth/jwt";
+import { getAdminClearCookie } from "@/lib/auth/admin";
+import { UserRegistration } from "@/types/user.types";
+import { isDatabaseAvailable } from "@/lib/db/client";
+import { logError } from "@/lib/logger";
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,8 +12,12 @@ export async function POST(request: NextRequest) {
     const dbAvailable = await isDatabaseAvailable();
     if (!dbAvailable) {
       return NextResponse.json(
-        { success: false, message: 'ההרשמה אינה זמינה במצב מקומי. אנא התחבר עם שם משתמש "admin" והסיסמה שהוגדרה.' },
-        { status: 503 }
+        {
+          success: false,
+          message:
+            'ההרשמה אינה זמינה במצב מקומי. אנא התחבר עם שם משתמש "admin" והסיסמה שהוגדרה.',
+        },
+        { status: 503 },
       );
     }
 
@@ -23,41 +27,48 @@ export async function POST(request: NextRequest) {
     // Validation
     if (!username || !password || !displayName || !grade || !classNumber) {
       return NextResponse.json(
-        { success: false, message: 'שם משתמש, סיסמה, שם מלא, כיתה ומספר כיתה הם שדות חובה' },
-        { status: 400 }
+        {
+          success: false,
+          message: "שם משתמש, סיסמה, שם מלא, כיתה ומספר כיתה הם שדות חובה",
+        },
+        { status: 400 },
       );
     }
 
     // Username validation (alphanumeric, 3-50 chars)
     if (!/^[a-zA-Z0-9_]{3,50}$/.test(username)) {
       return NextResponse.json(
-        { success: false, message: 'שם המשתמש חייב להכיל 3-50 תווים (אותיות אנגליות, מספרים וקו תחתון בלבד)' },
-        { status: 400 }
+        {
+          success: false,
+          message:
+            "שם המשתמש חייב להכיל 3-50 תווים (אותיות אנגליות, מספרים וקו תחתון בלבד)",
+        },
+        { status: 400 },
       );
     }
 
     // Password validation (min 8 chars)
     if (password.length < 8) {
       return NextResponse.json(
-        { success: false, message: 'הסיסמה חייבת להכיל לפחות 8 תווים' },
-        { status: 400 }
+        { success: false, message: "הסיסמה חייבת להכיל לפחות 8 תווים" },
+        { status: 400 },
       );
     }
 
     // Grade validation
-    const validGrades = ['ז', 'ח', 'ט', 'י'];
+    const validGrades = ["ז", "ח", "ט", "י"];
     if (!validGrades.includes(grade)) {
       return NextResponse.json(
-        { success: false, message: 'כיתה לא תקינה' },
-        { status: 400 }
+        { success: false, message: "כיתה לא תקינה" },
+        { status: 400 },
       );
     }
 
     // Class number validation
     if (classNumber < 1 || classNumber > 4) {
       return NextResponse.json(
-        { success: false, message: 'מספר כיתה חייב להיות בין 1 ל-4' },
-        { status: 400 }
+        { success: false, message: "מספר כיתה חייב להיות בין 1 ל-4" },
+        { status: 400 },
       );
     }
 
@@ -65,8 +76,8 @@ export async function POST(request: NextRequest) {
     const exists = await usernameExists(username);
     if (exists) {
       return NextResponse.json(
-        { success: false, message: 'שם המשתמש כבר קיים במערכת' },
-        { status: 409 }
+        { success: false, message: "שם המשתמש כבר קיים במערכת" },
+        { status: 409 },
       );
     }
 
@@ -79,8 +90,8 @@ export async function POST(request: NextRequest) {
     const clearAdminCookie = getAdminClearCookie();
 
     const headers = new Headers();
-    headers.append('Set-Cookie', authCookie);
-    headers.append('Set-Cookie', clearAdminCookie);
+    headers.append("Set-Cookie", authCookie);
+    headers.append("Set-Cookie", clearAdminCookie);
 
     // Return success with user data
     return NextResponse.json(
@@ -88,22 +99,23 @@ export async function POST(request: NextRequest) {
       {
         status: 201,
         headers,
-      }
+      },
     );
-  } catch (error: any) {
-    logError('Registration error:', error);
+  } catch (error) {
+    logError("Registration error:", error);
 
     // Handle specific errors
-    if (error.message?.includes('כבר קיים')) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    if (errorMessage.includes("כבר קיים")) {
       return NextResponse.json(
-        { success: false, message: error.message },
-        { status: 409 }
+        { success: false, message: errorMessage },
+        { status: 409 },
       );
     }
 
     return NextResponse.json(
-      { success: false, message: 'שגיאה ביצירת המשתמש. אנא נסה שנית.' },
-      { status: 500 }
+      { success: false, message: "שגיאה ביצירת המשתמש. אנא נסה שנית." },
+      { status: 500 },
     );
   }
 }

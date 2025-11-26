@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db/client';
-import { head } from '@vercel/blob';
-import { logError } from '@/lib/logger';
+import { NextRequest, NextResponse } from "next/server";
+import { db } from "@/lib/db/client";
+import { head } from "@vercel/blob";
+import { logError } from "@/lib/logger";
 
 /**
  * One-time setup endpoint for Vercel production
@@ -16,23 +16,23 @@ import { logError } from '@/lib/logger';
  * - Requires ADMIN_PASSWORD as query parameter for security
  */
 
-const BLOB_FILENAME = 'posts.json';
+const BLOB_FILENAME = "posts.json";
 
 export async function GET(request: NextRequest) {
   try {
     // Security: Require admin password
     const { searchParams } = new URL(request.url);
-    const password = searchParams.get('password');
+    const password = searchParams.get("password");
 
     if (password !== process.env.ADMIN_PASSWORD) {
       return NextResponse.json(
-        { error: 'Unauthorized. Provide ?password=YOUR_ADMIN_PASSWORD' },
-        { status: 401 }
+        { error: "Unauthorized. Provide ?password=YOUR_ADMIN_PASSWORD" },
+        { status: 401 },
       );
     }
 
     const logs: string[] = [];
-    logs.push('[SETUP] Starting database setup...\n');
+    logs.push("[SETUP] Starting database setup...\n");
 
     // Step 1: Check if already initialized
     try {
@@ -45,33 +45,36 @@ export async function GET(request: NextRequest) {
           SELECT FROM information_schema.tables
           WHERE table_schema = 'public' AND table_name = 'users'
         ) as users_exists;
-      ` as any;
+      `;
 
-      const { posts_exists, users_exists } = checkResult.rows[0];
+      const { posts_exists, users_exists } = checkResult.rows[0] as {
+        posts_exists: boolean;
+        users_exists: boolean;
+      };
 
       if (posts_exists && users_exists) {
-        logs.push('[INFO]  Database already initialized');
+        logs.push("[INFO]  Database already initialized");
 
         // Check if posts exist
-        const countResult = await db.query`SELECT COUNT(*) as count FROM posts` as any;
-        const postCount = parseInt(countResult.rows[0].count);
+        const countResult = await db.query`SELECT COUNT(*) as count FROM posts`;
+        const postCount = parseInt(String(countResult.rows[0].count));
 
-        logs.push(`📊 Current posts in database: ${postCount}`);
+        logs.push(` Current posts in database: ${postCount}`);
 
         return NextResponse.json({
           success: true,
           alreadyInitialized: true,
-          message: 'Database already set up',
+          message: "Database already set up",
           postCount,
           logs,
         });
       }
     } catch (error) {
-      logs.push('[INFO] Tables do not exist yet, will create them...');
+      logs.push("[INFO] Tables do not exist yet, will create them...");
     }
 
     // Step 2: Initialize database schema
-    logs.push('\n[INFO] Creating database tables...');
+    logs.push("\n[INFO] Creating database tables...");
 
     // Create users table
     await db.query`
@@ -147,15 +150,15 @@ export async function GET(request: NextRequest) {
       FOR EACH ROW EXECUTE FUNCTION update_updated_at_column()
     `;
 
-    logs.push('[OK] Database tables created successfully');
+    logs.push("[OK] Database tables created successfully");
 
     // Step 3: Migrate posts from Blob storage (if exists)
-    logs.push('\n📥 Checking for existing posts in Blob storage...');
+    logs.push("\n Checking for existing posts in Blob storage...");
 
     let migratedCount = 0;
     try {
       const metadata = await head(BLOB_FILENAME);
-      const response = await fetch(metadata.url, { cache: 'no-store' });
+      const response = await fetch(metadata.url, { cache: "no-store" });
 
       if (response.ok) {
         const text = await response.text();
@@ -164,7 +167,7 @@ export async function GET(request: NextRequest) {
         logs.push(`Found ${posts.length} posts in Blob storage`);
 
         if (posts.length > 0) {
-          logs.push('[INFO] Migrating posts to PostgreSQL...');
+          logs.push("[INFO] Migrating posts to PostgreSQL...");
 
           for (const post of posts) {
             try {
@@ -196,27 +199,33 @@ export async function GET(request: NextRequest) {
               `;
               migratedCount++;
               logs.push(`  [OK] ${post.title}`);
-            } catch (error: any) {
-              logs.push(`  [WARNING]  Skipped "${post.title}": ${error.message}`);
+            } catch (error) {
+              const errorMessage =
+                error instanceof Error ? error.message : String(error);
+              logs.push(
+                `  [WARNING]  Skipped "${post.title}": ${errorMessage}`,
+              );
             }
           }
 
           logs.push(`\n[OK] Migrated ${migratedCount} posts successfully`);
         }
       } else {
-        logs.push('[INFO]  No posts found in Blob storage');
+        logs.push("[INFO]  No posts found in Blob storage");
       }
     } catch (error) {
-      logs.push('[INFO]  No Blob storage configured or no posts to migrate');
+      logs.push("[INFO]  No Blob storage configured or no posts to migrate");
     }
 
     // Step 4: Summary
-    logs.push('\n[OK] Setup complete!');
-    logs.push('\n[INFO] Next steps:');
-    logs.push('  1. You can now delete this /api/setup route (optional)');
-    logs.push('  2. Users can register at /register');
-    logs.push('  3. Access admin panel at /admin');
-    logs.push('  4. Posts are now stored in PostgreSQL with immediate consistency!');
+    logs.push("\n[OK] Setup complete!");
+    logs.push("\n[INFO] Next steps:");
+    logs.push("  1. You can now delete this /api/setup route (optional)");
+    logs.push("  2. Users can register at /register");
+    logs.push("  3. Access admin panel at /admin");
+    logs.push(
+      "  4. Posts are now stored in PostgreSQL with immediate consistency!",
+    );
 
     return NextResponse.json({
       success: true,
@@ -224,16 +233,18 @@ export async function GET(request: NextRequest) {
       migratedPosts: migratedCount,
       logs,
     });
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorStack = error instanceof Error ? error.stack : undefined;
 
-  } catch (error: any) {
-    logError('Setup error:', error);
+    logError("Setup error:", error);
     return NextResponse.json(
       {
         success: false,
-        error: error.message,
-        stack: error.stack,
+        error: errorMessage,
+        stack: errorStack,
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
