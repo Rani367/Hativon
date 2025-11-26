@@ -5,15 +5,15 @@
  * Using framer-motion for smooth, performant animations.
  */
 
-import { Variants } from 'framer-motion';
+import { Variants } from "framer-motion";
 
 /**
  * Standard easing curves
  */
 export const easing = {
   smooth: [0.43, 0.13, 0.23, 0.96],
-  spring: { type: 'spring', stiffness: 300, damping: 30 },
-  soft: { type: 'spring', stiffness: 100, damping: 15 },
+  spring: { type: "spring", stiffness: 300, damping: 30 },
+  soft: { type: "spring", stiffness: 100, damping: 15 },
 } as const;
 
 /**
@@ -189,7 +189,7 @@ export const spinnerVariants: Variants = {
     transition: {
       duration: 1,
       repeat: Infinity,
-      ease: 'linear',
+      ease: "linear",
     },
   },
 };

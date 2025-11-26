@@ -1,7 +1,7 @@
-import { db } from './client';
-import { readFileSync } from 'fs';
-import { join } from 'path';
-import { Pool } from 'pg';
+import { db } from "./client";
+import { readFileSync } from "fs";
+import { join } from "path";
+import { Pool } from "pg";
 
 /**
  * Initialize database schema
@@ -14,38 +14,43 @@ import { Pool } from 'pg';
 export async function initializeDatabase(silent = false) {
   try {
     if (!silent) {
-      console.log('Initializing database...');
+      console.log("Initializing database...");
     }
 
     // Read schema file
-    const schemaPath = join(process.cwd(), 'src', 'lib', 'db', 'schema.sql');
-    const schema = readFileSync(schemaPath, 'utf-8');
+    const schemaPath = join(process.cwd(), "src", "lib", "db", "schema.sql");
+    const schema = readFileSync(schemaPath, "utf-8");
 
     // For local development, use direct pool to execute multi-statement SQL
-    if (process.env.VERCEL_ENV !== 'production' && process.env.POSTGRES_URL) {
+    if (process.env.VERCEL_ENV !== "production" && process.env.POSTGRES_URL) {
       const pool = new Pool({ connectionString: process.env.POSTGRES_URL });
       await pool.query(schema);
       await pool.end();
     } else {
       // For production, execute each statement separately
-      const statements = schema.split(';').filter(stmt => stmt.trim());
+      const statements = schema.split(";").filter((stmt) => stmt.trim());
       for (const statement of statements) {
         if (statement.trim()) {
-          await db.query([statement] as any);
+          await db.query([statement]);
         }
       }
     }
 
     if (!silent) {
-      console.log('✓ Database initialized successfully');
+      console.log(" Database initialized successfully");
     }
     return { success: true };
   } catch (error) {
     if (!silent) {
-      console.error('✗ Database initialization failed:', error);
+      console.error(" Database initialization failed:", error);
     }
     throw error;
   }
+}
+
+interface DatabaseSetupCheckResult {
+  users_exists: boolean;
+  posts_exists: boolean;
 }
 
 /**
@@ -63,10 +68,11 @@ export async function checkDatabaseSetup(): Promise<boolean> {
           SELECT FROM information_schema.tables
           WHERE table_schema = 'public' AND table_name = 'posts'
         ) as posts_exists;
-    ` as any;
-    return (result.rows[0]?.users_exists && result.rows[0]?.posts_exists) || false;
+    `;
+    const row = result.rows[0] as DatabaseSetupCheckResult | undefined;
+    return (row?.users_exists && row?.posts_exists) || false;
   } catch (error) {
-    console.error('Error checking database setup:', error);
+    console.error("Error checking database setup:", error);
     return false;
   }
 }

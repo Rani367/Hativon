@@ -1,8 +1,8 @@
-import { NextResponse } from 'next/server';
-import { getAllUsers } from '@/lib/users';
-import { requireAdminAuth } from '@/lib/auth/admin';
-import { isDatabaseAvailable } from '@/lib/db/client';
-import { logError } from '@/lib/logger';
+import { NextResponse } from "next/server";
+import { getAllUsers } from "@/lib/users";
+import { requireAdminAuth } from "@/lib/auth/admin";
+import { isDatabaseAvailable } from "@/lib/db/client";
+import { logError } from "@/lib/logger";
 
 /**
  * GET /api/admin/users - Get all users (admin only)
@@ -16,30 +16,38 @@ export async function GET() {
     const dbAvailable = await isDatabaseAvailable();
     if (!dbAvailable) {
       return NextResponse.json(
-        { error: 'Database not configured. User management requires PostgreSQL.' },
-        { status: 503 }
+        {
+          error:
+            "Database not configured. User management requires PostgreSQL.",
+        },
+        { status: 503 },
       );
     }
 
     const users = await getAllUsers();
 
     return NextResponse.json({ users });
-  } catch (error: any) {
-    if (error.message === 'Admin authentication required') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+
+    if (errorMessage === "Admin authentication required") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    if (error.message?.includes('Database connection not configured')) {
+    if (errorMessage.includes("Database connection not configured")) {
       return NextResponse.json(
-        { error: 'Database not configured. Set POSTGRES_URL in environment variables.' },
-        { status: 503 }
+        {
+          error:
+            "Database not configured. Set POSTGRES_URL in environment variables.",
+        },
+        { status: 503 },
       );
     }
 
-    logError('Error fetching users:', error);
+    logError("Error fetching users:", error);
     return NextResponse.json(
-      { error: `Failed to fetch users: ${error.message}` },
-      { status: 500 }
+      { error: `Failed to fetch users: ${errorMessage}` },
+      { status: 500 },
     );
   }
 }

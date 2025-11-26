@@ -1,10 +1,15 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { revalidatePath } from 'next/cache';
-import { getAllPosts, createPost, getPostStats, getPostsByAuthor } from '@/lib/posts';
-import { PostInput } from '@/types/post.types';
-import { getCurrentUser } from '@/lib/auth/middleware';
-import { isAdminAuthenticated } from '@/lib/auth/admin';
-import { logError } from '@/lib/logger';
+import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
+import {
+  getAllPosts,
+  createPost,
+  getPostStats,
+  getPostsByAuthor,
+} from "@/lib/posts";
+import { PostInput } from "@/types/post.types";
+import { getCurrentUser } from "@/lib/auth/middleware";
+import { isAdminAuthenticated } from "@/lib/auth/admin";
+import { logError } from "@/lib/logger";
 
 // GET /api/admin/posts - Get all posts (admin) or user's posts (regular user)
 export async function GET(request: NextRequest) {
@@ -15,13 +20,13 @@ export async function GET(request: NextRequest) {
 
     // Require either admin auth OR user auth
     if (!isAdmin && !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { searchParams } = new URL(request.url);
-    const status = searchParams.get('status');
-    const search = searchParams.get('search');
-    const includeStats = searchParams.get('stats') === 'true';
+    const status = searchParams.get("status");
+    const search = searchParams.get("search");
+    const includeStats = searchParams.get("stats") === "true";
 
     let posts;
 
@@ -32,27 +37,36 @@ export async function GET(request: NextRequest) {
       posts = await getPostsByAuthor(user.id);
     } else {
       // This shouldn't happen due to auth check above, but for type safety
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // Filter by status
-    if (status && (status === 'published' || status === 'draft')) {
-      posts = posts.filter(post => post.status === status);
+    if (status && (status === "published" || status === "draft")) {
+      posts = posts.filter((post) => post.status === status);
     }
 
     // Search by title
     if (search) {
       const searchLower = search.toLowerCase();
-      posts = posts.filter(post =>
-        post.title.toLowerCase().includes(searchLower) ||
-        post.slug.toLowerCase().includes(searchLower)
+      posts = posts.filter(
+        (post) =>
+          post.title.toLowerCase().includes(searchLower) ||
+          post.slug.toLowerCase().includes(searchLower),
       );
     }
 
     // Sort by date (newest first)
-    posts.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    posts.sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    );
 
-    const response: any = { posts };
+    interface PostsResponse {
+      posts: typeof posts;
+      stats?: Awaited<ReturnType<typeof getPostStats>>;
+    }
+
+    const response: PostsResponse = { posts };
 
     // Include stats if requested
     if (includeStats) {
@@ -62,16 +76,16 @@ export async function GET(request: NextRequest) {
     // Disable caching for instant updates
     return NextResponse.json(response, {
       headers: {
-        'Cache-Control': 'no-store, no-cache, must-revalidate',
-        'Pragma': 'no-cache',
-        'Expires': '0',
+        "Cache-Control": "no-store, no-cache, must-revalidate",
+        Pragma: "no-cache",
+        Expires: "0",
       },
     });
   } catch (error) {
-    logError('Error fetching posts:', error);
+    logError("Error fetching posts:", error);
     return NextResponse.json(
-      { error: 'Failed to fetch posts' },
-      { status: 500 }
+      { error: "Failed to fetch posts" },
+      { status: 500 },
     );
   }
 }
@@ -85,7 +99,7 @@ export async function POST(request: NextRequest) {
 
     // Require either admin auth OR user auth
     if (!isAdmin && !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const body: PostInput = await request.json();
@@ -93,8 +107,8 @@ export async function POST(request: NextRequest) {
     // Validate required fields
     if (!body.title || !body.content) {
       return NextResponse.json(
-        { error: 'Title and content are required' },
-        { status: 400 }
+        { error: "Title and content are required" },
+        { status: 400 },
       );
     }
 
@@ -111,24 +125,24 @@ export async function POST(request: NextRequest) {
     } else if (isAdmin) {
       // Admin creating post without user context - use provided values or defaults
       if (!body.authorId) {
-        body.authorId = 'legacy-admin';
+        body.authorId = "legacy-admin";
       }
       if (!body.author) {
-        body.author = 'מנהל המערכת'; // "System Admin" in Hebrew
+        body.author = "מנהל המערכת"; // "System Admin" in Hebrew
       }
     }
 
     const newPost = await createPost(body);
 
     // Revalidate all pages to show the new post immediately
-    revalidatePath('/', 'layout');
+    revalidatePath("/", "layout");
 
     return NextResponse.json(newPost, { status: 201 });
   } catch (error) {
-    logError('Error creating post:', error);
+    logError("Error creating post:", error);
     return NextResponse.json(
-      { error: 'Failed to create post' },
-      { status: 500 }
+      { error: "Failed to create post" },
+      { status: 500 },
     );
   }
 }

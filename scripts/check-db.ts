@@ -17,17 +17,17 @@
  *   tsx scripts/check-db.ts
  */
 
-import { sql } from '@vercel/postgres';
+import { sql } from "@vercel/postgres";
 
 // ANSI color codes
 const colors = {
-  reset: '\x1b[0m',
-  red: '\x1b[31m',
-  green: '\x1b[32m',
-  yellow: '\x1b[33m',
-  blue: '\x1b[34m',
-  cyan: '\x1b[36m',
-  bold: '\x1b[1m',
+  reset: "\x1b[0m",
+  red: "\x1b[31m",
+  green: "\x1b[32m",
+  yellow: "\x1b[33m",
+  blue: "\x1b[34m",
+  cyan: "\x1b[36m",
+  bold: "\x1b[1m",
 };
 
 interface CheckResult {
@@ -54,16 +54,16 @@ async function checkConnectivity(): Promise<CheckResult> {
     await sql`SELECT 1 as test`;
 
     return {
-      name: 'Database Connectivity',
+      name: "Database Connectivity",
       passed: true,
-      message: 'Successfully connected to database',
+      message: "Successfully connected to database",
     };
-  } catch (error: any) {
+  } catch (error) {
     return {
-      name: 'Database Connectivity',
+      name: "Database Connectivity",
       passed: false,
-      message: 'Failed to connect to database',
-      details: error.message,
+      message: "Failed to connect to database",
+      details: error instanceof Error ? error.message : String(error),
     };
   }
 }
@@ -85,24 +85,24 @@ async function checkUsersTable(): Promise<CheckResult> {
 
     if (!exists) {
       return {
-        name: 'Users Table',
+        name: "Users Table",
         passed: false,
-        message: 'Users table does not exist',
+        message: "Users table does not exist",
         details: 'Run "pnpm run db:init" to initialize the database',
       };
     }
 
     return {
-      name: 'Users Table',
+      name: "Users Table",
       passed: true,
-      message: 'Users table exists',
+      message: "Users table exists",
     };
-  } catch (error: any) {
+  } catch (error) {
     return {
-      name: 'Users Table',
+      name: "Users Table",
       passed: false,
-      message: 'Failed to check users table',
-      details: error.message,
+      message: "Failed to check users table",
+      details: error instanceof Error ? error.message : String(error),
     };
   }
 }
@@ -122,39 +122,39 @@ async function checkUsersTableSchema(): Promise<CheckResult> {
 
     const columns = result.rows;
     const requiredColumns = [
-      { name: 'id', type: 'uuid' },
-      { name: 'username', type: 'character varying' },
-      { name: 'password_hash', type: 'character varying' },
-      { name: 'display_name', type: 'character varying' },
-      { name: 'role', type: 'character varying' },
-      { name: 'created_at', type: 'timestamp with time zone' },
+      { name: "id", type: "uuid" },
+      { name: "username", type: "character varying" },
+      { name: "password_hash", type: "character varying" },
+      { name: "display_name", type: "character varying" },
+      { name: "role", type: "character varying" },
+      { name: "created_at", type: "timestamp with time zone" },
     ];
 
     const missingColumns = requiredColumns.filter(
-      required => !columns.some(col => col.column_name === required.name)
+      (required) => !columns.some((col) => col.column_name === required.name),
     );
 
     if (missingColumns.length > 0) {
       return {
-        name: 'Users Table Schema',
+        name: "Users Table Schema",
         passed: false,
-        message: 'Users table schema is incomplete',
-        details: `Missing columns: ${missingColumns.map(c => c.name).join(', ')}\nRun "pnpm run db:init" to update schema`,
+        message: "Users table schema is incomplete",
+        details: `Missing columns: ${missingColumns.map((c) => c.name).join(", ")}\nRun "pnpm run db:init" to update schema`,
       };
     }
 
     return {
-      name: 'Users Table Schema',
+      name: "Users Table Schema",
       passed: true,
-      message: 'Users table schema is valid',
+      message: "Users table schema is valid",
       details: `Found ${columns.length} columns`,
     };
-  } catch (error: any) {
+  } catch (error) {
     return {
-      name: 'Users Table Schema',
+      name: "Users Table Schema",
       passed: false,
-      message: 'Failed to validate schema',
-      details: error.message,
+      message: "Failed to validate schema",
+      details: error instanceof Error ? error.message : String(error),
     };
   }
 }
@@ -170,28 +170,28 @@ async function checkAdminUser(): Promise<CheckResult> {
       WHERE role = 'admin';
     `;
 
-    const adminCount = parseInt(result.rows[0]?.admin_count || '0', 10);
+    const adminCount = parseInt(result.rows[0]?.admin_count || "0", 10);
 
     if (adminCount === 0) {
       return {
-        name: 'Admin User',
+        name: "Admin User",
         passed: false,
-        message: 'No admin user found',
+        message: "No admin user found",
         details: 'Run "pnpm run create-admin" to create an admin account',
       };
     }
 
     return {
-      name: 'Admin User',
+      name: "Admin User",
       passed: true,
       message: `Found ${adminCount} admin user(s)`,
     };
-  } catch (error: any) {
+  } catch (error) {
     return {
-      name: 'Admin User',
+      name: "Admin User",
       passed: false,
-      message: 'Failed to check admin users',
-      details: error.message,
+      message: "Failed to check admin users",
+      details: error instanceof Error ? error.message : String(error),
     };
   }
 }
@@ -208,34 +208,34 @@ async function checkIndexes(): Promise<CheckResult> {
       AND schemaname = 'public';
     `;
 
-    const indexes = result.rows.map(row => row.indexname);
+    const indexes = result.rows.map((row) => row.indexname);
 
     // Check for username unique index
-    const hasUsernameIndex = indexes.some(idx =>
-      idx.includes('username') || idx.includes('users_pkey')
+    const hasUsernameIndex = indexes.some(
+      (idx) => idx.includes("username") || idx.includes("users_pkey"),
     );
 
     if (!hasUsernameIndex) {
       return {
-        name: 'Database Indexes',
+        name: "Database Indexes",
         passed: false,
-        message: 'Missing username unique index',
+        message: "Missing username unique index",
         details: 'Run "pnpm run db:init" to create required indexes',
       };
     }
 
     return {
-      name: 'Database Indexes',
+      name: "Database Indexes",
       passed: true,
-      message: 'Required indexes present',
+      message: "Required indexes present",
       details: `Found ${indexes.length} index(es)`,
     };
-  } catch (error: any) {
+  } catch (error) {
     return {
-      name: 'Database Indexes',
+      name: "Database Indexes",
       passed: false,
-      message: 'Failed to check indexes',
-      details: error.message,
+      message: "Failed to check indexes",
+      details: error instanceof Error ? error.message : String(error),
     };
   }
 }
@@ -244,13 +244,15 @@ async function checkIndexes(): Promise<CheckResult> {
  * Print check results
  */
 function printResults() {
-  console.log(`\n${colors.bold}${colors.cyan}=== Database Health Check ===${colors.reset}\n`);
+  console.log(
+    `\n${colors.bold}${colors.cyan}=== Database Health Check ===${colors.reset}\n`,
+  );
 
   let failures = 0;
   let warnings = 0;
 
   results.forEach((result, index) => {
-    const icon = result.passed ? '[OK]' : '✗';
+    const icon = result.passed ? "[OK]" : "";
     const color = result.passed ? colors.green : colors.red;
 
     console.log(`${color}${icon} ${result.name}${colors.reset}`);
@@ -273,12 +275,18 @@ function printResults() {
   console.log();
 
   if (failures > 0) {
-    console.log(`${colors.red}${colors.bold}✗ Database check failed with ${failures} error(s)${colors.reset}`);
-    console.log(`${colors.cyan}Run the suggested commands to fix issues${colors.reset}`);
+    console.log(
+      `${colors.red}${colors.bold} Database check failed with ${failures} error(s)${colors.reset}`,
+    );
+    console.log(
+      `${colors.cyan}Run the suggested commands to fix issues${colors.reset}`,
+    );
     console.log();
     return false;
   } else {
-    console.log(`${colors.green}${colors.bold}[OK] Database is healthy!${colors.reset}`);
+    console.log(
+      `${colors.green}${colors.bold}[OK] Database is healthy!${colors.reset}`,
+    );
     console.log();
     return true;
   }
@@ -288,13 +296,19 @@ function printResults() {
  * Main check function
  */
 async function main() {
-  console.log(`${colors.cyan}${colors.bold}Checking database health...${colors.reset}\n`);
+  console.log(
+    `${colors.cyan}${colors.bold}Checking database health...${colors.reset}\n`,
+  );
 
   // Check if database is configured
   if (!isDatabaseConfigured()) {
-    console.log(`${colors.yellow}⚠ Database not configured${colors.reset}`);
-    console.log(`${colors.cyan}Set POSTGRES_URL environment variable to enable user authentication${colors.reset}`);
-    console.log(`${colors.cyan}System will run in admin-only mode without database${colors.reset}\n`);
+    console.log(`${colors.yellow} Database not configured${colors.reset}`);
+    console.log(
+      `${colors.cyan}Set POSTGRES_URL environment variable to enable user authentication${colors.reset}`,
+    );
+    console.log(
+      `${colors.cyan}System will run in admin-only mode without database${colors.reset}\n`,
+    );
     return;
   }
 
@@ -321,9 +335,13 @@ async function main() {
     if (!success) {
       process.exit(1);
     }
-  } catch (error: any) {
-    console.log(`\n${colors.red}${colors.bold}✗ Database check failed${colors.reset}`);
-    console.log(`${colors.red}${error.message}${colors.reset}\n`);
+  } catch (error) {
+    console.log(
+      `\n${colors.red}${colors.bold} Database check failed${colors.reset}`,
+    );
+    console.log(
+      `${colors.red}${error instanceof Error ? error.message : String(error)}${colors.reset}\n`,
+    );
     process.exit(1);
   }
 }

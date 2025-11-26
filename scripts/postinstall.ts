@@ -16,116 +16,132 @@
  * After this completes, just run: pnpm run dev
  */
 
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
-import { join } from 'path';
-import { randomBytes } from 'crypto';
-import { execSync } from 'child_process';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
+import { join } from "path";
+import { randomBytes } from "crypto";
+import { execSync } from "child_process";
 
-const projectRoot = join(__dirname, '..');
-const envPath = join(projectRoot, '.env.local');
-const envExamplePath = join(projectRoot, '.env.example');
-const dataDir = join(projectRoot, 'data');
+const projectRoot = join(__dirname, "..");
+const envPath = join(projectRoot, ".env.local");
+const envExamplePath = join(projectRoot, ".env.example");
+const dataDir = join(projectRoot, "data");
 
 // Skip postinstall in CI/CD environments
 if (process.env.CI || process.env.VERCEL || process.env.GITHUB_ACTIONS) {
-  console.log('[INFO] Skipping postinstall in CI/CD environment');
+  console.log("[INFO] Skipping postinstall in CI/CD environment");
   process.exit(0);
 }
 
-console.log('\n[SETUP] Running automated setup...\n');
+console.log("\n[SETUP] Running automated setup...\n");
 
 // Step 1: Create data directory
 if (!existsSync(dataDir)) {
   mkdirSync(dataDir, { recursive: true });
-  console.log('[OK] Created data/ directory');
+  console.log("[OK] Created data/ directory");
 }
 
 // Step 2: Create .env.local if it doesn't exist
 const isNewEnv = !existsSync(envPath);
 if (isNewEnv) {
-  console.log('[INFO] Creating .env.local with secure defaults...');
+  console.log("[INFO] Creating .env.local with secure defaults...");
 
   // Generate secure JWT secret
-  const jwtSecret = randomBytes(32).toString('base64');
+  const jwtSecret = randomBytes(32).toString("base64");
 
   // Read .env.example as template
   let envContent = existsSync(envExamplePath)
-    ? readFileSync(envExamplePath, 'utf-8')
-    : '';
+    ? readFileSync(envExamplePath, "utf-8")
+    : "";
 
   // Replace placeholder values with secure defaults
   envContent = envContent
     .replace(/ADMIN_PASSWORD=.*/g, `ADMIN_PASSWORD=admin123`)
     .replace(/JWT_SECRET=.*/g, `JWT_SECRET=${jwtSecret}`)
-    .replace(/NEXT_PUBLIC_SITE_URL=.*/g, `NEXT_PUBLIC_SITE_URL=http://localhost:3000`)
+    .replace(
+      /NEXT_PUBLIC_SITE_URL=.*/g,
+      `NEXT_PUBLIC_SITE_URL=http://localhost:3000`,
+    )
     .replace(/SESSION_DURATION=.*/g, `SESSION_DURATION=604800`)
     .replace(/BLOB_READ_WRITE_TOKEN=.*/g, `BLOB_READ_WRITE_TOKEN=`)
     .replace(/POSTGRES_URL=$/gm, `POSTGRES_URL=`);
 
   writeFileSync(envPath, envContent);
-  console.log('[OK] Created .env.local with secure JWT secret');
-  console.log('[WARNING] Default admin password: admin123 (change this in .env.local)');
+  console.log("[OK] Created .env.local with secure JWT secret");
+  console.log(
+    "[WARNING] Default admin password: admin123 (change this in .env.local)",
+  );
 } else {
-  console.log('[OK] .env.local already exists');
+  console.log("[OK] .env.local already exists");
 }
 
 // Step 3: Auto-detect and configure PostgreSQL
-console.log('\n[INFO] Detecting PostgreSQL...');
+console.log("\n[INFO] Detecting PostgreSQL...");
 
 let hasPostgres = false;
 let dbConfigured = false;
 
 // Check if POSTGRES_URL is already configured
-const existingEnvContent = readFileSync(envPath, 'utf-8');
-const hasPostgresUrl = existingEnvContent.match(/POSTGRES_URL=postgresql:\/\/.+/);
+const existingEnvContent = readFileSync(envPath, "utf-8");
+const hasPostgresUrl = existingEnvContent.match(
+  /POSTGRES_URL=postgresql:\/\/.+/,
+);
 
 if (hasPostgresUrl) {
-  console.log('[OK] PostgreSQL already configured in .env.local');
+  console.log("[OK] PostgreSQL already configured in .env.local");
   dbConfigured = true;
   hasPostgres = true;
 } else {
   // Try to detect PostgreSQL installation
   try {
-    const psqlCheck = process.platform === 'win32' ? 'where psql' : 'which psql';
-    execSync(psqlCheck, { stdio: 'pipe' });
+    const psqlCheck =
+      process.platform === "win32" ? "where psql" : "which psql";
+    execSync(psqlCheck, { stdio: "pipe" });
     hasPostgres = true;
-    console.log('[OK] PostgreSQL detected on system');
+    console.log("[OK] PostgreSQL detected on system");
   } catch {
-    console.log('[WARNING] PostgreSQL not detected');
-    console.log('   App will run in admin-only mode (posts stored locally)');
-    console.log('   To enable full features, install PostgreSQL and run: pnpm run setup');
+    console.log("[WARNING] PostgreSQL not detected");
+    console.log("   App will run in admin-only mode (posts stored locally)");
+    console.log(
+      "   To enable full features, install PostgreSQL and run: pnpm run setup",
+    );
   }
 }
 
 // Step 4: Auto-configure database if PostgreSQL is available and not already configured
 if (hasPostgres && !dbConfigured) {
-  console.log('\n[INFO] Configuring local database...');
+  console.log("\n[INFO] Configuring local database...");
 
-  const dbName = 'school_newspaper';
-  const dbUser = process.env.USER || 'postgres';
-  const dbHost = 'localhost';
-  const dbPort = '5432';
+  const dbName = "school_newspaper";
+  const dbUser = process.env.USER || "postgres";
+  const dbHost = "localhost";
+  const dbPort = "5432";
 
   try {
     // Try to create the database (will fail silently if exists)
     console.log(`   Creating database "${dbName}"...`);
     try {
       execSync(`createdb -U ${dbUser} -h ${dbHost} -p ${dbPort} ${dbName}`, {
-        stdio: 'pipe',
-        timeout: 5000
+        stdio: "pipe",
+        timeout: 5000,
       });
       console.log(`   [OK] Created database "${dbName}"`);
-    } catch (createError: any) {
+    } catch (createError) {
       // Database might already exist, which is fine
-      if (createError.message?.includes('already exists')) {
+      const errorMessage =
+        createError instanceof Error
+          ? createError.message
+          : String(createError);
+      if (errorMessage.includes("already exists")) {
         console.log(`   [OK] Database "${dbName}" already exists`);
       } else {
         // Try without specifying user (for peer authentication)
         try {
-          execSync(`createdb ${dbName}`, { stdio: 'pipe', timeout: 5000 });
+          execSync(`createdb ${dbName}`, { stdio: "pipe", timeout: 5000 });
           console.log(`   [OK] Created database "${dbName}"`);
         } catch {
-          console.log(`   [WARNING] Could not create database (may already exist)`);
+          console.log(
+            `   [WARNING] Could not create database (may already exist)`,
+          );
         }
       }
     }
@@ -134,41 +150,44 @@ if (hasPostgres && !dbConfigured) {
     const dbUrl = `postgresql://${dbUser}@${dbHost}:${dbPort}/${dbName}`;
 
     // Test connection
-    console.log('   Testing database connection...');
+    console.log("   Testing database connection...");
     try {
-      execSync(`psql "${dbUrl}" -c "SELECT 1" -t`, { stdio: 'pipe', timeout: 5000 });
+      execSync(`psql "${dbUrl}" -c "SELECT 1" -t`, {
+        stdio: "pipe",
+        timeout: 5000,
+      });
 
       // Connection successful, add to .env.local
-      let envContent = readFileSync(envPath, 'utf-8');
+      let envContent = readFileSync(envPath, "utf-8");
       envContent = envContent.replace(
         /POSTGRES_URL=$/m,
-        `POSTGRES_URL=${dbUrl}`
+        `POSTGRES_URL=${dbUrl}`,
       );
       envContent = envContent.replace(
         /POSTGRES_URL_NON_POOLING=$/m,
-        `POSTGRES_URL_NON_POOLING=${dbUrl}`
+        `POSTGRES_URL_NON_POOLING=${dbUrl}`,
       );
 
       writeFileSync(envPath, envContent);
-      console.log('   [OK] Database connection configured');
+      console.log("   [OK] Database connection configured");
       dbConfigured = true;
     } catch (testError) {
-      console.log('   [WARNING] Could not connect to database');
-      console.log('   App will run in admin-only mode');
-      console.log('   For manual setup, run: pnpm run setup');
+      console.log("   [WARNING] Could not connect to database");
+      console.log("   App will run in admin-only mode");
+      console.log("   For manual setup, run: pnpm run setup");
     }
-  } catch (error: any) {
-    console.log('   [WARNING] Database auto-configuration failed');
-    console.log('   App will run in admin-only mode');
+  } catch (error) {
+    console.log("   [WARNING] Database auto-configuration failed");
+    console.log("   App will run in admin-only mode");
   }
 }
 
 // Step 5: Initialize database schema if database is configured
 if (dbConfigured) {
-  console.log('\n[INFO] Checking database schema...');
+  console.log("\n[INFO] Checking database schema...");
   try {
     // Re-read .env.local to get POSTGRES_URL
-    const envContent = readFileSync(envPath, 'utf-8');
+    const envContent = readFileSync(envPath, "utf-8");
     const postgresUrlMatch = envContent.match(/POSTGRES_URL=(.+)/);
 
     if (postgresUrlMatch) {
@@ -179,67 +198,69 @@ if (dbConfigured) {
       let schemaExists = false;
       try {
         const checkSchema = `psql "${dbUrl}" -c "SELECT 1 FROM users LIMIT 1" -t 2>&1`;
-        execSync(checkSchema, { stdio: 'pipe', timeout: 5000 });
-        console.log('[OK] Database schema already initialized');
+        execSync(checkSchema, { stdio: "pipe", timeout: 5000 });
+        console.log("[OK] Database schema already initialized");
         schemaExists = true;
       } catch {
         // Schema doesn't exist, initialize it
-        console.log('[INFO] Initializing database schema...');
+        console.log("[INFO] Initializing database schema...");
 
         // Run db:init using tsx directly
-        execSync('npx tsx scripts/init-db.ts --silent', {
-          stdio: 'pipe',
+        execSync("npx tsx scripts/init-db.ts --silent", {
+          stdio: "pipe",
           cwd: projectRoot,
           env: { ...process.env, POSTGRES_URL: dbUrl },
-          timeout: 10000
+          timeout: 10000,
         });
 
-        console.log('[OK] Database schema initialized');
+        console.log("[OK] Database schema initialized");
         schemaExists = true;
       }
 
       // Step 6: Create test user (always check)
       if (schemaExists) {
-        console.log('\n[INFO] Checking test user...');
+        console.log("\n[INFO] Checking test user...");
         try {
-          execSync('npx tsx scripts/create-test-user-simple.ts', {
-            stdio: 'pipe',
+          execSync("npx tsx scripts/create-test-user-simple.ts", {
+            stdio: "pipe",
             cwd: projectRoot,
             env: { ...process.env, POSTGRES_URL: dbUrl },
-            timeout: 10000
+            timeout: 10000,
           });
-          console.log('[OK] Test user created (username: user, password: 12345678)');
+          console.log(
+            "[OK] Test user created (username: user, password: 12345678)",
+          );
         } catch (userError) {
-          console.log('[OK] Test user already exists');
+          console.log("[OK] Test user already exists");
         }
       }
     }
-  } catch (error: any) {
-    console.log('[WARNING] Database initialization skipped');
-    console.log('   You can run manually: pnpm run db:init');
+  } catch (error) {
+    console.log("[WARNING] Database initialization skipped");
+    console.log("   You can run manually: pnpm run db:init");
   }
 }
 
 // Step 8: Show completion message
-console.log('\n' + '═'.repeat(60));
-console.log('[OK] Setup complete! Everything is ready to go.');
-console.log('═'.repeat(60));
-console.log('\n[INFO] Start developing:\n');
-console.log('   pnpm run dev');
-console.log('\n   Then open http://localhost:3000\n');
+console.log("\n" + "═".repeat(60));
+console.log("[OK] Setup complete! Everything is ready to go.");
+console.log("═".repeat(60));
+console.log("\n[INFO] Start developing:\n");
+console.log("   pnpm run dev");
+console.log("\n   Then open http://localhost:3000\n");
 
 if (dbConfigured) {
-  console.log('[INFO] Test user credentials:');
-  console.log('   Username: user');
-  console.log('   Password: 12345678\n');
-  console.log('[INFO] Admin panel access:');
-  console.log('   URL: http://localhost:3000/admin');
-  console.log('   Password: admin123 (from ADMIN_PASSWORD in .env.local)\n');
-  console.log('[WARNING] Change passwords in production!\n');
+  console.log("[INFO] Test user credentials:");
+  console.log("   Username: user");
+  console.log("   Password: 12345678\n");
+  console.log("[INFO] Admin panel access:");
+  console.log("   URL: http://localhost:3000/admin");
+  console.log("   Password: admin123 (from ADMIN_PASSWORD in .env.local)\n");
+  console.log("[WARNING] Change passwords in production!\n");
 } else {
-  console.log('[INFO] Running in admin-only mode');
-  console.log('   Access admin panel at: http://localhost:3000/admin');
-  console.log('   Password: admin123\n');
+  console.log("[INFO] Running in admin-only mode");
+  console.log("   Access admin panel at: http://localhost:3000/admin");
+  console.log("   Password: admin123\n");
 }
 
-console.log('[INFO] For more info, see CLAUDE.md or README.md\n');
+console.log("[INFO] For more info, see CLAUDE.md or README.md\n");

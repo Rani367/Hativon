@@ -1,22 +1,9 @@
-import type { User } from '@/types/user.types';
-import type { UserQueryResult, ExistsQueryResult } from '@/types/database.types';
-import { db } from '../db/client';
-
-/**
- * SQL SELECT clause for user fields (excluding password_hash)
- * Used consistently across all user queries
- */
-const USER_SELECT_FIELDS = `
-  id,
-  username,
-  display_name as "displayName",
-  email,
-  grade,
-  class_number as "classNumber",
-  created_at as "createdAt",
-  updated_at as "updatedAt",
-  last_login as "lastLogin"
-`;
+import type { User } from "@/types/user.types";
+import type {
+  UserQueryResult,
+  ExistsQueryResult,
+} from "@/types/database.types";
+import { db } from "../db/client";
 
 /**
  * Get a user by their ID
@@ -25,7 +12,7 @@ const USER_SELECT_FIELDS = `
  * @returns User object or null if not found
  */
 export async function getUserById(id: string): Promise<User | null> {
-  const result = await db.query`
+  const result = (await db.query`
     SELECT
       id,
       username,
@@ -38,7 +25,7 @@ export async function getUserById(id: string): Promise<User | null> {
       last_login as "lastLogin"
     FROM users
     WHERE id = ${id}
-  ` as UserQueryResult;
+  `) as UserQueryResult;
 
   return (result.rows[0] as User) || null;
 }
@@ -49,8 +36,10 @@ export async function getUserById(id: string): Promise<User | null> {
  * @param username - Unique username
  * @returns User object or null if not found
  */
-export async function getUserByUsername(username: string): Promise<User | null> {
-  const result = await db.query`
+export async function getUserByUsername(
+  username: string,
+): Promise<User | null> {
+  const result = (await db.query`
     SELECT
       id,
       username,
@@ -63,7 +52,7 @@ export async function getUserByUsername(username: string): Promise<User | null> 
       last_login as "lastLogin"
     FROM users
     WHERE username = ${username}
-  ` as UserQueryResult;
+  `) as UserQueryResult;
 
   return (result.rows[0] as User) || null;
 }
@@ -77,9 +66,9 @@ export async function getUserByUsername(username: string): Promise<User | null> 
  * @internal
  */
 export async function getUserWithPassword(
-  username: string
+  username: string,
 ): Promise<(User & { passwordHash: string }) | null> {
-  const result = await db.query`
+  const result = (await db.query`
     SELECT
       id,
       username,
@@ -93,9 +82,9 @@ export async function getUserWithPassword(
       last_login as "lastLogin"
     FROM users
     WHERE username = ${username}
-  ` as UserQueryResult;
+  `) as UserQueryResult;
 
-  return (result.rows[0] as (User & { passwordHash: string })) || null;
+  return (result.rows[0] as User & { passwordHash: string }) || null;
 }
 
 /**
@@ -105,7 +94,7 @@ export async function getUserWithPassword(
  * @returns Array of all users
  */
 export async function getAllUsers(): Promise<User[]> {
-  const result = await db.query`
+  const result = (await db.query`
     SELECT
       id,
       username,
@@ -118,7 +107,7 @@ export async function getAllUsers(): Promise<User[]> {
       last_login as "lastLogin"
     FROM users
     ORDER BY created_at DESC
-  ` as UserQueryResult;
+  `) as UserQueryResult;
 
   return result.rows as User[];
 }
@@ -130,9 +119,9 @@ export async function getAllUsers(): Promise<User[]> {
  * @returns true if username exists
  */
 export async function usernameExists(username: string): Promise<boolean> {
-  const result = await db.query`
+  const result = (await db.query`
     SELECT EXISTS(SELECT 1 FROM users WHERE username = ${username}) as exists
-  ` as ExistsQueryResult;
+  `) as ExistsQueryResult;
 
   return result.rows[0].exists;
 }

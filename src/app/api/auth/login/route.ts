@@ -1,10 +1,10 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { validatePassword, updateLastLogin } from '@/lib/users';
-import { createAuthCookie } from '@/lib/auth/jwt';
-import { getAdminClearCookie } from '@/lib/auth/admin';
-import { UserLogin } from '@/types/user.types';
-import { isDatabaseAvailable } from '@/lib/db/client';
-import { logError } from '@/lib/logger';
+import { NextRequest, NextResponse } from "next/server";
+import { validatePassword, updateLastLogin } from "@/lib/users";
+import { createAuthCookie } from "@/lib/auth/jwt";
+import { getAdminClearCookie } from "@/lib/auth/admin";
+import { UserLogin } from "@/types/user.types";
+import { isDatabaseAvailable } from "@/lib/db/client";
+import { logError } from "@/lib/logger";
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,8 +14,8 @@ export async function POST(request: NextRequest) {
     // Validation
     if (!username || !password) {
       return NextResponse.json(
-        { success: false, message: 'שם משתמש וסיסמה הם שדות חובה' },
-        { status: 400 }
+        { success: false, message: "שם משתמש וסיסמה הם שדות חובה" },
+        { status: 400 },
       );
     }
 
@@ -28,20 +28,20 @@ export async function POST(request: NextRequest) {
 
       if (!adminPassword) {
         return NextResponse.json(
-          { success: false, message: 'מערכת האימות לא מוגדרת כראוי' },
-          { status: 503 }
+          { success: false, message: "מערכת האימות לא מוגדרת כראוי" },
+          { status: 503 },
         );
       }
 
       // Check if credentials match admin password
-      if (username === 'admin' && password === adminPassword) {
+      if (username === "admin" && password === adminPassword) {
         // Create a mock admin user for legacy mode
         const legacyAdminUser = {
-          id: 'legacy-admin',
-          username: 'admin',
-          displayName: 'Admin',
+          id: "legacy-admin",
+          username: "admin",
+          displayName: "Admin",
           email: undefined,
-          grade: 'ז' as const,
+          grade: "ז" as const,
           classNumber: 1,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
@@ -53,20 +53,20 @@ export async function POST(request: NextRequest) {
         const clearAdminCookie = getAdminClearCookie();
 
         const headers = new Headers();
-        headers.append('Set-Cookie', authCookie);
-        headers.append('Set-Cookie', clearAdminCookie);
+        headers.append("Set-Cookie", authCookie);
+        headers.append("Set-Cookie", clearAdminCookie);
 
         return NextResponse.json(
           { success: true, user: legacyAdminUser },
           {
             status: 200,
             headers,
-          }
+          },
         );
       } else {
         return NextResponse.json(
-          { success: false, message: 'שם משתמש או סיסמה שגויים' },
-          { status: 401 }
+          { success: false, message: "שם משתמש או סיסמה שגויים" },
+          { status: 401 },
         );
       }
     }
@@ -76,8 +76,8 @@ export async function POST(request: NextRequest) {
 
     if (!user) {
       return NextResponse.json(
-        { success: false, message: 'שם משתמש או סיסמה שגויים' },
-        { status: 401 }
+        { success: false, message: "שם משתמש או סיסמה שגויים" },
+        { status: 401 },
       );
     }
 
@@ -92,8 +92,8 @@ export async function POST(request: NextRequest) {
     const clearAdminCookie = getAdminClearCookie();
 
     const headers = new Headers();
-    headers.append('Set-Cookie', authCookie);
-    headers.append('Set-Cookie', clearAdminCookie);
+    headers.append("Set-Cookie", authCookie);
+    headers.append("Set-Cookie", clearAdminCookie);
 
     // Return success with user data
     return NextResponse.json(
@@ -101,13 +101,13 @@ export async function POST(request: NextRequest) {
       {
         status: 200,
         headers,
-      }
+      },
     );
-  } catch (error: any) {
-    logError('Login error:', error);
+  } catch (error) {
+    logError("Login error:", error);
     return NextResponse.json(
-      { success: false, message: 'שגיאה בהתחברות. אנא נסה שנית.' },
-      { status: 500 }
+      { success: false, message: "שגיאה בהתחברות. אנא נסה שנית." },
+      { status: 500 },
     );
   }
 }
