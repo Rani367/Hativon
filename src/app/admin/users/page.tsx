@@ -69,9 +69,11 @@ export default function UsersManagementPage() {
 
       const data = await response.json();
       setUsers(data.users || []);
-    } catch (error: any) {
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
       logError("Failed to fetch users:", error);
-      toast.error(`שגיאה בטעינת משתמשים: ${error.message}`);
+      toast.error(`שגיאה בטעינת משתמשים: ${errorMessage}`);
     } finally {
       setLoading(false);
     }

@@ -21,6 +21,34 @@ This is a strict project requirement. Instead:
 - CORRECT: `console.log('[WARNING] Warning!')`
 - CORRECT: `## Getting Started`
 
+## CRITICAL RULE: TypeScript Type Safety
+
+**NEVER use the 'any' type in TypeScript code.**
+
+This is a strict project requirement for maintaining type safety:
+- Use proper TypeScript types instead of `any`
+- For error handling: Use `catch (error)` instead of `catch (error: any)`
+- Access error properties safely: `error instanceof Error ? error.message : String(error)`
+- For unknown types: Use `unknown` and narrow with type guards
+- For generic objects: Define proper interfaces or use `Record<string, T>`
+- For function parameters: Define explicit parameter types
+
+**Examples of what NOT to do:**
+- WRONG: `catch (error: any) { console.log(error.message); }`
+- WRONG: `const data: any = await response.json();`
+- WRONG: `function process(data: any) { ... }`
+- WRONG: `interface Props { [key: string]: any; }`
+
+**Examples of correct patterns:**
+- CORRECT: `catch (error) { const message = error instanceof Error ? error.message : String(error); }`
+- CORRECT: `const data: UserData = await response.json();`
+- CORRECT: `function process(data: ProcessInput) { ... }`
+- CORRECT: `interface Props extends React.HTMLAttributes<HTMLDivElement> { ... }`
+
+**The only acceptable use of 'any':**
+- In test files when mocking complex external dependencies
+- When explicitly required by third-party library types (very rare)
+
 ## CRITICAL RULE: Git Workflow
 
 **NEVER commit directly using `git commit`. NEVER push to GitHub.**
@@ -193,13 +221,11 @@ pnpm test:ui              # Open Vitest UI for visual test exploration
 ```bash
 pnpm run validate         # Run comprehensive validation (all checks below)
 pnpm run pre-deploy       # ONE COMMAND that runs:
-                          # 1. Auto-update pnpm and all dependencies to latest versions
-                          # 2. All tests (162 tests must pass)
-                          # 3. Comprehensive validation (100+ checks)
-                          # 4. Production build
-                          # 5. Git commit (prompts for message)
+                          # 1. All tests (162 tests must pass)
+                          # 2. Comprehensive validation (100+ checks)
+                          # 3. Production build
+                          # 4. Git commit (prompts for message)
                           # This is EXTREMELY thorough - catches ALL issues
-                          # Ensures latest package manager and security patches
 git push                  # After pre-deploy, push to trigger Vercel deployment
 ```
 
@@ -212,8 +238,14 @@ git push                  # After pre-deploy, push to trigger Vercel deployment
 6. **Configuration**: package.json, tsconfig.json, next.config.ts, .env.example
 7. **Runtime**: API route structure, module resolution, debug statements
 8. **Dependencies**: Version pinning, peer dependencies, no pre-release versions
-9. **Code Quality**: TODOs in critical paths, error handling, naming conventions
+9. **Code Quality**: TODOs in critical paths, error handling, naming conventions, **NO EMOJIS (auto-removed)**
 10. **Build Size**: Bundle size, large chunks detection
+
+**Automatic Fixes During Validation:**
+- **Emoji Removal**: Any emojis found in `.ts`, `.tsx`, `.js`, `.jsx` files are automatically removed
+  - Scans all files in `src/` and `scripts/` directories
+  - Reports which files were cleaned and how many emojis were removed
+  - Continues validation after cleanup
 
 ## Architecture
 
@@ -609,8 +641,8 @@ All utility scripts are in `scripts/`:
 
 | Script | Purpose |
 |--------|---------|
-| `auto-update.ts` | Auto-update pnpm and all dependencies to latest versions (runs before pre-deploy) |
 | `postinstall.ts` | Auto-setup on `pnpm install` (creates .env.local, configures DB, creates test user) |
+| `kill-port.ts` | Kill process on port 3000 (runs before `pnpm run dev`) |
 | `setup.ts` | Interactive setup with database configuration |
 | `init-db.ts` | Initialize database schema (runs schema.sql) |
 | `create-test-user-simple.ts` | Create test user (username: user, password: 12345678) |

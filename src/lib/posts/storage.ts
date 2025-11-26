@@ -1,14 +1,14 @@
-import type { Post, PostInput } from '@/types/post.types';
-import type { PostQueryResult, DbMutationResult } from '@/types/database.types';
-import { db } from '../db/client';
-import { v4 as uuidv4 } from 'uuid';
-import { generateSlug, generateDescription, rowToPost } from './utils';
-import { getPostById } from './queries';
+import type { Post, PostInput } from "@/types/post.types";
+import type { PostQueryResult, DbMutationResult } from "@/types/database.types";
+import { db } from "../db/client";
+import { v4 as uuidv4 } from "uuid";
+import { generateSlug, generateDescription, rowToPost } from "./utils";
+import { getPostById } from "./queries";
 
 /**
  * Default post status for new posts
  */
-const DEFAULT_POST_STATUS = 'draft' as const;
+const DEFAULT_POST_STATUS = "draft" as const;
 
 /**
  * Create a new post
@@ -23,13 +23,14 @@ export async function createPost(input: PostInput): Promise<Post> {
   const now = new Date();
   const slug = generateSlug(input.title);
   // Use custom description if provided, otherwise auto-generate from content
-  const description = input.description && input.description.trim()
-    ? input.description.trim()
-    : generateDescription(input.content);
+  const description =
+    input.description && input.description.trim()
+      ? input.description.trim()
+      : generateDescription(input.content);
   const status = input.status || DEFAULT_POST_STATUS;
 
   try {
-    const result = await db.query`
+    const result = (await db.query`
       INSERT INTO posts (
         id, title, slug, content, cover_image, description,
         date, author, author_id, author_grade, author_class,
@@ -54,11 +55,11 @@ export async function createPost(input: PostInput): Promise<Post> {
         ${now}
       )
       RETURNING *
-    ` as PostQueryResult;
+    `) as PostQueryResult;
 
     return rowToPost(result.rows[0]);
   } catch (error) {
-    console.error('[ERROR] Failed to create post:', error);
+    console.error("[ERROR] Failed to create post:", error);
     throw error;
   }
 }
@@ -72,7 +73,10 @@ export async function createPost(input: PostInput): Promise<Post> {
  * @returns Updated Post object or null if post not found
  * @throws Error if database update fails
  */
-export async function updatePost(id: string, input: Partial<PostInput>): Promise<Post | null> {
+export async function updatePost(
+  id: string,
+  input: Partial<PostInput>,
+): Promise<Post | null> {
   try {
     // Verify post exists
     const existing = await getPostById(id);
@@ -96,21 +100,30 @@ export async function updatePost(id: string, input: Partial<PostInput>): Promise
     if (input.coverImage !== undefined) updates.cover_image = input.coverImage;
     if (input.author !== undefined) updates.author = input.author;
     if (input.authorId !== undefined) updates.author_id = input.authorId;
-    if (input.authorGrade !== undefined) updates.author_grade = input.authorGrade;
-    if (input.authorClass !== undefined) updates.author_class = input.authorClass;
+    if (input.authorGrade !== undefined)
+      updates.author_grade = input.authorGrade;
+    if (input.authorClass !== undefined)
+      updates.author_class = input.authorClass;
     if (input.tags !== undefined) updates.tags = input.tags;
     if (input.category !== undefined) updates.category = input.category;
     if (input.status !== undefined) updates.status = input.status;
 
     // Build parameterized query
-    const setters = Object.keys(updates).map((key, index) => `${key} = $${index + 2}`).join(', ');
+    const setters = Object.keys(updates)
+      .map((key, index) => `${key} = $${index + 2}`)
+      .join(", ");
     const values = Object.values(updates);
 
-    const result = (await db.query([
-      `UPDATE posts SET ${setters}, updated_at = CURRENT_TIMESTAMP WHERE id = $1 RETURNING *`,
-      id,
-      ...values
-    ])) as PostQueryResult;
+    // Build query parameters array with query string as first element
+    const queryString = `UPDATE posts SET ${setters}, updated_at = CURRENT_TIMESTAMP WHERE id = $1 RETURNING *`;
+    const queryArray = [queryString, id, ...values] as (
+      | string
+      | number
+      | string[]
+      | null
+    )[];
+
+    const result = (await db.query(queryArray)) as PostQueryResult;
 
     if (result.rows.length === 0) {
       return null;
@@ -118,7 +131,7 @@ export async function updatePost(id: string, input: Partial<PostInput>): Promise
 
     return rowToPost(result.rows[0]);
   } catch (error) {
-    console.error('[ERROR] Failed to update post:', error);
+    console.error("[ERROR] Failed to update post:", error);
     throw error;
   }
 }
@@ -131,14 +144,14 @@ export async function updatePost(id: string, input: Partial<PostInput>): Promise
  */
 export async function deletePost(id: string): Promise<boolean> {
   try {
-    const result = await db.query`
+    const result = (await db.query`
       DELETE FROM posts
       WHERE id = ${id}
-    ` as unknown as DbMutationResult;
+    `) as unknown as DbMutationResult;
 
     return result.rowCount > 0;
   } catch (error) {
-    console.error('[ERROR] Failed to delete post:', error);
+    console.error("[ERROR] Failed to delete post:", error);
     return false;
   }
 }
