@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { requireAuth } from '@/lib/auth/middleware';
-import { updateUser } from '@/lib/users';
-import { UserUpdate } from '@/types/user.types';
-import { logError } from '@/lib/logger';
+import { NextRequest, NextResponse } from "next/server";
+import { requireAuth } from "@/lib/auth/middleware";
+import { updateUser } from "@/lib/users";
+import { UserUpdate } from "@/types/user.types";
+import { logError } from "@/lib/logger";
 
 /**
  * PATCH /api/user/profile - Update current user's profile
@@ -13,36 +13,35 @@ export async function PATCH(request: NextRequest) {
     const body: UserUpdate = await request.json();
 
     // Validate grade and classNumber if provided
-    if (body.grade && !['ז', 'ח', 'ט', 'י'].includes(body.grade)) {
-      return NextResponse.json(
-        { error: 'כיתה לא תקינה' },
-        { status: 400 }
-      );
+    if (body.grade && !["ז", "ח", "ט", "י"].includes(body.grade)) {
+      return NextResponse.json({ error: "כיתה לא תקינה" }, { status: 400 });
     }
 
     if (body.classNumber && (body.classNumber < 1 || body.classNumber > 4)) {
       return NextResponse.json(
-        { error: 'מספר כיתה חייב להיות בין 1 ל-4' },
-        { status: 400 }
+        { error: "מספר כיתה חייב להיות בין 1 ל-4" },
+        { status: 400 },
       );
     }
 
     const updatedUser = await updateUser(user.id, body);
 
     return NextResponse.json({ user: updatedUser });
-  } catch (error: any) {
-    if (error.message === 'Authentication required') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+
+    if (errorMessage === "Authentication required") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    if (error.message?.includes('לא נמצא')) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    if (errorMessage.includes("לא נמצא")) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    logError('Error updating profile:', error);
+    logError("Error updating profile:", error);
     return NextResponse.json(
-      { error: `Failed to update profile: ${error.message}` },
-      { status: 500 }
+      { error: `Failed to update profile: ${errorMessage}` },
+      { status: 500 },
     );
   }
 }

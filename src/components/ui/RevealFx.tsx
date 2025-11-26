@@ -1,8 +1,15 @@
 "use client";
-import { useState, useEffect, forwardRef, useRef, CSSProperties, ReactNode } from "react";
+import {
+  useState,
+  useEffect,
+  forwardRef,
+  useRef,
+  CSSProperties,
+  ReactNode,
+} from "react";
 import styles from "./RevealFx.module.scss";
 
-interface RevealFxProps {
+interface RevealFxProps extends React.HTMLAttributes<HTMLDivElement> {
   children: ReactNode;
   speed?: "fast" | "medium" | "slow" | number;
   delay?: number;
@@ -11,7 +18,6 @@ interface RevealFxProps {
   trigger?: boolean;
   style?: CSSProperties;
   className?: string;
-  [key: string]: any;
 }
 
 const RevealFx = forwardRef<HTMLDivElement, RevealFxProps>(
@@ -27,7 +33,7 @@ const RevealFx = forwardRef<HTMLDivElement, RevealFxProps>(
       className,
       ...rest
     },
-    ref
+    ref,
   ) => {
     const [isRevealed, setIsRevealed] = useState(revealedByDefault);
     const [maskRemoved, setMaskRemoved] = useState(false);
@@ -143,7 +149,7 @@ const RevealFx = forwardRef<HTMLDivElement, RevealFxProps>(
         {children}
       </div>
     );
-  }
+  },
 );
 
 RevealFx.displayName = "RevealFx";

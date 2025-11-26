@@ -3,7 +3,13 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/features/auth/auth-provider";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,7 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { logError } from '@/lib/logger';
+import { logError } from "@/lib/logger";
 import { User as UserIcon, Save, Loader2, AlertCircle } from "lucide-react";
 import { Grade } from "@/types/user.types";
 
@@ -90,9 +96,11 @@ export default function ProfilePage() {
 
       toast.success("הפרופיל עודכן בהצלחה");
       router.push("/dashboard");
-    } catch (error: any) {
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
       logError("Failed to update profile:", error);
-      toast.error(`שגיאה בעדכון הפרופיל: ${error.message}`);
+      toast.error(`שגיאה בעדכון הפרופיל: ${errorMessage}`);
     } finally {
       setSaving(false);
     }
@@ -111,10 +119,10 @@ export default function ProfilePage() {
   const getGradeDisplay = (grade: Grade | null) => {
     if (!grade) return null;
     const gradeMap: Record<Grade, string> = {
-      'ז': 'כיתה ז',
-      'ח': 'כיתה ח',
-      'ט': 'כיתה ט',
-      'י': 'כיתה י',
+      ז: "כיתה ז",
+      ח: "כיתה ח",
+      ט: "כיתה ט",
+      י: "כיתה י",
     };
     return gradeMap[grade];
   };
@@ -123,9 +131,7 @@ export default function ProfilePage() {
     <div className="container max-w-2xl py-8">
       <div className="mb-6">
         <h1 className="text-3xl font-bold">הפרופיל שלי</h1>
-        <p className="text-muted-foreground mt-1">
-          עדכן את פרטי הפרופיל שלך
-        </p>
+        <p className="text-muted-foreground mt-1">עדכן את פרטי הפרופיל שלך</p>
       </div>
 
       <Card>
@@ -195,13 +201,11 @@ export default function ProfilePage() {
                     setFormData({ ...formData, grade: value as Grade })
                   }
                 >
-                  <SelectTrigger
-                    id="grade"
-                    className="w-full"
-                    dir="rtl"
-                  >
+                  <SelectTrigger id="grade" className="w-full" dir="rtl">
                     <SelectValue placeholder="בחר כיתה">
-                      {formData.grade ? getGradeDisplay(formData.grade) : "בחר כיתה"}
+                      {formData.grade
+                        ? getGradeDisplay(formData.grade)
+                        : "בחר כיתה"}
                     </SelectValue>
                   </SelectTrigger>
                   <SelectContent className="text-right" dir="rtl">
@@ -229,18 +233,31 @@ export default function ProfilePage() {
                 הכתבות שלך יוצגו כ:{" "}
                 <strong>
                   {formData.displayName || "שם תצוגה"}
-                  {formData.grade ? ` - ${formData.grade}'${formData.classNumber}` : " - [כיתה לא נבחרה]"}
+                  {formData.grade
+                    ? ` - ${formData.grade}'${formData.classNumber}`
+                    : " - [כיתה לא נבחרה]"}
                 </strong>
               </p>
             </div>
 
             {/* Current Values Display */}
             <div className="rounded-lg border bg-blue-500/10 border-blue-500/50 p-4">
-              <p className="text-sm font-medium mb-2 text-blue-600 dark:text-blue-400">ערכים נוכחיים:</p>
+              <p className="text-sm font-medium mb-2 text-blue-600 dark:text-blue-400">
+                ערכים נוכחיים:
+              </p>
               <div className="text-sm text-muted-foreground space-y-1">
-                <p>שם תצוגה: <strong>{user.displayName || "לא הוגדר"}</strong></p>
-                <p>כיתה: <strong>{user.grade ? getGradeDisplay(user.grade) : "לא הוגדר"}</strong></p>
-                <p>מספר כיתה: <strong>{user.classNumber || "לא הוגדר"}</strong></p>
+                <p>
+                  שם תצוגה: <strong>{user.displayName || "לא הוגדר"}</strong>
+                </p>
+                <p>
+                  כיתה:{" "}
+                  <strong>
+                    {user.grade ? getGradeDisplay(user.grade) : "לא הוגדר"}
+                  </strong>
+                </p>
+                <p>
+                  מספר כיתה: <strong>{user.classNumber || "לא הוגדר"}</strong>
+                </p>
               </div>
             </div>
 
@@ -254,10 +271,7 @@ export default function ProfilePage() {
               >
                 ביטול
               </Button>
-              <Button
-                type="submit"
-                disabled={saving || !formData.grade}
-              >
+              <Button type="submit" disabled={saving || !formData.grade}>
                 {saving ? (
                   <>
                     <Loader2 className="h-4 w-4 me-2 animate-spin" />

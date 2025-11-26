@@ -23,26 +23,26 @@
  *   tsx scripts/validate-build.ts
  */
 
-import { execSync } from 'child_process';
-import * as fs from 'fs';
-import * as path from 'path';
-import { config } from 'dotenv';
+import { execSync } from "child_process";
+import * as fs from "fs";
+import * as path from "path";
+import { config } from "dotenv";
 
 // Load .env.local file if it exists
-const envPath = path.join(process.cwd(), '.env.local');
+const envPath = path.join(process.cwd(), ".env.local");
 if (fs.existsSync(envPath)) {
   config({ path: envPath });
 }
 
 // ANSI color codes
 const colors = {
-  reset: '\x1b[0m',
-  red: '\x1b[31m',
-  green: '\x1b[32m',
-  yellow: '\x1b[33m',
-  blue: '\x1b[34m',
-  cyan: '\x1b[36m',
-  bold: '\x1b[1m',
+  reset: "\x1b[0m",
+  red: "\x1b[31m",
+  green: "\x1b[32m",
+  yellow: "\x1b[33m",
+  blue: "\x1b[34m",
+  cyan: "\x1b[36m",
+  bold: "\x1b[1m",
 };
 
 interface CheckResult {
@@ -62,11 +62,11 @@ function runCommand(command: string, description: string): boolean {
     console.log(`${colors.cyan}Running: ${description}...${colors.reset}`);
     execSync(command, {
       cwd: process.cwd(),
-      stdio: 'pipe',
-      encoding: 'utf-8',
+      stdio: "pipe",
+      encoding: "utf-8",
     });
     return true;
-  } catch (error: any) {
+  } catch (error) {
     return false;
   }
 }
@@ -85,9 +85,9 @@ function fileExists(filePath: string): boolean {
  */
 function checkTypeScript(): CheckResult {
   return {
-    name: 'TypeScript',
+    name: "TypeScript",
     passed: true,
-    message: 'Will be checked during Next.js build',
+    message: "Will be checked during Next.js build",
   };
 }
 
@@ -98,9 +98,9 @@ function checkTypeScript(): CheckResult {
  */
 function checkESLint(): CheckResult {
   return {
-    name: 'ESLint',
+    name: "ESLint",
     passed: true,
-    message: 'Will be checked during Next.js build',
+    message: "Will be checked during Next.js build",
   };
 }
 
@@ -109,33 +109,33 @@ function checkESLint(): CheckResult {
  */
 function checkCriticalFiles(): CheckResult {
   const criticalFiles = [
-    'package.json',
-    'next.config.ts',
-    'tsconfig.json',
-    'src/app/layout.tsx',
-    'src/app/page.tsx',
-    'src/lib/posts.ts',
-    'src/lib/posts-storage.ts',
-    'src/lib/users.ts',
-    'src/lib/auth/jwt.ts',
-    '.env.example',
+    "package.json",
+    "next.config.ts",
+    "tsconfig.json",
+    "src/app/layout.tsx",
+    "src/app/page.tsx",
+    "src/lib/posts.ts",
+    "src/lib/posts-storage.ts",
+    "src/lib/users.ts",
+    "src/lib/auth/jwt.ts",
+    ".env.example",
   ];
 
-  const missingFiles = criticalFiles.filter(file => !fileExists(file));
+  const missingFiles = criticalFiles.filter((file) => !fileExists(file));
 
   if (missingFiles.length > 0) {
     return {
-      name: 'Critical Files',
+      name: "Critical Files",
       passed: false,
       message: `Missing ${missingFiles.length} critical file(s)`,
-      error: `Missing files:\n${missingFiles.map(f => `  - ${f}`).join('\n')}`,
+      error: `Missing files:\n${missingFiles.map((f) => `  - ${f}`).join("\n")}`,
     };
   }
 
   return {
-    name: 'Critical Files',
+    name: "Critical Files",
     passed: true,
-    message: 'All critical files present',
+    message: "All critical files present",
   };
 }
 
@@ -145,19 +145,19 @@ function checkCriticalFiles(): CheckResult {
 function checkDependencies(): CheckResult {
   try {
     const packageJson = JSON.parse(
-      fs.readFileSync(path.join(process.cwd(), 'package.json'), 'utf-8')
+      fs.readFileSync(path.join(process.cwd(), "package.json"), "utf-8"),
     );
 
     const requiredDeps = [
-      'next',
-      'react',
-      'react-dom',
-      '@vercel/blob',
-      '@vercel/postgres',
-      'bcryptjs',
-      'jsonwebtoken',
-      'react-markdown',
-      'tailwindcss',
+      "next",
+      "react",
+      "react-dom",
+      "@vercel/blob",
+      "@vercel/postgres",
+      "bcryptjs",
+      "jsonwebtoken",
+      "react-markdown",
+      "tailwindcss",
     ];
 
     const allDeps = {
@@ -165,28 +165,28 @@ function checkDependencies(): CheckResult {
       ...packageJson.devDependencies,
     };
 
-    const missingDeps = requiredDeps.filter(dep => !allDeps[dep]);
+    const missingDeps = requiredDeps.filter((dep) => !allDeps[dep]);
 
     if (missingDeps.length > 0) {
       return {
-        name: 'Dependencies',
+        name: "Dependencies",
         passed: false,
         message: `Missing ${missingDeps.length} required dependencies`,
-        error: `Missing:\n${missingDeps.map(d => `  - ${d}`).join('\n')}\nRun: pnpm install`,
+        error: `Missing:\n${missingDeps.map((d) => `  - ${d}`).join("\n")}\nRun: pnpm install`,
       };
     }
 
     return {
-      name: 'Dependencies',
+      name: "Dependencies",
       passed: true,
-      message: 'All required dependencies present',
+      message: "All required dependencies present",
     };
   } catch (error) {
     return {
-      name: 'Dependencies',
+      name: "Dependencies",
       passed: false,
-      message: 'Failed to read package.json',
-      error: 'Ensure package.json exists and is valid JSON',
+      message: "Failed to read package.json",
+      error: "Ensure package.json exists and is valid JSON",
     };
   }
 }
@@ -195,19 +195,19 @@ function checkDependencies(): CheckResult {
  * Check node_modules exists
  */
 function checkNodeModules(): CheckResult {
-  if (!fileExists('node_modules')) {
+  if (!fileExists("node_modules")) {
     return {
-      name: 'Node Modules',
+      name: "Node Modules",
       passed: false,
-      message: 'node_modules directory not found',
+      message: "node_modules directory not found",
       error: 'Run "pnpm install" to install dependencies',
     };
   }
 
   return {
-    name: 'Node Modules',
+    name: "Node Modules",
     passed: true,
-    message: 'Dependencies installed',
+    message: "Dependencies installed",
   };
 }
 
@@ -217,22 +217,22 @@ function checkNodeModules(): CheckResult {
 function checkEnvironment(): CheckResult {
   try {
     // Run the environment validation script
-    execSync('tsx scripts/validate-env.ts', {
+    execSync("tsx scripts/validate-env.ts", {
       cwd: process.cwd(),
-      stdio: 'pipe',
-      encoding: 'utf-8',
+      stdio: "pipe",
+      encoding: "utf-8",
     });
 
     return {
-      name: 'Environment Variables',
+      name: "Environment Variables",
       passed: true,
-      message: 'Environment variables validated',
+      message: "Environment variables validated",
     };
-  } catch (error: any) {
+  } catch (error) {
     return {
-      name: 'Environment Variables',
+      name: "Environment Variables",
       passed: false,
-      message: 'Environment validation failed',
+      message: "Environment validation failed",
       error: 'Run "pnpm run validate:env" to see details',
     };
   }
@@ -242,19 +242,19 @@ function checkEnvironment(): CheckResult {
  * Check database schema file
  */
 function checkDatabaseSchema(): CheckResult {
-  if (!fileExists('src/lib/db/schema.sql')) {
+  if (!fileExists("src/lib/db/schema.sql")) {
     return {
-      name: 'Database Schema',
+      name: "Database Schema",
       passed: false,
-      message: 'Database schema file missing',
-      error: 'src/lib/db/schema.sql is required for database initialization',
+      message: "Database schema file missing",
+      error: "src/lib/db/schema.sql is required for database initialization",
     };
   }
 
   return {
-    name: 'Database Schema',
+    name: "Database Schema",
     passed: true,
-    message: 'Database schema file present',
+    message: "Database schema file present",
   };
 }
 
@@ -262,40 +262,43 @@ function checkDatabaseSchema(): CheckResult {
  * Check Vercel configuration validity
  */
 function checkVercelConfig(): CheckResult {
-  if (!fileExists('vercel.json')) {
+  if (!fileExists("vercel.json")) {
     return {
-      name: 'Vercel Config',
+      name: "Vercel Config",
       passed: true, // Optional file
-      message: 'No vercel.json found (using defaults)',
+      message: "No vercel.json found (using defaults)",
     };
   }
 
   try {
     const vercelConfig = JSON.parse(
-      fs.readFileSync(path.join(process.cwd(), 'vercel.json'), 'utf-8')
+      fs.readFileSync(path.join(process.cwd(), "vercel.json"), "utf-8"),
     );
 
     // Check if buildCommand is set correctly
-    if (vercelConfig.buildCommand && vercelConfig.buildCommand !== 'pnpm run pre-deploy') {
+    if (
+      vercelConfig.buildCommand &&
+      vercelConfig.buildCommand !== "pnpm run pre-deploy"
+    ) {
       return {
-        name: 'Vercel Config',
+        name: "Vercel Config",
         passed: false,
-        message: 'Invalid buildCommand in vercel.json',
+        message: "Invalid buildCommand in vercel.json",
         error: `Expected "pnpm run pre-deploy", got "${vercelConfig.buildCommand}"`,
       };
     }
 
     return {
-      name: 'Vercel Config',
+      name: "Vercel Config",
       passed: true,
-      message: 'Vercel configuration valid',
+      message: "Vercel configuration valid",
     };
   } catch (error) {
     return {
-      name: 'Vercel Config',
+      name: "Vercel Config",
       passed: false,
-      message: 'Failed to parse vercel.json',
-      error: 'Ensure vercel.json is valid JSON',
+      message: "Failed to parse vercel.json",
+      error: "Ensure vercel.json is valid JSON",
     };
   }
 }
@@ -306,39 +309,39 @@ function checkVercelConfig(): CheckResult {
 function checkGitStatus(): CheckResult {
   try {
     // Check if git is initialized
-    execSync('git rev-parse --git-dir', {
+    execSync("git rev-parse --git-dir", {
       cwd: process.cwd(),
-      stdio: 'pipe',
+      stdio: "pipe",
     });
 
     // Check for uncommitted changes
-    const status = execSync('git status --porcelain', {
+    const status = execSync("git status --porcelain", {
       cwd: process.cwd(),
-      stdio: 'pipe',
-      encoding: 'utf-8',
+      stdio: "pipe",
+      encoding: "utf-8",
     });
 
     if (status.trim().length > 0) {
-      const lines = status.trim().split('\n');
+      const lines = status.trim().split("\n");
       return {
-        name: 'Git Status',
+        name: "Git Status",
         passed: true, // Warning only, not a failure
         message: `${lines.length} uncommitted change(s)`,
-        error: 'Consider committing changes before deploying',
+        error: "Consider committing changes before deploying",
       };
     }
 
     return {
-      name: 'Git Status',
+      name: "Git Status",
       passed: true,
-      message: 'Working directory clean',
+      message: "Working directory clean",
     };
   } catch (error) {
     // Git not initialized or other error - not critical
     return {
-      name: 'Git Status',
+      name: "Git Status",
       passed: true,
-      message: 'Git not initialized or unavailable',
+      message: "Git not initialized or unavailable",
     };
   }
 }
@@ -347,13 +350,15 @@ function checkGitStatus(): CheckResult {
  * Print check results
  */
 function printResults() {
-  console.log(`\n${colors.bold}${colors.cyan}=== Build Validation Results ===${colors.reset}\n`);
+  console.log(
+    `\n${colors.bold}${colors.cyan}=== Build Validation Results ===${colors.reset}\n`,
+  );
 
   let failures = 0;
   let warnings = 0;
 
   results.forEach((result, index) => {
-    const icon = result.passed ? '[OK]' : '[FAIL]';
+    const icon = result.passed ? "[OK]" : "[FAIL]";
     const color = result.passed ? colors.green : colors.red;
 
     console.log(`${color}${icon} ${result.name}${colors.reset}`);
@@ -362,7 +367,9 @@ function printResults() {
     if (result.error) {
       if (result.passed) {
         warnings++;
-        console.log(`  ${colors.yellow}[WARNING] ${result.error}${colors.reset}`);
+        console.log(
+          `  ${colors.yellow}[WARNING] ${result.error}${colors.reset}`,
+        );
       } else {
         failures++;
         console.log(`  ${colors.red}[ERROR] ${result.error}${colors.reset}`);
@@ -377,19 +384,29 @@ function printResults() {
   console.log();
 
   if (failures > 0) {
-    console.log(`${colors.red}${colors.bold}[ERROR] Build validation failed with ${failures} error(s)${colors.reset}`);
+    console.log(
+      `${colors.red}${colors.bold}[ERROR] Build validation failed with ${failures} error(s)${colors.reset}`,
+    );
     if (warnings > 0) {
-      console.log(`${colors.yellow}[WARNING] Also found ${warnings} warning(s)${colors.reset}`);
+      console.log(
+        `${colors.yellow}[WARNING] Also found ${warnings} warning(s)${colors.reset}`,
+      );
     }
     console.log();
     return false;
   } else if (warnings > 0) {
-    console.log(`${colors.yellow}${colors.bold}[WARNING] Build validation passed with ${warnings} warning(s)${colors.reset}`);
-    console.log(`${colors.cyan}Consider addressing warnings before deploying${colors.reset}`);
+    console.log(
+      `${colors.yellow}${colors.bold}[WARNING] Build validation passed with ${warnings} warning(s)${colors.reset}`,
+    );
+    console.log(
+      `${colors.cyan}Consider addressing warnings before deploying${colors.reset}`,
+    );
     console.log();
     return true;
   } else {
-    console.log(`${colors.green}${colors.bold}[OK] All checks passed! Ready to build.${colors.reset}`);
+    console.log(
+      `${colors.green}${colors.bold}[OK] All checks passed! Ready to build.${colors.reset}`,
+    );
     console.log();
     return true;
   }
@@ -399,8 +416,12 @@ function printResults() {
  * Main validation function
  */
 function main() {
-  console.log(`${colors.cyan}${colors.bold}Starting pre-build validation...${colors.reset}`);
-  console.log(`${colors.cyan}This matches what Vercel checks before running the build${colors.reset}\n`);
+  console.log(
+    `${colors.cyan}${colors.bold}Starting pre-build validation...${colors.reset}`,
+  );
+  console.log(
+    `${colors.cyan}This matches what Vercel checks before running the build${colors.reset}\n`,
+  );
 
   // Run all checks in order of importance
   results.push(checkNodeModules());
@@ -416,7 +437,9 @@ function main() {
   // Print results
   const success = printResults();
 
-  console.log(`${colors.cyan}Next step: Running Next.js build (same as Vercel)...${colors.reset}\n`);
+  console.log(
+    `${colors.cyan}Next step: Running Next.js build (same as Vercel)...${colors.reset}\n`,
+  );
 
   // Exit with error code if validation failed
   if (!success) {
