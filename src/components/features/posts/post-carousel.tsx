@@ -183,10 +183,21 @@ export function PostCarousel({ posts }: PostCarouselProps) {
   // Touch event handlers for swipe gesture
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartX.current = e.touches[0].clientX;
+    touchEndX.current = e.touches[0].clientX;
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
+    if (!touchStartX.current) return;
+
     touchEndX.current = e.touches[0].clientX;
+
+    // Calculate horizontal movement
+    const diffX = Math.abs(touchEndX.current - touchStartX.current);
+
+    // If horizontal movement is significant, prevent vertical scrolling
+    if (diffX > 10) {
+      e.preventDefault();
+    }
   };
 
   const handleTouchEnd = () => {

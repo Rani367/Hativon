@@ -1,0 +1,115 @@
+"use client";
+
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { ImageUpload } from "./image-upload";
+
+interface PostFormFieldsProps {
+  title: string;
+  description: string;
+  content: string;
+  coverImage: string;
+  onTitleChange: (value: string) => void;
+  onDescriptionChange: (value: string) => void;
+  onContentChange: (value: string) => void;
+  onCoverImageChange: (url: string) => void;
+  errors?: {
+    title?: string;
+    description?: string;
+    content?: string;
+    coverImage?: string;
+  };
+  idPrefix?: string;
+  showImageUrlInput?: boolean;
+}
+
+export function PostFormFields({
+  title,
+  description,
+  content,
+  coverImage,
+  onTitleChange,
+  onDescriptionChange,
+  onContentChange,
+  onCoverImageChange,
+  errors = {},
+  idPrefix = "",
+  showImageUrlInput = false,
+}: PostFormFieldsProps) {
+  const titleId = idPrefix ? `title-${idPrefix}` : "title";
+  const descriptionId = idPrefix ? `description-${idPrefix}` : "description";
+  const contentId = idPrefix ? `content-${idPrefix}` : "content";
+  const imageUploadId = idPrefix ? `imageUpload-${idPrefix}` : "imageUpload";
+
+  return (
+    <>
+      <div className="space-y-2">
+        <Label htmlFor={titleId}>כותרת *</Label>
+        <Input
+          id={titleId}
+          value={title}
+          onChange={(e) => onTitleChange(e.target.value)}
+          placeholder="הזן כותרת כתבה"
+          required
+          className={errors.title ? "border-destructive" : ""}
+          aria-invalid={!!errors.title}
+          aria-describedby={errors.title ? `${titleId}-error` : undefined}
+        />
+        {errors.title && (
+          <p
+            id={`${titleId}-error`}
+            className="text-sm text-destructive"
+            role="alert"
+          >
+            {errors.title}
+          </p>
+        )}
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor={descriptionId}>תיאור (אופציונלי)</Label>
+        <Textarea
+          id={descriptionId}
+          value={description}
+          onChange={(e) => onDescriptionChange(e.target.value)}
+          placeholder="תיאור קצר של הכתבה שיוצג בקרוסלה וברשימת הכתבות. אם לא יוזן, התיאור ייווצר אוטומטית מהתוכן."
+          className="min-h-[100px]"
+        />
+        <p className="text-xs text-muted-foreground">
+          התיאור יוצג בקרוסלה ובכרטיסי הכתבות. מומלץ עד 200 תווים.
+        </p>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor={contentId}>תוכן * (Markdown)</Label>
+        <Textarea
+          id={contentId}
+          value={content}
+          onChange={(e) => onContentChange(e.target.value)}
+          placeholder="כתוב את תוכן הכתבה בפורמט Markdown..."
+          className={`min-h-[250px] sm:min-h-[400px] font-mono ${errors.content ? "border-destructive" : ""}`}
+          required
+          aria-invalid={!!errors.content}
+          aria-describedby={errors.content ? `${contentId}-error` : undefined}
+        />
+        {errors.content && (
+          <p
+            id={`${contentId}-error`}
+            className="text-sm text-destructive"
+            role="alert"
+          >
+            {errors.content}
+          </p>
+        )}
+      </div>
+
+      <ImageUpload
+        value={coverImage}
+        onChange={onCoverImageChange}
+        id={imageUploadId}
+        showUrlInput={showImageUrlInput}
+      />
+    </>
+  );
+}

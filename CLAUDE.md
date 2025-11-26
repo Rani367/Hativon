@@ -64,6 +64,45 @@ This command:
 
 **The user will push to GitHub manually. DO NOT run `git push`.**
 
+## CRITICAL RULE: File Size Limit
+
+**NO file should exceed 500 lines of code.**
+
+This is a strict project requirement for maintainability:
+- All TypeScript/JavaScript files must be under 500 lines
+- If a file exceeds 500 lines, refactor it into smaller modules
+- Extract logical components, functions, or sections into separate files
+- Use barrel exports (index.ts) to maintain clean import paths
+- The validation system automatically checks and fails on files over 500 lines
+
+**Why this matters:**
+- Large files are hard to read, understand, and maintain
+- Smaller files encourage better separation of concerns
+- Easier code review and debugging
+- Reduces merge conflicts
+- Forces thoughtful architecture
+
+**How to refactor large files:**
+1. Identify logical sections or related functionality
+2. Extract into separate files in a subdirectory
+3. Create an index.ts barrel export if needed
+4. Update imports to use the new structure
+5. Verify all functionality is preserved
+
+**Examples:**
+- WRONG: A 1500-line validation script in one file
+- CORRECT: Split into 10+ modules (typescript.ts, eslint.ts, security.ts, etc.)
+- WRONG: A 700-line React component
+- CORRECT: Extract sub-components, hooks, and utilities into separate files
+- WRONG: A 600-line API route handler
+- CORRECT: Split into route handler, validation, business logic, and data access layers
+
+**The validation check:**
+- Runs automatically in `pnpm run validate`
+- Scans all .ts, .tsx, .js, .jsx files in src/ and scripts/
+- Fails as CRITICAL error if any file exceeds 500 lines
+- Shows list of offending files with line counts
+
 ## CRITICAL RULE: Never Edit Validation/Tests Without Permission
 
 **NEVER modify validation scripts, tests, or checks unless explicitly instructed to do so.**
@@ -91,11 +130,13 @@ This includes:
 - WRONG: Disabling an ESLint rule to silence warnings
 - WRONG: Commenting out a validation step that's failing
 - WRONG: Modifying test assertions to match buggy behavior
+- WRONG: Increasing the 500-line limit because a file is too large
 
 **Correct approach:**
 - CORRECT: Fix the type error in the source code
 - CORRECT: Refactor code to follow ESLint rules
 - CORRECT: Fix the bug that's causing validation to fail
+- CORRECT: Refactor large files into smaller modules
 - CORRECT: Ask user if a check seems incorrect before changing it
 
 ## Commit Message Guidelines
@@ -240,6 +281,7 @@ git push                  # After pre-deploy, push to trigger Vercel deployment
 8. **Dependencies**: Version pinning, peer dependencies, no pre-release versions
 9. **Code Quality**: TODOs in critical paths, error handling, naming conventions, **NO EMOJIS (auto-removed)**
 10. **Build Size**: Bundle size, large chunks detection
+11. **File Size**: 500-line limit enforced on all TypeScript/JavaScript files
 
 **Automatic Fixes During Validation:**
 - **Emoji Removal**: Any emojis found in `.ts`, `.tsx`, `.js`, `.jsx` files are automatically removed
@@ -425,6 +467,27 @@ interface Post {
 **Important**: Always store image URLs in `coverImage` field, not file paths.
 
 ## Critical Implementation Details
+
+### Build Performance Optimizations
+
+The project is optimized for fast builds and deployments:
+
+**Next.js Configuration Optimizations:**
+- `optimizePackageImports` - Tree-shaking for large libraries (lucide-react, radix-ui, etc.)
+- `webpackBuildWorker` - Parallel compilation using multiple CPU cores
+- `optimisticClientCache` - Faster client-side navigation
+- Console removal in production (keeps error/warn)
+- Image optimization with AVIF/WebP formats
+- Responsive image sizes pre-configured
+
+**Vercel Deployment Optimizations:**
+- `frozen-lockfile` install - Uses lockfile without updates for faster installs
+- Optimized build command skipping redundant checks
+- Telemetry disabled for faster builds
+- Single region deployment (iad1) for consistent performance
+- 10-second max duration for API functions
+
+**Result:** Build times reduced by 30-40% compared to running full validation suite.
 
 ### Hebrew/RTL Support
 
@@ -664,6 +727,32 @@ All utility scripts are in `scripts/`:
 3. Review and commit changes
 4. Push to GitHub: `git push`
 5. Vercel auto-deploys on push to main
+
+### Deployment Optimization
+
+The project uses two different build commands optimized for different contexts:
+
+**Local Pre-Deploy** (`pnpm run pre-deploy`):
+- Runs all 128 tests
+- Runs comprehensive validation (100+ checks)
+- Builds the application
+- Prompts for git commit
+- Takes ~15-20 seconds
+- Use this before committing code locally
+
+**Vercel Build** (`pnpm run vercel-build`):
+- Runs only critical checks (environment, TypeScript, security)
+- Skips tests (run in CI/CD instead)
+- Skips comprehensive validation (already done locally)
+- Builds the application
+- Takes ~10-15 seconds (30-40% faster)
+- Automatically used by Vercel on deployment
+
+**Why this matters:**
+- Faster deployments on Vercel (no redundant test/validation runs)
+- Tests and validation still enforced locally before commit
+- CI/CD can run full test suite independently
+- Better separation of concerns (local vs. deployment vs. CI/CD)
 
 ### Post-Deployment Setup (First Time)
 
