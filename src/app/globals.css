@@ -108,6 +108,13 @@
     touch-action: pan-y pinch-zoom;
 }
 
+/* Hide carousel on smaller screens (tablets and mobile) */
+@media (max-width: 1023px) {
+    .carousel-container {
+        display: none;
+    }
+}
+
 .carousel {
     position: relative;
     width: 100%;
