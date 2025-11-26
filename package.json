@@ -16,6 +16,7 @@
     "validate": "tsx scripts/validate-comprehensive.ts",
     "validate:env": "tsx scripts/validate-env.ts",
     "validate:build": "tsx scripts/validate-build.ts",
+    "vercel-build": "tsx scripts/vercel-build.ts",
     "pre-deploy": "vitest run && tsx scripts/validate-comprehensive.ts && pnpm run build && tsx scripts/post-build-deploy.ts",
     "test": "vitest",
     "test:run": "vitest run",

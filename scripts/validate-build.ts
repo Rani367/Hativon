@@ -276,15 +276,16 @@ function checkVercelConfig(): CheckResult {
     );
 
     // Check if buildCommand is set correctly
+    const validBuildCommands = ["pnpm run pre-deploy", "pnpm run vercel-build"];
     if (
       vercelConfig.buildCommand &&
-      vercelConfig.buildCommand !== "pnpm run pre-deploy"
+      !validBuildCommands.includes(vercelConfig.buildCommand)
     ) {
       return {
         name: "Vercel Config",
         passed: false,
         message: "Invalid buildCommand in vercel.json",
-        error: `Expected "pnpm run pre-deploy", got "${vercelConfig.buildCommand}"`,
+        error: `Expected one of ${validBuildCommands.join(" or ")}, got "${vercelConfig.buildCommand}"`,
       };
     }
 
