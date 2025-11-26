@@ -16,13 +16,26 @@ export function PostCarousel({ posts }: PostCarouselProps) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [checkingAuth, setCheckingAuth] = useState(true);
   const [scrollIndicatorOpacity, setScrollIndicatorOpacity] = useState(1);
+  const [isTouchDevice, setIsTouchDevice] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const touchStartX = useRef<number>(0);
+  const touchEndX = useRef<number>(0);
   const router = useRouter();
 
   // Filter only published posts with cover images
   const carouselPosts = posts.filter(
     (post) => post.status === "published" && post.coverImage,
   );
+
+  // Detect touch device
+  useEffect(() => {
+    const checkTouchDevice = () => {
+      setIsTouchDevice(
+        "ontouchstart" in window || navigator.maxTouchPoints > 0,
+      );
+    };
+    checkTouchDevice();
+  }, []);
 
   // Check authentication status
   useEffect(() => {
@@ -167,6 +180,35 @@ export function PostCarousel({ posts }: PostCarouselProps) {
     setCurrentIndex((prev) => (prev + 1) % carouselPosts.length);
   };
 
+  // Touch event handlers for swipe gesture
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    touchEndX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStartX.current || !touchEndX.current) return;
+
+    const distance = touchStartX.current - touchEndX.current;
+    const isLeftSwipe = distance > 50;
+    const isRightSwipe = distance < -50;
+
+    if (isLeftSwipe) {
+      // Swipe left = next (in RTL context)
+      handleNext();
+    } else if (isRightSwipe) {
+      // Swipe right = previous (in RTL context)
+      handlePrevious();
+    }
+
+    // Reset values
+    touchStartX.current = 0;
+    touchEndX.current = 0;
+  };
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString("he-IL", {
@@ -190,7 +232,13 @@ export function PostCarousel({ posts }: PostCarouselProps) {
   }
 
   return (
-    <div className="carousel-container" ref={containerRef}>
+    <div
+      className="carousel-container"
+      ref={containerRef}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+    >
       <div className="carousel">
         {carouselPosts.map((post, index) => (
           <div
@@ -247,8 +295,8 @@ export function PostCarousel({ posts }: PostCarouselProps) {
         ))}
       </div>
 
-      {/* Navigation Arrows */}
-      {carouselPosts.length > 1 && (
+      {/* Navigation Arrows - Hidden on touch devices */}
+      {carouselPosts.length > 1 && !isTouchDevice && (
         <>
           <button
             className="carousel-nav carousel-nav-prev"
