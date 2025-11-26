@@ -3,15 +3,14 @@
 import { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Save, Eye, Trash2, Upload, X, Edit, Loader2 } from "lucide-react";
+import { Eye, Edit, Trash2 } from "lucide-react";
 import { Post } from "@/types/post.types";
 import { logError } from "@/lib/logger";
 import { PostPreview } from "@/components/features/posts/post-preview";
+import { PostFormFields } from "@/components/features/posts/post-form-fields";
+import { PostEditActions } from "@/components/features/posts/post-edit-actions";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { toast } from "sonner";
 
@@ -24,7 +23,6 @@ export default function EditPostPage({
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [uploading, setUploading] = useState(false);
   const [post, setPost] = useState<Post | null>(null);
   const [form, setForm] = useState({
     title: "",
@@ -66,47 +64,6 @@ export default function EditPostPage({
 
     fetchPost();
   }, [id, router]);
-
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    // Validate file type
-    if (!file.type.startsWith("image/")) {
-      toast.error("נא להעלות קובץ תמונה בלבד");
-      return;
-    }
-
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("גודל התמונה חייב להיות קטן מ-5MB");
-      return;
-    }
-
-    setUploading(true);
-
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
-
-      const response = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setForm({ ...form, coverImage: data.url });
-      } else {
-        toast.error("העלאת התמונה נכשלה");
-      }
-    } catch (error) {
-      logError("Failed to upload image:", error);
-      toast.error("העלאת התמונה נכשלה");
-    } finally {
-      setUploading(false);
-    }
-  };
 
   const handleUpdate = async (status: "draft" | "published") => {
     if (!form.title || !form.content) {
@@ -178,6 +135,22 @@ export default function EditPostPage({
     }
   };
 
+  const handleTitleChange = (value: string) => {
+    setForm({ ...form, title: value });
+  };
+
+  const handleDescriptionChange = (value: string) => {
+    setForm({ ...form, description: value });
+  };
+
+  const handleContentChange = (value: string) => {
+    setForm({ ...form, content: value });
+  };
+
+  const handleCoverImageChange = (url: string) => {
+    setForm({ ...form, coverImage: url });
+  };
+
   if (loading) {
     return <div className="text-center py-8">טוען...</div>;
   }
@@ -218,137 +191,27 @@ export default function EditPostPage({
               <CardTitle>פרטי הכתבה</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="title">כותרת *</Label>
-                <Input
-                  id="title"
-                  value={form.title}
-                  onChange={(e) => setForm({ ...form, title: e.target.value })}
-                  placeholder="הזן כותרת כתבה"
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="description">תיאור (אופציונלי)</Label>
-                <Textarea
-                  id="description"
-                  value={form.description}
-                  onChange={(e) =>
-                    setForm({ ...form, description: e.target.value })
-                  }
-                  placeholder="תיאור קצר של הכתבה שיוצג בקרוסלה וברשימת הכתבות. אם לא יוזן, התיאור ייווצר אוטומטית מהתוכן."
-                  className="min-h-[100px]"
-                />
-                <p className="text-xs text-muted-foreground">
-                  התיאור יוצג בקרוסלה ובכרטיסי הכתבות. מומלץ עד 200 תווים.
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="content">תוכן * (Markdown)</Label>
-                <Textarea
-                  id="content"
-                  value={form.content}
-                  onChange={(e) =>
-                    setForm({ ...form, content: e.target.value })
-                  }
-                  placeholder="כתוב את תוכן הכתבה בפורמט Markdown..."
-                  className="min-h-[400px] font-mono"
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label>תמונת שער</Label>
-                {form.coverImage ? (
-                  <div className="space-y-2">
-                    <div className="relative rounded-lg overflow-hidden border">
-                      <img
-                        src={form.coverImage}
-                        alt="תצוגה מקדימה"
-                        className="w-full h-48 object-cover"
-                      />
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        size="icon"
-                        className="absolute top-2 left-2"
-                        onClick={() => setForm({ ...form, coverImage: "" })}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    <Input
-                      value={form.coverImage}
-                      onChange={(e) =>
-                        setForm({ ...form, coverImage: e.target.value })
-                      }
-                      placeholder="או הזן כתובת URL"
-                      className="text-sm"
-                    />
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    <div className="flex gap-2">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="flex-1"
-                        onClick={() =>
-                          document.getElementById("imageUpload")?.click()
-                        }
-                        disabled={uploading}
-                      >
-                        {uploading ? (
-                          <Loader2 className="h-4 w-4 me-2 animate-spin" />
-                        ) : (
-                          <Upload className="h-4 w-4 me-2" />
-                        )}
-                        {uploading ? "מעלה..." : "העלה תמונה"}
-                      </Button>
-                      <input
-                        id="imageUpload"
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={handleImageUpload}
-                      />
-                    </div>
-                    <Input
-                      placeholder="או הזן כתובת URL של תמונה"
-                      value={form.coverImage}
-                      onChange={(e) =>
-                        setForm({ ...form, coverImage: e.target.value })
-                      }
-                    />
-                  </div>
-                )}
-              </div>
+              <PostFormFields
+                title={form.title}
+                description={form.description}
+                content={form.content}
+                coverImage={form.coverImage}
+                onTitleChange={handleTitleChange}
+                onDescriptionChange={handleDescriptionChange}
+                onContentChange={handleContentChange}
+                onCoverImageChange={handleCoverImageChange}
+                showImageUrlInput={true}
+              />
             </CardContent>
           </Card>
 
-          <div className="flex justify-end gap-3">
-            <Button
-              variant="outline"
-              onClick={() => router.back()}
-              disabled={saving}
-            >
-              ביטול
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => handleUpdate("draft")}
-              disabled={saving}
-            >
-              <Save className="h-4 w-4 me-2" />
-              שמור כטיוטה
-            </Button>
-            <Button onClick={() => handleUpdate("published")} disabled={saving}>
-              <Eye className="h-4 w-4 me-2" />
-              {form.status === "published" ? "עדכן" : "פרסם"}
-            </Button>
-          </div>
+          <PostEditActions
+            loading={saving}
+            onCancel={() => router.back()}
+            onSaveDraft={() => handleUpdate("draft")}
+            onUpdate={() => handleUpdate("published")}
+            isPublished={form.status === "published"}
+          />
         </TabsContent>
 
         <TabsContent value="preview">
@@ -376,139 +239,28 @@ export default function EditPostPage({
               <CardTitle>פרטי הכתבה</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="title-desktop">כותרת *</Label>
-                <Input
-                  id="title-desktop"
-                  value={form.title}
-                  onChange={(e) => setForm({ ...form, title: e.target.value })}
-                  placeholder="הזן כותרת כתבה"
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="description-desktop">תיאור (אופציונלי)</Label>
-                <Textarea
-                  id="description-desktop"
-                  value={form.description}
-                  onChange={(e) =>
-                    setForm({ ...form, description: e.target.value })
-                  }
-                  placeholder="תיאור קצר של הכתבה שיוצג בקרוסלה וברשימת הכתבות. אם לא יוזן, התיאור ייווצר אוטומטית מהתוכן."
-                  className="min-h-[100px]"
-                />
-                <p className="text-xs text-muted-foreground">
-                  התיאור יוצג בקרוסלה ובכרטיסי הכתבות. מומלץ עד 200 תווים.
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="content-desktop">תוכן * (Markdown)</Label>
-                <Textarea
-                  id="content-desktop"
-                  value={form.content}
-                  onChange={(e) =>
-                    setForm({ ...form, content: e.target.value })
-                  }
-                  placeholder="כתוב את תוכן הכתבה בפורמט Markdown..."
-                  className="min-h-[400px] font-mono"
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label>תמונת שער</Label>
-                {form.coverImage ? (
-                  <div className="space-y-2">
-                    <div className="relative rounded-lg overflow-hidden border">
-                      <img
-                        src={form.coverImage}
-                        alt="תצוגה מקדימה"
-                        className="w-full h-48 object-cover"
-                      />
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        size="icon"
-                        className="absolute top-2 left-2"
-                        onClick={() => setForm({ ...form, coverImage: "" })}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    <Input
-                      value={form.coverImage}
-                      onChange={(e) =>
-                        setForm({ ...form, coverImage: e.target.value })
-                      }
-                      placeholder="או הזן כתובת URL"
-                      className="text-sm"
-                    />
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    <div className="flex gap-2">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="flex-1"
-                        onClick={() =>
-                          document
-                            .getElementById("imageUpload-desktop")
-                            ?.click()
-                        }
-                        disabled={uploading}
-                      >
-                        {uploading ? (
-                          <Loader2 className="h-4 w-4 me-2 animate-spin" />
-                        ) : (
-                          <Upload className="h-4 w-4 me-2" />
-                        )}
-                        {uploading ? "מעלה..." : "העלה תמונה"}
-                      </Button>
-                      <input
-                        id="imageUpload-desktop"
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={handleImageUpload}
-                      />
-                    </div>
-                    <Input
-                      placeholder="או הזן כתובת URL של תמונה"
-                      value={form.coverImage}
-                      onChange={(e) =>
-                        setForm({ ...form, coverImage: e.target.value })
-                      }
-                    />
-                  </div>
-                )}
-              </div>
+              <PostFormFields
+                title={form.title}
+                description={form.description}
+                content={form.content}
+                coverImage={form.coverImage}
+                onTitleChange={handleTitleChange}
+                onDescriptionChange={handleDescriptionChange}
+                onContentChange={handleContentChange}
+                onCoverImageChange={handleCoverImageChange}
+                idPrefix="desktop"
+                showImageUrlInput={true}
+              />
             </CardContent>
           </Card>
 
-          <div className="flex justify-end gap-3">
-            <Button
-              variant="outline"
-              onClick={() => router.back()}
-              disabled={saving}
-            >
-              ביטול
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => handleUpdate("draft")}
-              disabled={saving}
-            >
-              <Save className="h-4 w-4 me-2" />
-              שמור כטיוטה
-            </Button>
-            <Button onClick={() => handleUpdate("published")} disabled={saving}>
-              <Eye className="h-4 w-4 me-2" />
-              {form.status === "published" ? "עדכן" : "פרסם"}
-            </Button>
-          </div>
+          <PostEditActions
+            loading={saving}
+            onCancel={() => router.back()}
+            onSaveDraft={() => handleUpdate("draft")}
+            onUpdate={() => handleUpdate("published")}
+            isPublished={form.status === "published"}
+          />
         </div>
 
         <div className="sticky top-20 max-h-[calc(100vh-12rem)] overflow-y-auto">
