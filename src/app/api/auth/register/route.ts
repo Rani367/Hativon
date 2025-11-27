@@ -2,75 +2,80 @@ import { NextRequest, NextResponse } from "next/server";
 import { createUser, usernameExists } from "@/lib/users";
 import { createAuthCookie } from "@/lib/auth/jwt";
 import { getAdminClearCookie } from "@/lib/auth/admin";
-import { UserRegistration } from "@/types/user.types";
 import { isDatabaseAvailable } from "@/lib/db/client";
 import { logError } from "@/lib/logger";
+import { userRegistrationSchema } from "@/lib/validation/schemas";
+import { checkRateLimit, registerRateLimiter } from "@/lib/rate-limit";
 
 export async function POST(request: NextRequest) {
+  // Rate limiting: 3 registration attempts per hour
+  const rateLimitResult = await checkRateLimit(
+    request,
+    registerRateLimiter,
+    "register",
+  );
+  if (rateLimitResult.limited) {
+    return rateLimitResult.response!;
+  }
+
+  // Check if database is available
+  const dbAvailable = await isDatabaseAvailable();
+  if (!dbAvailable) {
+    return NextResponse.json(
+      {
+        success: false,
+        message:
+          'ההרשמה אינה זמינה במצב מקומי. אנא התחבר עם שם משתמש "admin" והסיסמה שהוגדרה.',
+      },
+      { status: 503 },
+    );
+  }
+
+  // Parse JSON body
+  let body;
   try {
-    // Check if database is available
-    const dbAvailable = await isDatabaseAvailable();
-    if (!dbAvailable) {
-      return NextResponse.json(
-        {
-          success: false,
-          message:
-            'ההרשמה אינה זמינה במצב מקומי. אנא התחבר עם שם משתמש "admin" והסיסמה שהוגדרה.',
-        },
-        { status: 503 },
-      );
-    }
+    body = await request.json();
+  } catch {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Invalid JSON",
+      },
+      { status: 400 },
+    );
+  }
 
-    const body: UserRegistration = await request.json();
-    const { username, password, displayName, grade, classNumber } = body;
+  // Validate request body with Zod
+  const validation = userRegistrationSchema.safeParse(body);
 
-    // Validation
-    if (!username || !password || !displayName || !grade || !classNumber) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "שם משתמש, סיסמה, שם מלא, כיתה ומספר כיתה הם שדות חובה",
-        },
-        { status: 400 },
-      );
-    }
+  if (!validation.success) {
+    const errors: Record<string, string> = {};
+    const errorMessages: string[] = [];
 
-    // Username validation (alphanumeric, 3-50 chars)
-    if (!/^[a-zA-Z0-9_]{3,50}$/.test(username)) {
-      return NextResponse.json(
-        {
-          success: false,
-          message:
-            "שם המשתמש חייב להכיל 3-50 תווים (אותיות אנגליות, מספרים וקו תחתון בלבד)",
-        },
-        { status: 400 },
-      );
-    }
+    // Zod validation errors - use 'issues' property
+    validation.error.issues.forEach((err) => {
+      const path = err.path?.join?.(".") || "unknown";
+      const message = err.message || "Invalid value";
+      errors[path] = message;
+      errorMessages.push(message);
+    });
 
-    // Password validation (min 8 chars)
-    if (password.length < 8) {
-      return NextResponse.json(
-        { success: false, message: "הסיסמה חייבת להכיל לפחות 8 תווים" },
-        { status: 400 },
-      );
-    }
+    return NextResponse.json(
+      {
+        success: false,
+        message:
+          errorMessages.length > 0
+            ? errorMessages.join(", ")
+            : "נתונים לא תקינים",
+        errors,
+      },
+      { status: 400 },
+    );
+  }
 
-    // Grade validation
-    const validGrades = ["ז", "ח", "ט", "י"];
-    if (!validGrades.includes(grade)) {
-      return NextResponse.json(
-        { success: false, message: "כיתה לא תקינה" },
-        { status: 400 },
-      );
-    }
-
-    // Class number validation
-    if (classNumber < 1 || classNumber > 4) {
-      return NextResponse.json(
-        { success: false, message: "מספר כיתה חייב להיות בין 1 ל-4" },
-        { status: 400 },
-      );
-    }
+  try {
+    const { username, password, displayName, grade, classNumber } =
+      validation.data;
 
     // Check if username already exists
     const exists = await usernameExists(username);
@@ -82,7 +87,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Create user
-    const user = await createUser(body);
+    const user = await createUser({
+      username,
+      password,
+      displayName,
+      grade,
+      classNumber,
+    });
 
     // Generate auth cookie and clear admin cookie
     // Clear admin authentication when user registers to prevent privilege escalation

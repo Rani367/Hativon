@@ -1,8 +1,8 @@
-import type { User, UserRegistration, UserUpdate } from '@/types/user.types';
-import type { UserQueryResult, DbMutationResult } from '@/types/database.types';
-import { db } from '../db/client';
-import bcrypt from 'bcryptjs';
-import { BCRYPT_SALT_ROUNDS } from '../constants/auth';
+import type { User, UserRegistration, UserUpdate } from "@/types/user.types";
+import type { UserQueryResult, DbMutationResult } from "@/types/database.types";
+import { db } from "../db/client";
+import bcrypt from "bcrypt";
+import { BCRYPT_SALT_ROUNDS } from "../constants/auth";
 
 /**
  * Create a new user account
@@ -19,7 +19,7 @@ export async function createUser(data: UserRegistration): Promise<User> {
   const passwordHash = await bcrypt.hash(password, BCRYPT_SALT_ROUNDS);
 
   try {
-    const result = await db.query`
+    const result = (await db.query`
       INSERT INTO users (username, password_hash, display_name, email, grade, class_number)
       VALUES (${username}, ${passwordHash}, ${displayName}, null, ${grade}, ${classNumber})
       RETURNING
@@ -32,19 +32,19 @@ export async function createUser(data: UserRegistration): Promise<User> {
         created_at as "createdAt",
         updated_at as "updatedAt",
         last_login as "lastLogin"
-    ` as UserQueryResult;
+    `) as UserQueryResult;
 
     return result.rows[0] as User;
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : String(error);
 
     // Handle duplicate key violations with user-friendly Hebrew messages
-    if (errorMessage.includes('duplicate key')) {
-      if (errorMessage.includes('username')) {
-        throw new Error('שם המשתמש כבר קיים במערכת');
+    if (errorMessage.includes("duplicate key")) {
+      if (errorMessage.includes("username")) {
+        throw new Error("שם המשתמש כבר קיים במערכת");
       }
-      if (errorMessage.includes('email')) {
-        throw new Error('כתובת האימייל כבר קיימת במערכת');
+      if (errorMessage.includes("email")) {
+        throw new Error("כתובת האימייל כבר קיימת במערכת");
       }
     }
 
@@ -61,10 +61,13 @@ export async function createUser(data: UserRegistration): Promise<User> {
  * @returns Updated User object
  * @throws Error with Hebrew message if user not found
  */
-export async function updateUser(userId: string, updates: UserUpdate): Promise<User> {
+export async function updateUser(
+  userId: string,
+  updates: UserUpdate,
+): Promise<User> {
   const { displayName, email, grade, classNumber } = updates;
 
-  const result = await db.query`
+  const result = (await db.query`
     UPDATE users
     SET
       display_name = COALESCE(${displayName}, display_name),
@@ -83,10 +86,10 @@ export async function updateUser(userId: string, updates: UserUpdate): Promise<U
       created_at as "createdAt",
       updated_at as "updatedAt",
       last_login as "lastLogin"
-  ` as UserQueryResult;
+  `) as UserQueryResult;
 
   if (result.rows.length === 0) {
-    throw new Error('משתמש לא נמצא');
+    throw new Error("משתמש לא נמצא");
   }
 
   return result.rows[0] as User;
@@ -99,11 +102,11 @@ export async function updateUser(userId: string, updates: UserUpdate): Promise<U
  * @param userId - User UUID
  */
 export async function updateLastLogin(userId: string): Promise<void> {
-  await db.query`
+  (await db.query`
     UPDATE users
     SET last_login = CURRENT_TIMESTAMP
     WHERE id = ${userId}
-  ` as unknown as DbMutationResult;
+  `) as unknown as DbMutationResult;
 }
 
 /**
@@ -113,8 +116,8 @@ export async function updateLastLogin(userId: string): Promise<void> {
  * @param userId - User UUID
  */
 export async function deleteUser(userId: string): Promise<void> {
-  await db.query`
+  (await db.query`
     DELETE FROM users
     WHERE id = ${userId}
-  ` as unknown as DbMutationResult;
+  `) as unknown as DbMutationResult;
 }

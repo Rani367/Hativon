@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { useAuth } from "./auth-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,111 +11,66 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { Grade } from "@/types/user.types";
 import { motion } from "framer-motion";
 import { buttonVariants } from "@/lib/utils";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  userRegistrationFormSchema,
+  type UserRegistrationFormInput,
+} from "@/lib/validation/schemas";
 
 interface RegisterFormProps {
   onSuccess?: () => void;
 }
 
 export function RegisterForm({ onSuccess }: RegisterFormProps) {
-  const { register } = useAuth();
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [displayName, setDisplayName] = useState("");
-  const [grade, setGrade] = useState<Grade | "">("");
-  const [classNumber, setClassNumber] = useState<number | "">("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [usernameError, setUsernameError] = useState("");
+  const { register: registerUser } = useAuth();
 
-  const validateUsername = (value: string) => {
-    if (!value) {
-      setUsernameError("");
-      return;
-    }
+  const {
+    register,
+    control,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+    setError: setFormError,
+  } = useForm<UserRegistrationFormInput>({
+    resolver: zodResolver(userRegistrationFormSchema),
+    defaultValues: {
+      username: "",
+      password: "",
+      confirmPassword: "",
+      displayName: "",
+      grade: undefined,
+      classNumber: undefined,
+    },
+  });
 
-    if (value.length < 3) {
-      setUsernameError("שם משתמש חייב להכיל לפחות 3 תווים");
-      return;
-    }
-
-    if (value.length > 50) {
-      setUsernameError("שם משתמש לא יכול להיות ארוך מ-50 תווים");
-      return;
-    }
-
-    const usernamePattern = /^[a-zA-Z0-9_]+$/;
-    if (!usernamePattern.test(value)) {
-      setUsernameError(
-        "שם משתמש יכול להכיל רק אותיות אנגליות, מספרים וקו תחתון",
-      );
-      return;
-    }
-
-    setUsernameError("");
-  };
-
-  const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setUsername(value);
-    validateUsername(value);
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-
-    // Check username validation first
-    if (usernameError) {
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      setError("הסיסמאות אינן תואמות");
-      return;
-    }
-
-    if (password.length < 8) {
-      setError("הסיסמה חייבת להכיל לפחות 8 תווים");
-      return;
-    }
-
-    if (!grade) {
-      setError("יש לבחור כיתה");
-      return;
-    }
-
-    if (!classNumber) {
-      setError("יש לבחור מספר כיתה");
-      return;
-    }
-
-    setLoading(true);
-
+  const onSubmit = async (data: UserRegistrationFormInput) => {
     try {
-      const result = await register({
-        username,
-        password,
-        displayName,
-        grade: grade as Grade,
-        classNumber: classNumber as number,
+      const result = await registerUser({
+        username: data.username,
+        password: data.password,
+        displayName: data.displayName,
+        grade: data.grade,
+        classNumber: data.classNumber,
       });
 
       if (result.success) {
         onSuccess?.();
       } else {
-        setError(result.message || "הרשמה נכשלה");
+        setFormError("root", {
+          message: result.message || "הרשמה נכשלה",
+        });
       }
-    } finally {
-      setLoading(false);
+    } catch {
+      setFormError("root", {
+        message: "שגיאה בהרשמה. אנא נסה שנית.",
+      });
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <motion.div
         className="space-y-2"
         initial={{ opacity: 0, y: 10 }}
@@ -129,23 +83,22 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
         <Input
           id="register-username"
           type="text"
-          value={username}
-          onChange={handleUsernameChange}
-          required
-          disabled={loading}
+          {...register("username")}
+          disabled={isSubmitting}
           placeholder="אותיות אנגליות ומספרים בלבד"
-          pattern="[a-zA-Z0-9_]{3,50}"
-          className={`text-right transition-all duration-200 focus:scale-[1.01] ${usernameError ? "border-destructive" : ""}`}
-          aria-invalid={!!usernameError}
-          aria-describedby={usernameError ? "username-error" : "username-help"}
+          className={`text-right transition-all duration-200 focus:scale-[1.01] ${errors.username ? "border-destructive" : ""}`}
+          aria-invalid={!!errors.username}
+          aria-describedby={
+            errors.username ? "username-error" : "username-help"
+          }
         />
-        {usernameError ? (
+        {errors.username ? (
           <p
             id="username-error"
             className="text-xs text-destructive text-right"
             role="alert"
           >
-            {usernameError}
+            {errors.username.message}
           </p>
         ) : (
           <p
@@ -169,13 +122,16 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
         <Input
           id="register-displayName"
           type="text"
-          value={displayName}
-          onChange={(e) => setDisplayName(e.target.value)}
-          required
-          disabled={loading}
+          {...register("displayName")}
+          disabled={isSubmitting}
           placeholder="השם שיוצג בפוסטים שלך"
           className="text-right transition-all duration-200 focus:scale-[1.01]"
         />
+        {errors.displayName && (
+          <p className="text-xs text-destructive text-right">
+            {errors.displayName.message}
+          </p>
+        )}
       </motion.div>
 
       <motion.div
@@ -188,46 +144,68 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
           <Label htmlFor="register-classNumber" className="text-right block">
             מספר כיתה
           </Label>
-          <Select
-            value={classNumber.toString()}
-            onValueChange={(value) => setClassNumber(Number(value))}
-            disabled={loading}
-          >
-            <SelectTrigger
-              id="register-classNumber"
-              className="w-full"
-              dir="rtl"
-            >
-              <SelectValue placeholder="בחר מספר" />
-            </SelectTrigger>
-            <SelectContent className="text-right" dir="rtl">
-              <SelectItem value="1">1</SelectItem>
-              <SelectItem value="2">2</SelectItem>
-              <SelectItem value="3">3</SelectItem>
-              <SelectItem value="4">4</SelectItem>
-            </SelectContent>
-          </Select>
+          <Controller
+            name="classNumber"
+            control={control}
+            render={({ field }) => (
+              <Select
+                value={field.value?.toString()}
+                onValueChange={(value) => field.onChange(Number(value))}
+                disabled={isSubmitting}
+              >
+                <SelectTrigger
+                  id="register-classNumber"
+                  className="w-full"
+                  dir="rtl"
+                >
+                  <SelectValue placeholder="בחר מספר" />
+                </SelectTrigger>
+                <SelectContent className="text-right" dir="rtl">
+                  <SelectItem value="1">1</SelectItem>
+                  <SelectItem value="2">2</SelectItem>
+                  <SelectItem value="3">3</SelectItem>
+                  <SelectItem value="4">4</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
+          />
+          {errors.classNumber && (
+            <p className="text-xs text-destructive text-right">
+              {errors.classNumber.message}
+            </p>
+          )}
         </div>
 
         <div className="flex-1 space-y-2">
           <Label htmlFor="register-grade" className="text-right block">
             כיתה
           </Label>
-          <Select
-            value={grade}
-            onValueChange={(value) => setGrade(value as Grade)}
-            disabled={loading}
-          >
-            <SelectTrigger id="register-grade" className="w-full" dir="rtl">
-              <SelectValue placeholder="בחר כיתה" />
-            </SelectTrigger>
-            <SelectContent className="text-right" dir="rtl">
-              <SelectItem value="ז">כיתה ז</SelectItem>
-              <SelectItem value="ח">כיתה ח</SelectItem>
-              <SelectItem value="ט">כיתה ט</SelectItem>
-              <SelectItem value="י">כיתה י</SelectItem>
-            </SelectContent>
-          </Select>
+          <Controller
+            name="grade"
+            control={control}
+            render={({ field }) => (
+              <Select
+                value={field.value}
+                onValueChange={field.onChange}
+                disabled={isSubmitting}
+              >
+                <SelectTrigger id="register-grade" className="w-full" dir="rtl">
+                  <SelectValue placeholder="בחר כיתה" />
+                </SelectTrigger>
+                <SelectContent className="text-right" dir="rtl">
+                  <SelectItem value="ז">כיתה ז</SelectItem>
+                  <SelectItem value="ח">כיתה ח</SelectItem>
+                  <SelectItem value="ט">כיתה ט</SelectItem>
+                  <SelectItem value="י">כיתה י</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
+          />
+          {errors.grade && (
+            <p className="text-xs text-destructive text-right">
+              {errors.grade.message}
+            </p>
+          )}
         </div>
       </motion.div>
 
@@ -243,14 +221,16 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
         <Input
           id="register-password"
           type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-          disabled={loading}
+          {...register("password")}
+          disabled={isSubmitting}
           placeholder="לפחות 8 תווים"
-          minLength={8}
           className="text-right transition-all duration-200 focus:scale-[1.01]"
         />
+        {errors.password && (
+          <p className="text-xs text-destructive text-right">
+            {errors.password.message}
+          </p>
+        )}
       </motion.div>
 
       <motion.div
@@ -265,24 +245,26 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
         <Input
           id="register-confirmPassword"
           type="password"
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
-          required
-          disabled={loading}
+          {...register("confirmPassword")}
+          disabled={isSubmitting}
           placeholder="הזן סיסמה שוב"
-          minLength={8}
           className="text-right transition-all duration-200 focus:scale-[1.01]"
         />
+        {errors.confirmPassword && (
+          <p className="text-xs text-destructive text-right">
+            {errors.confirmPassword.message}
+          </p>
+        )}
       </motion.div>
 
-      {error && (
+      {errors.root && (
         <motion.div
           className="text-sm text-red-600 dark:text-red-400 text-center"
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.2 }}
         >
-          {error}
+          {errors.root.message}
         </motion.div>
       )}
 
@@ -294,8 +276,8 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
         whileTap="tap"
         variants={buttonVariants}
       >
-        <Button type="submit" className="w-full" disabled={loading}>
-          {loading ? "נרשם..." : "הרשם"}
+        <Button type="submit" className="w-full" disabled={isSubmitting}>
+          {isSubmitting ? "נרשם..." : "הרשם"}
         </Button>
       </motion.div>
     </form>
