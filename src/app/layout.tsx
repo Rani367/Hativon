@@ -36,10 +36,12 @@ export const metadata: Metadata = {
     default: "חטיבון - עיתון בית הספר",
     template: `%s | חטיבון`,
   },
-  description: "עיתון התלמידים של חטיבת הביניים - חדשות, כתבות ועדכונים מבית הספר",
+  description:
+    "עיתון התלמידים של חטיבת הביניים - חדשות, כתבות ועדכונים מבית הספר",
   openGraph: {
     title: "חטיבון - עיתון בית הספר",
-    description: "עיתון התלמידים של חטיבת הביניים - חדשות, כתבות ועדכונים מבית הספר",
+    description:
+      "עיתון התלמידים של חטיבת הביניים - חדשות, כתבות ועדכונים מבית הספר",
     url: siteUrl,
     siteName: "חטיבון",
     images: [
@@ -56,7 +58,8 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "חטיבון - עיתון בית הספר",
-    description: "עיתון התלמידים של חטיבת הביניים - חדשות, כתבות ועדכונים מבית הספר",
+    description:
+      "עיתון התלמידים של חטיבת הביניים - חדשות, כתבות ועדכונים מבית הספר",
     images: [`${siteUrl}/opengraph-image.png`],
   },
   robots: {
@@ -92,8 +95,6 @@ export default function RootLayout({
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://vercel-storage.com" />
-        <link rel="dns-prefetch" href="https://vercel-storage.com" />
       </head>
       <body className={heebo.className}>
         <ClientProviders>
