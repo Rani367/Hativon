@@ -18,6 +18,17 @@ interface PostPageProps {
 // Use ISR for instant loading with periodic revalidation
 export const revalidate = 300; // Revalidate every 5 minutes
 
+// Enable caching for CDN and browser
+export const dynamic = "force-static";
+
+// Add cache control headers
+export async function generateStaticParams() {
+  const posts = await getPosts(); // Only published posts
+  return posts.map((post) => ({
+    slug: post.slug,
+  }));
+}
+
 export async function generateMetadata({
   params,
 }: PostPageProps): Promise<Metadata> {

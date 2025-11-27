@@ -1,6 +1,19 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { UserRegistration, UserUpdate } from "@/types/user.types";
-import bcrypt from "bcryptjs";
+
+// Mock bcrypt before importing
+vi.mock("bcrypt", () => {
+  const hash = vi.fn().mockResolvedValue("hashed-password");
+  const compare = vi.fn().mockResolvedValue(true);
+
+  return {
+    default: { hash, compare },
+    hash,
+    compare,
+  };
+});
+
+import bcrypt from "bcrypt";
 
 describe("User Storage", () => {
   let mockDb: { query: ReturnType<typeof vi.fn> };
@@ -25,7 +38,7 @@ describe("User Storage", () => {
       db: mockDb,
     }));
 
-    vi.doMock("bcryptjs", () => ({
+    vi.doMock("bcrypt", () => ({
       default: mockBcrypt,
     }));
   });
