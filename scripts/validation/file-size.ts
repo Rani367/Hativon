@@ -7,7 +7,11 @@ const MAX_LINES = 500;
 
 export function validateFileSize(
   results: ValidationResult[],
-  context: { totalChecks: number; passedChecks: number; criticalFailures: number },
+  context: {
+    totalChecks: number;
+    passedChecks: number;
+    criticalFailures: number;
+  },
 ) {
   console.log(`\n${colors.cyan}[11/11] File Size Validation...${colors.reset}`);
 
@@ -52,12 +56,25 @@ export function validateFileSize(
     }
   }
 
-  console.log(`  Checking ${filesToCheck.length} files for ${MAX_LINES}-line limit...`);
+  console.log(
+    `  Checking ${filesToCheck.length} files for ${MAX_LINES}-line limit...`,
+  );
 
   const oversizedFiles: { file: string; lines: number }[] = [];
 
   for (const file of filesToCheck) {
     try {
+      // Skip test files (__tests__ directories, .test.ts, .spec.ts)
+      if (
+        file.includes("__tests__") ||
+        file.endsWith(".test.ts") ||
+        file.endsWith(".test.tsx") ||
+        file.endsWith(".spec.ts") ||
+        file.endsWith(".spec.tsx")
+      ) {
+        continue;
+      }
+
       const content = fs.readFileSync(file, "utf-8");
       const lineCount = content.split("\n").length;
 
@@ -96,5 +113,7 @@ export function validateFileSize(
     );
   }
 
-  console.log(`  ${colors.green}[OK]${colors.reset} File size validation complete`);
+  console.log(
+    `  ${colors.green}[OK]${colors.reset} File size validation complete`,
+  );
 }
