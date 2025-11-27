@@ -21,6 +21,44 @@ const mockUser: User = {
 };
 
 describe("JWT Token Management", () => {
+  describe("module initialization", () => {
+    it("warns when JWT_SECRET is not set in production", async () => {
+      const consoleWarnSpy = vi
+        .spyOn(console, "warn")
+        .mockImplementation(() => {});
+
+      vi.stubEnv("JWT_SECRET", "");
+      vi.stubEnv("NODE_ENV", "production");
+
+      vi.resetModules();
+      await import("../jwt");
+
+      expect(consoleWarnSpy).toHaveBeenCalledWith(
+        "WARNING: JWT_SECRET not set in production environment!",
+      );
+
+      consoleWarnSpy.mockRestore();
+      vi.unstubAllEnvs();
+    });
+
+    it("does not warn in development without JWT_SECRET", async () => {
+      const consoleWarnSpy = vi
+        .spyOn(console, "warn")
+        .mockImplementation(() => {});
+
+      vi.stubEnv("JWT_SECRET", "");
+      vi.stubEnv("NODE_ENV", "development");
+
+      vi.resetModules();
+      await import("../jwt");
+
+      expect(consoleWarnSpy).not.toHaveBeenCalled();
+
+      consoleWarnSpy.mockRestore();
+      vi.unstubAllEnvs();
+    });
+  });
+
   describe("generateToken", () => {
     it("generates a valid JWT token", () => {
       const token = generateToken(mockUser);

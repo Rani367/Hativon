@@ -299,5 +299,14 @@ describe("POST /api/auth/register", () => {
 
       expect(response.status).toBe(409);
     });
+
+    it("handles non-Error thrown objects", async () => {
+      vi.mocked(createUser).mockRejectedValue("String error");
+
+      const request = createRequest(validRegistrationData);
+      const response = await POST(request);
+
+      expect(response.status).toBe(500);
+    });
   });
 });
