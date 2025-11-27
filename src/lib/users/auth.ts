@@ -1,6 +1,6 @@
-import type { User } from '@/types/user.types';
-import bcrypt from 'bcryptjs';
-import { getUserWithPassword } from './queries';
+import type { User } from "@/types/user.types";
+import bcrypt from "bcrypt";
+import { getUserWithPassword } from "./queries";
 
 /**
  * Validate user credentials (username + password)
@@ -12,7 +12,7 @@ import { getUserWithPassword } from './queries';
  */
 export async function validatePassword(
   username: string,
-  password: string
+  password: string,
 ): Promise<User | null> {
   const user = await getUserWithPassword(username);
 

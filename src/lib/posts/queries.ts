@@ -1,7 +1,8 @@
-import type { Post, PostStats } from '@/types/post.types';
-import type { PostQueryResult, StatsQueryResult } from '@/types/database.types';
-import { db } from '../db/client';
-import { rowToPost } from './utils';
+import type { Post, PostStats } from "@/types/post.types";
+import type { PostQueryResult, StatsQueryResult } from "@/types/database.types";
+import { db } from "../db/client";
+import { rowToPost } from "./utils";
+import { memoize } from "../cache";
 
 /**
  * Get all posts, optionally filtered by publication status
@@ -12,7 +13,7 @@ import { rowToPost } from './utils';
 export async function getPosts(filterPublished = false): Promise<Post[]> {
   try {
     const result = filterPublished
-      ? await db.query`
+      ? ((await db.query`
           SELECT
             p.*,
             CASE WHEN u.id IS NULL AND p.author_id IS NOT NULL AND p.author_id != 'legacy-admin' THEN true ELSE false END as author_deleted
@@ -20,19 +21,23 @@ export async function getPosts(filterPublished = false): Promise<Post[]> {
           LEFT JOIN users u ON p.author_id = u.id::text
           WHERE p.status = 'published'
           ORDER BY p.date DESC, p.created_at DESC
-        ` as PostQueryResult
-      : await db.query`
+        `) as PostQueryResult)
+      : ((await db.query`
           SELECT
             p.*,
             CASE WHEN u.id IS NULL AND p.author_id IS NOT NULL AND p.author_id != 'legacy-admin' THEN true ELSE false END as author_deleted
           FROM posts p
           LEFT JOIN users u ON p.author_id = u.id::text
           ORDER BY p.date DESC, p.created_at DESC
-        ` as PostQueryResult;
+        `) as PostQueryResult);
 
     return result.rows.map(rowToPost);
   } catch (error) {
-    console.error('[ERROR] Failed to fetch posts:', error);
+    // Suppress error if posts table doesn't exist (common in fresh installs)
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    if (!errorMessage.includes('relation "posts" does not exist')) {
+      console.error("[ERROR] Failed to fetch posts:", error);
+    }
     return [];
   }
 }
@@ -45,14 +50,14 @@ export async function getPosts(filterPublished = false): Promise<Post[]> {
  */
 export async function getPostById(id: string): Promise<Post | null> {
   try {
-    const result = await db.query`
+    const result = (await db.query`
       SELECT
         p.*,
         CASE WHEN u.id IS NULL AND p.author_id IS NOT NULL AND p.author_id != 'legacy-admin' THEN true ELSE false END as author_deleted
       FROM posts p
       LEFT JOIN users u ON p.author_id = u.id::text
       WHERE p.id = ${id}
-    ` as PostQueryResult;
+    `) as PostQueryResult;
 
     if (result.rows.length === 0) {
       return null;
@@ -60,7 +65,11 @@ export async function getPostById(id: string): Promise<Post | null> {
 
     return rowToPost(result.rows[0]);
   } catch (error) {
-    console.error('[ERROR] Failed to fetch post by ID:', error);
+    // Suppress error if posts table doesn't exist (common in fresh installs)
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    if (!errorMessage.includes('relation "posts" does not exist')) {
+      console.error("[ERROR] Failed to fetch post by ID:", error);
+    }
     return null;
   }
 }
@@ -74,14 +83,14 @@ export async function getPostById(id: string): Promise<Post | null> {
  */
 export async function getPostBySlug(slug: string): Promise<Post | null> {
   try {
-    const result = await db.query`
+    const result = (await db.query`
       SELECT
         p.*,
         CASE WHEN u.id IS NULL AND p.author_id IS NOT NULL AND p.author_id != 'legacy-admin' THEN true ELSE false END as author_deleted
       FROM posts p
       LEFT JOIN users u ON p.author_id = u.id::text
       WHERE p.slug = ${slug} AND p.status = 'published'
-    ` as PostQueryResult;
+    `) as PostQueryResult;
 
     if (result.rows.length === 0) {
       return null;
@@ -89,7 +98,11 @@ export async function getPostBySlug(slug: string): Promise<Post | null> {
 
     return rowToPost(result.rows[0]);
   } catch (error) {
-    console.error('[ERROR] Failed to fetch post by slug:', error);
+    // Suppress error if posts table doesn't exist (common in fresh installs)
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    if (!errorMessage.includes('relation "posts" does not exist')) {
+      console.error("[ERROR] Failed to fetch post by slug:", error);
+    }
     return null;
   }
 }
@@ -102,7 +115,7 @@ export async function getPostBySlug(slug: string): Promise<Post | null> {
  */
 export async function getPostsByAuthor(authorId: string): Promise<Post[]> {
   try {
-    const result = await db.query`
+    const result = (await db.query`
       SELECT
         p.*,
         CASE WHEN u.id IS NULL AND p.author_id IS NOT NULL AND p.author_id != 'legacy-admin' THEN true ELSE false END as author_deleted
@@ -110,11 +123,15 @@ export async function getPostsByAuthor(authorId: string): Promise<Post[]> {
       LEFT JOIN users u ON p.author_id = u.id::text
       WHERE p.author_id = ${authorId}
       ORDER BY p.date DESC, p.created_at DESC
-    ` as PostQueryResult;
+    `) as PostQueryResult;
 
     return result.rows.map(rowToPost);
   } catch (error) {
-    console.error('[ERROR] Failed to fetch posts by author:', error);
+    // Suppress error if posts table doesn't exist (common in fresh installs)
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    if (!errorMessage.includes('relation "posts" does not exist')) {
+      console.error("[ERROR] Failed to fetch posts by author:", error);
+    }
     return [];
   }
 }
@@ -127,7 +144,7 @@ export async function getPostsByAuthor(authorId: string): Promise<Post[]> {
  */
 export async function getPostStats(): Promise<PostStats> {
   try {
-    const result = await db.query`
+    const result = (await db.query`
       SELECT
         COUNT(*) as total,
         SUM(CASE WHEN status = 'published' THEN 1 ELSE 0 END) as published,
@@ -136,7 +153,7 @@ export async function getPostStats(): Promise<PostStats> {
         SUM(CASE WHEN created_at >= CURRENT_DATE - INTERVAL '7 days' THEN 1 ELSE 0 END) as this_week,
         SUM(CASE WHEN created_at >= DATE_TRUNC('month', CURRENT_DATE) THEN 1 ELSE 0 END) as this_month
       FROM posts
-    ` as StatsQueryResult;
+    `) as StatsQueryResult;
 
     const row = result.rows[0];
     return {
@@ -148,7 +165,11 @@ export async function getPostStats(): Promise<PostStats> {
       thisMonth: parseInt(row.this_month) || 0,
     };
   } catch (error) {
-    console.error('[ERROR] Failed to fetch post stats:', error);
+    // Suppress error if posts table doesn't exist (common in fresh installs)
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    if (!errorMessage.includes('relation "posts" does not exist')) {
+      console.error("[ERROR] Failed to fetch post stats:", error);
+    }
     return {
       total: 0,
       published: 0,

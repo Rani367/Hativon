@@ -6,10 +6,10 @@ import {
   getPostStats,
   getPostsByAuthor,
 } from "@/lib/posts";
-import { PostInput } from "@/types/post.types";
 import { getCurrentUser } from "@/lib/auth/middleware";
 import { isAdminAuthenticated } from "@/lib/auth/admin";
 import { logError } from "@/lib/logger";
+import { postInputSchema } from "@/lib/validation/schemas";
 
 // GET /api/admin/posts - Get all posts (admin) or user's posts (regular user)
 export async function GET(request: NextRequest) {
@@ -102,37 +102,50 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body: PostInput = await request.json();
+    const body = await request.json();
 
-    // Validate required fields
-    if (!body.title || !body.content) {
+    // Validate request body with Zod
+    const validation = postInputSchema.safeParse(body);
+
+    if (!validation.success) {
+      const errors: Record<string, string> = {};
+      validation.error.issues.forEach((err) => {
+        const path = err.path.join(".");
+        errors[path] = err.message;
+      });
+
       return NextResponse.json(
-        { error: "Title and content are required" },
+        {
+          error: "Invalid post data",
+          errors,
+        },
         { status: 400 },
       );
     }
 
+    const postData = validation.data;
+
     // Add authorId, grade, and class from authenticated user (if available)
     if (user) {
-      body.authorId = user.id;
+      postData.authorId = user.id;
       // Also set author display name if not provided
-      if (!body.author) {
-        body.author = user.displayName;
+      if (!postData.author) {
+        postData.author = user.displayName;
       }
       // Set author grade and class
-      body.authorGrade = user.grade;
-      body.authorClass = user.classNumber;
+      postData.authorGrade = user.grade;
+      postData.authorClass = user.classNumber;
     } else if (isAdmin) {
       // Admin creating post without user context - use provided values or defaults
-      if (!body.authorId) {
-        body.authorId = "legacy-admin";
+      if (!postData.authorId) {
+        postData.authorId = "legacy-admin";
       }
-      if (!body.author) {
-        body.author = "מנהל המערכת"; // "System Admin" in Hebrew
+      if (!postData.author) {
+        postData.author = "מנהל המערכת"; // "System Admin" in Hebrew
       }
     }
 
-    const newPost = await createPost(body);
+    const newPost = await createPost(postData);
 
     // Revalidate all pages to show the new post immediately
     revalidatePath("/", "layout");
