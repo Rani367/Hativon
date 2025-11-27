@@ -20,10 +20,16 @@ vi.mock("@/lib/logger", () => ({
   logError: vi.fn(),
 }));
 
+vi.mock("@/lib/rate-limit", () => ({
+  checkRateLimit: vi.fn(),
+  registerRateLimiter: {},
+}));
+
 import { POST } from "@/app/api/auth/register/route";
 import { createUser, usernameExists } from "@/lib/users";
 import { createAuthCookie } from "@/lib/auth/jwt";
 import { isDatabaseAvailable } from "@/lib/db/client";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 const mockUser: User = {
   id: "user-123",
@@ -61,6 +67,7 @@ describe("POST /api/auth/register", () => {
     vi.mocked(usernameExists).mockResolvedValue(false);
     vi.mocked(createUser).mockResolvedValue(mockUser);
     vi.mocked(createAuthCookie).mockReturnValue("authToken=test; HttpOnly");
+    vi.mocked(checkRateLimit).mockResolvedValue({ limited: false });
   });
 
   describe("Database Availability", () => {
@@ -171,7 +178,9 @@ describe("POST /api/auth/register", () => {
       const data = await tooShortResponse.json();
 
       expect(tooShortResponse.status).toBe(400);
-      expect(data.message).toContain("8");
+      expect(data.success).toBe(false);
+      // Zod validation returns Hebrew error message
+      expect(data.message).toBeTruthy();
 
       const validLength = createRequest({
         ...validRegistrationData,

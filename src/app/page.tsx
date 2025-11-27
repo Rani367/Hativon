@@ -9,6 +9,9 @@ import RevealFx from "@/components/ui/RevealFx";
 // Use ISR for instant loading with periodic revalidation
 export const revalidate = 60; // Revalidate every 60 seconds
 
+// Enable caching for CDN and browser
+export const dynamic = "force-static";
+
 async function HomeContent() {
   const posts = await getPosts();
 
@@ -35,18 +38,20 @@ async function HomeContent() {
 export default function Home() {
   return (
     <div>
-      <Suspense fallback={
-        <>
-          <div className="carousel-container">
-            <div className="flex items-center justify-center h-full">
-              <div className="animate-pulse text-white">Loading...</div>
+      <Suspense
+        fallback={
+          <>
+            <div className="carousel-container">
+              <div className="flex items-center justify-center h-full">
+                <div className="animate-pulse text-white">Loading...</div>
+              </div>
             </div>
-          </div>
-          <div className="container mx-auto px-4 pt-24 pb-12">
-            <PostGridSkeleton count={12} />
-          </div>
-        </>
-      }>
+            <div className="container mx-auto px-4 pt-24 pb-12">
+              <PostGridSkeleton count={12} />
+            </div>
+          </>
+        }
+      >
         <HomeContent />
       </Suspense>
     </div>

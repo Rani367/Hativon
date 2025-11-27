@@ -20,10 +20,16 @@ vi.mock("@/lib/logger", () => ({
   logError: vi.fn(),
 }));
 
+vi.mock("@/lib/rate-limit", () => ({
+  checkRateLimit: vi.fn(),
+  loginRateLimiter: {},
+}));
+
 import { POST } from "@/app/api/auth/login/route";
 import { validatePassword, updateLastLogin } from "@/lib/users";
 import { createAuthCookie } from "@/lib/auth/jwt";
 import { isDatabaseAvailable } from "@/lib/db/client";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 const mockUser: User = {
   id: "user-123",
@@ -51,6 +57,7 @@ describe("POST /api/auth/login", () => {
     vi.clearAllMocks();
     vi.mocked(isDatabaseAvailable).mockResolvedValue(true);
     vi.mocked(createAuthCookie).mockReturnValue("authToken=test; HttpOnly");
+    vi.mocked(checkRateLimit).mockResolvedValue({ limited: false });
   });
 
   describe("Validation", () => {
@@ -242,7 +249,10 @@ describe("POST /api/auth/login", () => {
 
       const response = await POST(request);
 
-      expect(response.status).toBe(500);
+      // Improved error handling: JSON parse errors return 400 instead of 500
+      expect(response.status).toBe(400);
+      const data = await response.json();
+      expect(data.success).toBe(false);
     });
   });
 });

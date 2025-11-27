@@ -2,22 +2,66 @@ import { NextRequest, NextResponse } from "next/server";
 import { validatePassword, updateLastLogin } from "@/lib/users";
 import { createAuthCookie } from "@/lib/auth/jwt";
 import { getAdminClearCookie } from "@/lib/auth/admin";
-import { UserLogin } from "@/types/user.types";
 import { isDatabaseAvailable } from "@/lib/db/client";
 import { logError } from "@/lib/logger";
+import { userLoginSchema } from "@/lib/validation/schemas";
+import { checkRateLimit, loginRateLimiter } from "@/lib/rate-limit";
 
 export async function POST(request: NextRequest) {
-  try {
-    const body: UserLogin = await request.json();
-    const { username, password } = body;
+  // Rate limiting: 5 login attempts per 15 minutes
+  const rateLimitResult = await checkRateLimit(
+    request,
+    loginRateLimiter,
+    "login",
+  );
+  if (rateLimitResult.limited) {
+    return rateLimitResult.response!;
+  }
 
-    // Validation
-    if (!username || !password) {
-      return NextResponse.json(
-        { success: false, message: "שם משתמש וסיסמה הם שדות חובה" },
-        { status: 400 },
-      );
-    }
+  // Parse JSON body
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Invalid JSON",
+      },
+      { status: 400 },
+    );
+  }
+
+  // Validate request body with Zod
+  const validation = userLoginSchema.safeParse(body);
+
+  if (!validation.success) {
+    const errors: Record<string, string> = {};
+    const errorMessages: string[] = [];
+
+    // Zod validation errors - use 'issues' property
+    validation.error.issues.forEach((err) => {
+      const path = err.path?.join?.(".") || "unknown";
+      const message = err.message || "Invalid value";
+      errors[path] = message;
+      errorMessages.push(message);
+    });
+
+    return NextResponse.json(
+      {
+        success: false,
+        message:
+          errorMessages.length > 0
+            ? errorMessages.join(", ")
+            : "נתונים לא תקינים",
+        errors,
+      },
+      { status: 400 },
+    );
+  }
+
+  try {
+    const { username, password } = validation.data;
 
     // Check if database is available
     const dbAvailable = await isDatabaseAvailable();
