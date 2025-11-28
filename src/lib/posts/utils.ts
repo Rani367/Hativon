@@ -1,5 +1,5 @@
-import type { DbPostRow } from '@/types/database.types';
-import type { Post } from '@/types/post.types';
+import type { DbPostRow } from "@/types/database.types";
+import type { Post } from "@/types/post.types";
 
 /**
  * Maximum length for auto-generated post descriptions
@@ -9,6 +9,7 @@ export const MAX_DESCRIPTION_LENGTH = 160;
 /**
  * Generate URL-friendly slug from title
  * Converts title to lowercase and replaces non-alphanumeric characters with hyphens
+ * Preserves Hebrew characters (Unicode range U+0590-U+05FF)
  *
  * @example
  * generateSlug("Hello World!") // "hello-world"
@@ -17,8 +18,8 @@ export const MAX_DESCRIPTION_LENGTH = 160;
 export function generateSlug(title: string): string {
   return title
     .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
+    .replace(/[^\u0590-\u05FFa-z0-9]+/gi, "-")
+    .replace(/^-+|-+$/g, "");
 }
 
 /**
@@ -30,14 +31,14 @@ export function generateSlug(title: string): string {
  */
 export function generateDescription(content: string): string {
   const plainText = content
-    .replace(/```[\s\S]*?```/g, '') // Remove code blocks
-    .replace(/`[^`]*`/g, '') // Remove inline code
-    .replace(/[#*_~\[\]()]/g, '') // Remove markdown syntax
-    .replace(/\s+/g, ' ') // Normalize whitespace
+    .replace(/```[\s\S]*?```/g, "") // Remove code blocks
+    .replace(/`[^`]*`/g, "") // Remove inline code
+    .replace(/[#*_~\[\]()]/g, "") // Remove markdown syntax
+    .replace(/\s+/g, " ") // Normalize whitespace
     .trim();
 
   return plainText.length > MAX_DESCRIPTION_LENGTH
-    ? plainText.substring(0, MAX_DESCRIPTION_LENGTH) + '...'
+    ? plainText.substring(0, MAX_DESCRIPTION_LENGTH) + "..."
     : plainText;
 }
 
@@ -64,7 +65,7 @@ export function rowToPost(row: DbPostRow): Post {
     authorDeleted: row.author_deleted || false,
     tags: row.tags || [],
     category: row.category || undefined,
-    status: row.status as 'draft' | 'published',
+    status: row.status as "draft" | "published",
     createdAt: row.created_at.toISOString(),
     updatedAt: row.updated_at.toISOString(),
   };

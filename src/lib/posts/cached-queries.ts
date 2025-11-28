@@ -1,42 +1,69 @@
 /**
- * Cached versions of post queries
- * Use these in API routes for better performance
+ * Cached versions of post queries using Next.js unstable_cache
+ * Use these in API routes for better performance with automatic revalidation
  */
 
-import { memoize, clearCacheByPrefix } from '../cache';
-import { getPosts as getPostsUncached, getPostStats as getPostStatsUncached, getPostBySlug as getPostBySlugUncached } from './queries';
+import { unstable_cache } from "next/cache";
+import {
+  getPosts as getPostsUncached,
+  getPostStats as getPostStatsUncached,
+  getPostBySlug as getPostBySlugUncached,
+} from "./queries";
 
 /**
  * Cached version of getPosts
- * TTL: 60 seconds
+ * Revalidates: 60 seconds or when 'posts' tag is invalidated
  */
-export const getCachedPosts = memoize(getPostsUncached, {
-  keyGenerator: (filterPublished = false) => `posts:all:${filterPublished}`,
-  ttl: 60,
-});
+export const getCachedPosts = unstable_cache(
+  async (filterPublished = false) => {
+    return getPostsUncached(filterPublished);
+  },
+  ["posts-all"],
+  {
+    revalidate: 60,
+    tags: ["posts"],
+  },
+);
 
 /**
  * Cached version of getPostStats
- * TTL: 60 seconds
+ * Revalidates: 60 seconds or when 'posts' tag is invalidated
  */
-export const getCachedPostStats = memoize(getPostStatsUncached, {
-  keyGenerator: () => 'posts:stats',
-  ttl: 60,
-});
+export const getCachedPostStats = unstable_cache(
+  async () => {
+    return getPostStatsUncached();
+  },
+  ["posts-stats"],
+  {
+    revalidate: 60,
+    tags: ["posts"],
+  },
+);
 
 /**
  * Cached version of getPostBySlug
- * TTL: 60 seconds (for published posts)
+ * Revalidates: 60 seconds or when 'posts' tag is invalidated
  */
-export const getCachedPostBySlug = memoize(getPostBySlugUncached, {
-  keyGenerator: (slug: string) => `posts:slug:${slug}`,
-  ttl: 60,
-});
+export const getCachedPostBySlug = unstable_cache(
+  async (slug: string) => {
+    return getPostBySlugUncached(slug);
+  },
+  ["posts-by-slug"],
+  {
+    revalidate: 60,
+    tags: ["posts"],
+  },
+);
 
 /**
  * Invalidate all post caches
  * Call this after creating, updating, or deleting posts
+ * Note: This is now handled by revalidateTag('posts') in mutation handlers
  */
 export function invalidatePostCache(): void {
-  clearCacheByPrefix('posts:');
+  // This function is kept for backward compatibility
+  // but is no longer needed since we use revalidateTag('posts') directly
+  console.warn(
+    '[DEPRECATED] Use revalidateTag("posts") instead of invalidatePostCache()',
+  );
 }

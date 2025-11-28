@@ -6,6 +6,7 @@ import {
   getPostStats,
   getPostsByAuthor,
 } from "@/lib/posts";
+import type { Post } from "@/types/post.types";
 import { getCurrentUser } from "@/lib/auth/middleware";
 import { isAdminAuthenticated } from "@/lib/auth/admin";
 import { logError } from "@/lib/logger";
@@ -27,14 +28,43 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get("status");
     const search = searchParams.get("search");
     const includeStats = searchParams.get("stats") === "true";
+    const limit = searchParams.get("limit");
+    const offset = searchParams.get("offset");
 
-    let posts;
+    // Check if pagination is requested
+    const usePagination = limit !== null || offset !== null;
+    const paginationOptions = usePagination
+      ? {
+          limit: limit ? parseInt(limit, 10) : 10,
+          offset: offset ? parseInt(offset, 10) : 0,
+        }
+      : undefined;
+
+    let posts: Post[] = [];
+    let total: number | undefined;
+    let hasMore: boolean | undefined;
 
     // Admin sees all posts, regular user sees only their own
     if (isAdmin) {
-      posts = await getAllPosts(false); // Get all posts (including drafts)
+      const result = await getAllPosts(false, paginationOptions);
+      if (usePagination && typeof result === "object" && "posts" in result) {
+        posts = result.posts;
+        total = result.total;
+        hasMore = result.hasMore;
+      } else {
+        posts = Array.isArray(result) ? result : [];
+      }
     } else if (user) {
       posts = await getPostsByAuthor(user.id);
+      // For user posts, apply manual pagination if requested
+      if (usePagination && paginationOptions) {
+        total = posts.length;
+        posts = posts.slice(
+          paginationOptions.offset,
+          paginationOptions.offset + paginationOptions.limit,
+        );
+        hasMore = paginationOptions.offset + paginationOptions.limit < total;
+      }
     } else {
       // This shouldn't happen due to auth check above, but for type safety
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -55,18 +85,32 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Sort by date (newest first)
-    posts.sort(
-      (a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-    );
+    // Sort by date (newest first) - only if not using database pagination
+    if (!usePagination || !isAdmin) {
+      posts.sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+      );
+    }
 
     interface PostsResponse {
       posts: typeof posts;
+      total?: number;
+      limit?: number;
+      offset?: number;
+      hasMore?: boolean;
       stats?: Awaited<ReturnType<typeof getPostStats>>;
     }
 
     const response: PostsResponse = { posts };
+
+    // Include pagination info if requested
+    if (usePagination && paginationOptions) {
+      response.total = total;
+      response.limit = paginationOptions.limit;
+      response.offset = paginationOptions.offset;
+      response.hasMore = hasMore;
+    }
 
     // Include stats if requested
     if (includeStats) {

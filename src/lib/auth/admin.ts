@@ -1,10 +1,12 @@
-import { cookies } from 'next/headers';
-import { serialize } from 'cookie';
-import jwt from 'jsonwebtoken';
+import { cookies } from "next/headers";
+import { serialize } from "cookie";
+import jwt from "jsonwebtoken";
+import bcrypt from "bcrypt";
 
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '';
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-this-in-production';
-const ADMIN_COOKIE_NAME = 'adminAuth';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "";
+const JWT_SECRET =
+  process.env.JWT_SECRET || "your-secret-key-change-this-in-production";
+const ADMIN_COOKIE_NAME = "adminAuth";
 
 /**
  * Admin authentication payload
@@ -16,13 +18,29 @@ interface AdminAuthPayload {
 
 /**
  * Verify admin password
+ * Uses bcrypt.compare() to prevent timing attacks
+ * Supports both hashed and plain text passwords for backward compatibility
  */
-export function verifyAdminPassword(password: string): boolean {
+export async function verifyAdminPassword(password: string): Promise<boolean> {
   if (!ADMIN_PASSWORD) {
-    console.error('ADMIN_PASSWORD environment variable is not set');
+    console.error("ADMIN_PASSWORD environment variable is not set");
     return false;
   }
-  return password === ADMIN_PASSWORD;
+
+  // Check if stored password is a bcrypt hash (starts with $2a$, $2b$, or $2y$)
+  const isBcryptHash = /^\$2[aby]\$/.test(ADMIN_PASSWORD);
+
+  if (isBcryptHash) {
+    // Use bcrypt comparison for hashed passwords (constant-time)
+    return await bcrypt.compare(password, ADMIN_PASSWORD);
+  } else {
+    // For plain text passwords (backward compatibility)
+    // Still vulnerable to timing attacks but allows gradual migration
+    console.warn(
+      "[SECURITY WARNING] Admin password is not hashed. Run: pnpm run hash-admin-password",
+    );
+    return password === ADMIN_PASSWORD;
+  }
 }
 
 /**
@@ -61,10 +79,10 @@ export async function setAdminAuth(): Promise<void> {
 
   cookieStore.set(ADMIN_COOKIE_NAME, token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
     // No maxAge - makes this a session cookie that expires when browser closes
-    path: '/',
+    path: "/",
   });
 }
 
@@ -81,12 +99,12 @@ export async function clearAdminAuth(): Promise<void> {
  * Use this when setting cookies via NextResponse headers
  */
 export function getAdminClearCookie(): string {
-  return serialize(ADMIN_COOKIE_NAME, '', {
+  return serialize(ADMIN_COOKIE_NAME, "", {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
     maxAge: 0,
-    path: '/',
+    path: "/",
   });
 }
 
@@ -104,7 +122,7 @@ export async function isAdminAuthenticated(): Promise<boolean> {
 
     return verifyAdminToken(adminToken.value);
   } catch (error) {
-    console.error('Error checking admin authentication:', error);
+    console.error("Error checking admin authentication:", error);
     return false;
   }
 }
@@ -117,6 +135,6 @@ export async function requireAdminAuth(): Promise<void> {
   const isAuthenticated = await isAdminAuthenticated();
 
   if (!isAuthenticated) {
-    throw new Error('Admin authentication required');
+    throw new Error("Admin authentication required");
   }
 }

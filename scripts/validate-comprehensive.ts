@@ -39,6 +39,7 @@ import { validateDependencies } from "./validation/dependencies";
 import { validateCodeQuality } from "./validation/code-quality";
 import { validateBuildSize } from "./validation/build-size";
 import { validateFileSize } from "./validation/file-size";
+import { validateMarkdownFiles } from "./validation/markdown-files";
 import { printResults } from "./validation/print-results";
 
 // Load environment
@@ -78,6 +79,7 @@ async function main() {
   validateCodeQuality(results, context);
   validateBuildSize(results, context);
   validateFileSize(results, context);
+  await validateMarkdownFiles(results, context);
 
   const duration = ((Date.now() - startTime) / 1000).toFixed(2);
 

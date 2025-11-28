@@ -47,7 +47,7 @@ describe("POST /api/admin/verify-password", () => {
 
   describe("Password Verification", () => {
     it("returns 200 for correct password", async () => {
-      vi.mocked(verifyAdminPassword).mockReturnValue(true);
+      vi.mocked(verifyAdminPassword).mockResolvedValue(true);
       vi.mocked(setAdminAuth).mockResolvedValue(undefined);
 
       const request = createRequest({ password: "correct-password" });
@@ -59,7 +59,7 @@ describe("POST /api/admin/verify-password", () => {
     });
 
     it("calls verifyAdminPassword with provided password", async () => {
-      vi.mocked(verifyAdminPassword).mockReturnValue(true);
+      vi.mocked(verifyAdminPassword).mockResolvedValue(true);
       vi.mocked(setAdminAuth).mockResolvedValue(undefined);
 
       const request = createRequest({ password: "test-password" });
@@ -69,7 +69,7 @@ describe("POST /api/admin/verify-password", () => {
     });
 
     it("sets admin auth cookie on success", async () => {
-      vi.mocked(verifyAdminPassword).mockReturnValue(true);
+      vi.mocked(verifyAdminPassword).mockResolvedValue(true);
       vi.mocked(setAdminAuth).mockResolvedValue(undefined);
 
       const request = createRequest({ password: "correct-password" });
@@ -79,7 +79,7 @@ describe("POST /api/admin/verify-password", () => {
     });
 
     it("returns 401 for incorrect password", async () => {
-      vi.mocked(verifyAdminPassword).mockReturnValue(false);
+      vi.mocked(verifyAdminPassword).mockResolvedValue(false);
 
       const request = createRequest({ password: "wrong-password" });
       const response = await POST(request);
@@ -90,7 +90,7 @@ describe("POST /api/admin/verify-password", () => {
     });
 
     it("does not set auth cookie on failed verification", async () => {
-      vi.mocked(verifyAdminPassword).mockReturnValue(false);
+      vi.mocked(verifyAdminPassword).mockResolvedValue(false);
 
       const request = createRequest({ password: "wrong-password" });
       await POST(request);
@@ -101,7 +101,7 @@ describe("POST /api/admin/verify-password", () => {
 
   describe("Error Handling", () => {
     it("returns 500 on setAdminAuth error", async () => {
-      vi.mocked(verifyAdminPassword).mockReturnValue(true);
+      vi.mocked(verifyAdminPassword).mockResolvedValue(true);
       vi.mocked(setAdminAuth).mockRejectedValue(new Error("Cookie error"));
 
       const request = createRequest({ password: "correct-password" });
@@ -132,7 +132,7 @@ describe("POST /api/admin/verify-password", () => {
 
   describe("Security", () => {
     it("does not leak information about admin password", async () => {
-      vi.mocked(verifyAdminPassword).mockReturnValue(false);
+      vi.mocked(verifyAdminPassword).mockResolvedValue(false);
 
       const request = createRequest({ password: "wrong" });
       const response = await POST(request);
