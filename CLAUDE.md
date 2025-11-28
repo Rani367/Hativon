@@ -21,6 +21,29 @@ This is a strict project requirement. Instead:
 - CORRECT: `console.log('[WARNING] Warning!')`
 - CORRECT: `## Getting Started`
 
+## CRITICAL RULE: NO MARKDOWN FILES (except CLAUDE.md and README.md)
+
+**NEVER create .md files except CLAUDE.md and README.md.**
+
+This is a strict project requirement:
+- Only two markdown files allowed: `CLAUDE.md` and `README.md`
+- Do NOT create documentation files like `CONTRIBUTING.md`, `CHANGELOG.md`, `SETUP.md`, etc.
+- Do NOT create markdown files for documentation, guides, or summaries
+- Put all documentation in code comments, JSDoc, or in CLAUDE.md/README.md
+- If user asks for documentation, add it to CLAUDE.md or README.md instead
+
+**Examples of what NOT to do:**
+- WRONG: Create `IMPROVEMENTS_SUMMARY.md`
+- WRONG: Create `SETUP_VERIFICATION.md`
+- WRONG: Create `MIGRATION_GUIDE.md`
+- WRONG: Create `API_DOCS.md`
+
+**Examples of correct approach:**
+- CORRECT: Add documentation to CLAUDE.md
+- CORRECT: Add user-facing docs to README.md
+- CORRECT: Use JSDoc comments in code
+- CORRECT: Add inline code comments
+
 ## CRITICAL RULE: TypeScript Type Safety
 
 **NEVER use the 'any' type in TypeScript code.**
@@ -222,7 +245,12 @@ pnpm run lint             # ESLint check
 ```bash
 pnpm run setup            # Interactive setup with PostgreSQL configuration
 pnpm run db:init          # Initialize database schema (runs src/lib/db/schema.sql)
+pnpm run db:migrate       # Run database migrations
+pnpm run db:migrate:status # Check migration status
+pnpm run db:migrate:rollback # Rollback last migration
+pnpm run db:create-migration "name" # Create new migration file
 pnpm run create-test-user # Create test user (username: user, password: 12345678)
+pnpm run hash-admin-password # Hash admin password with bcrypt
 
 # Note: Admin panel access uses ADMIN_PASSWORD from .env.local, NOT user accounts
 ```
@@ -262,7 +290,7 @@ pnpm test:ui              # Open Vitest UI for visual test exploration
 ```bash
 pnpm run validate         # Run comprehensive validation (all checks below)
 pnpm run pre-deploy       # ONE COMMAND that runs:
-                          # 1. All tests (162 tests must pass)
+                          # 1. All tests (244 tests must pass)
                           # 2. Comprehensive validation (100+ checks)
                           # 3. Production build
                           # 4. Git commit (prompts for message)
@@ -708,13 +736,15 @@ All utility scripts are in `scripts/`:
 | `kill-port.ts` | Kill process on port 3000 (runs before `pnpm run dev`) |
 | `setup.ts` | Interactive setup with database configuration |
 | `init-db.ts` | Initialize database schema (runs schema.sql) |
+| `db-migrate.ts` | Run database migrations (supports up, status, rollback) |
+| `create-migration.ts` | Generate new timestamped migration file |
+| `hash-admin-password.ts` | Hash admin password with bcrypt for security |
 | `create-test-user-simple.ts` | Create test user (username: user, password: 12345678) |
 | `create-test-user.ts` | Interactive test user creation |
 | `check-db.ts` | Check database connection and status |
 | `validate-env.ts` | Validate environment variables |
 | `validate-build.ts` | Validate build configuration |
 | `post-build-deploy.ts` | Git commit workflow (interactive) |
-| `migrate-*.ts` | Database migrations |
 
 **Note**: There are no "create-admin" scripts because admin panel uses `ADMIN_PASSWORD` from `.env.local`, not user accounts.
 
@@ -733,7 +763,7 @@ All utility scripts are in `scripts/`:
 The project uses two different build commands optimized for different contexts:
 
 **Local Pre-Deploy** (`pnpm run pre-deploy`):
-- Runs all 128 tests
+- Runs all 244 tests
 - Runs comprehensive validation (100+ checks)
 - Builds the application
 - Prompts for git commit
@@ -784,6 +814,60 @@ Auto-configured by Vercel (don't set manually):
 
 **Important**: `ADMIN_PASSWORD` is for the admin panel at `/admin`, completely separate from user accounts. Users register and login through the homepage.
 
+## Recent Improvements (2025-01-29)
+
+### Security Enhancements
+- **Admin Password Hashing**: Upgraded from plain text to bcrypt with constant-time comparison, preventing timing attacks
+- **Database Connection Limits**: Added pool configuration (max 20 connections, 30s idle timeout, 2s connection timeout)
+- **Security Headers**: Added X-Frame-Options, CSP, X-Content-Type-Options, and more to prevent common vulnerabilities
+
+### Performance Optimizations
+- **Granular Cache Invalidation**: Uses `revalidateTag('posts')` instead of invalidating entire app
+- **API Pagination**: Added limit/offset support to `getAllPosts()` for scalability
+- **Next.js Cache Migration**: Migrated from custom cache to `unstable_cache` with automatic revalidation
+
+### Code Quality
+- **API Route Consolidation**: Created shared handlers, reduced admin route from 174 to 65 lines (62% reduction)
+- **Standardized API Responses**: Added `ApiResponse<T>`, `ApiErrorResponse`, `ApiSuccessResponse` types
+- **Hebrew Slug Fix**: Updated regex to preserve Hebrew characters (U+0590-U+05FF range)
+
+### Developer Experience
+- **Database Migration System**: Full migration support with up/down, rollback, and version tracking
+- **Environment Variable Types**: Complete TypeScript definitions with IntelliSense
+- **New Utilities**: `hash-admin-password`, `db:migrate`, `db:create-migration` commands
+- **Component Tests**: Added LoginForm tests with accessibility validation
+- **Hebrew/Unicode Tests**: 36 comprehensive tests for RTL/Hebrew edge cases
+
+### Migration System
+The project now includes a professional database migration system:
+
+**Structure**:
+- `src/lib/db/migrations/index.ts` - Migration engine
+- `src/lib/db/migrations/registry.ts` - Migration registry
+- `src/lib/db/migrations/YYYYMMDDHHMMSS_name.ts` - Individual migrations
+
+**Usage**:
+```bash
+pnpm run db:create-migration "add_user_avatar"  # Create new migration
+pnpm run db:migrate                              # Run pending migrations
+pnpm run db:migrate:status                       # Check status
+pnpm run db:migrate:rollback                     # Rollback last migration
+```
+
+**Example Migration**:
+```typescript
+const migration: Migration = {
+  id: '20250101000000',
+  name: 'add_user_avatar',
+  async up() {
+    await db.query`ALTER TABLE users ADD COLUMN avatar VARCHAR(255)`;
+  },
+  async down() {
+    await db.query`ALTER TABLE users DROP COLUMN avatar`;
+  },
+};
+```
+
 ## Additional Notes
 
 - The project uses pnpm as package manager (not npm or yarn)
@@ -794,3 +878,5 @@ Auto-configured by Vercel (don't set manually):
 - Class numbers are 1-4 (validated by database constraint)
 - Markdown content supports GitHub Flavored Markdown (via remark-gfm)
 - Syntax highlighting in code blocks (via react-syntax-highlighter)
+- Hebrew text is fully supported in slugs, content, and metadata
+- Admin passwords can be plain text (legacy) or bcrypt hashed (recommended)

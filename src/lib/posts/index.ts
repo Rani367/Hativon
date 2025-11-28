@@ -17,27 +17,19 @@ export {
   getPostBySlug,
   getPostsByAuthor,
   getPostStats,
-} from './queries';
+} from "./queries";
+
+// Query types
+export type { PaginationOptions, PaginatedPosts } from "./queries";
 
 // Public API (published posts only)
-export {
-  getPosts,
-  getPost,
-  getWordCount,
-} from './posts';
+export { getPosts, getPost, getWordCount } from "./posts";
 
 // CRUD operations
-export {
-  createPost,
-  updatePost,
-  deletePost,
-} from './storage';
+export { createPost, updatePost, deletePost } from "./storage";
 
 // Permission checking
-export {
-  canUserEditPost,
-  canUserDeletePost,
-} from './permissions';
+export { canUserEditPost, canUserDeletePost } from "./permissions";
 
 // Utility functions
 export {
@@ -45,4 +37,4 @@ export {
   generateDescription,
   rowToPost,
   MAX_DESCRIPTION_LENGTH,
-} from './utils';
+} from "./utils";
