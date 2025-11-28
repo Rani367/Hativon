@@ -15,11 +15,8 @@ interface PostPageProps {
   params: Promise<{ slug: string }>;
 }
 
-// Use ISR for instant loading with periodic revalidation
-export const revalidate = 300; // Revalidate every 5 minutes
-
-// Enable caching for CDN and browser
-export const dynamic = "force-static";
+// Enable ISR with 5 minute revalidation for instant loading
+export const revalidate = 300;
 
 // Add cache control headers
 export async function generateStaticParams() {
