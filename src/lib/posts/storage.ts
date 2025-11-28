@@ -4,6 +4,7 @@ import { db } from "../db/client";
 import { v4 as uuidv4 } from "uuid";
 import { generateSlug, generateDescription, rowToPost } from "./utils";
 import { getPostById } from "./queries";
+import { revalidateTag } from "next/cache";
 
 /**
  * Default post status for new posts
@@ -57,7 +58,12 @@ export async function createPost(input: PostInput): Promise<Post> {
       RETURNING *
     `) as PostQueryResult;
 
-    return rowToPost(result.rows[0]);
+    const post = rowToPost(result.rows[0]);
+
+    // Revalidate cache to show new post instantly
+    revalidateTag("posts", "max");
+
+    return post;
   } catch (error) {
     console.error("[ERROR] Failed to create post:", error);
     throw error;
@@ -129,7 +135,12 @@ export async function updatePost(
       return null;
     }
 
-    return rowToPost(result.rows[0]);
+    const post = rowToPost(result.rows[0]);
+
+    // Revalidate cache to show updates instantly
+    revalidateTag("posts", "max");
+
+    return post;
   } catch (error) {
     console.error("[ERROR] Failed to update post:", error);
     throw error;
@@ -149,7 +160,14 @@ export async function deletePost(id: string): Promise<boolean> {
       WHERE id = ${id}
     `) as unknown as DbMutationResult;
 
-    return result.rowCount > 0;
+    const deleted = result.rowCount > 0;
+
+    // Revalidate cache to remove deleted post instantly
+    if (deleted) {
+      revalidateTag("posts", "max");
+    }
+
+    return deleted;
   } catch (error) {
     console.error("[ERROR] Failed to delete post:", error);
     return false;

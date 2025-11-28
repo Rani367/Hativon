@@ -1,8 +1,8 @@
-import '@testing-library/jest-dom/vitest';
-import { vi } from 'vitest';
+import "@testing-library/jest-dom/vitest";
+import { vi } from "vitest";
 
 // Mock next/navigation
-vi.mock('next/navigation', () => ({
+vi.mock("next/navigation", () => ({
   useRouter: () => ({
     push: vi.fn(),
     replace: vi.fn(),
@@ -11,13 +11,13 @@ vi.mock('next/navigation', () => ({
     refresh: vi.fn(),
     prefetch: vi.fn(),
   }),
-  usePathname: () => '/',
+  usePathname: () => "/",
   useSearchParams: () => new URLSearchParams(),
   useParams: () => ({}),
 }));
 
 // Mock next/headers for server-side tests
-vi.mock('next/headers', () => ({
+vi.mock("next/headers", () => ({
   cookies: vi.fn(() => ({
     get: vi.fn(),
     set: vi.fn(),
@@ -28,9 +28,15 @@ vi.mock('next/headers', () => ({
   headers: vi.fn(() => new Map()),
 }));
 
+// Mock next/cache for revalidation functions
+vi.mock("next/cache", () => ({
+  revalidateTag: vi.fn(),
+  revalidatePath: vi.fn(),
+}));
+
 // Mock environment variables for testing
-process.env.JWT_SECRET = 'test-jwt-secret-key-at-least-32-chars';
-process.env.ADMIN_PASSWORD = 'test-admin-password';
+process.env.JWT_SECRET = "test-jwt-secret-key-at-least-32-chars";
+process.env.ADMIN_PASSWORD = "test-admin-password";
 // NODE_ENV is already set by Vitest, no need to override
 
 // Global test utilities
@@ -44,10 +50,10 @@ global.ResizeObserver = vi.fn().mockImplementation(() => ({
 const originalConsoleError = console.error;
 console.error = (...args: unknown[]) => {
   // Filter out known non-critical warnings
-  const message = args[0]?.toString() || '';
+  const message = args[0]?.toString() || "";
   if (
-    message.includes('Warning: ReactDOM.render is deprecated') ||
-    message.includes('Warning: useLayoutEffect does nothing on the server')
+    message.includes("Warning: ReactDOM.render is deprecated") ||
+    message.includes("Warning: useLayoutEffect does nothing on the server")
   ) {
     return;
   }
