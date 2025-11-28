@@ -5,13 +5,90 @@ import { rowToPost } from "./utils";
 import { memoize } from "../cache";
 
 /**
+ * Pagination options for querying posts
+ */
+export interface PaginationOptions {
+  limit?: number;
+  offset?: number;
+}
+
+/**
+ * Paginated result for posts query
+ */
+export interface PaginatedPosts {
+  posts: Post[];
+  total: number;
+  limit: number;
+  offset: number;
+  hasMore: boolean;
+}
+
+/**
  * Get all posts, optionally filtered by publication status
  *
  * @param filterPublished - If true, only return published posts
- * @returns Array of posts sorted by date (newest first)
+ * @param pagination - Optional pagination parameters (limit, offset)
+ * @returns Array of posts sorted by date (newest first) or paginated result
  */
-export async function getPosts(filterPublished = false): Promise<Post[]> {
+export async function getPosts(
+  filterPublished = false,
+  pagination?: PaginationOptions,
+): Promise<Post[] | PaginatedPosts> {
   try {
+    // If pagination is requested, return paginated result
+    if (pagination) {
+      const limit = pagination.limit || 10;
+      const offset = pagination.offset || 0;
+
+      // Get total count
+      const countResult = filterPublished
+        ? await db.query`
+            SELECT COUNT(*) as count FROM posts WHERE status = 'published'
+          `
+        : await db.query`
+            SELECT COUNT(*) as count FROM posts
+          `;
+
+      const total = parseInt((countResult.rows[0] as { count: string }).count);
+
+      // Get paginated posts
+      const result = filterPublished
+        ? ((await db.query([
+            `SELECT
+              p.*,
+              CASE WHEN u.id IS NULL AND p.author_id IS NOT NULL AND p.author_id != 'legacy-admin' THEN true ELSE false END as author_deleted
+            FROM posts p
+            LEFT JOIN users u ON p.author_id = u.id::text
+            WHERE p.status = 'published'
+            ORDER BY p.date DESC, p.created_at DESC
+            LIMIT $1 OFFSET $2`,
+            limit,
+            offset,
+          ])) as PostQueryResult)
+        : ((await db.query([
+            `SELECT
+              p.*,
+              CASE WHEN u.id IS NULL AND p.author_id IS NOT NULL AND p.author_id != 'legacy-admin' THEN true ELSE false END as author_deleted
+            FROM posts p
+            LEFT JOIN users u ON p.author_id = u.id::text
+            ORDER BY p.date DESC, p.created_at DESC
+            LIMIT $1 OFFSET $2`,
+            limit,
+            offset,
+          ])) as PostQueryResult);
+
+      const posts = result.rows.map(rowToPost);
+
+      return {
+        posts,
+        total,
+        limit,
+        offset,
+        hasMore: offset + limit < total,
+      };
+    }
+
+    // Non-paginated (backward compatible)
     const result = filterPublished
       ? ((await db.query`
           SELECT
@@ -38,7 +115,15 @@ export async function getPosts(filterPublished = false): Promise<Post[]> {
     if (!errorMessage.includes('relation "posts" does not exist')) {
       console.error("[ERROR] Failed to fetch posts:", error);
     }
-    return [];
+    return pagination
+      ? {
+          posts: [],
+          total: 0,
+          limit: pagination.limit || 10,
+          offset: pagination.offset || 0,
+          hasMore: false,
+        }
+      : [];
   }
 }
 

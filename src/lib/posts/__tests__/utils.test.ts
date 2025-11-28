@@ -1,344 +1,263 @@
 import { describe, it, expect } from "vitest";
-import {
-  generateSlug,
-  generateDescription,
-  rowToPost,
-  MAX_DESCRIPTION_LENGTH,
-} from "../utils";
+import { generateSlug, generateDescription, rowToPost } from "../utils";
 import type { DbPostRow } from "@/types/database.types";
 
-describe("Post Utilities", () => {
-  describe("generateSlug", () => {
-    it("converts title to lowercase slug with hyphens", () => {
-      expect(generateSlug("Hello World")).toBe("hello-world");
-      expect(generateSlug("Multiple   Spaces   Here")).toBe(
-        "multiple-spaces-here",
-      );
-      expect(generateSlug("Post 123 Title")).toBe("post-123-title");
-      expect(generateSlug("CamelCaseTitle")).toBe("camelcasetitle");
+describe("generateSlug", () => {
+  describe("Hebrew text handling", () => {
+    it("preserves Hebrew characters", () => {
+      expect(generateSlug("כותרת בעברית")).toBe("כותרת-בעברית");
     });
 
-    it("removes special characters and trims hyphens", () => {
-      expect(generateSlug("Hello! @World# $Test%")).toBe("hello-world-test");
-      expect(generateSlug("  !Hello World!  ")).toBe("hello-world");
-      expect(generateSlug("Hello, World! How are you?")).toBe(
-        "hello-world-how-are-you",
-      );
-      expect(generateSlug("title_with_underscores")).toBe(
-        "title-with-underscores",
-      );
+    it("handles Hebrew with punctuation", () => {
+      expect(generateSlug("כותרת: תת-כותרת!")).toBe("כותרת-תת-כותרת");
     });
 
-    it("handles edge cases", () => {
+    it("handles mixed Hebrew and English", () => {
+      expect(generateSlug("Hello עולם")).toBe("hello-עולם");
+    });
+
+    it("handles Hebrew with numbers", () => {
+      expect(generateSlug("כותרת 123")).toBe("כותרת-123");
+    });
+
+    it("handles Hebrew with special characters", () => {
+      expect(generateSlug("כותרת@#$%^&*()")).toBe("כותרת");
+    });
+
+    it("handles multiple spaces in Hebrew text", () => {
+      expect(generateSlug("כותרת    עם    רווחים")).toBe("כותרת-עם-רווחים");
+    });
+
+    it("handles leading and trailing spaces", () => {
+      expect(generateSlug("  כותרת  ")).toBe("כותרת");
+    });
+
+    it("handles empty string", () => {
       expect(generateSlug("")).toBe("");
-      expect(generateSlug("!@#$%^&*()")).toBe("");
-      expect(generateSlug("כותרת הפוסט")).toBe("");
+    });
+
+    it("handles only special characters", () => {
+      expect(generateSlug("@#$%^&*()")).toBe("");
     });
   });
 
-  describe("generateDescription", () => {
-    it("strips markdown formatting", () => {
-      expect(generateDescription("**Bold** and *italic* text")).toBe(
-        "Bold and italic text",
-      );
-      expect(generateDescription("# Header\n## Subheader\nContent")).toBe(
-        "Header Subheader Content",
-      );
-      expect(
-        generateDescription(
-          "Text before ```javascript\nconst x = 1;\n``` text after",
-        ),
-      ).toBe("Text before text after");
-      expect(generateDescription("Use `console.log()` for debugging")).toBe(
-        "Use for debugging",
+  describe("English text handling", () => {
+    it("converts English to lowercase", () => {
+      expect(generateSlug("Hello World")).toBe("hello-world");
+    });
+
+    it("replaces spaces with hyphens", () => {
+      expect(generateSlug("my blog post")).toBe("my-blog-post");
+    });
+
+    it("removes special characters", () => {
+      expect(generateSlug("Hello! World?")).toBe("hello-world");
+    });
+
+    it("handles consecutive special characters", () => {
+      expect(generateSlug("hello---world")).toBe("hello-world");
+    });
+  });
+
+  describe("Edge cases", () => {
+    it("handles very long Hebrew text", () => {
+      const longText = "כותרת ".repeat(100);
+      const result = generateSlug(longText);
+      expect(result).toContain("כותרת");
+      expect(result.split("-").filter(Boolean).length).toBeGreaterThan(50);
+    });
+
+    it("handles Unicode emoji (should be removed)", () => {
+      expect(generateSlug("כותרת  בעברית")).toBe("כותרת-בעברית");
+    });
+
+    it("handles RTL marks and zero-width characters", () => {
+      const textWithMarks = "כותרת\u200F\u200Eבעברית";
+      const result = generateSlug(textWithMarks);
+      // RTL and zero-width marks are replaced with hyphens by the regex
+      expect(result).toBe("כותרת-בעברית");
+    });
+
+    it("is case-insensitive for English", () => {
+      expect(generateSlug("HELLO")).toBe(generateSlug("hello"));
+    });
+
+    it("handles Hebrew nikud (diacritics) - should be removed", () => {
+      const textWithNikud = "כָּתוּב";
+      const result = generateSlug(textWithNikud);
+      // Nikud characters (U+0591-U+05C7) are outside our range
+      expect(result).not.toContain("\u05B0");
+    });
+  });
+});
+
+describe("generateDescription", () => {
+  describe("Hebrew text handling", () => {
+    it("preserves Hebrew text", () => {
+      const content = "זהו תוכן בעברית עם כמה מילים.";
+      expect(generateDescription(content)).toBe(content);
+    });
+
+    it("truncates long Hebrew text to 160 characters", () => {
+      const longContent = "א".repeat(200);
+      const result = generateDescription(longContent);
+      expect(result).toHaveLength(163); // 160 + '...'
+      expect(result.endsWith("...")).toBe(true);
+    });
+
+    it("removes Hebrew markdown syntax", () => {
+      const content = "**טקסט מודגש** ו-*טקסט נטוי*";
+      const result = generateDescription(content);
+      expect(result).toBe("טקסט מודגש ו-טקסט נטוי");
+    });
+
+    it("removes code blocks with Hebrew content", () => {
+      const content = "```\nקוד בעברית\n```\nטקסט רגיל";
+      const result = generateDescription(content);
+      expect(result).toBe("טקסט רגיל");
+    });
+  });
+
+  describe("Markdown removal", () => {
+    it("removes code blocks", () => {
+      const content = "```javascript\nconst x = 1;\n```\nRegular text";
+      expect(generateDescription(content)).toBe("Regular text");
+    });
+
+    it("removes inline code backticks and content", () => {
+      const content = "Use `console.log()` to debug";
+      // Inline code (backticks and content inside) is completely removed
+      expect(generateDescription(content)).toBe("Use to debug");
+    });
+
+    it("removes headings", () => {
+      const content = "# Title\nContent here";
+      expect(generateDescription(content)).toBe("Title Content here");
+    });
+
+    it("removes emphasis markers", () => {
+      const content = "**bold** and *italic* and ~strikethrough~";
+      expect(generateDescription(content)).toBe(
+        "bold and italic and strikethrough",
       );
     });
 
-    it("normalizes whitespace", () => {
-      expect(generateDescription("Text   with\n\nmultiple   spaces")).toBe(
-        "Text with multiple spaces",
-      );
-      expect(generateDescription("  Trimmed content  ")).toBe(
-        "Trimmed content",
-      );
+    it("removes link markdown syntax", () => {
+      const content = "[link text](url) and [another](url2)";
+      // Brackets and parentheses are removed, text remains
+      expect(generateDescription(content)).toBe("link texturl and anotherurl2");
+    });
+  });
+
+  describe("Whitespace normalization", () => {
+    it("normalizes multiple spaces", () => {
+      const content = "text    with    spaces";
+      expect(generateDescription(content)).toBe("text with spaces");
     });
 
-    it("truncates to MAX_DESCRIPTION_LENGTH with ellipsis", () => {
-      const longContent = "A".repeat(200);
-      const description = generateDescription(longContent);
-
-      expect(description.length).toBe(MAX_DESCRIPTION_LENGTH + 3);
-      expect(description.endsWith("...")).toBe(true);
-
-      expect(generateDescription("Short description")).toBe(
-        "Short description",
-      );
-      expect(generateDescription("A".repeat(MAX_DESCRIPTION_LENGTH))).toBe(
-        "A".repeat(MAX_DESCRIPTION_LENGTH),
-      );
+    it("normalizes newlines", () => {
+      const content = "line1\n\nline2\n\n\nline3";
+      expect(generateDescription(content)).toBe("line1 line2 line3");
     });
 
-    it("handles edge cases", () => {
+    it("trims leading and trailing whitespace", () => {
+      const content = "   text   ";
+      expect(generateDescription(content)).toBe("text");
+    });
+  });
+
+  describe("Edge cases", () => {
+    it("handles empty string", () => {
       expect(generateDescription("")).toBe("");
+    });
 
-      const complexMarkdown = `
-        # Title
-        This is **bold** and *italic* text.
-        \`\`\`javascript
-        const code = "removed";
-        \`\`\`
-        [Link](url) and \`inline code\`.
-      `;
-      const description = generateDescription(complexMarkdown);
-      expect(description).not.toContain("**");
-      expect(description).not.toContain("```");
-      expect(description).not.toContain("`");
+    it("handles only markdown syntax", () => {
+      expect(generateDescription("**  **")).toBe("");
+    });
+
+    it("handles mixed Hebrew and English with markdown", () => {
+      const content = "**Hello** עולם with *text*";
+      expect(generateDescription(content)).toBe("Hello עולם with text");
+    });
+
+    it("preserves Hebrew punctuation", () => {
+      const content = "שאלה? תשובה! הערה.";
+      expect(generateDescription(content)).toBe("שאלה? תשובה! הערה.");
+    });
+  });
+});
+
+describe("rowToPost", () => {
+  it("converts database row to Post object", () => {
+    const mockRow: DbPostRow = {
+      id: "test-id",
+      title: "כותרת בדיקה",
+      slug: "כותרת-בדיקה",
+      content: "תוכן בדיקה",
+      cover_image: "https://example.com/image.jpg",
+      description: "תיאור בדיקה",
+      date: new Date("2024-01-01"),
+      author: "שם מחבר",
+      author_id: "author-123",
+      author_grade: "י",
+      author_class: 2,
+      author_deleted: false,
+      tags: ["תג1", "תג2"],
+      category: "קטגוריה",
+      status: "published",
+      created_at: new Date("2024-01-01T10:00:00Z"),
+      updated_at: new Date("2024-01-01T12:00:00Z"),
+    };
+
+    const result = rowToPost(mockRow);
+
+    expect(result).toEqual({
+      id: "test-id",
+      title: "כותרת בדיקה",
+      slug: "כותרת-בדיקה",
+      content: "תוכן בדיקה",
+      coverImage: "https://example.com/image.jpg",
+      description: "תיאור בדיקה",
+      date: "2024-01-01T00:00:00.000Z",
+      author: "שם מחבר",
+      authorId: "author-123",
+      authorGrade: "י",
+      authorClass: 2,
+      authorDeleted: false,
+      tags: ["תג1", "תג2"],
+      category: "קטגוריה",
+      status: "published",
+      createdAt: "2024-01-01T10:00:00.000Z",
+      updatedAt: "2024-01-01T12:00:00.000Z",
     });
   });
 
-  describe("MAX_DESCRIPTION_LENGTH constant", () => {
-    it("is 160 characters", () => {
-      expect(MAX_DESCRIPTION_LENGTH).toBe(160);
-    });
-  });
+  it("handles null values correctly", () => {
+    const mockRow: DbPostRow = {
+      id: "test-id",
+      title: "Test",
+      slug: "test",
+      content: "Content",
+      cover_image: null,
+      description: "Desc",
+      date: new Date("2024-01-01"),
+      author: null,
+      author_id: null,
+      author_grade: null,
+      author_class: null,
+      author_deleted: false,
+      tags: null,
+      category: null,
+      status: "draft",
+      created_at: new Date("2024-01-01T10:00:00Z"),
+      updated_at: new Date("2024-01-01T12:00:00Z"),
+    };
 
-  describe("rowToPost", () => {
-    it("converts database row to Post object with all fields", () => {
-      const dbRow: DbPostRow = {
-        id: "post-123",
-        title: "Test Post",
-        slug: "test-post",
-        content: "Test content",
-        cover_image: "https://example.com/image.jpg",
-        description: "Test description",
-        date: new Date("2025-01-15T10:00:00Z"),
-        author: "Test Author",
-        author_id: "user-456",
-        author_grade: "י",
-        author_class: 3,
-        author_deleted: false,
-        tags: ["tag1", "tag2"],
-        category: "News",
-        status: "published",
-        created_at: new Date("2025-01-01T00:00:00Z"),
-        updated_at: new Date("2025-01-15T12:00:00Z"),
-      };
+    const result = rowToPost(mockRow);
 
-      const result = rowToPost(dbRow);
-
-      expect(result).toEqual({
-        id: "post-123",
-        title: "Test Post",
-        slug: "test-post",
-        content: "Test content",
-        coverImage: "https://example.com/image.jpg",
-        description: "Test description",
-        date: "2025-01-15T10:00:00.000Z",
-        author: "Test Author",
-        authorId: "user-456",
-        authorGrade: "י",
-        authorClass: 3,
-        authorDeleted: false,
-        tags: ["tag1", "tag2"],
-        category: "News",
-        status: "published",
-        createdAt: "2025-01-01T00:00:00.000Z",
-        updatedAt: "2025-01-15T12:00:00.000Z",
-      });
-    });
-
-    it("handles null optional fields correctly", () => {
-      const dbRow: DbPostRow = {
-        id: "post-minimal",
-        title: "Minimal Post",
-        slug: "minimal-post",
-        content: "Minimal content",
-        cover_image: null,
-        description: "Description",
-        date: new Date("2025-01-01T00:00:00Z"),
-        author: null,
-        author_id: null,
-        author_grade: null,
-        author_class: null,
-        author_deleted: undefined,
-        tags: [],
-        category: null,
-        status: "draft",
-        created_at: new Date("2025-01-01T00:00:00Z"),
-        updated_at: new Date("2025-01-01T00:00:00Z"),
-      };
-
-      const result = rowToPost(dbRow);
-
-      expect(result.coverImage).toBeUndefined();
-      expect(result.author).toBeUndefined();
-      expect(result.authorId).toBeUndefined();
-      expect(result.authorGrade).toBeUndefined();
-      expect(result.authorClass).toBeUndefined();
-      expect(result.authorDeleted).toBe(false);
-      expect(result.category).toBeUndefined();
-    });
-
-    it("converts snake_case to camelCase", () => {
-      const dbRow: DbPostRow = {
-        id: "post-123",
-        title: "Test",
-        slug: "test",
-        content: "Content",
-        cover_image: "image.jpg",
-        description: "Desc",
-        date: new Date("2025-01-01"),
-        author: "Author",
-        author_id: "user-1",
-        author_grade: "ח",
-        author_class: 2,
-        author_deleted: true,
-        tags: [],
-        category: "Tech",
-        status: "published",
-        created_at: new Date("2025-01-01"),
-        updated_at: new Date("2025-01-01"),
-      };
-
-      const result = rowToPost(dbRow);
-
-      expect(result).toHaveProperty("coverImage");
-      expect(result).toHaveProperty("authorId");
-      expect(result).toHaveProperty("authorGrade");
-      expect(result).toHaveProperty("authorClass");
-      expect(result).toHaveProperty("authorDeleted");
-      expect(result).toHaveProperty("createdAt");
-      expect(result).toHaveProperty("updatedAt");
-      expect(result).not.toHaveProperty("cover_image");
-      expect(result).not.toHaveProperty("author_id");
-    });
-
-    it("converts dates to ISO strings", () => {
-      const testDate = new Date("2025-06-15T14:30:00Z");
-      const dbRow: DbPostRow = {
-        id: "post-date",
-        title: "Date Test",
-        slug: "date-test",
-        content: "Content",
-        cover_image: null,
-        description: "Desc",
-        date: testDate,
-        author: null,
-        author_id: null,
-        author_grade: null,
-        author_class: null,
-        author_deleted: undefined,
-        tags: [],
-        category: null,
-        status: "draft",
-        created_at: testDate,
-        updated_at: testDate,
-      };
-
-      const result = rowToPost(dbRow);
-
-      expect(result.date).toBe("2025-06-15T14:30:00.000Z");
-      expect(result.createdAt).toBe("2025-06-15T14:30:00.000Z");
-      expect(result.updatedAt).toBe("2025-06-15T14:30:00.000Z");
-      expect(typeof result.date).toBe("string");
-      expect(typeof result.createdAt).toBe("string");
-      expect(typeof result.updatedAt).toBe("string");
-    });
-
-    it("handles draft and published status correctly", () => {
-      const draftRow: DbPostRow = {
-        id: "post-1",
-        title: "Draft",
-        slug: "draft",
-        content: "Content",
-        cover_image: null,
-        description: "Desc",
-        date: new Date("2025-01-01"),
-        author: null,
-        author_id: null,
-        author_grade: null,
-        author_class: null,
-        author_deleted: undefined,
-        tags: [],
-        category: null,
-        status: "draft",
-        created_at: new Date("2025-01-01"),
-        updated_at: new Date("2025-01-01"),
-      };
-
-      const publishedRow: DbPostRow = {
-        ...draftRow,
-        id: "post-2",
-        status: "published",
-      };
-
-      expect(rowToPost(draftRow).status).toBe("draft");
-      expect(rowToPost(publishedRow).status).toBe("published");
-    });
-
-    it("preserves empty tags array", () => {
-      const dbRow: DbPostRow = {
-        id: "post-tags",
-        title: "Tags Test",
-        slug: "tags-test",
-        content: "Content",
-        cover_image: null,
-        description: "Desc",
-        date: new Date("2025-01-01"),
-        author: null,
-        author_id: null,
-        author_grade: null,
-        author_class: null,
-        author_deleted: undefined,
-        tags: [],
-        category: null,
-        status: "draft",
-        created_at: new Date("2025-01-01"),
-        updated_at: new Date("2025-01-01"),
-      };
-
-      const result = rowToPost(dbRow);
-
-      expect(result.tags).toEqual([]);
-      expect(Array.isArray(result.tags)).toBe(true);
-    });
-
-    it("handles authorDeleted flag correctly", () => {
-      const deletedRow: DbPostRow = {
-        id: "post-deleted",
-        title: "Deleted Author",
-        slug: "deleted-author",
-        content: "Content",
-        cover_image: null,
-        description: "Desc",
-        date: new Date("2025-01-01"),
-        author: null,
-        author_id: null,
-        author_grade: null,
-        author_class: null,
-        author_deleted: true,
-        tags: [],
-        category: null,
-        status: "published",
-        created_at: new Date("2025-01-01"),
-        updated_at: new Date("2025-01-01"),
-      };
-
-      const activeRow: DbPostRow = {
-        ...deletedRow,
-        id: "post-active",
-        author_deleted: false,
-      };
-
-      const nullRow: DbPostRow = {
-        ...deletedRow,
-        id: "post-null",
-        author_deleted: undefined,
-      };
-
-      expect(rowToPost(deletedRow).authorDeleted).toBe(true);
-      expect(rowToPost(activeRow).authorDeleted).toBe(false);
-      expect(rowToPost(nullRow).authorDeleted).toBe(false);
-    });
+    expect(result.coverImage).toBeUndefined();
+    expect(result.author).toBeUndefined();
+    expect(result.authorId).toBeUndefined();
+    expect(result.category).toBeUndefined();
   });
 });

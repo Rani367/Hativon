@@ -16,7 +16,7 @@ describe("Admin Authentication", () => {
       process.env.ADMIN_PASSWORD = TEST_ADMIN_PASSWORD;
       const { verifyAdminPassword } = await import("../admin");
 
-      const result = verifyAdminPassword(TEST_ADMIN_PASSWORD);
+      const result = await verifyAdminPassword(TEST_ADMIN_PASSWORD);
 
       expect(result).toBe(true);
     });
@@ -25,7 +25,7 @@ describe("Admin Authentication", () => {
       process.env.ADMIN_PASSWORD = TEST_ADMIN_PASSWORD;
       const { verifyAdminPassword } = await import("../admin");
 
-      const result = verifyAdminPassword("wrong-password");
+      const result = await verifyAdminPassword("wrong-password");
 
       expect(result).toBe(false);
     });
@@ -34,7 +34,7 @@ describe("Admin Authentication", () => {
       process.env.ADMIN_PASSWORD = TEST_ADMIN_PASSWORD;
       const { verifyAdminPassword } = await import("../admin");
 
-      const result = verifyAdminPassword("");
+      const result = await verifyAdminPassword("");
 
       expect(result).toBe(false);
     });
@@ -46,7 +46,7 @@ describe("Admin Authentication", () => {
       process.env.ADMIN_PASSWORD = "";
       const { verifyAdminPassword } = await import("../admin");
 
-      const result = verifyAdminPassword("any-password");
+      const result = await verifyAdminPassword("any-password");
 
       expect(result).toBe(false);
       expect(consoleErrorSpy).toHaveBeenCalledWith(
@@ -60,23 +60,51 @@ describe("Admin Authentication", () => {
       process.env.ADMIN_PASSWORD = TEST_ADMIN_PASSWORD;
       const { verifyAdminPassword } = await import("../admin");
 
-      expect(verifyAdminPassword("TEST-ADMIN-PASSWORD")).toBe(false);
-      expect(verifyAdminPassword("test-admin")).toBe(false);
-      expect(verifyAdminPassword("test-admin-password-extra")).toBe(false);
+      expect(await verifyAdminPassword("TEST-ADMIN-PASSWORD")).toBe(false);
+      expect(await verifyAdminPassword("test-admin")).toBe(false);
+      expect(await verifyAdminPassword("test-admin-password-extra")).toBe(
+        false,
+      );
     });
 
     it("handles special characters and whitespace correctly", async () => {
       process.env.ADMIN_PASSWORD = "p@ssw0rd!#$%";
       const { verifyAdminPassword } = await import("../admin");
 
-      expect(verifyAdminPassword("p@ssw0rd!#$%")).toBe(true);
+      expect(await verifyAdminPassword("p@ssw0rd!#$%")).toBe(true);
 
       vi.resetModules();
       process.env.ADMIN_PASSWORD = " password with spaces ";
       const { verifyAdminPassword: verify2 } = await import("../admin");
 
-      expect(verify2(" password with spaces ")).toBe(true);
-      expect(verify2("password with spaces")).toBe(false);
+      expect(await verify2(" password with spaces ")).toBe(true);
+      expect(await verify2("password with spaces")).toBe(false);
+    });
+
+    it("verifies bcrypt hashed passwords correctly", async () => {
+      const bcrypt = await import("bcrypt");
+      const hashedPassword = await bcrypt.hash(TEST_ADMIN_PASSWORD, 10);
+      process.env.ADMIN_PASSWORD = hashedPassword;
+      const { verifyAdminPassword } = await import("../admin");
+
+      expect(await verifyAdminPassword(TEST_ADMIN_PASSWORD)).toBe(true);
+      expect(await verifyAdminPassword("wrong-password")).toBe(false);
+    });
+
+    it("shows warning for plain text passwords", async () => {
+      const consoleWarnSpy = vi
+        .spyOn(console, "warn")
+        .mockImplementation(() => {});
+      process.env.ADMIN_PASSWORD = TEST_ADMIN_PASSWORD;
+      const { verifyAdminPassword } = await import("../admin");
+
+      await verifyAdminPassword(TEST_ADMIN_PASSWORD);
+
+      expect(consoleWarnSpy).toHaveBeenCalledWith(
+        "[SECURITY WARNING] Admin password is not hashed. Run: pnpm run hash-admin-password",
+      );
+
+      consoleWarnSpy.mockRestore();
     });
   });
 

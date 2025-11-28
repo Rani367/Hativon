@@ -11,7 +11,8 @@ import { unstable_cache } from "next/cache";
  */
 export const getPosts = unstable_cache(
   async (): Promise<Post[]> => {
-    return getStoragePosts(true); // Only published posts
+    const result = await getStoragePosts(true); // Only published posts
+    return Array.isArray(result) ? result : result.posts;
   },
   ["posts-public"],
   {
