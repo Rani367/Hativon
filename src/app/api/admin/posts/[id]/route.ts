@@ -12,17 +12,25 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  // Check authentication - Admin panel auth takes priority over user JWT auth
-  const isAdmin = await isAdminAuthenticated();
-  const user = await getCurrentUser();
+  try {
+    // Check authentication - Admin panel auth takes priority over user JWT auth
+    const isAdmin = await isAdminAuthenticated();
+    const user = await getCurrentUser();
 
-  // Require either admin auth OR user auth
-  if (!isAdmin && !user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    // Require either admin auth OR user auth
+    if (!isAdmin && !user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { id } = await params;
+    return handleGetPost(id, user?.id, isAdmin);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    return NextResponse.json(
+      { error: "Failed to fetch post", details: message },
+      { status: 500 },
+    );
   }
-
-  const { id } = await params;
-  return handleGetPost(id, user?.id, isAdmin);
 }
 
 // PATCH /api/admin/posts/[id] - Update post
@@ -30,19 +38,27 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  // Check authentication - Admin panel auth takes priority over user JWT auth
-  const isAdmin = await isAdminAuthenticated();
-  const user = await getCurrentUser();
+  try {
+    // Check authentication - Admin panel auth takes priority over user JWT auth
+    const isAdmin = await isAdminAuthenticated();
+    const user = await getCurrentUser();
 
-  // Require either admin auth OR user auth
-  if (!isAdmin && !user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    // Require either admin auth OR user auth
+    if (!isAdmin && !user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { id } = await params;
+    const body = await request.json();
+
+    return handleUpdatePost(id, body, user?.id, isAdmin);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    return NextResponse.json(
+      { error: "Failed to update post", details: message },
+      { status: 500 },
+    );
   }
-
-  const { id } = await params;
-  const body = await request.json();
-
-  return handleUpdatePost(id, body, user?.id, isAdmin);
 }
 
 // DELETE /api/admin/posts/[id] - Delete post
@@ -50,15 +66,23 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  // Check authentication - Admin panel auth takes priority over user JWT auth
-  const isAdmin = await isAdminAuthenticated();
-  const user = await getCurrentUser();
+  try {
+    // Check authentication - Admin panel auth takes priority over user JWT auth
+    const isAdmin = await isAdminAuthenticated();
+    const user = await getCurrentUser();
 
-  // Require either admin auth OR user auth
-  if (!isAdmin && !user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    // Require either admin auth OR user auth
+    if (!isAdmin && !user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { id } = await params;
+    return handleDeletePost(id, user?.id, isAdmin);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    return NextResponse.json(
+      { error: "Failed to delete post", details: message },
+      { status: 500 },
+    );
   }
-
-  const { id } = await params;
-  return handleDeletePost(id, user?.id, isAdmin);
 }

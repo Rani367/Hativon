@@ -217,9 +217,9 @@ This file is Claude's primary source of truth about the project. When it's outda
 
 ## Project Overview
 
-A Next.js 16 school newspaper blog application with Hebrew/RTL support, featuring multi-user authentication, role-based access control, and dual-mode operation (database-backed or admin-only).
+A Next.js 16 school newspaper application (Hativon) with Hebrew/RTL support, featuring multi-user authentication, role-based access control, and dual-mode operation (database-backed or admin-only).
 
-**Stack**: Next.js 16.0.5 (App Router), React 19.2, TypeScript, Tailwind CSS 4, PostgreSQL (Vercel Postgres), Vercel Blob, JWT authentication
+**Stack**: Next.js 16.0.6 (App Router), React 19.2, TypeScript, Tailwind CSS 4, PostgreSQL (Vercel Postgres), Vercel Blob, JWT authentication
 
 ## Essential Commands
 

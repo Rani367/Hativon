@@ -1,578 +1,153 @@
-# School Newspaper Blog
+# School Newspaper - Hativon
 
-A modern Next.js 16 blog application with self-hosted admin panel, designed for Hebrew language content with RTL support. Features include user authentication, multi-author support, and comprehensive pre-deployment validation.
+A production-ready Next.js 16 school newspaper application with Hebrew/RTL support, featuring comprehensive testing (244 tests), security-first authentication, database migrations, and professional deployment workflows.
 
 ## Features
 
+- **Modern Stack** - Next.js 16.0.6, React 19.2, TypeScript, Tailwind CSS 4
 - **Hebrew & RTL Support** - Fully configured for Hebrew language with right-to-left layout
-- **Multi-User Authentication** - JWT-based auth with role-based access control (Admin & User roles)
+- **Multi-User Authentication** - JWT-based auth with bcrypt password hashing and rate limiting
+- **Database Migrations** - Professional migration system with rollback support
+- **Comprehensive Testing** - 244 tests with 100% coverage in security-critical areas
+- **Zod Validation** - Type-safe API validation with detailed error messages
 - **Rich Markdown Editor** - Full GitHub Flavored Markdown with syntax highlighting
-- **Self-Hosted Admin Panel** - No external dependencies, complete control
-- **Dual Storage** - Vercel Blob (production) + Local JSON (development)
-- **Admin Dashboard** - Statistics, user management, post management
-- **Modern UI** - Built with Tailwind CSS 4 and shadcn/ui components
-- **Pre-Deployment Validation** - Automated checks matching Vercel's exact deployment process
-- **One-Command Deployment** - Validate, build, and push to GitHub with a single command
-- **PostgreSQL Database** - User management with Vercel Postgres
+- **Self-Hosted Admin Panel** - Complete control, no external dependencies
+- **Dual Storage** - Vercel Blob (production) + PostgreSQL (database)
+- **Cache Optimization** - Granular cache invalidation with Next.js 16 cache tags
+- **Pre-Deployment Validation** - 100+ automated checks ensuring production readiness
+- **One-Command Setup** - `pnpm install` configures everything automatically
+
+## Technology Stack
+
+### Core Framework
+- **Next.js 16.0.6** - React framework with App Router
+- **React 19.2** - UI library with Server Components
+- **TypeScript 5.9** - Type-safe JavaScript
+
+### Styling
+- **Tailwind CSS 4.1** - Utility-first CSS framework
+- **shadcn/ui** - Accessible component library
+- **Radix UI** - Unstyled accessible primitives
+- **Framer Motion** - Animation library
+- **Heebo Font** - Hebrew typeface from Google Fonts
+
+### Database & Storage
+- **Vercel Postgres** - Managed PostgreSQL database
+- **Vercel Blob** - Object storage for images
+- **pg** - PostgreSQL client library
+- **@vercel/postgres** - Vercel-optimized database client
+
+### Authentication & Security
+- **jsonwebtoken** - JWT token generation/verification
+- **bcrypt 6.0** - Password hashing (10 salt rounds)
+- **@upstash/ratelimit** - API rate limiting
+- **@upstash/redis** - Redis for rate limiting
+- **cookie** - Cookie parsing and serialization
+
+### Validation & Forms
+- **Zod 4.1** - Schema validation
+- **react-hook-form** - Form state management
+- **@hookform/resolvers** - Form validation integration
+
+### Markdown & Content
+- **react-markdown** - Markdown rendering
+- **remark-gfm** - GitHub Flavored Markdown
+- **rehype-raw** - Raw HTML in Markdown
+- **react-syntax-highlighter** - Code syntax highlighting
+
+### Testing
+- **Vitest 4.0** - Fast unit test framework
+- **@testing-library/react** - React component testing
+- **@testing-library/user-event** - User interaction simulation
+- **jsdom** - DOM implementation for Node.js
+- **@vitest/coverage-v8** - Code coverage reporting
+- **@vitest/ui** - Visual test explorer
+
+### Development Tools
+- **tsx** - TypeScript execution for scripts
+- **dotenv** - Environment variable loading
+- **glob** - File pattern matching
+- **pnpm 10.23** - Fast package manager
 
 ## Quick Start
 
-**TL;DR:** Just two commands and you're ready to go!
-
-```bash
-pnpm install    # One-command setup - configures EVERYTHING automatically
-pnpm run dev    # Start developing immediately
-```
-
-Then open http://localhost:3000
-
-**Default login credentials:**
-- Username: `user`
-- Password: `12345678`
-- Admin panel: `/admin` with `ADMIN_PASSWORD` from `.env.local`
-
----
-
-## Table of Contents
-
-- [Setup Guide](#setup-guide)
-  - [Prerequisites](#prerequisites)
-  - [Installation](#installation)
-  - [What Happens During Install](#what-happens-during-install)
-  - [Setup Modes](#setup-modes)
-  - [Manual Setup](#manual-setup)
-- [Development](#development)
-- [Deployment](#deployment)
-  - [Pre-Deployment Validation](#pre-deployment-validation)
-  - [Deploy to Vercel](#deploy-to-vercel)
-  - [Post-Deployment Setup](#post-deployment-setup)
-- [Available Scripts](#available-scripts)
-- [Environment Variables](#environment-variables)
-- [Troubleshooting](#troubleshooting)
-- [Project Structure](#project-structure)
-- [Technology Stack](#technology-stack)
-- [Contributing](#contributing)
-
----
-
-## Setup Guide
-
 ### Prerequisites
 
-Install pnpm if you don't have it:
+**Required:**
+- Node.js 18+ (20.x recommended)
+- pnpm (install via `npm install -g pnpm` or `corepack enable`)
 
-```bash
-npm install -g pnpm
-```
-
-Or using Homebrew (macOS):
-```bash
-brew install pnpm
-```
-
-Or enable corepack (Node.js 16.13+):
-```bash
-corepack enable
-```
+**Optional:**
+- PostgreSQL 13+ (enables multi-user authentication)
+- Git (for version control and deployment)
 
 ### Installation
 
 ```bash
+# Clone the repository
 git clone <your-repo-url>
 cd school-newspaper
+
+# Install dependencies (auto-configures everything)
 pnpm install
 ```
 
-**That's it!** `pnpm install` automatically configures everything for you.
+**That's it!** `pnpm install` automatically:
+- Creates `.env.local` with secure JWT secret
+- Detects PostgreSQL and creates database
+- Initializes schema and runs migrations
+- Creates test user (username: `user`, password: `12345678`)
+- Falls back to admin-only mode if no PostgreSQL
 
-### What Happens During Install?
-
-The `postinstall` script runs automatically and does **everything** for you:
-
-#### 1. Creates `data/` directory
-   - Used for local posts storage (fallback mode)
-   - Automatically created if missing
-
-#### 2. Generates `.env.local` (if it doesn't exist)
-   - Copies from `.env.example`
-   - Generates secure random JWT secret (32 bytes, base64)
-   - Sets default values:
-     - `ADMIN_PASSWORD=admin123` (WARNING: Change this!)
-     - `JWT_SECRET=<auto-generated>`
-     - `NEXT_PUBLIC_SITE_URL=http://localhost:3000`
-     - `SESSION_DURATION=604800` (7 days)
-
-#### 3. Detects PostgreSQL (automatic)
-   - Checks if `psql` is available on your system
-   - If found, automatically configures database
-   - If not found, falls back to admin-only mode (still fully functional!)
-
-#### 4. Configures Database (if PostgreSQL detected)
-   - Creates `school_newspaper` database automatically
-   - Tests connection with sensible defaults (localhost:5432)
-   - Adds `POSTGRES_URL` to `.env.local`
-   - Uses your system username for database connection
-
-#### 5. Initializes Database Schema (if database configured)
-   - Runs `src/lib/db/schema.sql` automatically
-   - Creates `users` and `posts` tables
-   - Sets up indexes and triggers
-   - No manual SQL needed!
-
-#### 6. Creates Test User (if database configured)
-   - Username: `user`
-   - Password: `12345678`
-   - Display name: `תלמיד` (Student in Hebrew)
-   - Ready to login immediately!
-
-**All of this happens automatically. Zero manual configuration required.**
-
-**Skipped in CI/CD:** The postinstall script automatically skips in CI environments (Vercel, GitHub Actions).
-
-### Setup Modes
-
-#### Mode 1: Admin-Only Mode (No PostgreSQL)
-**When:** `pnpm install` without PostgreSQL
-**Features:**
-- Posts stored in `data/posts.json` (local file)
-- No user authentication
-- Admin panel accessible with `ADMIN_PASSWORD` from `.env.local`
-- Perfect for quick testing or simple use cases
-
-#### Mode 2: Full Mode (With PostgreSQL)
-**When:** `pnpm install` with PostgreSQL available
-**Features:**
-- Posts stored in PostgreSQL database
-- Users stored in PostgreSQL database
-- Multi-user authentication with JWT
-- User registration and login
-- Ownership-based access control
-- Admin panel with user management
-
-### Manual Setup (Alternative)
-
-If you prefer manual configuration:
-
-#### 1. Copy Environment Template
-```bash
-cp .env.example .env.local
-```
-
-#### 2. Generate JWT Secret
-```bash
-openssl rand -base64 32
-```
-
-Copy the output and paste into `.env.local`:
-```bash
-JWT_SECRET=<paste-here>
-```
-
-#### 3. Set Admin Password
-```bash
-ADMIN_PASSWORD=your_secure_password_here
-```
-
-#### 4. Configure Database (Optional)
-```bash
-POSTGRES_URL=postgresql://user:password@localhost:5432/dbname
-```
-
-#### 5. Initialize Database
-```bash
-pnpm run db:init
-pnpm run create-test-user
-```
-
----
-
-## Development
-
-### Start Development Server
+### Development
 
 ```bash
+# Start development server
 pnpm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+Open [http://localhost:3000](http://localhost:3000)
 
-### User Authentication
-
-The app has TWO SEPARATE authentication systems:
-
-#### 1. User Authentication (Regular Users)
-**Requires `POSTGRES_URL`** for database-backed user accounts:
-- Multi-user support with registration/login at homepage
-- JWT-based sessions stored in HTTP-only cookies
-- Users stored in PostgreSQL `users` table
+**Default credentials:**
 - Test user: username=`user`, password=`12345678`
+- Admin panel: `/admin` with `ADMIN_PASSWORD` from `.env.local` (default: `admin123`)
 
-**Without `POSTGRES_URL`** (admin-only mode):
-- No user registration/login available
-- Posts stored in `data/posts.json` (local file)
-- Mock admin user with ID `'legacy-admin'`
-
-#### 2. Admin Panel Authentication (Separate System)
-**IMPORTANT**: Admin panel access is COMPLETELY INDEPENDENT of user accounts.
-- Accessed at `/admin` route
-- Uses `ADMIN_PASSWORD` from `.env.local` (default: `admin123`)
-- Simple password-based authentication (no username)
-- Stored in separate cookie `adminAuth`
-- Anyone with this password can access the admin panel
-- **No connection to the users table** - not a user account!
-
----
-
-## Deployment
-
-### Pre-Deployment Validation
-
-Before deploying to Vercel, run:
+### Essential Commands
 
 ```bash
-pnpm run pre-deploy
-```
-
-This runs **100+ validation checks** covering:
-
-1. **TypeScript Validation**
-   - Strict mode enforcement
-   - Full type checking with `tsc --noEmit`
-   - Detection of unsafe `any` types in critical files
-
-2. **ESLint Validation**
-   - Zero errors allowed
-   - Zero warnings allowed (`--max-warnings 0`)
-
-3. **Security Scanning**
-   - Exposed secrets detection (passwords, API keys, tokens)
-   - Dangerous pattern detection (eval, innerHTML, command injection)
-   - NPM audit for high/critical vulnerabilities
-
-4. **Import Validation**
-   - Circular dependency detection
-   - Unused dependency detection
-   - Missing critical imports check
-
-5. **Database Validation**
-   - Schema file existence and validity
-   - Required tables check (users, posts)
-   - Live connection test (if POSTGRES_URL set)
-
-6. **Configuration Validation**
-   - package.json structure and required scripts
-   - next.config.ts syntax validation
-   - tsconfig.json critical options check
-   - .env.example completeness
-
-7. **Runtime Validation**
-   - API route structure validation
-   - HTTP method handler exports
-   - Critical module resolution
-
-8. **Dependency Validation**
-   - Critical dependency presence
-   - Version pinning check
-   - No pre-release versions in production
-
-9. **Code Quality Checks**
-   - TODO/FIXME in critical paths
-   - Error handling in API routes
-   - File naming conventions
-
-10. **Build Size Validation**
-    - Total build size monitoring
-    - Large chunk detection (>500KB)
-
-**Interactive workflow:**
-```bash
-$ pnpm run pre-deploy
-
-# Validation passes...
-# Build succeeds...
-
-=== Git Deployment ===
-Current branch: main
-Changes:
-  Modified: 5 file(s)
-  Added: 2 file(s)
-
-Do you want to commit these changes? (y/n): y
-Enter commit message:
-> Add student grade display feature
-
-[OK] Changes staged
-[OK] Changes committed
-[OK] Commit successful!
-Your changes have been committed locally.
-To push to GitHub, run: git push
-
-$ git push
-# Deployment triggered on Vercel
-```
-
-**Note:** The git commit step is automatically skipped when running on Vercel (CI/CD environment).
-
-### Deploy to Vercel
-
-#### Initial Setup
-
-1. **Push your code to GitHub**
-
-2. **Connect to Vercel**
-   - Import your repository at [vercel.com](https://vercel.com)
-   - Vercel will detect the Next.js framework automatically
-
-3. **Enable Vercel Postgres**
-   - Go to your project dashboard
-   - Navigate to Storage tab
-   - Click "Create Database" → "Postgres"
-   - This auto-sets `POSTGRES_URL` and `POSTGRES_URL_NON_POOLING`
-
-4. **Enable Vercel Blob Storage**
-   - In Storage tab
-   - Click "Create Database" → "Blob"
-   - This auto-sets `BLOB_READ_WRITE_TOKEN`
-
-5. **Set Environment Variables**
-
-   In Vercel dashboard → Settings → Environment Variables, add:
-
-   ```
-   ADMIN_PASSWORD=your_secure_password
-   JWT_SECRET=your_generated_jwt_secret
-   NEXT_PUBLIC_SITE_URL=https://yourdomain.com
-   SESSION_DURATION=604800  (optional)
-   ```
-
-   **Important:**
-   - Use strong, unique values (not localhost/dev values)
-   - Generate JWT_SECRET with: `openssl rand -base64 32`
-   - Set for "Production" environment
-
-6. **Deploy**
-   - Click "Deploy" or push to main branch
-   - Vercel will automatically run validation via `vercel.json` buildCommand
-   - Build will fail if validation doesn't pass
-
-### Post-Deployment Setup
-
-7. **Initialize Database**
-
-   Connect to your production database and run:
-
-   ```bash
-   # Using Vercel CLI (recommended)
-   pnpm run db:init
-   ```
-
-   Or manually run the SQL from `src/lib/db/schema.sql`
-
-8. **Create Test User (Optional)**
-
-   ```bash
-   pnpm run create-test-user
-   ```
-
-9. **Test Everything**
-   - Visit `yourdomain.com/admin` - should show login
-   - Click "התחבר" button - should show register/login dialog
-   - Create a test post
-   - Verify user registration works
-
----
-
-## Available Scripts
-
-### Setup
-```bash
-pnpm run setup            # Interactive setup with database configuration
-pnpm run db:init          # Initialize database schema
-pnpm run create-test-user # Create test user (username: user, password: 12345678)
-```
-
-### Development
-```bash
-pnpm run dev              # Start development server (no validation, starts immediately)
-pnpm run build            # Build for production
-pnpm run start            # Start production server
+# Development
+pnpm run dev              # Start dev server
+pnpm run build            # Production build
 pnpm run lint             # Run ESLint
+
+# Testing
+pnpm test                 # Run tests (watch mode)
+pnpm test:run             # Run tests once
+pnpm test:coverage        # Coverage report
+
+# Database
+pnpm run db:init          # Initialize database
+pnpm run db:migrate       # Run migrations
+pnpm run create-test-user # Create test user
+
+# Deployment
+pnpm run pre-deploy       # Tests + validation + build + commit
+git push                  # Triggers Vercel deployment
 ```
 
-### Validation & Deployment
-```bash
-pnpm run validate         # Run comprehensive validation (100+ checks)
-pnpm run validate:env     # Validate environment variables only
-pnpm run validate:build   # Validate build configuration only
-pnpm run pre-deploy       # Validate + build + commit (EXTREMELY thorough)
-                          # Catches ALL issues before production
-```
+## Documentation
 
-### Database
-```bash
-pnpm run db:init          # Initialize PostgreSQL database
-pnpm run check-db         # Check database connection and status
-```
+For comprehensive developer documentation including:
+- Detailed setup and configuration
+- Development workflow and database migrations
+- Deployment process and validation
+- Complete environment variable reference
+- Codebase architecture and structure
+- Security features and best practices
+- Troubleshooting common issues
+- Scripts reference
 
----
-
-## Environment Variables
-
-### Required
-- `ADMIN_PASSWORD` - Admin panel password (min 8 chars recommended)
-- `JWT_SECRET` - JWT signing key (min 32 chars, generated automatically)
-- `NEXT_PUBLIC_SITE_URL` - Site URL (e.g., http://localhost:3000)
-
-### Optional
-- `POSTGRES_URL` - Database connection string (enables user auth)
-- `SESSION_DURATION` - JWT session duration in seconds (default: 604800 = 7 days)
-
-### Auto-configured by Vercel
-- `BLOB_READ_WRITE_TOKEN` - Vercel Blob storage token
-- `POSTGRES_URL_NON_POOLING` - Non-pooled database connection
-
----
-
-## Troubleshooting
-
-### "Cannot find module" errors
-```bash
-# Reinstall dependencies
-rm -rf node_modules pnpm-lock.yaml
-pnpm install
-```
-
-### Database connection errors
-```bash
-# Check database is running
-psql -h localhost -U postgres
-
-# Reinitialize database
-pnpm run db:init
-```
-
-### Environment variable errors
-```bash
-# Regenerate .env.local
-rm .env.local
-pnpm install
-```
-
-### Port 3000 already in use
-```bash
-# Kill process using port 3000
-lsof -ti:3000 | xargs kill -9
-
-# Or use different port
-PORT=3001 pnpm run dev
-```
-
-### "ADMIN_PASSWORD is required"
-**Solution:** Set `ADMIN_PASSWORD` in your environment variables (`.env.local` locally, Vercel dashboard for production)
-
-### "JWT_SECRET must be at least 32 characters"
-**Solution:** Generate a proper secret:
-```bash
-openssl rand -base64 32
-```
-Copy the output to your `JWT_SECRET` environment variable.
-
-### "TypeScript errors detected"
-**Solution:** The `pnpm run pre-deploy` command will show you the exact TypeScript issues. Fix them and run again.
-
-### Build succeeds locally but fails on Vercel
-**Solutions:**
-1. Check environment variables in Vercel dashboard match your `.env.local`
-2. Ensure `NEXT_PUBLIC_SITE_URL` uses your production domain (not localhost)
-3. Check Vercel build logs for specific details
-4. Verify Node.js version matches (20.x recommended)
-
----
-
-## Project Structure
-
-```
-school-newspaper/
-├── src/
-│   ├── app/              # Next.js app router pages
-│   │   ├── admin/        # Admin panel pages
-│   │   ├── api/          # API routes
-│   │   ├── dashboard/    # User dashboard
-│   │   ├── posts/        # Blog post pages
-│   │   └── page.tsx      # Homepage
-│   ├── components/       # React components
-│   │   ├── auth/         # Authentication components
-│   │   └── ui/           # shadcn/ui components
-│   ├── lib/              # Utilities and business logic
-│   │   ├── auth/         # Authentication logic
-│   │   ├── db/           # Database setup & schema
-│   │   ├── posts.ts      # Public post API
-│   │   ├── posts-storage.ts  # CRUD operations
-│   │   └── users.ts      # User management
-│   └── types/            # TypeScript types
-├── scripts/              # Utility scripts
-│   ├── postinstall.ts    # Auto-setup on install
-│   ├── setup.ts          # Interactive setup
-│   ├── validate-comprehensive.ts  # Full validation
-│   ├── validate-env.ts   # Environment validation
-│   ├── validate-build.ts # Build validation
-│   ├── check-db.ts       # Database checks
-│   ├── init-db.ts        # Database initialization
-│   └── create-test-user-simple.ts  # Test user creation
-├── public/               # Static assets
-├── .env.example          # Environment variable template
-├── vercel.json           # Vercel configuration
-├── CLAUDE.md             # Developer documentation (for AI assistants)
-└── README.md             # This file
-```
-
----
-
-## Technology Stack
-
-- **Framework**: Next.js 16 (App Router)
-- **Language**: TypeScript
-- **Styling**: Tailwind CSS 4 + shadcn/ui
-- **Database**: Vercel Postgres (PostgreSQL)
-- **Storage**: Vercel Blob + Local JSON
-- **Authentication**: JWT with HTTP-only cookies
-- **Markdown**: react-markdown + remark-gfm
-- **Package Manager**: pnpm
-
----
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Make your changes
-4. Run validation: `pnpm run pre-deploy`
-5. Commit your changes (`git commit -m 'Add amazing feature'`)
-6. Push to the branch (`git push origin feature/amazing-feature`)
-7. Open a Pull Request
-
----
-
-## Security Notes
-
-**WARNING - Important:** Change the default admin password!
-
-1. Open `.env.local`
-2. Change `ADMIN_PASSWORD=admin123` to a strong password
-3. Restart the dev server
-
-For production deployment, always use:
-- Strong admin password (12+ characters)
-- Secure JWT secret (generated via `openssl rand -base64 32`)
-- HTTPS only (handled by Vercel)
-
-**Security Best Practices:**
-- Never commit `.env.local` or `.env` files
-- Use different secrets for dev and production
-- Rotate JWT_SECRET if compromised
-- Use strong admin passwords (16+ chars recommended)
-
----
+See **[CLAUDE.md](CLAUDE.md)** - Complete developer and AI assistant documentation.
 
 ## License
 
@@ -580,11 +155,15 @@ This project is open source and available under the MIT License.
 
 ## Acknowledgments
 
-- Built with [Next.js](https://nextjs.org/)
-- UI components from [shadcn/ui](https://ui.shadcn.com/)
-- Hosted on [Vercel](https://vercel.com/)
-- Font: [Heebo](https://fonts.google.com/specimen/Heebo) (Hebrew typeface)
+- **Framework**: [Next.js](https://nextjs.org/) - The React Framework
+- **UI Components**: [shadcn/ui](https://ui.shadcn.com/) - Beautifully designed components
+- **UI Primitives**: [Radix UI](https://www.radix-ui.com/) - Accessible component primitives
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/) - Utility-first CSS
+- **Hosting**: [Vercel](https://vercel.com/) - Platform for frontend developers
+- **Database**: [Vercel Postgres](https://vercel.com/storage/postgres) - Managed PostgreSQL
+- **Storage**: [Vercel Blob](https://vercel.com/storage/blob) - Object storage
+- **Font**: [Heebo](https://fonts.google.com/specimen/Heebo) - Hebrew typeface by Meir Sadan
+- **Testing**: [Vitest](https://vitest.dev/) - Blazing fast unit test framework
+- **Icons**: [Lucide](https://lucide.dev/) - Beautiful & consistent icons
 
----
-
-**Need technical details?** Check [CLAUDE.md](CLAUDE.md) for comprehensive developer documentation.
+Built with love for Hebrew-speaking students.

@@ -1,7 +1,7 @@
 /**
  * Post management module
  *
- * This module provides a complete API for managing blog posts including:
+ * This module provides a complete API for managing school newspaper posts including:
  * - CRUD operations (create, read, update, delete)
  * - Query functions (get posts, filter by author, search by slug)
  * - Permission checking (who can edit/delete posts)
