@@ -91,7 +91,7 @@ export default async function PostPage({ params }: PostPageProps) {
 
   const jsonLd = {
     "@context": "https://schema.org",
-    "@type": "BlogPosting",
+    "@type": "NewsArticle",
     headline: post.title,
     description: post.description,
     image: post.coverImage || `${siteUrl}/opengraph-image.png`,

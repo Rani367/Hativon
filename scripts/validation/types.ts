@@ -21,4 +21,5 @@ export const colors = {
   yellow: "\x1b[33m",
   cyan: "\x1b[36m",
   bold: "\x1b[1m",
+  dim: "\x1b[2m",
 };

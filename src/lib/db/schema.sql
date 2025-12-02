@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS users (
   last_login TIMESTAMP
 );
 
--- Posts table for blog content
+-- Posts table for school newspaper content
 CREATE TABLE IF NOT EXISTS posts (
   id TEXT PRIMARY KEY,
   title TEXT NOT NULL,
