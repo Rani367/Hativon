@@ -4,15 +4,15 @@
  *
  * Creates the initial tables for the school newspaper application:
  * - users: User accounts and profiles
- * - posts: Blog posts and articles
+ * - posts: School newspaper posts and articles
  */
 
-import { db } from '../client';
-import type { Migration } from './index';
+import { db } from "../client";
+import type { Migration } from "./index";
 
 const migration: Migration = {
-  id: '20250101000000',
-  name: 'initial_schema',
+  id: "20250101000000",
+  name: "initial_schema",
 
   async up() {
     // Create users table
@@ -60,7 +60,7 @@ const migration: Migration = {
     await db.query`CREATE INDEX IF NOT EXISTS idx_posts_date ON posts(date DESC)`;
     await db.query`CREATE INDEX IF NOT EXISTS idx_users_username ON users(username)`;
 
-    console.log('[MIGRATION] Created users and posts tables');
+    console.log("[MIGRATION] Created users and posts tables");
   },
 
   async down() {
@@ -68,7 +68,7 @@ const migration: Migration = {
     await db.query`DROP TABLE IF EXISTS posts CASCADE`;
     await db.query`DROP TABLE IF EXISTS users CASCADE`;
 
-    console.log('[MIGRATION] Dropped users and posts tables');
+    console.log("[MIGRATION] Dropped users and posts tables");
   },
 };
 
