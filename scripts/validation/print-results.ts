@@ -58,6 +58,73 @@ export function printResults(
   );
   console.log(`${"=".repeat(80)}\n`);
 
+  // Collect all failures and warnings
+  const failures = results.filter((r) => !r.passed);
+  const criticalFailures = failures.filter((r) => r.critical);
+  const warnings = failures.filter((r) => !r.critical);
+
+  // Print detailed error/warning summary at the bottom for easy copying
+  if (failures.length > 0) {
+    console.log(`\n${"=".repeat(80)}`);
+    console.log(
+      `${colors.bold}${colors.red}ERRORS AND WARNINGS SUMMARY${colors.reset}`,
+    );
+    console.log(
+      `${colors.dim}(Scroll up for full details, or copy this section)${colors.reset}`,
+    );
+    console.log(`${"=".repeat(80)}\n`);
+
+    if (criticalFailures.length > 0) {
+      console.log(
+        `${colors.bold}${colors.red}CRITICAL ERRORS (${criticalFailures.length}):${colors.reset}`,
+      );
+      console.log(`${"─".repeat(80)}\n`);
+
+      criticalFailures.forEach((result, index) => {
+        console.log(
+          `${colors.red}${index + 1}. [${result.category}] ${result.name}${colors.reset}`,
+        );
+        console.log(`   ${result.message}`);
+        if (result.details) {
+          console.log(`\n   Details:`);
+          const detailLines = result.details.split("\n");
+          detailLines.forEach((line) => {
+            if (line.trim()) {
+              console.log(`   ${line}`);
+            }
+          });
+        }
+        console.log();
+      });
+    }
+
+    if (warnings.length > 0) {
+      console.log(
+        `${colors.bold}${colors.yellow}WARNINGS (${warnings.length}):${colors.reset}`,
+      );
+      console.log(`${"─".repeat(80)}\n`);
+
+      warnings.forEach((result, index) => {
+        console.log(
+          `${colors.yellow}${index + 1}. [${result.category}] ${result.name}${colors.reset}`,
+        );
+        console.log(`   ${result.message}`);
+        if (result.details) {
+          console.log(`\n   Details:`);
+          const detailLines = result.details.split("\n");
+          detailLines.forEach((line) => {
+            if (line.trim()) {
+              console.log(`   ${line}`);
+            }
+          });
+        }
+        console.log();
+      });
+    }
+
+    console.log(`${"=".repeat(80)}\n`);
+  }
+
   if (context.criticalFailures > 0) {
     console.log(
       `${colors.red}${colors.bold}[ERROR] ${context.criticalFailures} CRITICAL FAILURE(S) DETECTED${colors.reset}`,
