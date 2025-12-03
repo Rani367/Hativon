@@ -13,7 +13,7 @@ export interface Post {
   authorDeleted?: boolean; // True if the author user has been deleted
   tags?: string[];
   category?: string;
-  status: 'draft' | 'published';
+  status: "draft" | "published";
   createdAt: string;
   updatedAt: string;
 }
@@ -22,14 +22,14 @@ export interface PostInput {
   title: string;
   content: string;
   description?: string; // Optional custom description - if not provided, auto-generated from content
-  coverImage?: string; // Optional - posts with cover images will appear in carousel
+  coverImage?: string; // Optional cover image for post
   author?: string;
   authorId?: string; // User ID reference for post ownership
   authorGrade?: string; // Author's grade (ז, ח, ט, י)
   authorClass?: number; // Author's class number (1-4)
   tags?: string[];
   category?: string;
-  status?: 'draft' | 'published';
+  status?: "draft" | "published";
 }
 
 export interface PostStats {
