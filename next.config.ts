@@ -115,9 +115,10 @@ const nextConfig: NextConfig = {
     ];
   },
 
-  // Empty turbopack config to silence the warning
-  // Turbopack handles most optimizations automatically
-  turbopack: {},
+  // Set explicit turbopack root to silence workspace detection warning
+  turbopack: {
+    root: process.cwd(),
+  },
 };
 
 export default nextConfig;
