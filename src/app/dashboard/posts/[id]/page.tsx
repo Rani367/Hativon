@@ -4,14 +4,11 @@ import { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Eye, Edit, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { Post } from "@/types/post.types";
 import { logError } from "@/lib/logger";
-import { PostPreview } from "@/components/features/posts/post-preview";
 import { PostFormFields } from "@/components/features/posts/post-form-fields";
 import { PostEditActions } from "@/components/features/posts/post-edit-actions";
-import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { toast } from "sonner";
 
 export default function EditPostPage({
@@ -31,11 +28,6 @@ export default function EditPostPage({
     coverImage: "",
     status: "draft" as "draft" | "published",
   });
-
-  // Debounced values for preview
-  const debouncedTitle = useDebouncedValue(form.title, 300);
-  const debouncedContent = useDebouncedValue(form.content, 500);
-  const debouncedCoverImage = useDebouncedValue(form.coverImage, 300);
 
   useEffect(() => {
     async function fetchPost() {
@@ -93,7 +85,6 @@ export default function EditPostPage({
       }
 
       toast.success("הכתבה עודכנה בהצלחה");
-      // Refresh to invalidate cache and navigate
       router.refresh();
       router.push("/dashboard");
     } catch (error) {
@@ -124,7 +115,6 @@ export default function EditPostPage({
       }
 
       toast.success("הכתבה נמחקה בהצלחה");
-      // Refresh to invalidate cache and navigate
       router.refresh();
       router.push("/dashboard");
     } catch (error) {
@@ -160,7 +150,7 @@ export default function EditPostPage({
   }
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">ערוך כתבה</h1>
@@ -172,116 +162,32 @@ export default function EditPostPage({
         </Button>
       </div>
 
-      {/* Mobile: Tabs, Desktop: Side-by-side */}
-      <Tabs defaultValue="edit" className="lg:hidden">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="edit">
-            <Edit className="h-4 w-4 me-2" />
-            עריכה
-          </TabsTrigger>
-          <TabsTrigger value="preview">
-            <Eye className="h-4 w-4 me-2" />
-            תצוגה מקדימה
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="edit" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>פרטי הכתבה</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <PostFormFields
-                title={form.title}
-                description={form.description}
-                content={form.content}
-                coverImage={form.coverImage}
-                onTitleChange={handleTitleChange}
-                onDescriptionChange={handleDescriptionChange}
-                onContentChange={handleContentChange}
-                onCoverImageChange={handleCoverImageChange}
-                showImageUrlInput={true}
-              />
-            </CardContent>
-          </Card>
-
-          <PostEditActions
-            loading={saving}
-            onCancel={() => router.back()}
-            onSaveDraft={() => handleUpdate("draft")}
-            onUpdate={() => handleUpdate("published")}
-            isPublished={form.status === "published"}
+      <Card>
+        <CardHeader>
+          <CardTitle>פרטי הכתבה</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <PostFormFields
+            title={form.title}
+            description={form.description}
+            content={form.content}
+            coverImage={form.coverImage}
+            onTitleChange={handleTitleChange}
+            onDescriptionChange={handleDescriptionChange}
+            onContentChange={handleContentChange}
+            onCoverImageChange={handleCoverImageChange}
+            showImageUrlInput={true}
           />
-        </TabsContent>
+        </CardContent>
+      </Card>
 
-        <TabsContent value="preview">
-          <Card>
-            <CardContent className="pt-6">
-              <PostPreview
-                title={debouncedTitle}
-                content={debouncedContent}
-                coverImage={debouncedCoverImage}
-                author={post?.author}
-                authorGrade={post?.authorGrade}
-                authorClass={post?.authorClass}
-                date={post?.date ? new Date(post.date) : new Date()}
-              />
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-
-      {/* Desktop: Side-by-side layout */}
-      <div className="hidden lg:grid lg:grid-cols-2 lg:gap-6">
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>פרטי הכתבה</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <PostFormFields
-                title={form.title}
-                description={form.description}
-                content={form.content}
-                coverImage={form.coverImage}
-                onTitleChange={handleTitleChange}
-                onDescriptionChange={handleDescriptionChange}
-                onContentChange={handleContentChange}
-                onCoverImageChange={handleCoverImageChange}
-                idPrefix="desktop"
-                showImageUrlInput={true}
-              />
-            </CardContent>
-          </Card>
-
-          <PostEditActions
-            loading={saving}
-            onCancel={() => router.back()}
-            onSaveDraft={() => handleUpdate("draft")}
-            onUpdate={() => handleUpdate("published")}
-            isPublished={form.status === "published"}
-          />
-        </div>
-
-        <div className="sticky top-20 max-h-[calc(100vh-12rem)] overflow-y-auto">
-          <Card>
-            <CardHeader>
-              <CardTitle>תצוגה מקדימה</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <PostPreview
-                title={debouncedTitle}
-                content={debouncedContent}
-                coverImage={debouncedCoverImage}
-                author={post?.author}
-                authorGrade={post?.authorGrade}
-                authorClass={post?.authorClass}
-                date={post?.date ? new Date(post.date) : new Date()}
-              />
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+      <PostEditActions
+        loading={saving}
+        onCancel={() => router.back()}
+        onSaveDraft={() => handleUpdate("draft")}
+        onUpdate={() => handleUpdate("published")}
+        isPublished={form.status === "published"}
+      />
     </div>
   );
 }
