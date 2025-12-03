@@ -222,6 +222,85 @@ export async function getPostsByAuthor(authorId: string): Promise<Post[]> {
 }
 
 /**
+ * Archive month representation
+ */
+export interface ArchiveMonth {
+  year: number;
+  month: number; // 1-12
+  count: number; // Number of published posts in this month
+}
+
+/**
+ * Get posts for a specific month and year
+ * Only returns published posts
+ *
+ * @param year - Year (e.g., 2025)
+ * @param month - Month number (1-12)
+ * @returns Array of posts for that month, sorted by date (newest first)
+ */
+export async function getPostsByMonth(
+  year: number,
+  month: number,
+): Promise<Post[]> {
+  try {
+    const result = (await db.query([
+      `SELECT
+        p.*,
+        CASE WHEN u.id IS NULL AND p.author_id IS NOT NULL AND p.author_id != 'legacy-admin' THEN true ELSE false END as author_deleted
+      FROM posts p
+      LEFT JOIN users u ON p.author_id = u.id::text
+      WHERE p.status = 'published'
+        AND EXTRACT(YEAR FROM p.date) = $1
+        AND EXTRACT(MONTH FROM p.date) = $2
+      ORDER BY p.date DESC, p.created_at DESC`,
+      year,
+      month,
+    ])) as PostQueryResult;
+
+    return result.rows.map(rowToPost);
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    if (!errorMessage.includes('relation "posts" does not exist')) {
+      console.error("[ERROR] Failed to fetch posts by month:", error);
+    }
+    return [];
+  }
+}
+
+/**
+ * Get all available archive months (months with at least one published post)
+ * Returns months grouped by year in descending order
+ *
+ * @returns Array of archive months with post counts
+ */
+export async function getArchiveMonths(): Promise<ArchiveMonth[]> {
+  try {
+    const result = await db.query`
+      SELECT
+        EXTRACT(YEAR FROM date)::int as year,
+        EXTRACT(MONTH FROM date)::int as month,
+        COUNT(*) as count
+      FROM posts
+      WHERE status = 'published'
+      GROUP BY year, month
+      ORDER BY year DESC, month DESC
+    `;
+
+    return result.rows.map((row) => ({
+      year: row.year as number,
+      month: row.month as number,
+      count: parseInt(String(row.count)),
+    }));
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    if (!errorMessage.includes('relation "posts" does not exist')) {
+      console.error("[ERROR] Failed to fetch archive months:", error);
+    }
+    return [];
+  }
+}
+
+/**
  * Get aggregated post statistics
  * Includes total counts, status breakdown, and time-based metrics
  *
