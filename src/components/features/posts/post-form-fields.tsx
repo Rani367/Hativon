@@ -73,21 +73,21 @@ export function PostFormFields({
           id={descriptionId}
           value={description}
           onChange={(e) => onDescriptionChange(e.target.value)}
-          placeholder="תיאור קצר של הכתבה שיוצג בקרוסלה וברשימת הכתבות. אם לא יוזן, התיאור ייווצר אוטומטית מהתוכן."
+          placeholder="תיאור קצר של הכתבה. אם לא יוזן, התיאור ייווצר אוטומטית מהתוכן."
           className="min-h-[100px]"
         />
         <p className="text-xs text-muted-foreground">
-          התיאור יוצג בקרוסלה ובכרטיסי הכתבות. מומלץ עד 200 תווים.
+          התיאור יוצג בכרטיסי הכתבות. מומלץ עד 200 תווים.
         </p>
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor={contentId}>תוכן * (Markdown)</Label>
+        <Label htmlFor={contentId}>תוכן</Label>
         <Textarea
           id={contentId}
           value={content}
           onChange={(e) => onContentChange(e.target.value)}
-          placeholder="כתוב את תוכן הכתבה בפורמט Markdown..."
+          placeholder="כתוב את תוכן הכתבה..."
           className={`min-h-[250px] sm:min-h-[400px] font-mono ${errors.content ? "border-destructive" : ""}`}
           required
           aria-invalid={!!errors.content}
