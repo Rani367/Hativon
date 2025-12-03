@@ -208,21 +208,21 @@ export default function EditPostPage({
               onChange={(e) =>
                 setForm({ ...form, description: e.target.value })
               }
-              placeholder="תיאור קצר של הכתבה שיוצג בקרוסלה וברשימת הכתבות. אם לא יוזן, התיאור ייווצר אוטומטית מהתוכן."
+              placeholder="תיאור קצר של הכתבה. אם לא יוזן, התיאור ייווצר אוטומטית מהתוכן."
               className="min-h-[100px]"
             />
             <p className="text-xs text-muted-foreground">
-              התיאור יוצג בקרוסלה ובכרטיסי הכתבות. מומלץ עד 200 תווים.
+              התיאור יוצג בכרטיסי הכתבות. מומלץ עד 200 תווים.
             </p>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="content">תוכן * (Markdown)</Label>
+            <Label htmlFor="content">תוכן</Label>
             <Textarea
               id="content"
               value={form.content}
               onChange={(e) => setForm({ ...form, content: e.target.value })}
-              placeholder="כתוב את תוכן הכתבה בפורמט Markdown..."
+              placeholder="כתוב את תוכן הכתבה..."
               className="min-h-[400px] font-mono"
               required
             />
