@@ -21,7 +21,7 @@ export function ImageUpload({
   value,
   onChange,
   label = "תמונת שער (אופציונלי)",
-  description = "כתבות עם תמונת שער יופיעו בקרוסלה בעמוד הראשי.",
+  description = "תמונת שער לכתבה.",
   id = "imageUpload",
   showUrlInput = false,
 }: ImageUploadProps) {
