@@ -874,3 +874,6 @@ const migration: Migration = {
 - Syntax highlighting in code blocks (via react-syntax-highlighter)
 - Hebrew text is fully supported in slugs, content, and metadata
 - Admin passwords can be plain text (legacy) or bcrypt hashed (recommended)
+
+## code quality
+- All your code/docs(everything) should seem 100% human written.
