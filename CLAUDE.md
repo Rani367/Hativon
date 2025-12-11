@@ -307,15 +307,9 @@ git push                  # After pre-deploy, push to trigger Vercel deployment
 6. **Configuration**: package.json, tsconfig.json, next.config.ts, .env.example
 7. **Runtime**: API route structure, module resolution, debug statements
 8. **Dependencies**: Version pinning, peer dependencies, no pre-release versions
-9. **Code Quality**: TODOs in critical paths, error handling, naming conventions, **NO EMOJIS (auto-removed)**
+9. **Code Quality**: TODOs in critical paths, error handling, naming conventions
 10. **Build Size**: Bundle size, large chunks detection
 11. **File Size**: 500-line limit enforced on all TypeScript/JavaScript files
-
-**Automatic Fixes During Validation:**
-- **Emoji Removal**: Any emojis found in `.ts`, `.tsx`, `.js`, `.jsx` files are automatically removed
-  - Scans all files in `src/` and `scripts/` directories
-  - Reports which files were cleaned and how many emojis were removed
-  - Continues validation after cleanup
 
 ## Architecture
 
