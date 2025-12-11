@@ -4,18 +4,9 @@ import { db } from "../db/client";
 import bcrypt from "bcrypt";
 import { BCRYPT_SALT_ROUNDS } from "../constants/auth";
 
-/**
- * Create a new user account
- * Automatically hashes password before storage
- *
- * @param data - User registration data
- * @returns Created User object (without password hash)
- * @throws Error with Hebrew message if username/email already exists
- */
 export async function createUser(data: UserRegistration): Promise<User> {
   const { username, password, displayName, grade, classNumber } = data;
 
-  // Hash password securely
   const passwordHash = await bcrypt.hash(password, BCRYPT_SALT_ROUNDS);
 
   try {
@@ -38,7 +29,7 @@ export async function createUser(data: UserRegistration): Promise<User> {
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : String(error);
 
-    // Handle duplicate key violations with user-friendly Hebrew messages
+    // friendly error messages for duplicate violations
     if (errorMessage.includes("duplicate key")) {
       if (errorMessage.includes("username")) {
         throw new Error("שם המשתמש כבר קיים במערכת");
@@ -52,15 +43,6 @@ export async function createUser(data: UserRegistration): Promise<User> {
   }
 }
 
-/**
- * Update user information
- * Only updates provided fields (uses COALESCE for partial updates)
- *
- * @param userId - User UUID
- * @param updates - Partial user data to update
- * @returns Updated User object
- * @throws Error with Hebrew message if user not found
- */
 export async function updateUser(
   userId: string,
   updates: UserUpdate,
@@ -95,12 +77,6 @@ export async function updateUser(
   return result.rows[0] as User;
 }
 
-/**
- * Update user's last login timestamp to current time
- * Called after successful authentication
- *
- * @param userId - User UUID
- */
 export async function updateLastLogin(userId: string): Promise<void> {
   (await db.query`
     UPDATE users
@@ -109,12 +85,6 @@ export async function updateLastLogin(userId: string): Promise<void> {
   `) as unknown as DbMutationResult;
 }
 
-/**
- * Delete a user account permanently
- * This will cascade delete all user-related data (posts, etc.)
- *
- * @param userId - User UUID
- */
 export async function deleteUser(userId: string): Promise<void> {
   (await db.query`
     DELETE FROM users

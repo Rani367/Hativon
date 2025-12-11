@@ -1,20 +1,9 @@
 import type { DbPostRow } from "@/types/database.types";
 import type { Post } from "@/types/post.types";
 
-/**
- * Maximum length for auto-generated post descriptions
- */
 export const MAX_DESCRIPTION_LENGTH = 160;
 
-/**
- * Generate URL-friendly slug from title
- * Converts title to lowercase and replaces non-alphanumeric characters with hyphens
- * Preserves Hebrew characters (Unicode range U+0590-U+05FF)
- *
- * @example
- * generateSlug("Hello World!") // "hello-world"
- * generateSlug("כותרת בעברית") // "כותרת-בעברית"
- */
+// converts title to url-friendly slug, keeps hebrew chars
 export function generateSlug(title: string): string {
   return title
     .toLowerCase()
@@ -22,19 +11,13 @@ export function generateSlug(title: string): string {
     .replace(/^-+|-+$/g, "");
 }
 
-/**
- * Generate description from markdown content
- * Strips markdown syntax and truncates to MAX_DESCRIPTION_LENGTH characters
- *
- * @param content - Markdown content
- * @returns Plain text description (max 160 chars)
- */
+// strips markdown and truncates for preview
 export function generateDescription(content: string): string {
   const plainText = content
-    .replace(/```[\s\S]*?```/g, "") // Remove code blocks
-    .replace(/`[^`]*`/g, "") // Remove inline code
-    .replace(/[#*_~\[\]()]/g, "") // Remove markdown syntax
-    .replace(/\s+/g, " ") // Normalize whitespace
+    .replace(/```[\s\S]*?```/g, "") // code blocks
+    .replace(/`[^`]*`/g, "") // inline code
+    .replace(/[#*_~\[\]()]/g, "") // markdown syntax
+    .replace(/\s+/g, " ")
     .trim();
 
   return plainText.length > MAX_DESCRIPTION_LENGTH
@@ -42,13 +25,7 @@ export function generateDescription(content: string): string {
     : plainText;
 }
 
-/**
- * Convert database row to Post object
- * Transforms snake_case database columns to camelCase TypeScript properties
- *
- * @param row - Database post row
- * @returns Formatted Post object
- */
+// db row -> Post object (snake_case to camelCase)
 export function rowToPost(row: DbPostRow): Post {
   return {
     id: row.id,
