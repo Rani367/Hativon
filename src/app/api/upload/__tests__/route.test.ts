@@ -1,13 +1,52 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { NextRequest } from "next/server";
+
+// Helper to create a mock File with arrayBuffer support
+function createMockFile(
+  content: string | Uint8Array,
+  name: string,
+  type: string,
+): File {
+  const data =
+    typeof content === "string" ? new TextEncoder().encode(content) : content;
+
+  // Create ArrayBuffer from data (avoids Uint8Array/BlobPart type issues)
+  const arrayBuffer = new ArrayBuffer(data.byteLength);
+  new Uint8Array(arrayBuffer).set(data);
+  const file = new File([arrayBuffer], name, { type });
+
+  // Ensure arrayBuffer method works in jsdom by creating a proper ArrayBuffer
+  if (!file.arrayBuffer || typeof file.arrayBuffer !== "function") {
+    const fileWithArrayBuffer = file as File & {
+      arrayBuffer: () => Promise<ArrayBuffer>;
+    };
+    fileWithArrayBuffer.arrayBuffer = async (): Promise<ArrayBuffer> => {
+      return arrayBuffer;
+    };
+  }
+
+  return file;
+}
+
+// Helper to create a mock request with formData method
+function createMockRequest(formData: FormData): NextRequest {
+  return {
+    formData: vi.fn().mockResolvedValue(formData),
+  } as unknown as NextRequest;
+}
 
 describe("POST /api/upload", () => {
   let mockGetCurrentUser: ReturnType<typeof vi.fn>;
   let mockPut: ReturnType<typeof vi.fn>;
   let mockLogError: ReturnType<typeof vi.fn>;
+  let originalBlobToken: string | undefined;
 
   beforeEach(() => {
     vi.resetModules();
+
+    // Save and clear the BLOB_READ_WRITE_TOKEN for test isolation
+    originalBlobToken = process.env.BLOB_READ_WRITE_TOKEN;
+    delete process.env.BLOB_READ_WRITE_TOKEN;
 
     mockGetCurrentUser = vi.fn();
     mockPut = vi.fn();
@@ -26,6 +65,15 @@ describe("POST /api/upload", () => {
     }));
   });
 
+  afterEach(() => {
+    // Restore original token
+    if (originalBlobToken) {
+      process.env.BLOB_READ_WRITE_TOKEN = originalBlobToken;
+    } else {
+      delete process.env.BLOB_READ_WRITE_TOKEN;
+    }
+  });
+
   it("returns 401 when user is not authenticated", async () => {
     mockGetCurrentUser.mockResolvedValue(null);
 
@@ -37,11 +85,7 @@ describe("POST /api/upload", () => {
     });
     formData.append("file", file);
 
-    const request = new NextRequest("http://localhost:3000/api/upload", {
-      method: "POST",
-      body: formData,
-    });
-
+    const request = createMockRequest(formData);
     const response = await POST(request);
     const data = await response.json();
 
@@ -58,11 +102,7 @@ describe("POST /api/upload", () => {
     const { POST } = await import("../route");
 
     const formData = new FormData();
-
-    const request = new NextRequest("http://localhost:3000/api/upload", {
-      method: "POST",
-      body: formData,
-    });
+    const request = createMockRequest(formData);
 
     const response = await POST(request);
     const data = await response.json();
@@ -85,11 +125,7 @@ describe("POST /api/upload", () => {
     });
     formData.append("file", file);
 
-    const request = new NextRequest("http://localhost:3000/api/upload", {
-      method: "POST",
-      body: formData,
-    });
-
+    const request = createMockRequest(formData);
     const response = await POST(request);
     const data = await response.json();
 
@@ -110,11 +146,7 @@ describe("POST /api/upload", () => {
     const file = new File([largeContent], "large.jpg", { type: "image/jpeg" });
     formData.append("file", file);
 
-    const request = new NextRequest("http://localhost:3000/api/upload", {
-      method: "POST",
-      body: formData,
-    });
-
+    const request = createMockRequest(formData);
     const response = await POST(request);
     const data = await response.json();
 
@@ -123,9 +155,7 @@ describe("POST /api/upload", () => {
   });
 
   it("returns base64 data URL when BLOB_READ_WRITE_TOKEN is not set", async () => {
-    const originalToken = process.env.BLOB_READ_WRITE_TOKEN;
-    delete process.env.BLOB_READ_WRITE_TOKEN;
-
+    // Token is already deleted in beforeEach
     mockGetCurrentUser.mockResolvedValue({
       id: "user-123",
       username: "testuser",
@@ -134,16 +164,10 @@ describe("POST /api/upload", () => {
     const { POST } = await import("../route");
 
     const formData = new FormData();
-    const file = new File(["test image content"], "test.jpg", {
-      type: "image/jpeg",
-    });
+    const file = createMockFile("test image content", "test.jpg", "image/jpeg");
     formData.append("file", file);
 
-    const request = new NextRequest("http://localhost:3000/api/upload", {
-      method: "POST",
-      body: formData,
-    });
-
+    const request = createMockRequest(formData);
     const response = await POST(request);
     const data = await response.json();
 
@@ -151,10 +175,6 @@ describe("POST /api/upload", () => {
     expect(data.url).toContain("data:image/jpeg;base64,");
     expect(data.filename).toBeDefined();
     expect(mockPut).not.toHaveBeenCalled();
-
-    if (originalToken) {
-      process.env.BLOB_READ_WRITE_TOKEN = originalToken;
-    }
   });
 
   it("uploads to Vercel Blob when BLOB_READ_WRITE_TOKEN exists", async () => {
@@ -178,11 +198,7 @@ describe("POST /api/upload", () => {
     });
     formData.append("file", file);
 
-    const request = new NextRequest("http://localhost:3000/api/upload", {
-      method: "POST",
-      body: formData,
-    });
-
+    const request = createMockRequest(formData);
     const response = await POST(request);
     const data = await response.json();
 
@@ -218,11 +234,7 @@ describe("POST /api/upload", () => {
     });
     formData.append("file", file);
 
-    const request = new NextRequest("http://localhost:3000/api/upload", {
-      method: "POST",
-      body: formData,
-    });
-
+    const request = createMockRequest(formData);
     await POST(request);
 
     const putCall = mockPut.mock.calls[0];
@@ -252,11 +264,7 @@ describe("POST /api/upload", () => {
     });
     formData.append("file", file);
 
-    const request = new NextRequest("http://localhost:3000/api/upload", {
-      method: "POST",
-      body: formData,
-    });
-
+    const request = createMockRequest(formData);
     await POST(request);
 
     const putCall = mockPut.mock.calls[0];
@@ -286,11 +294,7 @@ describe("POST /api/upload", () => {
     });
     formData.append("file", file);
 
-    const request = new NextRequest("http://localhost:3000/api/upload", {
-      method: "POST",
-      body: formData,
-    });
-
+    const request = createMockRequest(formData);
     await POST(request);
 
     const putCall = mockPut.mock.calls[0];
@@ -318,11 +322,7 @@ describe("POST /api/upload", () => {
     });
     formData.append("file", file);
 
-    const request = new NextRequest("http://localhost:3000/api/upload", {
-      method: "POST",
-      body: formData,
-    });
-
+    const request = createMockRequest(formData);
     const response = await POST(request);
     const data = await response.json();
 
@@ -361,11 +361,7 @@ describe("POST /api/upload", () => {
       const file = new File(["test image content"], `test.${ext}`, { type });
       formData.append("file", file);
 
-      const request = new NextRequest("http://localhost:3000/api/upload", {
-        method: "POST",
-        body: formData,
-      });
-
+      const request = createMockRequest(formData);
       const response = await POST(request);
 
       expect(response.status).toBe(200);
@@ -392,11 +388,7 @@ describe("POST /api/upload", () => {
     const file = new File([exactContent], "exact.jpg", { type: "image/jpeg" });
     formData.append("file", file);
 
-    const request = new NextRequest("http://localhost:3000/api/upload", {
-      method: "POST",
-      body: formData,
-    });
-
+    const request = createMockRequest(formData);
     const response = await POST(request);
 
     expect(response.status).toBe(200);
@@ -413,11 +405,7 @@ describe("POST /api/upload", () => {
     });
     formData.append("file", file);
 
-    const request = new NextRequest("http://localhost:3000/api/upload", {
-      method: "POST",
-      body: formData,
-    });
-
+    const request = createMockRequest(formData);
     const response = await POST(request);
     const data = await response.json();
 
