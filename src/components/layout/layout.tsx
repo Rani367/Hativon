@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { ReactNode, useState, useEffect } from "react";
 import { UserMenu } from "@/components/features/auth/user-menu";
 import { NewPostButton } from "@/components/features/posts/new-post-button";
@@ -13,6 +14,7 @@ interface LayoutProps {
 }
 
 export default function Layout({ children }: LayoutProps) {
+  const pathname = usePathname();
   const { year, month } = getCurrentMonthYear();
   const [archives, setArchives] = useState<ArchiveMonth[]>([]);
 
@@ -23,6 +25,12 @@ export default function Layout({ children }: LayoutProps) {
       .then((data) => setArchives(data))
       .catch((err) => console.error("Failed to fetch archives:", err));
   }, []);
+
+  // Don't wrap admin or dashboard routes with the main site layout
+  // These have their own layouts
+  if (pathname?.startsWith("/admin") || pathname?.startsWith("/dashboard")) {
+    return <>{children}</>;
+  }
 
   return (
     <div className="min-h-screen bg-background">
