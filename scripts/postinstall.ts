@@ -26,6 +26,72 @@ const envPath = join(projectRoot, ".env.local");
 const envExamplePath = join(projectRoot, ".env.example");
 const dataDir = join(projectRoot, "data");
 
+// Common PostgreSQL binary locations (Homebrew, system, etc.)
+const pgBinPaths = [
+  "/opt/homebrew/opt/postgresql@16/bin",
+  "/opt/homebrew/opt/postgresql@15/bin",
+  "/opt/homebrew/opt/postgresql@14/bin",
+  "/opt/homebrew/opt/postgresql/bin",
+  "/usr/local/opt/postgresql@16/bin",
+  "/usr/local/opt/postgresql@15/bin",
+  "/usr/local/opt/postgresql@14/bin",
+  "/usr/local/opt/postgresql/bin",
+  "/usr/local/pgsql/bin",
+  "/usr/pgsql-16/bin",
+  "/usr/pgsql-15/bin",
+  "/usr/pgsql-14/bin",
+  "/usr/lib/postgresql/16/bin",
+  "/usr/lib/postgresql/15/bin",
+  "/usr/lib/postgresql/14/bin",
+];
+
+/**
+ * Find PostgreSQL binary path
+ */
+function findPgBinPath(): string | null {
+  // First check if psql is in PATH
+  try {
+    const whichCmd = process.platform === "win32" ? "where psql" : "which psql";
+    const result = execSync(whichCmd, { stdio: "pipe", encoding: "utf-8" });
+    const psqlPath = result.trim().split("\n")[0];
+    if (psqlPath && existsSync(psqlPath)) {
+      return join(psqlPath, "..");
+    }
+  } catch {
+    // Not in PATH, check common locations
+  }
+
+  // Check common installation paths
+  for (const binPath of pgBinPaths) {
+    const psqlPath = join(binPath, "psql");
+    if (existsSync(psqlPath)) {
+      return binPath;
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Execute a PostgreSQL command with the correct binary path
+ */
+function execPgCommand(
+  command: string,
+  pgBinPath: string,
+  options: { timeout?: number } = {},
+): string {
+  const env = {
+    ...process.env,
+    PATH: `${pgBinPath}:${process.env.PATH}`,
+  };
+  return execSync(command, {
+    stdio: "pipe",
+    encoding: "utf-8",
+    timeout: options.timeout || 10000,
+    env,
+  });
+}
+
 // Skip postinstall in CI/CD environments
 if (process.env.CI || process.env.VERCEL || process.env.GITHUB_ACTIONS) {
   console.log("[INFO] Skipping postinstall in CI/CD environment");
@@ -79,26 +145,69 @@ console.log("\n[INFO] Detecting PostgreSQL...");
 
 let hasPostgres = false;
 let dbConfigured = false;
+let pgBinPath: string | null = null;
 
-// Check if POSTGRES_URL is already configured
+// Check if POSTGRES_URL is already configured (with actual value)
 const existingEnvContent = readFileSync(envPath, "utf-8");
-const hasPostgresUrl = existingEnvContent.match(
-  /POSTGRES_URL=postgresql:\/\/.+/,
+const postgresUrlMatch = existingEnvContent.match(
+  /POSTGRES_URL=(postgres(?:ql)?:\/\/.+)/,
 );
 
-if (hasPostgresUrl) {
+if (postgresUrlMatch && postgresUrlMatch[1]) {
   console.log("[OK] PostgreSQL already configured in .env.local");
   dbConfigured = true;
   hasPostgres = true;
+  pgBinPath = findPgBinPath();
 } else {
   // Try to detect PostgreSQL installation
-  try {
-    const psqlCheck =
-      process.platform === "win32" ? "where psql" : "which psql";
-    execSync(psqlCheck, { stdio: "pipe" });
+  pgBinPath = findPgBinPath();
+  if (pgBinPath) {
     hasPostgres = true;
-    console.log("[OK] PostgreSQL detected on system");
-  } catch {
+    console.log(`[OK] PostgreSQL detected at ${pgBinPath}`);
+
+    // Check if PostgreSQL service is running, try to start it if not
+    try {
+      execPgCommand(`psql -c "SELECT 1" -t`, pgBinPath, { timeout: 5000 });
+      console.log("[OK] PostgreSQL service is running");
+    } catch {
+      console.log(
+        "[INFO] PostgreSQL service not running, attempting to start...",
+      );
+      try {
+        // Try brew services first (macOS)
+        execSync(
+          "brew services start postgresql@16 2>/dev/null || brew services start postgresql@15 2>/dev/null || brew services start postgresql@14 2>/dev/null || brew services start postgresql 2>/dev/null",
+          {
+            stdio: "pipe",
+            timeout: 15000,
+          },
+        );
+        // Wait for service to start
+        execSync("sleep 2", { stdio: "pipe" });
+        console.log("[OK] PostgreSQL service started");
+      } catch {
+        // Try pg_ctl as fallback
+        try {
+          const dataDir =
+            process.platform === "darwin"
+              ? "/opt/homebrew/var/postgresql@16"
+              : "/var/lib/postgresql/data";
+          execPgCommand(
+            `pg_ctl -D "${dataDir}" start -l /tmp/postgres.log`,
+            pgBinPath,
+            { timeout: 10000 },
+          );
+          execSync("sleep 2", { stdio: "pipe" });
+          console.log("[OK] PostgreSQL service started via pg_ctl");
+        } catch {
+          console.log("[WARNING] Could not start PostgreSQL service");
+          console.log(
+            "   Please start PostgreSQL manually and run: pnpm run setup",
+          );
+        }
+      }
+    }
+  } else {
     console.log("[WARNING] PostgreSQL not detected");
     console.log("   App will run in admin-only mode (posts stored locally)");
     console.log(
@@ -108,7 +217,7 @@ if (hasPostgresUrl) {
 }
 
 // Step 4: Auto-configure database if PostgreSQL is available and not already configured
-if (hasPostgres && !dbConfigured) {
+if (hasPostgres && !dbConfigured && pgBinPath) {
   console.log("\n[INFO] Configuring local database...");
 
   const dbName = "school_newspaper";
@@ -119,41 +228,55 @@ if (hasPostgres && !dbConfigured) {
   try {
     // Try to create the database (will fail silently if exists)
     console.log(`   Creating database "${dbName}"...`);
+    let dbCreated = false;
+
+    // First try with current user (peer authentication)
     try {
-      execSync(`createdb -U ${dbUser} -h ${dbHost} -p ${dbPort} ${dbName}`, {
-        stdio: "pipe",
-        timeout: 5000,
-      });
+      execPgCommand(`createdb ${dbName}`, pgBinPath, { timeout: 5000 });
       console.log(`   [OK] Created database "${dbName}"`);
+      dbCreated = true;
     } catch (createError) {
-      // Database might already exist, which is fine
-      const errorMessage =
+      const errorOutput =
         createError instanceof Error
           ? createError.message
           : String(createError);
-      if (errorMessage.includes("already exists")) {
+      if (errorOutput.includes("already exists")) {
         console.log(`   [OK] Database "${dbName}" already exists`);
+        dbCreated = true;
       } else {
-        // Try without specifying user (for peer authentication)
+        // Try with explicit user/host
         try {
-          execSync(`createdb ${dbName}`, { stdio: "pipe", timeout: 5000 });
-          console.log(`   [OK] Created database "${dbName}"`);
-        } catch {
-          console.log(
-            `   [WARNING] Could not create database (may already exist)`,
+          execPgCommand(
+            `createdb -U ${dbUser} -h ${dbHost} -p ${dbPort} ${dbName}`,
+            pgBinPath,
+            { timeout: 5000 },
           );
+          console.log(`   [OK] Created database "${dbName}"`);
+          dbCreated = true;
+        } catch (retryError) {
+          const retryOutput =
+            retryError instanceof Error
+              ? retryError.message
+              : String(retryError);
+          if (retryOutput.includes("already exists")) {
+            console.log(`   [OK] Database "${dbName}" already exists`);
+            dbCreated = true;
+          } else {
+            console.log(
+              `   [WARNING] Could not create database (may already exist)`,
+            );
+          }
         }
       }
     }
 
     // Build connection string
-    const dbUrl = `postgresql://${dbUser}@${dbHost}:${dbPort}/${dbName}`;
+    const dbUrl = `postgres://${dbUser}@${dbHost}:${dbPort}/${dbName}`;
 
     // Test connection
     console.log("   Testing database connection...");
     try {
-      execSync(`psql "${dbUrl}" -c "SELECT 1" -t`, {
-        stdio: "pipe",
+      execPgCommand(`psql "${dbUrl}" -c "SELECT 1" -t`, pgBinPath, {
         timeout: 5000,
       });
 
@@ -171,12 +294,12 @@ if (hasPostgres && !dbConfigured) {
       writeFileSync(envPath, envContent);
       console.log("   [OK] Database connection configured");
       dbConfigured = true;
-    } catch (testError) {
+    } catch {
       console.log("   [WARNING] Could not connect to database");
       console.log("   App will run in admin-only mode");
       console.log("   For manual setup, run: pnpm run setup");
     }
-  } catch (error) {
+  } catch {
     console.log("   [WARNING] Database auto-configuration failed");
     console.log("   App will run in admin-only mode");
   }
@@ -188,17 +311,30 @@ if (dbConfigured) {
   try {
     // Re-read .env.local to get POSTGRES_URL
     const envContent = readFileSync(envPath, "utf-8");
-    const postgresUrlMatch = envContent.match(/POSTGRES_URL=(.+)/);
+    const dbUrlMatch = envContent.match(
+      /POSTGRES_URL=(postgres(?:ql)?:\/\/.+)/,
+    );
 
-    if (postgresUrlMatch) {
-      const dbUrl = postgresUrlMatch[1];
+    if (dbUrlMatch && dbUrlMatch[1]) {
+      const dbUrl = dbUrlMatch[1];
       process.env.POSTGRES_URL = dbUrl;
+      process.env.POSTGRES_URL_NON_POOLING = dbUrl;
 
       // Check if schema is already initialized
       let schemaExists = false;
       try {
-        const checkSchema = `psql "${dbUrl}" -c "SELECT 1 FROM users LIMIT 1" -t 2>&1`;
-        execSync(checkSchema, { stdio: "pipe", timeout: 5000 });
+        if (pgBinPath) {
+          execPgCommand(
+            `psql "${dbUrl}" -c "SELECT 1 FROM users LIMIT 1" -t`,
+            pgBinPath,
+            { timeout: 5000 },
+          );
+        } else {
+          execSync(`psql "${dbUrl}" -c "SELECT 1 FROM users LIMIT 1" -t`, {
+            stdio: "pipe",
+            timeout: 5000,
+          });
+        }
         console.log("[OK] Database schema already initialized");
         schemaExists = true;
       } catch {
@@ -206,11 +342,19 @@ if (dbConfigured) {
         console.log("[INFO] Initializing database schema...");
 
         // Run db:init using tsx directly
+        const initEnv = {
+          ...process.env,
+          POSTGRES_URL: dbUrl,
+          POSTGRES_URL_NON_POOLING: dbUrl,
+          PATH: pgBinPath
+            ? `${pgBinPath}:${process.env.PATH}`
+            : process.env.PATH,
+        };
         execSync("npx tsx scripts/init-db.ts --silent", {
           stdio: "pipe",
           cwd: projectRoot,
-          env: { ...process.env, POSTGRES_URL: dbUrl },
-          timeout: 10000,
+          env: initEnv,
+          timeout: 15000,
         });
 
         console.log("[OK] Database schema initialized");
@@ -220,22 +364,30 @@ if (dbConfigured) {
       // Step 6: Create test user (always check)
       if (schemaExists) {
         console.log("\n[INFO] Checking test user...");
+        const userEnv = {
+          ...process.env,
+          POSTGRES_URL: dbUrl,
+          POSTGRES_URL_NON_POOLING: dbUrl,
+          PATH: pgBinPath
+            ? `${pgBinPath}:${process.env.PATH}`
+            : process.env.PATH,
+        };
         try {
           execSync("npx tsx scripts/create-test-user-simple.ts", {
             stdio: "pipe",
             cwd: projectRoot,
-            env: { ...process.env, POSTGRES_URL: dbUrl },
-            timeout: 10000,
+            env: userEnv,
+            timeout: 15000,
           });
           console.log(
             "[OK] Test user created (username: user, password: 12345678)",
           );
-        } catch (userError) {
+        } catch {
           console.log("[OK] Test user already exists");
         }
       }
     }
-  } catch (error) {
+  } catch {
     console.log("[WARNING] Database initialization skipped");
     console.log("   You can run manually: pnpm run db:init");
   }

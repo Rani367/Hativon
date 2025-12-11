@@ -27,20 +27,33 @@ const envSchema = z.object({
       "NEXT_PUBLIC_SITE_URL must be a valid URL (e.g., http://localhost:3000 or https://yourdomain.com)",
     ),
 
-  // Optional but validated if present
+  // Optional but validated if present (empty string treated as undefined)
   POSTGRES_URL: z
     .string()
-    .url("POSTGRES_URL must be a valid PostgreSQL connection string")
-    .optional(),
+    .transform((val) => (val === "" ? undefined : val))
+    .pipe(
+      z
+        .string()
+        .url("POSTGRES_URL must be a valid PostgreSQL connection string")
+        .optional(),
+    ),
 
   POSTGRES_URL_NON_POOLING: z
     .string()
-    .url(
-      "POSTGRES_URL_NON_POOLING must be a valid PostgreSQL connection string",
-    )
-    .optional(),
+    .transform((val) => (val === "" ? undefined : val))
+    .pipe(
+      z
+        .string()
+        .url(
+          "POSTGRES_URL_NON_POOLING must be a valid PostgreSQL connection string",
+        )
+        .optional(),
+    ),
 
-  BLOB_READ_WRITE_TOKEN: z.string().optional(),
+  BLOB_READ_WRITE_TOKEN: z
+    .string()
+    .transform((val) => (val === "" ? undefined : val))
+    .optional(),
 
   SESSION_DURATION: z
     .string()
