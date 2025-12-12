@@ -49,6 +49,10 @@ const nextConfig: NextConfig = {
       "remark-gfm",
       "remark-math",
       "date-fns",
+      "@tiptap/react",
+      "@tiptap/starter-kit",
+      "@tiptap/extension-link",
+      "@tiptap/extension-placeholder",
     ],
     // Enable optimistic client cache
     optimisticClientCache: true,

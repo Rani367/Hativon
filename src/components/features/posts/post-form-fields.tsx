@@ -4,6 +4,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { ImageUpload } from "./image-upload";
+import { RichTextEditor } from "@/components/features/editor";
 
 interface PostFormFieldsProps {
   title: string;
@@ -83,13 +84,12 @@ export function PostFormFields({
 
       <div className="space-y-2">
         <Label htmlFor={contentId}>תוכן</Label>
-        <Textarea
+        <RichTextEditor
           id={contentId}
           value={content}
-          onChange={(e) => onContentChange(e.target.value)}
+          onChange={onContentChange}
           placeholder="כתוב את תוכן הכתבה..."
-          className={`min-h-[250px] sm:min-h-[400px] font-mono ${errors.content ? "border-destructive" : ""}`}
-          required
+          minHeight="300px"
           aria-invalid={!!errors.content}
           aria-describedby={errors.content ? `${contentId}-error` : undefined}
         />
