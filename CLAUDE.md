@@ -875,5 +875,29 @@ const migration: Migration = {
 - Hebrew text is fully supported in slugs, content, and metadata
 - Admin passwords can be plain text (legacy) or bcrypt hashed (recommended)
 
-## code quality
-- All your code/docs(everything) should seem 100% human written.
+## Code Quality
+- All your code/docs (everything) should seem 100% human written.
+
+## Debugging Guidelines
+
+**ALWAYS ask the user for access to tools and information when debugging issues.**
+
+When investigating bugs, especially production issues:
+- Ask for access to the deployed URL so you can test endpoints directly
+- Request Vercel function logs or error messages from the browser console
+- Ask for specific URLs, slugs, or data that trigger the issue
+- Don't hesitate to create temporary debug API endpoints to inspect state
+- Ask the user to share what they see on screen vs. what they expect
+
+**Why this matters:**
+- Production environments behave differently than local development
+- URL encoding, environment variables, and database state can vary
+- Direct access to production APIs saves hours of guessing
+- The user often has context that isn't obvious from code alone
+
+**Example debugging workflow:**
+1. Ask for the production URL and specific failing route
+2. Create a debug API endpoint to inspect database/state if needed
+3. Use WebFetch to test the production endpoint directly
+4. Compare production behavior with local behavior
+5. Clean up debug endpoints before final commit
