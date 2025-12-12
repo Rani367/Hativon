@@ -29,7 +29,9 @@ export async function generateStaticParams() {
 export async function generateMetadata({
   params,
 }: PostPageProps): Promise<Metadata> {
-  const { slug } = await params;
+  const { slug: rawSlug } = await params;
+  // Decode URL-encoded slug (handles Hebrew characters)
+  const slug = decodeURIComponent(rawSlug);
   const post = await getPost(slug);
 
   if (!post) {
@@ -78,7 +80,9 @@ export async function generateMetadata({
 }
 
 export default async function PostPage({ params }: PostPageProps) {
-  const { slug } = await params;
+  const { slug: rawSlug } = await params;
+  // Decode URL-encoded slug (handles Hebrew characters)
+  const slug = decodeURIComponent(rawSlug);
   const post = await getPost(slug);
 
   if (!post) {
