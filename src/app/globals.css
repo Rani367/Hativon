@@ -97,3 +97,88 @@
     }
 }
 
+/* Rich Text Editor Styles */
+.rich-text-editor-content {
+    @apply overflow-auto;
+}
+
+.rich-text-editor-content .ProseMirror {
+    @apply min-h-full p-4 outline-none;
+    direction: rtl;
+    text-align: right;
+}
+
+.rich-text-editor-content .ProseMirror p {
+    @apply mb-4;
+}
+
+.rich-text-editor-content .ProseMirror h1 {
+    @apply text-3xl font-bold mb-4 mt-6;
+}
+
+.rich-text-editor-content .ProseMirror h2 {
+    @apply text-2xl font-bold mb-3 mt-5;
+}
+
+.rich-text-editor-content .ProseMirror h3 {
+    @apply text-xl font-semibold mb-2 mt-4;
+}
+
+.rich-text-editor-content .ProseMirror strong {
+    @apply font-bold;
+}
+
+.rich-text-editor-content .ProseMirror em {
+    @apply italic;
+}
+
+.rich-text-editor-content .ProseMirror s {
+    @apply line-through;
+}
+
+.rich-text-editor-content .ProseMirror code {
+    @apply bg-muted px-1.5 py-0.5 rounded text-sm font-mono;
+}
+
+.rich-text-editor-content .ProseMirror pre {
+    @apply bg-muted p-4 rounded-lg my-4 overflow-x-auto;
+}
+
+.rich-text-editor-content .ProseMirror pre code {
+    @apply bg-transparent p-0;
+}
+
+.rich-text-editor-content .ProseMirror blockquote {
+    @apply border-r-4 border-muted-foreground/30 pr-4 mr-0 my-4 italic text-muted-foreground;
+}
+
+.rich-text-editor-content .ProseMirror ul {
+    @apply list-disc pr-6 mb-4;
+}
+
+.rich-text-editor-content .ProseMirror ol {
+    @apply list-decimal pr-6 mb-4;
+}
+
+.rich-text-editor-content .ProseMirror li {
+    @apply mb-1;
+}
+
+.rich-text-editor-content .ProseMirror a {
+    @apply text-primary underline underline-offset-2 hover:text-primary/80;
+}
+
+.rich-text-editor-content .ProseMirror hr {
+    @apply border-t border-border my-6;
+}
+
+/* Placeholder styling */
+.rich-text-editor-content .ProseMirror.is-editor-empty:first-child::before {
+    @apply text-muted-foreground pointer-events-none float-right h-0;
+    content: attr(data-placeholder);
+}
+
+/* Focus ring for accessibility */
+.rich-text-editor-content:focus-within {
+    @apply ring-2 ring-ring ring-offset-2 ring-offset-background rounded-b-md;
+}
