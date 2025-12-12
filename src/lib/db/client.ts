@@ -1,4 +1,4 @@
-import { sql } from "@vercel/postgres";
+import { sql, db as vercelDb } from "@vercel/postgres";
 import { Pool } from "pg";
 
 // Adapts between vercel postgres (prod) and local pg (dev)
@@ -35,11 +35,8 @@ export const db = {
       const [queryString, ...params] = strings;
 
       if (isVercelProduction) {
-        const pool = getLocalPool();
-        if (!pool) {
-          throw new Error("Database connection not configured");
-        }
-        return pool.query(queryString, params);
+        // Use Vercel Postgres client for production
+        return vercelDb.query(queryString, params);
       }
 
       const pool = getLocalPool();
