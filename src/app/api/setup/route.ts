@@ -28,6 +28,17 @@ const setupRateLimiter = createRateLimiter({
 });
 
 export async function POST(request: NextRequest) {
+  // Setup route is disabled by default - must be explicitly enabled
+  if (process.env.ENABLE_SETUP_ROUTE !== "true") {
+    return NextResponse.json(
+      {
+        error:
+          "Setup route is disabled. Set ENABLE_SETUP_ROUTE=true to enable.",
+      },
+      { status: 403 },
+    );
+  }
+
   try {
     // Rate limiting
     const identifier = getClientIdentifier(request);

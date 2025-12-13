@@ -62,13 +62,13 @@ describe("JWT Token Management", () => {
       expect(typeof decoded.exp).toBe("number");
     });
 
-    it("sets expiration to 2 days by default", () => {
+    it("sets expiration to 7 days by default", () => {
       const token = generateToken(mockUser);
       const decoded = jwt.decode(token) as { iat: number; exp: number };
-      const twoDaysInSeconds = 172800;
+      const sevenDaysInSeconds = 604800;
 
       const expiresIn = decoded.exp - decoded.iat;
-      expect(expiresIn).toBe(twoDaysInSeconds);
+      expect(expiresIn).toBe(sevenDaysInSeconds);
     });
 
     it("does not include sensitive user information", () => {

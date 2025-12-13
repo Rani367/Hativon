@@ -1,16 +1,20 @@
-'use client';
+"use client";
 
-import { useMemo } from 'react';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import rehypeRaw from 'rehype-raw';
-import { format } from 'date-fns';
-import { he } from 'date-fns/locale';
-import Image from 'next/image';
-import { Badge } from '@/components/ui/badge';
-import { components } from './mdx-component';
-import { getWordCount } from '@/lib/utils/text-utils';
-import { calculateReadingTime } from '@/lib/utils';
+import { useMemo } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+// rehype-sanitize uses GitHub's sanitization schema by default
+// This allows: headings, lists, links, images, code blocks, tables, emphasis
+// This blocks: script, style, iframe, form elements, event handlers
+// See: https://github.com/syntax-tree/hast-util-sanitize#schema
+import rehypeSanitize from "rehype-sanitize";
+import { format } from "date-fns";
+import { he } from "date-fns/locale";
+import Image from "next/image";
+import { Badge } from "@/components/ui/badge";
+import { components } from "./mdx-component";
+import { getWordCount } from "@/lib/utils/text-utils";
+import { calculateReadingTime } from "@/lib/utils";
 
 interface PostPreviewProps {
   title: string;
@@ -49,12 +53,12 @@ export function PostPreview({
     if (content) {
       // Strip markdown and get first 160 chars
       const stripped = content
-        .replace(/[#*`~\[\]()]/g, '')
-        .replace(/\n+/g, ' ')
+        .replace(/[#*`~\[\]()]/g, "")
+        .replace(/\n+/g, " ")
         .trim();
-      return stripped.substring(0, 160) + (stripped.length > 160 ? '...' : '');
+      return stripped.substring(0, 160) + (stripped.length > 160 ? "..." : "");
     }
-    return '';
+    return "";
   }, [description, content]);
 
   return (
@@ -63,7 +67,7 @@ export function PostPreview({
         <div className="relative aspect-video w-full mb-10 rounded-lg overflow-hidden">
           <Image
             src={coverImage}
-            alt={title || 'תצוגה מקדימה'}
+            alt={title || "תצוגה מקדימה"}
             fill
             className="object-cover"
             sizes="(max-width: 768px) 100vw, 896px"
@@ -75,11 +79,13 @@ export function PostPreview({
 
       <header className="mb-10">
         <div className="flex items-center gap-4 text-base text-muted-foreground mb-6">
-          <time>{format(date, 'd בMMMM yyyy', { locale: he })}</time>
+          <time>{format(date, "d בMMMM yyyy", { locale: he })}</time>
           {author && (
             <span>
               מאת {author}
-              {authorGrade && authorClass && ` (כיתה ${authorGrade}${authorClass})`}
+              {authorGrade &&
+                authorClass &&
+                ` (כיתה ${authorGrade}${authorClass})`}
             </span>
           )}
           <span>{readingTime}</span>
@@ -87,7 +93,7 @@ export function PostPreview({
         </div>
 
         <h1 className="text-5xl font-bold mb-6 text-foreground leading-tight">
-          {title || 'אין כותרת'}
+          {title || "אין כותרת"}
         </h1>
 
         {displayDescription && (
@@ -102,7 +108,7 @@ export function PostPreview({
           <ReactMarkdown
             components={components}
             remarkPlugins={[remarkGfm]}
-            rehypePlugins={[rehypeRaw]}
+            rehypePlugins={[rehypeSanitize]}
           >
             {content}
           </ReactMarkdown>

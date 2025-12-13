@@ -1,7 +1,84 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { NextRequest } from "next/server";
 
-// Helper to create a mock File with arrayBuffer support
+// Valid image magic bytes for testing
+const IMAGE_MAGIC_BYTES = {
+  jpeg: new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46]),
+  png: new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+  gif: new Uint8Array([0x47, 0x49, 0x46, 0x38, 0x39, 0x61]),
+  webp: new Uint8Array([0x52, 0x49, 0x46, 0x46, 0x00, 0x00, 0x00, 0x00]),
+};
+
+// Helper to create a mock File with valid image signature and proper slice support
+function createMockImageFile(
+  name: string,
+  type: string,
+  sizeInBytes?: number,
+): File {
+  // Get the appropriate magic bytes
+  let magicBytes: Uint8Array;
+  if (type === "image/jpeg") {
+    magicBytes = IMAGE_MAGIC_BYTES.jpeg;
+  } else if (type === "image/png") {
+    magicBytes = IMAGE_MAGIC_BYTES.png;
+  } else if (type === "image/gif") {
+    magicBytes = IMAGE_MAGIC_BYTES.gif;
+  } else if (type === "image/webp") {
+    magicBytes = IMAGE_MAGIC_BYTES.webp;
+  } else {
+    magicBytes = IMAGE_MAGIC_BYTES.jpeg; // default to jpeg
+  }
+
+  // If a specific size is requested, create a larger buffer
+  let data: Uint8Array;
+  if (sizeInBytes && sizeInBytes > magicBytes.length) {
+    data = new Uint8Array(sizeInBytes);
+    data.set(magicBytes, 0); // Set magic bytes at the beginning
+  } else {
+    // Add some padding after magic bytes for a realistic file
+    data = new Uint8Array(magicBytes.length + 100);
+    data.set(magicBytes, 0);
+  }
+
+  // Create explicit ArrayBuffer (not ArrayBufferLike) to satisfy TypeScript
+  const arrayBuffer = new ArrayBuffer(data.byteLength);
+  new Uint8Array(arrayBuffer).set(data);
+
+  // Create the file using the ArrayBuffer
+  const file = new File([arrayBuffer], name, { type });
+
+  // Create a copy of the ArrayBuffer for slice operations
+  const fullArrayBuffer = arrayBuffer.slice(0);
+
+  // Override arrayBuffer to work in jsdom (for base64 conversion)
+  (file as File & { arrayBuffer: () => Promise<ArrayBuffer> }).arrayBuffer =
+    async (): Promise<ArrayBuffer> => fullArrayBuffer;
+
+  // Override slice to return a Blob with proper arrayBuffer method
+  const originalSlice = file.slice.bind(file);
+  (file as File & { slice: typeof file.slice }).slice = (
+    start?: number,
+    end?: number,
+    contentType?: string,
+  ): Blob => {
+    const slicedBlob = originalSlice(start, end, contentType);
+    const sliceStart = start ?? 0;
+    const sliceEnd = end ?? data.length;
+    // Create a proper ArrayBuffer for the sliced data
+    const slicedArrayBuffer = fullArrayBuffer.slice(sliceStart, sliceEnd);
+
+    // Add arrayBuffer method to the sliced blob
+    (
+      slicedBlob as Blob & { arrayBuffer: () => Promise<ArrayBuffer> }
+    ).arrayBuffer = async (): Promise<ArrayBuffer> => slicedArrayBuffer;
+
+    return slicedBlob;
+  };
+
+  return file;
+}
+
+// Helper to create a mock File with arrayBuffer support (for non-image files)
 function createMockFile(
   content: string | Uint8Array,
   name: string,
@@ -142,8 +219,12 @@ describe("POST /api/upload", () => {
     const { POST } = await import("../route");
 
     const formData = new FormData();
-    const largeContent = new Uint8Array(6 * 1024 * 1024);
-    const file = new File([largeContent], "large.jpg", { type: "image/jpeg" });
+    // Create a large file with valid JPEG magic bytes
+    const file = createMockImageFile(
+      "large.jpg",
+      "image/jpeg",
+      6 * 1024 * 1024,
+    );
     formData.append("file", file);
 
     const request = createMockRequest(formData);
@@ -164,7 +245,7 @@ describe("POST /api/upload", () => {
     const { POST } = await import("../route");
 
     const formData = new FormData();
-    const file = createMockFile("test image content", "test.jpg", "image/jpeg");
+    const file = createMockImageFile("test.jpg", "image/jpeg");
     formData.append("file", file);
 
     const request = createMockRequest(formData);
@@ -193,9 +274,7 @@ describe("POST /api/upload", () => {
     const { POST } = await import("../route");
 
     const formData = new FormData();
-    const file = new File(["test image content"], "test.jpg", {
-      type: "image/jpeg",
-    });
+    const file = createMockImageFile("test.jpg", "image/jpeg");
     formData.append("file", file);
 
     const request = createMockRequest(formData);
@@ -229,9 +308,7 @@ describe("POST /api/upload", () => {
     const { POST } = await import("../route");
 
     const formData = new FormData();
-    const file = new File(["test image content"], "test.jpg", {
-      type: "image/jpeg",
-    });
+    const file = createMockImageFile("test.jpg", "image/jpeg");
     formData.append("file", file);
 
     const request = createMockRequest(formData);
@@ -259,9 +336,7 @@ describe("POST /api/upload", () => {
     const { POST } = await import("../route");
 
     const formData = new FormData();
-    const file = new File(["test image content"], "image.png", {
-      type: "image/png",
-    });
+    const file = createMockImageFile("image.png", "image/png");
     formData.append("file", file);
 
     const request = createMockRequest(formData);
@@ -289,9 +364,7 @@ describe("POST /api/upload", () => {
     const { POST } = await import("../route");
 
     const formData = new FormData();
-    const file = new File(["test image content"], "test.jpg", {
-      type: "image/jpeg",
-    });
+    const file = createMockImageFile("test.jpg", "image/jpeg");
     formData.append("file", file);
 
     const request = createMockRequest(formData);
@@ -317,9 +390,7 @@ describe("POST /api/upload", () => {
     const { POST } = await import("../route");
 
     const formData = new FormData();
-    const file = new File(["test image content"], "test.jpg", {
-      type: "image/jpeg",
-    });
+    const file = createMockImageFile("test.jpg", "image/jpeg");
     formData.append("file", file);
 
     const request = createMockRequest(formData);
@@ -358,7 +429,7 @@ describe("POST /api/upload", () => {
       });
 
       const formData = new FormData();
-      const file = new File(["test image content"], `test.${ext}`, { type });
+      const file = createMockImageFile(`test.${ext}`, type);
       formData.append("file", file);
 
       const request = createMockRequest(formData);
@@ -384,8 +455,12 @@ describe("POST /api/upload", () => {
     const { POST } = await import("../route");
 
     const formData = new FormData();
-    const exactContent = new Uint8Array(5 * 1024 * 1024);
-    const file = new File([exactContent], "exact.jpg", { type: "image/jpeg" });
+    // Create exactly 5MB file with valid JPEG magic bytes
+    const file = createMockImageFile(
+      "exact.jpg",
+      "image/jpeg",
+      5 * 1024 * 1024,
+    );
     formData.append("file", file);
 
     const request = createMockRequest(formData);

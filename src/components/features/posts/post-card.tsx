@@ -1,11 +1,9 @@
-"use client";
-
 import Link from "next/link";
 import Image from "next/image";
 import { format } from "date-fns";
 import { he } from "date-fns/locale";
 import { Post } from "@/types/post.types";
-import { getWordCount, cardVariants } from "@/lib/utils";
+import { getWordCount } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { calculateReadingTime } from "@/lib/utils";
 import {
@@ -15,7 +13,6 @@ import {
   CardHeader,
 } from "@/components/ui/card";
 import { Clock, Calendar, ArrowUpRight } from "lucide-react";
-import { motion } from "framer-motion";
 
 interface PostCardProps {
   post: Post;
@@ -27,18 +24,13 @@ export default function PostCard({ post, priority = false }: PostCardProps) {
   const readingTime = calculateReadingTime(wordCount);
 
   return (
-    <motion.div
-      variants={cardVariants}
-      initial="initial"
-      animate="animate"
-      whileHover="hover"
-      whileTap="tap"
-    >
-      <Card className="group relative pt-0 overflow-hidden hover:shadow-xl transition-all duration-300 bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <div className="animate-fade-in-up">
+      <Card className="group relative pt-0 overflow-hidden hover:shadow-xl transition-all duration-300 bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-background/60 hover:-translate-y-1">
         <Link
           href={`/posts/${post.slug}`}
           className="absolute inset-0 z-10"
           aria-label={post.title}
+          prefetch={true}
         />
         <div className="relative aspect-[16/9] w-full overflow-hidden rounded-t-lg">
           {post.coverImage ? (
@@ -114,6 +106,6 @@ export default function PostCard({ post, priority = false }: PostCardProps) {
           </CardFooter>
         )}
       </Card>
-    </motion.div>
+    </div>
   );
 }

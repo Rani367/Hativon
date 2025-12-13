@@ -71,6 +71,16 @@ export async function verifyAdminPassword(password: string): Promise<boolean> {
     console.warn(
       "[SECURITY WARNING] Admin password is not hashed. Run: pnpm run hash-admin-password",
     );
+
+    // Reject plain-text passwords in production for security
+    if (process.env.NODE_ENV === "production") {
+      console.error(
+        "[SECURITY] Plain-text admin passwords are not allowed in production. " +
+          "Hash your password with: pnpm run hash-admin-password",
+      );
+      return false;
+    }
+
     return safeCompare(password, ADMIN_PASSWORD);
   }
 }

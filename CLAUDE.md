@@ -434,6 +434,9 @@ All API routes follow Next.js 16 App Router conventions (`src/app/api/`):
 
 **Important**: `/api/admin/*` routes use admin panel authentication (ADMIN_PASSWORD), NOT user account authentication. These are two separate systems.
 
+**API Error Response Pattern**:
+All API error responses use `createErrorResponse()` helper from `src/lib/api/response.ts`. Error details are only exposed in development mode, never in production.
+
 ### Type System
 
 **Key Files**: `src/types/`
@@ -583,10 +586,19 @@ The `pnpm run pre-deploy` command validates:
 - `ADMIN_PASSWORD` exists and is strong (min 8 chars recommended)
 - `JWT_SECRET` is at least 32 characters
 - `NEXT_PUBLIC_SITE_URL` is a valid URL
-- `SESSION_DURATION` is reasonable (if set)
+- `SESSION_DURATION` is reasonable (if set, in seconds - default is 7 days / 604800 seconds)
+- `ENABLE_SETUP_ROUTE` - Set to "true" to enable the `/api/setup` endpoint (disabled by default for security)
 - Warns if `POSTGRES_URL` missing (not required, enables database mode)
 
 **Files**: `scripts/validate-env.ts`, `scripts/validate-build.ts`
+
+### File Upload Security
+
+The upload endpoint (`/api/upload`) validates files in two ways:
+1. **MIME type check** - verifies Content-Type starts with 'image/'
+2. **Magic byte validation** - verifies file signature matches known image formats (JPEG, PNG, GIF, WebP)
+
+This prevents MIME type spoofing attacks where malicious files are uploaded with fake Content-Types.
 
 ### Database Schema Updates
 

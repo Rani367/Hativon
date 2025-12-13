@@ -1,6 +1,6 @@
 /**
  * Cached versions of post queries using Next.js unstable_cache
- * Use these in API routes for better performance with automatic revalidation
+ * Use these in pages for instant loading with automatic revalidation
  */
 
 import { unstable_cache } from "next/cache";
@@ -8,6 +8,8 @@ import {
   getPosts as getPostsUncached,
   getPostStats as getPostStatsUncached,
   getPostBySlug as getPostBySlugUncached,
+  getPostsByMonth as getPostsByMonthUncached,
+  getArchiveMonths as getArchiveMonthsUncached,
 } from "./queries";
 
 /**
@@ -49,6 +51,36 @@ export const getCachedPostBySlug = unstable_cache(
     return getPostBySlugUncached(slug);
   },
   ["posts-by-slug"],
+  {
+    revalidate: 60,
+    tags: ["posts"],
+  },
+);
+
+/**
+ * Cached version of getPostsByMonth
+ * Revalidates: 60 seconds or when 'posts' tag is invalidated
+ */
+export const getCachedPostsByMonth = unstable_cache(
+  async (year: number, month: number) => {
+    return getPostsByMonthUncached(year, month);
+  },
+  ["posts-by-month"],
+  {
+    revalidate: 60,
+    tags: ["posts"],
+  },
+);
+
+/**
+ * Cached version of getArchiveMonths
+ * Revalidates: 60 seconds or when 'posts' tag is invalidated
+ */
+export const getCachedArchiveMonths = unstable_cache(
+  async () => {
+    return getArchiveMonthsUncached();
+  },
+  ["archive-months"],
   {
     revalidate: 60,
     tags: ["posts"],

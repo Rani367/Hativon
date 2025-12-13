@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth/middleware";
 import { updateUser } from "@/lib/users";
-import { UserUpdate } from "@/types/user.types";
 import { logError } from "@/lib/logger";
+import { userUpdateSchema } from "@/lib/validation/schemas";
+import { createErrorResponse } from "@/lib/api/response";
 
 /**
  * PATCH /api/user/profile - Update current user's profile
@@ -10,21 +11,25 @@ import { logError } from "@/lib/logger";
 export async function PATCH(request: NextRequest) {
   try {
     const user = await requireAuth();
-    const body: UserUpdate = await request.json();
+    const body = await request.json();
 
-    // Validate grade and classNumber if provided
-    if (body.grade && !["ז", "ח", "ט", "י"].includes(body.grade)) {
-      return NextResponse.json({ error: "כיתה לא תקינה" }, { status: 400 });
-    }
+    // Validate request body with Zod
+    const validation = userUpdateSchema.safeParse(body);
 
-    if (body.classNumber && (body.classNumber < 1 || body.classNumber > 4)) {
+    if (!validation.success) {
+      const errors: Record<string, string> = {};
+      validation.error.issues.forEach((err) => {
+        const path = err.path.join(".");
+        errors[path] = err.message;
+      });
+
       return NextResponse.json(
-        { error: "מספר כיתה חייב להיות בין 1 ל-4" },
+        { error: "Invalid profile data", errors },
         { status: 400 },
       );
     }
 
-    const updatedUser = await updateUser(user.id, body);
+    const updatedUser = await updateUser(user.id, validation.data);
 
     return NextResponse.json({ user: updatedUser });
   } catch (error) {
@@ -39,9 +44,6 @@ export async function PATCH(request: NextRequest) {
     }
 
     logError("Error updating profile:", error);
-    return NextResponse.json(
-      { error: `Failed to update profile: ${errorMessage}` },
-      { status: 500 },
-    );
+    return createErrorResponse("Failed to update profile", error, 500);
   }
 }

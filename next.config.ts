@@ -53,6 +53,7 @@ const nextConfig: NextConfig = {
       "@tiptap/starter-kit",
       "@tiptap/extension-link",
       "@tiptap/extension-placeholder",
+      "framer-motion",
     ],
     // Enable optimistic client cache
     optimisticClientCache: true,
@@ -88,6 +89,10 @@ const nextConfig: NextConfig = {
       {
         source: "/:path*",
         headers: [
+          {
+            key: "Strict-Transport-Security",
+            value: "max-age=31536000; includeSubDomains",
+          },
           {
             key: "X-Frame-Options",
             value: "DENY",

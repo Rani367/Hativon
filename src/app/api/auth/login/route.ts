@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { timingSafeEqual } from "crypto";
 import { validatePassword, updateLastLogin } from "@/lib/users";
 import { createAuthCookie } from "@/lib/auth/jwt";
 import { getAdminClearCookie } from "@/lib/auth/admin";
@@ -6,6 +7,18 @@ import { isDatabaseAvailable } from "@/lib/db/client";
 import { logError } from "@/lib/logger";
 import { userLoginSchema } from "@/lib/validation/schemas";
 import { checkRateLimit, loginRateLimiter } from "@/lib/rate-limit";
+
+/**
+ * Constant-time string comparison to prevent timing attacks
+ */
+function safeCompare(a: string, b: string): boolean {
+  const maxLen = Math.max(a.length, b.length);
+  const bufA = Buffer.alloc(maxLen);
+  const bufB = Buffer.alloc(maxLen);
+  bufA.write(a);
+  bufB.write(b);
+  return timingSafeEqual(bufA, bufB) && a.length === b.length;
+}
 
 export async function POST(request: NextRequest) {
   // Rate limiting: 5 login attempts per 15 minutes
@@ -77,8 +90,8 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      // Check if credentials match admin password
-      if (username === "admin" && password === adminPassword) {
+      // Check if credentials match admin password using constant-time comparison
+      if (username === "admin" && safeCompare(password, adminPassword)) {
         // Create a mock admin user for legacy mode
         const legacyAdminUser = {
           id: "legacy-admin",

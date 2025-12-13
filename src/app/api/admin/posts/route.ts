@@ -11,10 +11,29 @@ import { getCurrentUser } from "@/lib/auth/middleware";
 import { isAdminAuthenticated } from "@/lib/auth/admin";
 import { logError } from "@/lib/logger";
 import { postInputSchema } from "@/lib/validation/schemas";
+import { createRateLimiter, getClientIdentifier } from "@/lib/rate-limit";
+
+// Rate limiter for listing posts: 100 requests per minute
+const listRateLimiter = createRateLimiter({
+  limit: 100,
+  window: 60 * 1000, // 1 minute
+});
 
 // GET /api/admin/posts - Get all posts (admin) or user's posts (regular user)
 export async function GET(request: NextRequest) {
   try {
+    // Rate limiting
+    const identifier = getClientIdentifier(request);
+    const rateLimitResult = await listRateLimiter.check(
+      `admin-posts-list:${identifier}`,
+    );
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        { error: "Too many requests. Please slow down." },
+        { status: 429 },
+      );
+    }
+
     // Check authentication - Admin panel auth takes priority over user JWT auth
     const isAdmin = await isAdminAuthenticated();
     const user = await getCurrentUser();
@@ -33,6 +52,26 @@ export async function GET(request: NextRequest) {
 
     // Check if pagination is requested
     const usePagination = limit !== null || offset !== null;
+
+    // Validate pagination parameters
+    if (usePagination) {
+      const limitVal = limit ? parseInt(limit, 10) : 10;
+      const offsetVal = offset ? parseInt(offset, 10) : 0;
+
+      if (isNaN(limitVal) || limitVal < 1 || limitVal > 100) {
+        return NextResponse.json(
+          { error: "Invalid limit - must be between 1 and 100" },
+          { status: 400 },
+        );
+      }
+      if (isNaN(offsetVal) || offsetVal < 0) {
+        return NextResponse.json(
+          { error: "Invalid offset - must be a non-negative number" },
+          { status: 400 },
+        );
+      }
+    }
+
     const paginationOptions = usePagination
       ? {
           limit: limit ? parseInt(limit, 10) : 10,
