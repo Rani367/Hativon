@@ -38,13 +38,12 @@ export default function PaginatedPosts({
       </div>
 
       {hasMore && (
-        <div className="flex justify-center mt-12 animate-fade-in">
+        <div className="flex justify-center mt-12">
           <Button
             onClick={loadMore}
             disabled={isPending}
             size="lg"
             variant="outline"
-            className="transition-transform hover:scale-105 active:scale-95"
           >
             {isPending ? (
               <>
