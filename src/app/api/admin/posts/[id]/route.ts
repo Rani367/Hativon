@@ -6,6 +6,7 @@ import {
   handleUpdatePost,
   handleDeletePost,
 } from "@/lib/api/handlers/posts";
+import { createErrorResponse } from "@/lib/api/response";
 
 // GET /api/admin/posts/[id] - Get single post
 export async function GET(
@@ -25,11 +26,7 @@ export async function GET(
     const { id } = await params;
     return handleGetPost(id, user?.id, isAdmin);
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    return NextResponse.json(
-      { error: "Failed to fetch post", details: message },
-      { status: 500 },
-    );
+    return createErrorResponse("Failed to fetch post", error, 500);
   }
 }
 
@@ -53,11 +50,7 @@ export async function PATCH(
 
     return handleUpdatePost(id, body, user?.id, isAdmin);
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    return NextResponse.json(
-      { error: "Failed to update post", details: message },
-      { status: 500 },
-    );
+    return createErrorResponse("Failed to update post", error, 500);
   }
 }
 
@@ -79,10 +72,6 @@ export async function DELETE(
     const { id } = await params;
     return handleDeletePost(id, user?.id, isAdmin);
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    return NextResponse.json(
-      { error: "Failed to delete post", details: message },
-      { status: 500 },
-    );
+    return createErrorResponse("Failed to delete post", error, 500);
   }
 }

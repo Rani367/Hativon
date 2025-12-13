@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getUserById, updateUser, deleteUser } from "@/lib/users";
 import { requireAdminAuth } from "@/lib/auth/admin";
-import { UserUpdate } from "@/types/user.types";
 import { isDatabaseAvailable } from "@/lib/db/client";
 import { logError } from "@/lib/logger";
+import { userUpdateSchema } from "@/lib/validation/schemas";
+import { createErrorResponse } from "@/lib/api/response";
 
 /**
  * GET /api/admin/users/[id] - Get single user (admin only)
@@ -39,10 +40,7 @@ export async function GET(
     }
 
     logError("Error fetching user:", error);
-    return NextResponse.json(
-      { error: `Failed to fetch user: ${errorMessage}` },
-      { status: 500 },
-    );
+    return createErrorResponse("Failed to fetch user", error, 500);
   }
 }
 
@@ -65,9 +63,25 @@ export async function PATCH(
     }
 
     const { id } = await params;
-    const body: UserUpdate = await request.json();
+    const body = await request.json();
 
-    const updatedUser = await updateUser(id, body);
+    // Validate request body with Zod
+    const validation = userUpdateSchema.safeParse(body);
+
+    if (!validation.success) {
+      const errors: Record<string, string> = {};
+      validation.error.issues.forEach((err) => {
+        const path = err.path.join(".");
+        errors[path] = err.message;
+      });
+
+      return NextResponse.json(
+        { error: "Invalid user data", errors },
+        { status: 400 },
+      );
+    }
+
+    const updatedUser = await updateUser(id, validation.data);
 
     return NextResponse.json({ user: updatedUser });
   } catch (error) {
@@ -82,10 +96,7 @@ export async function PATCH(
     }
 
     logError("Error updating user:", error);
-    return NextResponse.json(
-      { error: `Failed to update user: ${errorMessage}` },
-      { status: 500 },
-    );
+    return createErrorResponse("Failed to update user", error, 500);
   }
 }
 
@@ -126,9 +137,6 @@ export async function DELETE(
     }
 
     logError("Error deleting user:", error);
-    return NextResponse.json(
-      { error: `Failed to delete user: ${errorMessage}` },
-      { status: 500 },
-    );
+    return createErrorResponse("Failed to delete user", error, 500);
   }
 }
