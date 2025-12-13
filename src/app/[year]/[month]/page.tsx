@@ -11,7 +11,6 @@ import {
 } from "@/lib/date/months";
 import { EmptyPostsState } from "@/components/features/posts/empty-posts-state";
 import PaginatedPosts from "@/components/features/posts/paginated-posts";
-import RevealFx from "@/components/ui/RevealFx";
 
 // Static generation with ISR - pages are pre-built at build time
 export const revalidate = 60;
@@ -59,25 +58,19 @@ export default async function ArchivePage({ params }: ArchivePageProps) {
 
   return (
     <div className="container mx-auto px-4 py-12">
-      <RevealFx translateY="4" delay={0}>
-        <div className="mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold text-center">
-            גיליון {hebrewMonth} {year}
-          </h1>
-          <p className="text-center text-muted-foreground mt-2">
-            {posts.length} {posts.length === 1 ? "כתבה" : "כתבות"}
-          </p>
-        </div>
-      </RevealFx>
+      <div className="mb-8">
+        <h1 className="text-3xl md:text-4xl font-bold text-center">
+          גיליון {hebrewMonth} {year}
+        </h1>
+        <p className="text-center text-muted-foreground mt-2">
+          {posts.length} {posts.length === 1 ? "כתבה" : "כתבות"}
+        </p>
+      </div>
 
       {posts.length === 0 ? (
-        <RevealFx translateY="6" delay={0.2}>
-          <EmptyPostsState />
-        </RevealFx>
+        <EmptyPostsState />
       ) : (
-        <RevealFx translateY="8" delay={0.2}>
-          <PaginatedPosts initialPosts={posts} postsPerPage={12} />
-        </RevealFx>
+        <PaginatedPosts initialPosts={posts} postsPerPage={12} />
       )}
     </div>
   );
