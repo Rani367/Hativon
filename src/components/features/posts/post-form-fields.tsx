@@ -4,7 +4,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { ImageUpload } from "./image-upload";
-import { RichTextEditor } from "@/components/features/editor";
+import { LazyRichTextEditor } from "@/components/features/editor";
 
 interface PostFormFieldsProps {
   title: string;
@@ -84,7 +84,7 @@ export function PostFormFields({
 
       <div className="space-y-2">
         <Label htmlFor={contentId}>תוכן</Label>
-        <RichTextEditor
+        <LazyRichTextEditor
           id={contentId}
           value={content}
           onChange={onContentChange}

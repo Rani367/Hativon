@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { calculateReadingTime } from "@/lib/utils";
 import { components } from "@/components/features/posts/mdx-component";
 import remarkGfm from "remark-gfm";
-import rehypeRaw from "rehype-raw";
+import rehypeSanitize from "rehype-sanitize";
 
 interface PostPageProps {
   params: Promise<{ slug: string }>;
@@ -118,11 +118,14 @@ export default async function PostPage({ params }: PostPageProps) {
     },
   };
 
+  // Escape </script> sequences in JSON-LD to prevent script breakout attacks
+  const safeJsonLd = JSON.stringify(jsonLd).replace(/</g, "\\u003c");
+
   return (
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: safeJsonLd }}
       />
       <article className="max-w-4xl mx-auto prose prose-lg dark:prose-invert">
         {post.coverImage && (
@@ -187,7 +190,7 @@ export default async function PostPage({ params }: PostPageProps) {
           <ReactMarkdown
             components={components}
             remarkPlugins={[remarkGfm]}
-            rehypePlugins={[rehypeRaw]}
+            rehypePlugins={[rehypeSanitize]}
           >
             {post.content}
           </ReactMarkdown>

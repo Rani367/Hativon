@@ -14,7 +14,7 @@ function getJwtSecret(): string {
 }
 
 const JWT_SECRET = getJwtSecret();
-const SESSION_DURATION = parseInt(process.env.SESSION_DURATION || "172800"); // 2 days default
+const SESSION_DURATION = parseInt(process.env.SESSION_DURATION || "604800"); // 7 days default
 
 export function generateToken(user: User): string {
   const payload: JWTPayload = {
