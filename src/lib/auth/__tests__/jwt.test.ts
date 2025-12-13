@@ -22,39 +22,17 @@ const mockUser: User = {
 
 describe("JWT Token Management", () => {
   describe("module initialization", () => {
-    it("warns when JWT_SECRET is not set in production", async () => {
-      const consoleWarnSpy = vi
-        .spyOn(console, "warn")
-        .mockImplementation(() => {});
-
+    it("throws error when JWT_SECRET is not set", async () => {
       vi.stubEnv("JWT_SECRET", "");
-      vi.stubEnv("NODE_ENV", "production");
 
       vi.resetModules();
-      await import("../jwt");
 
-      expect(consoleWarnSpy).toHaveBeenCalledWith(
-        "WARNING: JWT_SECRET not set in production environment!",
+      await expect(async () => {
+        await import("../jwt");
+      }).rejects.toThrow(
+        "JWT_SECRET environment variable must be set. Generate one with: openssl rand -base64 32",
       );
 
-      consoleWarnSpy.mockRestore();
-      vi.unstubAllEnvs();
-    });
-
-    it("does not warn in development without JWT_SECRET", async () => {
-      const consoleWarnSpy = vi
-        .spyOn(console, "warn")
-        .mockImplementation(() => {});
-
-      vi.stubEnv("JWT_SECRET", "");
-      vi.stubEnv("NODE_ENV", "development");
-
-      vi.resetModules();
-      await import("../jwt");
-
-      expect(consoleWarnSpy).not.toHaveBeenCalled();
-
-      consoleWarnSpy.mockRestore();
       vi.unstubAllEnvs();
     });
   });
@@ -84,13 +62,13 @@ describe("JWT Token Management", () => {
       expect(typeof decoded.exp).toBe("number");
     });
 
-    it("sets expiration to 7 days by default", () => {
+    it("sets expiration to 2 days by default", () => {
       const token = generateToken(mockUser);
       const decoded = jwt.decode(token) as { iat: number; exp: number };
-      const sevenDaysInSeconds = 604800;
+      const twoDaysInSeconds = 172800;
 
       const expiresIn = decoded.exp - decoded.iat;
-      expect(expiresIn).toBe(sevenDaysInSeconds);
+      expect(expiresIn).toBe(twoDaysInSeconds);
     });
 
     it("does not include sensitive user information", () => {

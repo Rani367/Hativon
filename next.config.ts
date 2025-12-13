@@ -110,9 +110,13 @@ const nextConfig: NextConfig = {
           },
           {
             key: "Content-Security-Policy",
+            // Note: 'unsafe-inline' for scripts is required by Next.js for inline script hydration
+            // Consider using nonces in a custom Document if stricter CSP is needed
+            // 'unsafe-eval' has been removed for security - if issues arise, check for
+            // libraries that require eval and consider alternatives
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-eval' 'unsafe-inline'",
+              "script-src 'self' 'unsafe-inline'",
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "img-src 'self' data: blob: https:",
               "font-src 'self' https://fonts.gstatic.com",
