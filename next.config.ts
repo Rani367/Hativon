@@ -60,6 +60,12 @@ const nextConfig: NextConfig = {
     webpackBuildWorker: true,
   },
 
+  // Skip type checking during build (done locally via pre-deploy)
+  // Note: ESLint is not run during Next.js 16 builds (removed in v16)
+  typescript: {
+    ignoreBuildErrors: true,
+  },
+
   // Production optimizations
   compiler: {
     removeConsole:
