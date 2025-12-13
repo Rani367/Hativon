@@ -2,11 +2,35 @@ import { cookies } from "next/headers";
 import { serialize } from "cookie";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
+import { timingSafeEqual } from "crypto";
 
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "";
-const JWT_SECRET =
-  process.env.JWT_SECRET || "your-secret-key-change-this-in-production";
+// Require ADMIN_PASSWORD to be set - no fallback for security
+function getAdminPassword(): string {
+  const password = process.env.ADMIN_PASSWORD;
+  if (!password) {
+    throw new Error(
+      "ADMIN_PASSWORD environment variable must be set for admin panel access.",
+    );
+  }
+  return password;
+}
+
+// Require JWT_SECRET to be set - no fallback for security
+function getJwtSecret(): string {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error(
+      "JWT_SECRET environment variable must be set. Generate one with: openssl rand -base64 32",
+    );
+  }
+  return secret;
+}
+
+const ADMIN_PASSWORD = getAdminPassword();
+const JWT_SECRET = getJwtSecret();
 const ADMIN_COOKIE_NAME = "adminAuth";
+const ADMIN_TOKEN_EXPIRY = "4h"; // 4 hours
+const ADMIN_COOKIE_MAX_AGE = 4 * 60 * 60; // 4 hours in seconds
 
 /**
  * Admin authentication payload
@@ -17,16 +41,24 @@ interface AdminAuthPayload {
 }
 
 /**
+ * Constant-time string comparison to prevent timing attacks
+ */
+function safeCompare(a: string, b: string): boolean {
+  // Pad strings to same length to prevent length-based timing attacks
+  const maxLen = Math.max(a.length, b.length);
+  const bufA = Buffer.alloc(maxLen);
+  const bufB = Buffer.alloc(maxLen);
+  bufA.write(a);
+  bufB.write(b);
+  return timingSafeEqual(bufA, bufB) && a.length === b.length;
+}
+
+/**
  * Verify admin password
- * Uses bcrypt.compare() to prevent timing attacks
- * Supports both hashed and plain text passwords for backward compatibility
+ * Uses bcrypt.compare() for hashed passwords (constant-time)
+ * Uses timingSafeEqual for plain text passwords (backward compatibility)
  */
 export async function verifyAdminPassword(password: string): Promise<boolean> {
-  if (!ADMIN_PASSWORD) {
-    console.error("ADMIN_PASSWORD environment variable is not set");
-    return false;
-  }
-
   // Check if stored password is a bcrypt hash (starts with $2a$, $2b$, or $2y$)
   const isBcryptHash = /^\$2[aby]\$/.test(ADMIN_PASSWORD);
 
@@ -35,11 +67,11 @@ export async function verifyAdminPassword(password: string): Promise<boolean> {
     return await bcrypt.compare(password, ADMIN_PASSWORD);
   } else {
     // For plain text passwords (backward compatibility)
-    // Still vulnerable to timing attacks but allows gradual migration
+    // Use constant-time comparison to prevent timing attacks
     console.warn(
       "[SECURITY WARNING] Admin password is not hashed. Run: pnpm run hash-admin-password",
     );
-    return password === ADMIN_PASSWORD;
+    return safeCompare(password, ADMIN_PASSWORD);
   }
 }
 
@@ -52,8 +84,10 @@ function createAdminToken(): string {
     timestamp: Date.now(),
   };
 
-  // No expiry on token - session lasts until browser closes (session cookie)
-  const token = jwt.sign(payload, JWT_SECRET);
+  // Token expires after 4 hours for security
+  const token = jwt.sign(payload, JWT_SECRET, {
+    expiresIn: ADMIN_TOKEN_EXPIRY,
+  });
 
   return token;
 }
@@ -71,7 +105,7 @@ function verifyAdminToken(token: string): boolean {
 }
 
 /**
- * Set admin authentication cookie (session-based - expires when browser closes)
+ * Set admin authentication cookie (expires after 4 hours)
  */
 export async function setAdminAuth(): Promise<void> {
   const token = createAdminToken();
@@ -80,8 +114,8 @@ export async function setAdminAuth(): Promise<void> {
   cookieStore.set(ADMIN_COOKIE_NAME, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    // No maxAge - makes this a session cookie that expires when browser closes
+    sameSite: "strict",
+    maxAge: ADMIN_COOKIE_MAX_AGE,
     path: "/",
   });
 }
@@ -102,7 +136,7 @@ export function getAdminClearCookie(): string {
   return serialize(ADMIN_COOKIE_NAME, "", {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
+    sameSite: "strict",
     maxAge: 0,
     path: "/",
   });

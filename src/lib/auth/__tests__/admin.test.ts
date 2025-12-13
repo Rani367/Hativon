@@ -39,21 +39,14 @@ describe("Admin Authentication", () => {
       expect(result).toBe(false);
     });
 
-    it("returns false when ADMIN_PASSWORD env is not set", async () => {
-      const consoleErrorSpy = vi
-        .spyOn(console, "error")
-        .mockImplementation(() => {});
+    it("throws error when ADMIN_PASSWORD env is not set", async () => {
       process.env.ADMIN_PASSWORD = "";
-      const { verifyAdminPassword } = await import("../admin");
 
-      const result = await verifyAdminPassword("any-password");
-
-      expect(result).toBe(false);
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        "ADMIN_PASSWORD environment variable is not set",
+      await expect(async () => {
+        await import("../admin");
+      }).rejects.toThrow(
+        "ADMIN_PASSWORD environment variable must be set for admin panel access.",
       );
-
-      consoleErrorSpy.mockRestore();
     });
 
     it("is case-sensitive and requires exact match", async () => {
@@ -136,7 +129,7 @@ describe("Admin Authentication", () => {
       vi.doUnmock("next/headers");
     });
 
-    it("creates JWT token and sets HTTP-only session cookie", async () => {
+    it("creates JWT token and sets HTTP-only cookie with 4 hour expiry", async () => {
       const { setAdminAuth } = await import("../admin");
 
       await setAdminAuth();
@@ -149,7 +142,8 @@ describe("Admin Authentication", () => {
       expect(options).toEqual({
         httpOnly: true,
         secure: false,
-        sameSite: "lax",
+        sameSite: "strict",
+        maxAge: 14400, // 4 hours
         path: "/",
       });
 
@@ -176,14 +170,14 @@ describe("Admin Authentication", () => {
       vi.unstubAllEnvs();
     });
 
-    it("creates session cookie without maxAge", async () => {
+    it("creates cookie with 4 hour maxAge", async () => {
       const { setAdminAuth } = await import("../admin");
 
       await setAdminAuth();
 
       const [, , options] = mockCookies.set.mock.calls[0];
 
-      expect(options.maxAge).toBeUndefined();
+      expect(options.maxAge).toBe(14400); // 4 hours in seconds
     });
   });
 
@@ -235,7 +229,7 @@ describe("Admin Authentication", () => {
       expect(result).toContain("adminAuth=");
       expect(result).toContain("Max-Age=0");
       expect(result).toContain("HttpOnly");
-      expect(result).toContain("SameSite=Lax");
+      expect(result).toContain("SameSite=Strict");
       expect(result).toContain("Path=/");
     });
 

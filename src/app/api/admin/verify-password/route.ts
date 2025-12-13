@@ -1,13 +1,45 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyAdminPassword, setAdminAuth } from "@/lib/auth/admin";
 import { logError } from "@/lib/logger";
+import { createRateLimiter, getClientIdentifier } from "@/lib/rate-limit";
+
+// Rate limiter: 5 attempts per 15 minutes
+const adminPasswordRateLimiter = createRateLimiter({
+  limit: 5,
+  window: 15 * 60 * 1000, // 15 minutes
+});
 
 /**
  * POST /api/admin/verify-password - Verify admin password
  * No user authentication required - admin panel is accessible to anyone with the password
+ * Rate limited: 5 attempts per 15 minutes
  */
 export async function POST(request: NextRequest) {
   try {
+    // Rate limiting
+    const identifier = getClientIdentifier(request);
+    const rateLimitResult = await adminPasswordRateLimiter.check(
+      `admin-verify:${identifier}`,
+    );
+
+    if (!rateLimitResult.success) {
+      const resetDate = new Date(rateLimitResult.reset);
+      return NextResponse.json(
+        {
+          error: "Too many attempts. Try again later.",
+          resetAt: resetDate.toISOString(),
+        },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": String(
+              Math.ceil((rateLimitResult.reset - Date.now()) / 1000),
+            ),
+          },
+        },
+      );
+    }
+
     const body = await request.json();
     const { password } = body;
 
