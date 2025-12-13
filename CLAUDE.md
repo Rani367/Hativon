@@ -754,29 +754,27 @@ All utility scripts are in `scripts/`:
 
 ### Deployment Optimization
 
-The project uses two different build commands optimized for different contexts:
+**Zero-Check Vercel Build**: All validation, testing, and checks run locally via `pnpm run pre-deploy`. Vercel only runs `next build` with no additional checks.
 
 **Local Pre-Deploy** (`pnpm run pre-deploy`):
 - Runs all 244 tests
 - Runs comprehensive validation (100+ checks)
 - Builds the application
 - Prompts for git commit
-- Takes ~15-20 seconds
 - Use this before committing code locally
 
-**Vercel Build** (`pnpm run vercel-build`):
-- Runs only critical checks (environment, TypeScript, security)
-- Skips tests (run in CI/CD instead)
-- Skips comprehensive validation (already done locally)
-- Builds the application
-- Takes ~10-15 seconds (30-40% faster)
-- Automatically used by Vercel on deployment
+**Vercel Build** (automatic on deploy):
+- Runs ONLY `next build` - no checks, no validation, no tests
+- TypeScript errors ignored (`ignoreBuildErrors: true`)
+- ESLint not run (removed in Next.js 16)
+- No custom build scripts (`--ignore-scripts` on install)
+- Fastest possible deployment
 
 **Why this matters:**
-- Faster deployments on Vercel (no redundant test/validation runs)
-- Tests and validation still enforced locally before commit
-- CI/CD can run full test suite independently
-- Better separation of concerns (local vs. deployment vs. CI/CD)
+- All quality checks enforced locally before commit
+- Vercel build cannot fail due to validation (only real build issues)
+- Significantly faster deployments
+- No memory issues from running TypeScript checker twice
 
 ### Post-Deployment Setup (First Time)
 
