@@ -9,6 +9,18 @@ import {
 } from "react";
 import styles from "./RevealFx.module.scss";
 
+const SESSION_KEY = "revealFxPlayed";
+
+function hasAnimationPlayed(): boolean {
+  if (typeof window === "undefined") return false;
+  return sessionStorage.getItem(SESSION_KEY) === "true";
+}
+
+function markAnimationPlayed(): void {
+  if (typeof window === "undefined") return;
+  sessionStorage.setItem(SESSION_KEY, "true");
+}
+
 interface RevealFxProps extends React.HTMLAttributes<HTMLDivElement> {
   children: ReactNode;
   speed?: "fast" | "medium" | "slow" | number;
@@ -35,8 +47,12 @@ const RevealFx = forwardRef<HTMLDivElement, RevealFxProps>(
     },
     ref,
   ) => {
-    const [isRevealed, setIsRevealed] = useState(revealedByDefault);
-    const [maskRemoved, setMaskRemoved] = useState(false);
+    // Skip animation if already played this session
+    const skipAnimation = hasAnimationPlayed();
+    const [isRevealed, setIsRevealed] = useState(
+      revealedByDefault || skipAnimation,
+    );
+    const [maskRemoved, setMaskRemoved] = useState(skipAnimation);
     const transitionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     const getSpeedDurationMs = () => {
@@ -61,6 +77,9 @@ const RevealFx = forwardRef<HTMLDivElement, RevealFxProps>(
     };
 
     useEffect(() => {
+      // Skip if animation already played this session
+      if (skipAnimation) return;
+
       // If delay is 0, execute on next animation frame to allow initial render
       if (delay === 0) {
         // Use requestAnimationFrame to ensure DOM renders initial state first
@@ -68,6 +87,7 @@ const RevealFx = forwardRef<HTMLDivElement, RevealFxProps>(
           setIsRevealed(true);
           transitionTimeoutRef.current = setTimeout(() => {
             setMaskRemoved(true);
+            markAnimationPlayed();
           }, getSpeedDurationMs());
         });
 
@@ -84,6 +104,7 @@ const RevealFx = forwardRef<HTMLDivElement, RevealFxProps>(
         setIsRevealed(true);
         transitionTimeoutRef.current = setTimeout(() => {
           setMaskRemoved(true);
+          markAnimationPlayed();
         }, getSpeedDurationMs());
       }, delay * 1000);
 
@@ -93,7 +114,7 @@ const RevealFx = forwardRef<HTMLDivElement, RevealFxProps>(
           clearTimeout(transitionTimeoutRef.current);
         }
       };
-    }, [delay]);
+    }, [delay, skipAnimation]);
 
     useEffect(() => {
       if (trigger !== undefined) {
