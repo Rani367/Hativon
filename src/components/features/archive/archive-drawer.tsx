@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { X, ChevronDown, ChevronUp, Calendar } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import type { ArchiveMonth } from "@/lib/posts/queries";
@@ -43,33 +43,37 @@ export function ArchiveDrawer({
   const isLatestPage =
     currentYear === latestYear && currentMonth === latestMonth;
 
-  // Group archives by year
-  const yearGroups: YearGroup[] = [];
-  const yearsMap = new Map<number, YearGroup>();
+  // Group archives by year - memoized to avoid recalculating on every render
+  const yearGroups = useMemo(() => {
+    const groups: YearGroup[] = [];
+    const yearsMap = new Map<number, YearGroup>();
 
-  for (const archive of archives) {
-    if (!yearsMap.has(archive.year)) {
-      const yearGroup: YearGroup = {
-        year: archive.year,
-        months: [],
-      };
-      yearsMap.set(archive.year, yearGroup);
-      yearGroups.push(yearGroup);
+    for (const archive of archives) {
+      if (!yearsMap.has(archive.year)) {
+        const yearGroup: YearGroup = {
+          year: archive.year,
+          months: [],
+        };
+        yearsMap.set(archive.year, yearGroup);
+        groups.push(yearGroup);
+      }
+
+      const yearGroup = yearsMap.get(archive.year);
+      const monthNameEn = monthNumberToEnglish(archive.month);
+      const monthNameHe = monthNumberToHebrew(archive.month);
+
+      if (yearGroup && monthNameEn && monthNameHe) {
+        yearGroup.months.push({
+          month: archive.month,
+          monthNameEn,
+          monthNameHe,
+          count: archive.count,
+        });
+      }
     }
 
-    const yearGroup = yearsMap.get(archive.year);
-    const monthNameEn = monthNumberToEnglish(archive.month);
-    const monthNameHe = monthNumberToHebrew(archive.month);
-
-    if (yearGroup && monthNameEn && monthNameHe) {
-      yearGroup.months.push({
-        month: archive.month,
-        monthNameEn,
-        monthNameHe,
-        count: archive.count,
-      });
-    }
-  }
+    return groups;
+  }, [archives]);
 
   // State to track which years are expanded (default: current year)
   const [expandedYears, setExpandedYears] = useState<Set<number>>(

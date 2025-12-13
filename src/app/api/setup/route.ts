@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db/client";
 import { head } from "@vercel/blob";
 import { logError } from "@/lib/logger";
+import { createRateLimiter, getClientIdentifier } from "@/lib/rate-limit";
+import { verifyAdminPassword } from "@/lib/auth/admin";
 
 /**
  * One-time setup endpoint for Vercel production
@@ -11,22 +13,59 @@ import { logError } from "@/lib/logger";
  * 2. Migrates existing posts from Blob storage to PostgreSQL
  *
  * Usage:
- * - After first deployment to Vercel, visit: https://yourdomain.com/api/setup?password=YOUR_ADMIN_PASSWORD
+ * - After first deployment to Vercel, POST to: https://yourdomain.com/api/setup
+ * - Body: { "password": "YOUR_ADMIN_PASSWORD" }
  * - Only works once - subsequent calls will report "already initialized"
- * - Requires ADMIN_PASSWORD as query parameter for security
+ * - Rate limited: 3 attempts per hour
  */
 
 const BLOB_FILENAME = "posts.json";
 
-export async function GET(request: NextRequest) {
-  try {
-    // Security: Require admin password
-    const { searchParams } = new URL(request.url);
-    const password = searchParams.get("password");
+// Rate limiter: 3 attempts per hour
+const setupRateLimiter = createRateLimiter({
+  limit: 3,
+  window: 60 * 60 * 1000, // 1 hour
+});
 
-    if (password !== process.env.ADMIN_PASSWORD) {
+export async function POST(request: NextRequest) {
+  try {
+    // Rate limiting
+    const identifier = getClientIdentifier(request);
+    const rateLimitResult = await setupRateLimiter.check(`setup:${identifier}`);
+
+    if (!rateLimitResult.success) {
       return NextResponse.json(
-        { error: "Unauthorized. Provide ?password=YOUR_ADMIN_PASSWORD" },
+        { error: "Too many setup attempts. Try again later." },
+        { status: 429 },
+      );
+    }
+
+    // Security: Require admin password in request body
+    let body: { password?: string };
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json(
+        { error: "Invalid JSON body. Expected: { password: string }" },
+        { status: 400 },
+      );
+    }
+
+    const { password } = body;
+
+    if (!password) {
+      return NextResponse.json(
+        { error: "Password is required in request body" },
+        { status: 400 },
+      );
+    }
+
+    // Use secure password verification (constant-time comparison)
+    const isValidPassword = await verifyAdminPassword(password);
+
+    if (!isValidPassword) {
+      return NextResponse.json(
+        { error: "Invalid admin password" },
         { status: 401 },
       );
     }
@@ -234,15 +273,11 @@ export async function GET(request: NextRequest) {
       logs,
     });
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    const errorStack = error instanceof Error ? error.stack : undefined;
-
     logError("Setup error:", error);
     return NextResponse.json(
       {
         success: false,
-        error: errorMessage,
-        stack: errorStack,
+        error: "Setup failed. Check server logs for details.",
       },
       { status: 500 },
     );

@@ -18,11 +18,7 @@ vi.mock("next/cache", () => ({
   revalidateTag: vi.fn(),
 }));
 
-import {
-  handleGetPost,
-  handleUpdatePost,
-  handleDeletePost,
-} from "../posts";
+import { handleGetPost, handleUpdatePost, handleDeletePost } from "../posts";
 import {
   getPostById,
   updatePost,
@@ -125,6 +121,7 @@ describe("Post Handlers", () => {
 
     it("updates post when user has permission", async () => {
       const updatedPost = { ...mockPost, title: "Updated Title" };
+      vi.mocked(getPostById).mockResolvedValue(mockPost);
       vi.mocked(canUserEditPost).mockResolvedValue(true);
       vi.mocked(updatePost).mockResolvedValue(updatedPost);
 
@@ -138,12 +135,19 @@ describe("Post Handlers", () => {
 
       expect(response.status).toBe(200);
       expect(body.title).toBe("Updated Title");
-      expect(canUserEditPost).toHaveBeenCalledWith("user-456", "post-123", false);
+      // Now passes existing post as 4th argument to avoid N+1 query
+      expect(canUserEditPost).toHaveBeenCalledWith(
+        "user-456",
+        "post-123",
+        false,
+        mockPost,
+      );
       expect(revalidateTag).toHaveBeenCalledWith("posts", "max");
     });
 
     it("updates post when admin", async () => {
       const updatedPost = { ...mockPost, title: "Updated Title" };
+      vi.mocked(getPostById).mockResolvedValue(mockPost);
       vi.mocked(canUserEditPost).mockResolvedValue(true);
       vi.mocked(updatePost).mockResolvedValue(updatedPost);
 
@@ -160,10 +164,12 @@ describe("Post Handlers", () => {
         "legacy-admin",
         "post-123",
         true,
+        mockPost,
       );
     });
 
     it("returns 403 when user cannot edit post", async () => {
+      vi.mocked(getPostById).mockResolvedValue(mockPost);
       vi.mocked(canUserEditPost).mockResolvedValue(false);
 
       const response = await handleUpdatePost(
@@ -180,6 +186,7 @@ describe("Post Handlers", () => {
     });
 
     it("returns 400 for invalid update data", async () => {
+      vi.mocked(getPostById).mockResolvedValue(mockPost);
       vi.mocked(canUserEditPost).mockResolvedValue(true);
 
       const invalidBody = {
@@ -200,9 +207,15 @@ describe("Post Handlers", () => {
     });
 
     it("returns 400 when body is empty object", async () => {
+      vi.mocked(getPostById).mockResolvedValue(mockPost);
       vi.mocked(canUserEditPost).mockResolvedValue(true);
 
-      const response = await handleUpdatePost("post-123", {}, "user-456", false);
+      const response = await handleUpdatePost(
+        "post-123",
+        {},
+        "user-456",
+        false,
+      );
       const body = await response.json();
 
       expect(response.status).toBe(400);
@@ -210,6 +223,7 @@ describe("Post Handlers", () => {
     });
 
     it("returns 404 when post not found during update", async () => {
+      vi.mocked(getPostById).mockResolvedValue(mockPost);
       vi.mocked(canUserEditPost).mockResolvedValue(true);
       vi.mocked(updatePost).mockResolvedValue(null);
 
@@ -278,6 +292,7 @@ describe("Post Handlers", () => {
 
   describe("handleDeletePost", () => {
     it("deletes post when user has permission", async () => {
+      vi.mocked(getPostById).mockResolvedValue(mockPost);
       vi.mocked(canUserDeletePost).mockResolvedValue(true);
       vi.mocked(deletePost).mockResolvedValue(true);
 
@@ -286,15 +301,18 @@ describe("Post Handlers", () => {
 
       expect(response.status).toBe(200);
       expect(body.success).toBe(true);
+      // Now passes existing post as 4th argument to avoid N+1 query
       expect(canUserDeletePost).toHaveBeenCalledWith(
         "user-456",
         "post-123",
         false,
+        mockPost,
       );
       expect(revalidateTag).toHaveBeenCalledWith("posts", "max");
     });
 
     it("deletes post when admin", async () => {
+      vi.mocked(getPostById).mockResolvedValue(mockPost);
       vi.mocked(canUserDeletePost).mockResolvedValue(true);
       vi.mocked(deletePost).mockResolvedValue(true);
 
@@ -307,10 +325,12 @@ describe("Post Handlers", () => {
         "legacy-admin",
         "post-123",
         true,
+        mockPost,
       );
     });
 
     it("returns 403 when user cannot delete post", async () => {
+      vi.mocked(getPostById).mockResolvedValue(mockPost);
       vi.mocked(canUserDeletePost).mockResolvedValue(false);
 
       const response = await handleDeletePost(
@@ -326,6 +346,7 @@ describe("Post Handlers", () => {
     });
 
     it("returns 404 when post not found", async () => {
+      vi.mocked(getPostById).mockResolvedValue(mockPost);
       vi.mocked(canUserDeletePost).mockResolvedValue(true);
       vi.mocked(deletePost).mockResolvedValue(false);
 
@@ -337,6 +358,7 @@ describe("Post Handlers", () => {
     });
 
     it("returns 500 on database error", async () => {
+      vi.mocked(getPostById).mockResolvedValue(mockPost);
       vi.mocked(canUserDeletePost).mockResolvedValue(true);
       vi.mocked(deletePost).mockRejectedValue(new Error("Database error"));
 
@@ -362,24 +384,22 @@ describe("Post Handlers", () => {
     });
 
     it("handles legacy admin user ID in permissions check", async () => {
+      vi.mocked(getPostById).mockResolvedValue(mockPost);
       vi.mocked(canUserEditPost).mockResolvedValue(true);
       vi.mocked(updatePost).mockResolvedValue(mockPost);
 
-      await handleUpdatePost(
-        "post-123",
-        { title: "Updated" },
-        undefined,
-        true,
-      );
+      await handleUpdatePost("post-123", { title: "Updated" }, undefined, true);
 
       expect(canUserEditPost).toHaveBeenCalledWith(
         "legacy-admin",
         "post-123",
         true,
+        mockPost,
       );
     });
 
     it("validates status enum values", async () => {
+      vi.mocked(getPostById).mockResolvedValue(mockPost);
       vi.mocked(canUserEditPost).mockResolvedValue(true);
 
       const response = await handleUpdatePost(

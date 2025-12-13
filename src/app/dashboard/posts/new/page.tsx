@@ -29,18 +29,26 @@ export default function NewPostPage() {
 
   // Fetch current user for metadata
   useEffect(() => {
+    let isMounted = true;
+
     async function fetchUser() {
       try {
         const response = await fetch("/api/auth/session");
-        if (response.ok) {
+        if (response.ok && isMounted) {
           const data = await response.json();
           setUser(data.user);
         }
       } catch (error) {
-        logError("Failed to fetch user:", error);
+        if (isMounted) {
+          logError("Failed to fetch user:", error);
+        }
       }
     }
     fetchUser();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const validateForm = (): boolean => {

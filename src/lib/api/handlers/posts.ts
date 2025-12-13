@@ -55,11 +55,15 @@ export async function handleUpdatePost(
   isAdmin: boolean,
 ): Promise<NextResponse> {
   try {
-    // Check if user can edit this post
+    // Fetch post once and reuse for permission check to avoid N+1 query
+    const existingPost = await getPostById(id);
+
+    // Check if user can edit this post (pass existing post to avoid refetch)
     const canEdit = await canUserEditPost(
       userId || "legacy-admin",
       id,
       isAdmin,
+      existingPost,
     );
 
     if (!canEdit) {
@@ -117,11 +121,15 @@ export async function handleDeletePost(
   isAdmin: boolean,
 ): Promise<NextResponse> {
   try {
-    // Check if user can delete this post
+    // Fetch post once and reuse for permission check to avoid N+1 query
+    const existingPost = await getPostById(id);
+
+    // Check if user can delete this post (pass existing post to avoid refetch)
     const canDelete = await canUserDeletePost(
       userId || "legacy-admin",
       id,
       isAdmin,
+      existingPost,
     );
 
     if (!canDelete) {

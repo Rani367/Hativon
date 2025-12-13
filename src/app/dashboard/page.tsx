@@ -1,13 +1,21 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { PlusCircle, Search, Edit, Trash2, FileText } from "lucide-react";
+import {
+  PlusCircle,
+  Search,
+  Edit,
+  Trash2,
+  FileText,
+  ChevronRight,
+  ChevronLeft,
+} from "lucide-react";
 import { Post } from "@/types/post.types";
 import { format } from "date-fns";
 import { he } from "date-fns/locale";
@@ -24,8 +32,16 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
+const POSTS_PER_PAGE = 20;
+
 export default function DashboardPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Get pagination from URL params
+  const currentOffset = parseInt(searchParams.get("offset") || "0", 10);
+  const currentPage = Math.floor(currentOffset / POSTS_PER_PAGE) + 1;
+
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<
     "all" | "published" | "draft"
@@ -34,44 +50,72 @@ export default function DashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [postToDelete, setPostToDelete] = useState<string | null>(null);
+  const [totalPosts, setTotalPosts] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
 
-  // Fetch posts on mount
-  useEffect(() => {
-    fetchPosts();
-  }, []);
+  // Fetch posts with server-side pagination
+  const fetchPosts = useCallback(async () => {
+    let isMounted = true;
 
-  async function fetchPosts() {
     try {
       setIsLoading(true);
-      const response = await fetch("/api/admin/posts", { cache: "no-store" });
+
+      // Build URL with pagination and filters
+      const params = new URLSearchParams();
+      params.set("limit", String(POSTS_PER_PAGE));
+      params.set("offset", String(currentOffset));
+
+      if (statusFilter !== "all") {
+        params.set("status", statusFilter);
+      }
+
+      if (search) {
+        params.set("search", search);
+      }
+
+      const response = await fetch(`/api/admin/posts?${params.toString()}`, {
+        cache: "no-store",
+      });
+
+      if (!isMounted) return;
+
       const data = await response.json();
       setPosts(data.posts || []);
+      setTotalPosts(data.total ?? data.posts?.length ?? 0);
+      setHasMore(data.hasMore ?? false);
     } catch (error) {
-      logError("Failed to fetch posts:", error);
-      toast.error("שגיאה בטעינת כתבות");
+      if (isMounted) {
+        logError("Failed to fetch posts:", error);
+        toast.error("שגיאה בטעינת כתבות");
+      }
     } finally {
-      setIsLoading(false);
-    }
-  }
-
-  const filteredPosts = useMemo(() => {
-    let filtered = posts;
-
-    if (statusFilter !== "all") {
-      filtered = filtered.filter((post: Post) => post.status === statusFilter);
+      if (isMounted) {
+        setIsLoading(false);
+      }
     }
 
-    if (search) {
-      const searchLower = search.toLowerCase();
-      filtered = filtered.filter(
-        (post: Post) =>
-          post.title.toLowerCase().includes(searchLower) ||
-          post.slug.toLowerCase().includes(searchLower),
-      );
-    }
+    return () => {
+      isMounted = false;
+    };
+  }, [currentOffset, statusFilter, search]);
 
-    return filtered;
-  }, [posts, search, statusFilter]);
+  // Fetch posts when pagination or filters change
+  useEffect(() => {
+    fetchPosts();
+  }, [fetchPosts]);
+
+  // Navigate to page
+  const goToPage = (page: number) => {
+    const offset = (page - 1) * POSTS_PER_PAGE;
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("offset", String(offset));
+    router.push(`/dashboard?${params.toString()}`);
+  };
+
+  const totalPages = Math.ceil(totalPosts / POSTS_PER_PAGE);
+
+  // Client-side filtering is now done server-side, so just return posts
+  const filteredPosts = useMemo(() => posts, [posts]);
 
   function openDeleteDialog(id: string) {
     setPostToDelete(id);
@@ -367,6 +411,40 @@ export default function DashboardPage() {
               </table>
             </div>
           </Card>
+
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-muted-foreground">
+                מציג {currentOffset + 1}-
+                {Math.min(currentOffset + POSTS_PER_PAGE, totalPosts)} מתוך{" "}
+                {totalPosts} כתבות
+              </p>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => goToPage(currentPage - 1)}
+                  disabled={currentPage <= 1}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                  הקודם
+                </Button>
+                <span className="text-sm text-muted-foreground px-2">
+                  עמוד {currentPage} מתוך {totalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => goToPage(currentPage + 1)}
+                  disabled={!hasMore && currentPage >= totalPages}
+                >
+                  הבא
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
         </>
       )}
 

@@ -30,9 +30,13 @@ export default function EditPostPage({
   });
 
   useEffect(() => {
+    let isMounted = true;
+
     async function fetchPost() {
       try {
         const response = await fetch(`/api/user/posts/${id}`);
+        if (!isMounted) return;
+
         if (response.ok) {
           const data = await response.json();
           setPost(data);
@@ -48,13 +52,21 @@ export default function EditPostPage({
           router.push("/dashboard");
         }
       } catch (error) {
-        logError("Failed to fetch post:", error);
+        if (isMounted) {
+          logError("Failed to fetch post:", error);
+        }
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     }
 
     fetchPost();
+
+    return () => {
+      isMounted = false;
+    };
   }, [id, router]);
 
   const handleUpdate = async (status: "draft" | "published") => {
