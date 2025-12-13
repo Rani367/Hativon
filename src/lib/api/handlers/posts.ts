@@ -98,7 +98,7 @@ export async function handleUpdatePost(
       return NextResponse.json({ error: "Post not found" }, { status: 404 });
     }
 
-    // Granular cache invalidation - only revalidate posts tag and specific post path
+    // Granular cache invalidation - only revalidate posts tag
     revalidateTag("posts", "max");
 
     return NextResponse.json(updatedPost);
