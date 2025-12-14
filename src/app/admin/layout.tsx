@@ -33,6 +33,10 @@ export default function AdminLayout({
 
         // Teachers get automatic admin access
         if (data.authenticated && data.isTeacher) {
+          // Set admin auth cookie for teacher so API routes work
+          if (!data.isAdmin) {
+            await fetch("/api/admin/teacher-auth", { method: "POST" });
+          }
           setIsAdmin(true);
         } else {
           setIsAdmin(data.isAdmin || false);
