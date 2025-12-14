@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import Link from 'next/link';
-import { useAuth } from './auth-provider';
-import { Button } from '@/components/ui/button';
+import { useState } from "react";
+import Link from "next/link";
+import { useAuth } from "./auth-provider";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,18 +11,16 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { AuthDialog } from './auth-dialog';
-import { User, LogOut, FileText, LayoutDashboard, UserCog } from 'lucide-react';
+} from "@/components/ui/dropdown-menu";
+import { AuthDialog } from "./auth-dialog";
+import { User, LogOut, FileText, LayoutDashboard, UserCog } from "lucide-react";
 
 export function UserMenu() {
   const { user, logout, loading } = useAuth();
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
 
   if (loading) {
-    return (
-      <div className="h-9 w-24 rounded-md bg-muted animate-pulse" />
-    );
+    return <div className="h-9 w-24 rounded-md bg-muted animate-pulse" />;
   }
 
   if (!user) {
@@ -43,7 +41,8 @@ export function UserMenu() {
 
   const handleLogout = async () => {
     await logout();
-    window.location.href = '/';
+    // Force a hard reload to clear any cached state
+    window.location.replace("/");
   };
 
   return (
@@ -51,14 +50,20 @@ export function UserMenu() {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="sm" className="gap-2">
           <User className="h-4 w-4" />
-          <span className="hidden sm:inline max-w-[120px] truncate">{user.displayName}</span>
+          <span className="hidden sm:inline max-w-[120px] truncate">
+            {user.displayName}
+          </span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">{user.displayName}</p>
-            <p className="text-xs leading-none text-muted-foreground">@{user.username}</p>
+            <p className="text-sm font-medium leading-none">
+              {user.displayName}
+            </p>
+            <p className="text-xs leading-none text-muted-foreground">
+              @{user.username}
+            </p>
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
@@ -81,7 +86,10 @@ export function UserMenu() {
           </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-red-600 dark:text-red-400">
+        <DropdownMenuItem
+          onClick={handleLogout}
+          className="cursor-pointer text-red-600 dark:text-red-400"
+        >
           <LogOut className="ltr:mr-2 rtl:ml-2 h-4 w-4" />
           <span>התנתק</span>
         </DropdownMenuItem>
