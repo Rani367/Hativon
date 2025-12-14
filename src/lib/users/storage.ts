@@ -5,14 +5,15 @@ import bcrypt from "bcrypt";
 import { BCRYPT_SALT_ROUNDS } from "../constants/auth";
 
 export async function createUser(data: UserRegistration): Promise<User> {
-  const { username, password, displayName, grade, classNumber } = data;
+  const { username, password, displayName, grade, classNumber, isTeacher } =
+    data;
 
   const passwordHash = await bcrypt.hash(password, BCRYPT_SALT_ROUNDS);
 
   try {
     const result = (await db.query`
-      INSERT INTO users (username, password_hash, display_name, email, grade, class_number)
-      VALUES (${username}, ${passwordHash}, ${displayName}, null, ${grade}, ${classNumber})
+      INSERT INTO users (username, password_hash, display_name, email, grade, class_number, is_teacher)
+      VALUES (${username}, ${passwordHash}, ${displayName}, null, ${grade || null}, ${classNumber || null}, ${isTeacher || false})
       RETURNING
         id,
         username,
@@ -20,6 +21,7 @@ export async function createUser(data: UserRegistration): Promise<User> {
         email,
         grade,
         class_number as "classNumber",
+        is_teacher as "isTeacher",
         created_at as "createdAt",
         updated_at as "updatedAt",
         last_login as "lastLogin"
@@ -65,6 +67,7 @@ export async function updateUser(
       email,
       grade,
       class_number as "classNumber",
+      is_teacher as "isTeacher",
       created_at as "createdAt",
       updated_at as "updatedAt",
       last_login as "lastLogin"

@@ -20,6 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { logError } from "@/lib/logger";
 import { User as UserIcon, Save, Loader2, AlertCircle } from "lucide-react";
@@ -28,7 +29,7 @@ import { Grade } from "@/types/user.types";
 interface ProfileFormData {
   displayName: string;
   grade: Grade | null;
-  classNumber: number;
+  classNumber: number | null;
 }
 
 export default function ProfilePage() {
@@ -37,16 +38,27 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState<ProfileFormData | null>(null);
 
+  const isTeacher = user?.isTeacher || false;
+
   // Initialize form data only when user data is available
   useEffect(() => {
     if (user) {
       setFormData({
         displayName: user.displayName || "",
         grade: user.grade || null,
-        classNumber: user.classNumber || 1,
+        classNumber: user.classNumber || null,
       });
     }
   }, [user]);
+
+  // Check if any changes were made
+  const hasChanges =
+    formData &&
+    user &&
+    (formData.displayName.trim() !== (user.displayName || "") ||
+      (!isTeacher &&
+        (formData.grade !== (user.grade || null) ||
+          formData.classNumber !== (user.classNumber || null))));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,14 +71,19 @@ export default function ProfilePage() {
       return;
     }
 
-    // Validate grade selection
-    if (!formData.grade) {
+    // Validate grade selection (only for students)
+    if (!isTeacher && !formData.grade) {
       toast.error("יש לבחור כיתה");
       return;
     }
 
-    // Validate class number
-    if (formData.classNumber < 1 || formData.classNumber > 4) {
+    // Validate class number (only for students)
+    if (
+      !isTeacher &&
+      (formData.classNumber === null ||
+        formData.classNumber < 1 ||
+        formData.classNumber > 4)
+    ) {
       toast.error("מספר כיתה חייב להיות בין 1 ל-4");
       return;
     }
@@ -74,16 +91,22 @@ export default function ProfilePage() {
     try {
       setSaving(true);
 
+      const updateData: Record<string, unknown> = {
+        displayName: formData.displayName.trim(),
+      };
+
+      // Only include grade/class for students
+      if (!isTeacher) {
+        updateData.grade = formData.grade;
+        updateData.classNumber = formData.classNumber;
+      }
+
       const response = await fetch("/api/user/profile", {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          displayName: formData.displayName.trim(),
-          grade: formData.grade,
-          classNumber: formData.classNumber,
-        }),
+        body: JSON.stringify(updateData),
       });
 
       if (!response.ok) {
@@ -139,6 +162,9 @@ export default function ProfilePage() {
           <CardTitle className="flex items-center gap-2">
             <UserIcon className="h-5 w-5" />
             פרטי משתמש
+            {isTeacher && (
+              <Badge className="bg-amber-500 text-white ms-2">מורה</Badge>
+            )}
           </CardTitle>
           <CardDescription>
             שם המשתמש: <strong>@{user.username}</strong>
@@ -167,63 +193,71 @@ export default function ProfilePage() {
               </p>
             </div>
 
-            {/* Grade and Class Number - Side by Side */}
-            <div className="flex gap-4">
-              <div className="flex-1 space-y-2">
-                <Label htmlFor="classNumber" className="text-right block">
-                  מספר כיתה <span className="text-destructive">*</span>
-                </Label>
-                <Select
-                  value={formData.classNumber.toString()}
-                  onValueChange={(value) =>
-                    setFormData({ ...formData, classNumber: Number(value) })
-                  }
-                >
-                  <SelectTrigger id="classNumber" className="w-full" dir="rtl">
-                    <SelectValue placeholder="בחר מספר" />
-                  </SelectTrigger>
-                  <SelectContent className="text-right" dir="rtl">
-                    <SelectItem value="1">1</SelectItem>
-                    <SelectItem value="2">2</SelectItem>
-                    <SelectItem value="3">3</SelectItem>
-                    <SelectItem value="4">4</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+            {/* Grade and Class Number - Side by Side (Students only) */}
+            {!isTeacher && (
+              <>
+                <div className="flex gap-4">
+                  <div className="flex-1 space-y-2">
+                    <Label htmlFor="classNumber" className="text-right block">
+                      מספר כיתה <span className="text-destructive">*</span>
+                    </Label>
+                    <Select
+                      value={formData.classNumber?.toString() || ""}
+                      onValueChange={(value) =>
+                        setFormData({ ...formData, classNumber: Number(value) })
+                      }
+                    >
+                      <SelectTrigger
+                        id="classNumber"
+                        className="w-full"
+                        dir="rtl"
+                      >
+                        <SelectValue placeholder="בחר מספר" />
+                      </SelectTrigger>
+                      <SelectContent className="text-right" dir="rtl">
+                        <SelectItem value="1">1</SelectItem>
+                        <SelectItem value="2">2</SelectItem>
+                        <SelectItem value="3">3</SelectItem>
+                        <SelectItem value="4">4</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-              <div className="flex-1 space-y-2">
-                <Label htmlFor="grade" className="text-right block">
-                  כיתה <span className="text-destructive">*</span>
-                </Label>
-                <Select
-                  value={formData.grade || ""}
-                  onValueChange={(value) =>
-                    setFormData({ ...formData, grade: value as Grade })
-                  }
-                >
-                  <SelectTrigger id="grade" className="w-full" dir="rtl">
-                    <SelectValue placeholder="בחר כיתה">
-                      {formData.grade
-                        ? getGradeDisplay(formData.grade)
-                        : "בחר כיתה"}
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent className="text-right" dir="rtl">
-                    <SelectItem value="ז">כיתה ז</SelectItem>
-                    <SelectItem value="ח">כיתה ח</SelectItem>
-                    <SelectItem value="ט">כיתה ט</SelectItem>
-                    <SelectItem value="י">כיתה י</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
+                  <div className="flex-1 space-y-2">
+                    <Label htmlFor="grade" className="text-right block">
+                      כיתה <span className="text-destructive">*</span>
+                    </Label>
+                    <Select
+                      value={formData.grade || ""}
+                      onValueChange={(value) =>
+                        setFormData({ ...formData, grade: value as Grade })
+                      }
+                    >
+                      <SelectTrigger id="grade" className="w-full" dir="rtl">
+                        <SelectValue placeholder="בחר כיתה">
+                          {formData.grade
+                            ? getGradeDisplay(formData.grade)
+                            : "בחר כיתה"}
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent className="text-right" dir="rtl">
+                        <SelectItem value="ז">כיתה ז</SelectItem>
+                        <SelectItem value="ח">כיתה ח</SelectItem>
+                        <SelectItem value="ט">כיתה ט</SelectItem>
+                        <SelectItem value="י">כיתה י</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
 
-            {/* Warning if grade not selected */}
-            {!formData.grade && (
-              <div className="flex items-center gap-2 rounded-lg border border-amber-500/50 bg-amber-500/10 p-3 text-amber-600 dark:text-amber-400">
-                <AlertCircle className="h-4 w-4 flex-shrink-0" />
-                <p className="text-sm">יש לבחור כיתה לפני שמירה</p>
-              </div>
+                {/* Warning if grade not selected */}
+                {!formData.grade && (
+                  <div className="flex items-center gap-2 rounded-lg border border-amber-500/50 bg-amber-500/10 p-3 text-amber-600 dark:text-amber-400">
+                    <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                    <p className="text-sm">יש לבחור כיתה לפני שמירה</p>
+                  </div>
+                )}
+              </>
             )}
 
             {/* Preview */}
@@ -233,9 +267,11 @@ export default function ProfilePage() {
                 הכתבות שלך יוצגו כ:{" "}
                 <strong>
                   {formData.displayName || "שם תצוגה"}
-                  {formData.grade
-                    ? ` - ${formData.grade}'${formData.classNumber}`
-                    : " - [כיתה לא נבחרה]"}
+                  {isTeacher
+                    ? " (מורה)"
+                    : formData.grade
+                      ? ` - ${formData.grade}'${formData.classNumber}`
+                      : " - [כיתה לא נבחרה]"}
                 </strong>
               </p>
             </div>
@@ -249,15 +285,24 @@ export default function ProfilePage() {
                 <p>
                   שם תצוגה: <strong>{user.displayName || "לא הוגדר"}</strong>
                 </p>
-                <p>
-                  כיתה:{" "}
-                  <strong>
-                    {user.grade ? getGradeDisplay(user.grade) : "לא הוגדר"}
-                  </strong>
-                </p>
-                <p>
-                  מספר כיתה: <strong>{user.classNumber || "לא הוגדר"}</strong>
-                </p>
+                {isTeacher ? (
+                  <p>
+                    סוג חשבון: <strong>מורה</strong>
+                  </p>
+                ) : (
+                  <>
+                    <p>
+                      כיתה:{" "}
+                      <strong>
+                        {user.grade ? getGradeDisplay(user.grade) : "לא הוגדר"}
+                      </strong>
+                    </p>
+                    <p>
+                      מספר כיתה:{" "}
+                      <strong>{user.classNumber || "לא הוגדר"}</strong>
+                    </p>
+                  </>
+                )}
               </div>
             </div>
 
@@ -271,7 +316,12 @@ export default function ProfilePage() {
               >
                 ביטול
               </Button>
-              <Button type="submit" disabled={saving || !formData.grade}>
+              <Button
+                type="submit"
+                disabled={
+                  saving || !hasChanges || (!isTeacher && !formData.grade)
+                }
+              >
                 {saving ? (
                   <>
                     <Loader2 className="h-4 w-4 me-2 animate-spin" />

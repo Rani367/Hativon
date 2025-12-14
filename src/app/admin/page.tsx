@@ -10,15 +10,21 @@ export default function AdminLoginPage() {
   const [checking, setChecking] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
 
-  // Check if already authenticated with admin password
+  // Check if already authenticated with admin password or is a teacher
   useEffect(() => {
     async function checkAuth() {
       try {
         const response = await fetch("/api/check-auth");
         const data = await response.json();
 
+        // Teachers get automatic admin access - redirect straight to dashboard
+        if (data.authenticated && data.isTeacher) {
+          router.push("/admin/dashboard");
+          return;
+        }
+
         if (data.isAdmin) {
-          // Already authenticated, redirect to dashboard
+          // Already authenticated with admin password, redirect to dashboard
           router.push("/admin/dashboard");
         } else {
           // Not authenticated, show password gate

@@ -5,8 +5,8 @@
  * These types ensure proper typing throughout the database layer without using 'any'.
  */
 
-import type { User } from './user.types';
-import type { Post } from './post.types';
+import type { User } from "./user.types";
+import type { Post } from "./post.types";
 
 /**
  * Generic database query result structure
@@ -64,6 +64,7 @@ export interface DbPostRow {
   author_grade: string | null;
   author_class: number | null;
   author_deleted?: boolean; // Computed field from LEFT JOIN with users table
+  is_teacher_post?: boolean; // True if post was created by a teacher
   tags: string[] | null;
   category: string | null;
   status: string;

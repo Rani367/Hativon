@@ -218,6 +218,8 @@ export async function POST(request: NextRequest) {
       // Set author grade and class
       postData.authorGrade = user.grade;
       postData.authorClass = user.classNumber;
+      // Set isTeacherPost flag if user is a teacher
+      postData.isTeacherPost = user.isTeacher || false;
     } else if (isAdmin) {
       // Admin creating post without user context - use provided values or defaults
       if (!postData.authorId) {
@@ -226,6 +228,8 @@ export async function POST(request: NextRequest) {
       if (!postData.author) {
         postData.author = "מנהל המערכת"; // "System Admin" in Hebrew
       }
+      // Admin panel posts are also marked as teacher posts
+      postData.isTeacherPost = true;
     }
 
     const newPost = await createPost(postData);
