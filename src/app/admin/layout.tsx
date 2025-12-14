@@ -8,6 +8,8 @@ import { Home, FileText, Menu, Users } from "lucide-react";
 import { AdminPasswordGate } from "@/components/features/admin/admin-password-gate";
 import { logError } from "@/lib/logger";
 
+type AuthState = "checking" | "authorized" | "needs-password" | "login-page";
+
 export default function AdminLayout({
   children,
 }: {
@@ -15,15 +17,14 @@ export default function AdminLayout({
 }) {
   const router = useRouter();
   const pathname = usePathname();
-  const [checking, setChecking] = useState(true);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [authState, setAuthState] = useState<AuthState>("checking");
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Check admin password authentication or teacher status
   useEffect(() => {
     async function checkAuth() {
       if (pathname === "/admin") {
-        setChecking(false);
+        setAuthState("login-page");
         return;
       }
 
@@ -37,27 +38,28 @@ export default function AdminLayout({
           if (!data.isAdmin) {
             await fetch("/api/admin/teacher-auth", { method: "POST" });
           }
-          setIsAdmin(true);
+          setAuthState("authorized");
+        } else if (data.isAdmin) {
+          setAuthState("authorized");
         } else {
-          setIsAdmin(data.isAdmin || false);
+          setAuthState("needs-password");
         }
       } catch (error) {
         logError("Auth check failed:", error);
-      } finally {
-        setChecking(false);
+        setAuthState("needs-password");
       }
     }
 
     checkAuth();
   }, [pathname, router]);
 
-  // Show login page without layout
-  if (pathname === "/admin") {
+  // Show login page without layout (handled by page.tsx)
+  if (authState === "login-page") {
     return children;
   }
 
-  // Show loading state
-  if (checking) {
+  // Show loading state while checking authentication
+  if (authState === "checking") {
     return (
       <div className="min-h-screen bg-background">
         {/* Header Skeleton */}
@@ -99,9 +101,9 @@ export default function AdminLayout({
     );
   }
 
-  // Show admin password gate if not admin authenticated
-  if (!isAdmin) {
-    return <AdminPasswordGate onSuccess={() => setIsAdmin(true)} />;
+  // Show admin password gate only when explicitly needed
+  if (authState === "needs-password") {
+    return <AdminPasswordGate onSuccess={() => setAuthState("authorized")} />;
   }
 
   const navItems = [
