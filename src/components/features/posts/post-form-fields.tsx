@@ -11,10 +11,12 @@ interface PostFormFieldsProps {
   description: string;
   content: string;
   coverImage: string;
+  customAuthor?: string;
   onTitleChange: (value: string) => void;
   onDescriptionChange: (value: string) => void;
   onContentChange: (value: string) => void;
   onCoverImageChange: (url: string) => void;
+  onCustomAuthorChange?: (value: string) => void;
   errors?: {
     title?: string;
     description?: string;
@@ -23,6 +25,7 @@ interface PostFormFieldsProps {
   };
   idPrefix?: string;
   showImageUrlInput?: boolean;
+  showCustomAuthor?: boolean;
 }
 
 export function PostFormFields({
@@ -30,18 +33,22 @@ export function PostFormFields({
   description,
   content,
   coverImage,
+  customAuthor = "",
   onTitleChange,
   onDescriptionChange,
   onContentChange,
   onCoverImageChange,
+  onCustomAuthorChange,
   errors = {},
   idPrefix = "",
   showImageUrlInput = false,
+  showCustomAuthor = false,
 }: PostFormFieldsProps) {
   const titleId = idPrefix ? `title-${idPrefix}` : "title";
   const descriptionId = idPrefix ? `description-${idPrefix}` : "description";
   const contentId = idPrefix ? `content-${idPrefix}` : "content";
   const imageUploadId = idPrefix ? `imageUpload-${idPrefix}` : "imageUpload";
+  const customAuthorId = idPrefix ? `customAuthor-${idPrefix}` : "customAuthor";
 
   return (
     <>
@@ -67,6 +74,21 @@ export function PostFormFields({
           </p>
         )}
       </div>
+
+      {showCustomAuthor && (
+        <div className="space-y-2">
+          <Label htmlFor={customAuthorId}>שם מחבר מותאם (אופציונלי)</Label>
+          <Input
+            id={customAuthorId}
+            value={customAuthor}
+            onChange={(e) => onCustomAuthorChange?.(e.target.value)}
+            placeholder="השאר ריק לשימוש בשם התצוגה שלך"
+          />
+          <p className="text-xs text-muted-foreground">
+            אם תשאיר ריק, יוצג השם שלך מהפרופיל
+          </p>
+        </div>
+      )}
 
       <div className="space-y-2">
         <Label htmlFor={descriptionId}>תיאור (אופציונלי)</Label>

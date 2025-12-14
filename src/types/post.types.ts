@@ -11,6 +11,7 @@ export interface Post {
   authorGrade?: string; // Author's grade (ז, ח, ט, י)
   authorClass?: number; // Author's class number (1-4)
   authorDeleted?: boolean; // True if the author user has been deleted
+  isTeacherPost?: boolean; // True if the post was created by a teacher
   tags?: string[];
   category?: string;
   status: "draft" | "published";
@@ -27,6 +28,7 @@ export interface PostInput {
   authorId?: string; // User ID reference for post ownership
   authorGrade?: string; // Author's grade (ז, ח, ט, י)
   authorClass?: number; // Author's class number (1-4)
+  isTeacherPost?: boolean; // True if the post was created by a teacher
   tags?: string[];
   category?: string;
   status?: "draft" | "published";

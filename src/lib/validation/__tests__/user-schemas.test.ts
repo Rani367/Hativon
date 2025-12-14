@@ -271,34 +271,72 @@ describe("User Validation Schemas", () => {
   });
 
   describe("userRegistrationFormSchema", () => {
-    const validForm = {
+    const validStudentForm = {
       username: "testuser",
       password: "password123",
       confirmPassword: "password123",
       displayName: "Test User",
       grade: "ח" as const,
       classNumber: 2,
+      isTeacher: false,
+    };
+
+    const validTeacherForm = {
+      username: "teacher1",
+      password: "password123",
+      confirmPassword: "password123",
+      displayName: "Teacher Name",
+      isTeacher: true,
+      adminPassword: "admin123",
     };
 
     it("accepts matching passwords", () => {
-      const result = userRegistrationFormSchema.safeParse(validForm);
+      const result = userRegistrationFormSchema.safeParse(validStudentForm);
       expect(result.success).toBe(true);
     });
 
     it("rejects mismatched passwords", () => {
       const mismatch = {
-        ...validForm,
+        ...validStudentForm,
         confirmPassword: "different",
       };
 
       const result = userRegistrationFormSchema.safeParse(mismatch);
       expect(result.success).toBe(false);
       if (!result.success) {
-        const confirmError = result.error.issues.find(
-          (i) => i.path.includes("confirmPassword"),
+        const confirmError = result.error.issues.find((i) =>
+          i.path.includes("confirmPassword"),
         );
         expect(confirmError?.message).toContain("אינן תואמות");
       }
+    });
+
+    it("accepts valid teacher registration with admin password", () => {
+      const result = userRegistrationFormSchema.safeParse(validTeacherForm);
+      expect(result.success).toBe(true);
+    });
+
+    it("rejects teacher registration without admin password", () => {
+      const teacherWithoutAdminPass = {
+        ...validTeacherForm,
+        adminPassword: undefined,
+      };
+      const result = userRegistrationFormSchema.safeParse(
+        teacherWithoutAdminPass,
+      );
+      expect(result.success).toBe(false);
+    });
+
+    it("rejects student registration without grade/class", () => {
+      const studentWithoutGrade = {
+        username: "testuser",
+        password: "password123",
+        confirmPassword: "password123",
+        displayName: "Test User",
+        isTeacher: false,
+      };
+      const result = userRegistrationFormSchema.safeParse(studentWithoutGrade);
+      expect(result.success).toBe(false);
     });
   });
 

@@ -1,8 +1,8 @@
-import { cookies } from 'next/headers';
-import { User } from '@/types/user.types';
-import { verifyToken } from './jwt';
-import { getUserById } from '../users';
-import { isDatabaseAvailable } from '../db/client';
+import { cookies } from "next/headers";
+import { User } from "@/types/user.types";
+import { verifyToken } from "./jwt";
+import { getUserById } from "../users";
+import { isDatabaseAvailable } from "../db/client";
 
 /**
  * Get current user from auth token
@@ -11,7 +11,7 @@ import { isDatabaseAvailable } from '../db/client';
 export async function getCurrentUser(): Promise<User | null> {
   try {
     const cookieStore = await cookies();
-    const authToken = cookieStore.get('authToken');
+    const authToken = cookieStore.get("authToken");
 
     if (!authToken?.value) {
       return null;
@@ -24,15 +24,16 @@ export async function getCurrentUser(): Promise<User | null> {
     }
 
     // Check if this is the legacy admin user
-    if (payload.userId === 'legacy-admin') {
+    if (payload.userId === "legacy-admin") {
       // Return mock admin user for legacy mode
       return {
-        id: 'legacy-admin',
-        username: 'admin',
-        displayName: 'Admin',
+        id: "legacy-admin",
+        username: "admin",
+        displayName: "Admin",
         email: undefined,
-        grade: 'ז',
+        grade: "ז",
         classNumber: 1,
+        isTeacher: true,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         lastLogin: undefined,
@@ -50,7 +51,7 @@ export async function getCurrentUser(): Promise<User | null> {
 
     return user;
   } catch (error) {
-    console.error('Error getting current user:', error);
+    console.error("Error getting current user:", error);
     return null;
   }
 }
@@ -63,7 +64,7 @@ export async function requireAuth(): Promise<User> {
   const user = await getCurrentUser();
 
   if (!user) {
-    throw new Error('Authentication required');
+    throw new Error("Authentication required");
   }
 
   return user;

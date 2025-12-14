@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createUser, usernameExists } from "@/lib/users";
 import { createAuthCookie } from "@/lib/auth/jwt";
-import { getAdminClearCookie } from "@/lib/auth/admin";
+import { getAdminClearCookie, verifyAdminPassword } from "@/lib/auth/admin";
 import { isDatabaseAvailable } from "@/lib/db/client";
 import { logError } from "@/lib/logger";
 import { userRegistrationSchema } from "@/lib/validation/schemas";
@@ -74,8 +74,33 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { username, password, displayName, grade, classNumber } =
-      validation.data;
+    const {
+      username,
+      password,
+      displayName,
+      grade,
+      classNumber,
+      isTeacher,
+      adminPassword,
+    } = validation.data;
+
+    // If teacher registration, verify admin password
+    if (isTeacher) {
+      if (!adminPassword) {
+        return NextResponse.json(
+          { success: false, message: "סיסמת מנהל נדרשת למורים" },
+          { status: 400 },
+        );
+      }
+
+      const adminPasswordValid = await verifyAdminPassword(adminPassword);
+      if (!adminPasswordValid) {
+        return NextResponse.json(
+          { success: false, message: "סיסמת מנהל שגויה" },
+          { status: 401 },
+        );
+      }
+    }
 
     // Check if username already exists
     const exists = await usernameExists(username);
@@ -86,13 +111,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create user
+    // Create user (teachers don't need grade/class)
     const user = await createUser({
       username,
       password,
       displayName,
-      grade,
-      classNumber,
+      grade: isTeacher ? undefined : grade,
+      classNumber: isTeacher ? undefined : classNumber,
+      isTeacher: isTeacher || false,
     });
 
     // Generate auth cookie and clear admin cookie
