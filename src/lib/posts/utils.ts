@@ -40,6 +40,7 @@ export function rowToPost(row: DbPostRow): Post {
     authorGrade: row.author_grade || undefined,
     authorClass: row.author_class || undefined,
     authorDeleted: row.author_deleted || false,
+    isTeacherPost: row.is_teacher_post || false,
     tags: row.tags || [],
     category: row.category || undefined,
     status: row.status as "draft" | "published",

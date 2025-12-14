@@ -35,7 +35,7 @@ export async function createPost(input: PostInput): Promise<Post> {
       INSERT INTO posts (
         id, title, slug, content, cover_image, description,
         date, author, author_id, author_grade, author_class,
-        tags, category, status, created_at, updated_at
+        is_teacher_post, tags, category, status, created_at, updated_at
       )
       VALUES (
         ${id},
@@ -49,6 +49,7 @@ export async function createPost(input: PostInput): Promise<Post> {
         ${input.authorId || null},
         ${input.authorGrade || null},
         ${input.authorClass || null},
+        ${input.isTeacherPost || false},
         ${input.tags || []},
         ${input.category || null},
         ${status},

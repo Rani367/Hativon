@@ -100,6 +100,7 @@ export async function POST(request: NextRequest) {
           email: undefined,
           grade: "ז" as const,
           classNumber: 1,
+          isTeacher: true,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
           lastLogin: undefined,

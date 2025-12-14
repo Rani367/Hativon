@@ -224,6 +224,7 @@ describe("rowToPost", () => {
       authorGrade: "י",
       authorClass: 2,
       authorDeleted: false,
+      isTeacherPost: false,
       tags: ["תג1", "תג2"],
       category: "קטגוריה",
       status: "published",

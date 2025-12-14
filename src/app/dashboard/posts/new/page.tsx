@@ -18,6 +18,7 @@ export default function NewPostPage() {
     description: "",
     content: "",
     coverImage: "",
+    customAuthor: "",
     status: "draft" as "draft" | "published",
   });
   const [errors, setErrors] = useState<{
@@ -93,6 +94,7 @@ export default function NewPostPage() {
           description: form.description || undefined,
           content: form.content,
           coverImage: form.coverImage || undefined,
+          author: form.customAuthor || undefined,
           status,
         }),
       });
@@ -139,6 +141,10 @@ export default function NewPostPage() {
     if (errors.coverImage) setErrors({ ...errors, coverImage: undefined });
   };
 
+  const handleCustomAuthorChange = (value: string) => {
+    setForm({ ...form, customAuthor: value });
+  };
+
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div>
@@ -156,11 +162,14 @@ export default function NewPostPage() {
             description={form.description}
             content={form.content}
             coverImage={form.coverImage}
+            customAuthor={form.customAuthor}
             onTitleChange={handleTitleChange}
             onDescriptionChange={handleDescriptionChange}
             onContentChange={handleContentChange}
             onCoverImageChange={handleCoverImageChange}
+            onCustomAuthorChange={handleCustomAuthorChange}
             errors={errors}
+            showCustomAuthor={true}
           />
         </CardContent>
       </Card>

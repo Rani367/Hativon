@@ -38,6 +38,7 @@ const mockUser: User = {
   email: undefined,
   grade: "ח",
   classNumber: 2,
+  isTeacher: false,
   createdAt: "2024-01-01T00:00:00.000Z",
   updatedAt: "2024-01-01T00:00:00.000Z",
 };
@@ -284,7 +285,10 @@ describe("POST /api/auth/register", () => {
       const request = createRequest(validRegistrationData);
       await POST(request);
 
-      expect(createUser).toHaveBeenCalledWith(validRegistrationData);
+      expect(createUser).toHaveBeenCalledWith({
+        ...validRegistrationData,
+        isTeacher: false,
+      });
     });
   });
 

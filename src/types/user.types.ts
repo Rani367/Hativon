@@ -2,15 +2,16 @@
  * User type definitions for authentication and authorization
  */
 
-export type Grade = 'ז' | 'ח' | 'ט' | 'י';
+export type Grade = "ז" | "ח" | "ט" | "י";
 
 export interface User {
   id: string;
   username: string;
   displayName: string;
   email?: string;
-  grade: Grade;
-  classNumber: number;
+  grade?: Grade;
+  classNumber?: number;
+  isTeacher: boolean;
   createdAt: string;
   updatedAt: string;
   lastLogin?: string;
@@ -20,8 +21,17 @@ export interface UserRegistration {
   username: string;
   password: string;
   displayName: string;
-  grade: Grade;
-  classNumber: number;
+  grade?: Grade;
+  classNumber?: number;
+  isTeacher?: boolean;
+  adminPassword?: string; // Required for teacher registration
+}
+
+export interface TeacherRegistration {
+  username: string;
+  password: string;
+  displayName: string;
+  adminPassword: string;
 }
 
 export interface UserLogin {
@@ -40,7 +50,7 @@ export interface UserUpdate {
  * User object without sensitive information
  * Used for API responses and client-side state
  */
-export type SafeUser = Omit<User, 'passwordHash'>;
+export type SafeUser = Omit<User, "passwordHash">;
 
 /**
  * JWT payload structure

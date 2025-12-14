@@ -20,6 +20,7 @@ export async function getUserById(id: string): Promise<User | null> {
       email,
       grade,
       class_number as "classNumber",
+      is_teacher as "isTeacher",
       created_at as "createdAt",
       updated_at as "updatedAt",
       last_login as "lastLogin"
@@ -47,6 +48,7 @@ export async function getUserByUsername(
       email,
       grade,
       class_number as "classNumber",
+      is_teacher as "isTeacher",
       created_at as "createdAt",
       updated_at as "updatedAt",
       last_login as "lastLogin"
@@ -77,6 +79,7 @@ export async function getUserWithPassword(
       email,
       grade,
       class_number as "classNumber",
+      is_teacher as "isTeacher",
       created_at as "createdAt",
       updated_at as "updatedAt",
       last_login as "lastLogin"
@@ -102,6 +105,7 @@ export async function getAllUsers(): Promise<User[]> {
       email,
       grade,
       class_number as "classNumber",
+      is_teacher as "isTeacher",
       created_at as "createdAt",
       updated_at as "updatedAt",
       last_login as "lastLogin"

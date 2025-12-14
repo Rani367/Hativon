@@ -56,6 +56,16 @@ export default function PostCard({ post, priority = false }: PostCardProps) {
             </Badge>
           </div>
         )}
+        {post.isTeacherPost && (
+          <div className="absolute top-4 end-4 z-20">
+            <Badge
+              variant="default"
+              className="bg-amber-500/90 text-white backdrop-blur-sm shadow-sm"
+            >
+              פוסט של מורה
+            </Badge>
+          </div>
+        )}
       </div>
       <CardHeader className="space-y-3">
         <div className="flex items-center gap-3 sm:gap-4 text-sm text-muted-foreground">

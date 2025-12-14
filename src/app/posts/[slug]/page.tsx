@@ -167,7 +167,15 @@ export default async function PostPage({ params }: PostPageProps) {
             {post.title}
           </h1>
 
-          <div className="flex gap-3 mb-4">
+          <div className="flex gap-3 mb-4 flex-wrap">
+            {post.isTeacherPost && (
+              <Badge
+                variant="default"
+                className="bg-amber-500 text-white text-base px-4 py-1.5"
+              >
+                פוסט של מורה
+              </Badge>
+            )}
             {post.category && (
               <Badge variant="secondary" className="text-base px-4 py-1.5">
                 {post.category}

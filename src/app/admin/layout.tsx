@@ -6,16 +6,20 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Home, FileText, LogOut, Menu, Users } from "lucide-react";
 import { AdminPasswordGate } from "@/components/features/admin/admin-password-gate";
-import { logError } from '@/lib/logger';
+import { logError } from "@/lib/logger";
 
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
+export default function AdminLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const router = useRouter();
   const pathname = usePathname();
   const [checking, setChecking] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // Check admin password authentication
+  // Check admin password authentication or teacher status
   useEffect(() => {
     async function checkAuth() {
       if (pathname === "/admin") {
@@ -27,7 +31,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         const response = await fetch("/api/check-auth");
         const data = await response.json();
 
-        setIsAdmin(data.isAdmin || false);
+        // Teachers get automatic admin access
+        if (data.authenticated && data.isTeacher) {
+          setIsAdmin(true);
+        } else {
+          setIsAdmin(data.isAdmin || false);
+        }
       } catch (error) {
         logError("Auth check failed:", error);
       } finally {
@@ -75,7 +84,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <aside className="hidden lg:block w-64 border-l bg-background">
             <nav className="space-y-1 p-4">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="h-10 rounded-lg bg-muted animate-pulse" />
+                <div
+                  key={i}
+                  className="h-10 rounded-lg bg-muted animate-pulse"
+                />
               ))}
             </nav>
           </aside>

@@ -57,28 +57,59 @@ export const emailSchema = z
   .or(z.literal(""));
 
 // User registration schema
-export const userRegistrationSchema = z.object({
-  username: usernameSchema,
-  password: passwordSchema,
-  displayName: displayNameSchema,
-  grade: gradeSchema,
-  classNumber: classNumberSchema,
-});
+// API registration schema - supports both student and teacher registration
+export const userRegistrationSchema = z
+  .object({
+    username: usernameSchema,
+    password: passwordSchema,
+    displayName: displayNameSchema,
+    grade: gradeSchema.optional(),
+    classNumber: classNumberSchema.optional(),
+    isTeacher: z.boolean().optional().default(false),
+    adminPassword: z.string().optional(),
+  })
+  .refine(
+    (data) =>
+      !data.isTeacher || (data.adminPassword && data.adminPassword.length > 0),
+    {
+      message: "סיסמת מנהל נדרשת למורים",
+      path: ["adminPassword"],
+    },
+  )
+  .refine((data) => data.isTeacher || (data.grade && data.classNumber), {
+    message: "כיתה נדרשת לתלמידים",
+    path: ["grade"],
+  });
 
 // User registration schema with confirmation (for forms)
 // Note: Forms always submit numbers for classNumber, so we use number directly
+// Supports both student registration (requires grade/class) and teacher registration (requires admin password)
 export const userRegistrationFormSchema = z
   .object({
     username: usernameSchema,
     password: passwordSchema,
     displayName: displayNameSchema,
-    grade: gradeSchema,
-    classNumber: z.number().int().min(1).max(4),
+    grade: gradeSchema.optional(),
+    classNumber: z.number().int().min(1).max(4).optional(),
     confirmPassword: z.string().min(1, "אימות סיסמה נדרש"),
+    isTeacher: z.boolean(),
+    adminPassword: z.string().optional(),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "הסיסמאות אינן תואמות",
     path: ["confirmPassword"],
+  })
+  .refine(
+    (data) =>
+      !data.isTeacher || (data.adminPassword && data.adminPassword.length > 0),
+    {
+      message: "סיסמת מנהל נדרשת למורים",
+      path: ["adminPassword"],
+    },
+  )
+  .refine((data) => data.isTeacher || (data.grade && data.classNumber), {
+    message: "כיתה נדרשת",
+    path: ["grade"],
   });
 
 // User login schema
@@ -156,6 +187,7 @@ export const postInputSchema = z.object({
   authorId: z.string().uuid().optional(),
   authorGrade: gradeSchema.optional(),
   authorClass: classNumberSchema.optional(),
+  isTeacherPost: z.boolean().optional(),
   tags: tagsSchema,
   category: categorySchema,
   status: postStatusSchema.optional(),
