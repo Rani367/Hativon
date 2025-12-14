@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Home, FileText, LogOut, Menu, Users } from "lucide-react";
+import { Home, FileText, Menu, Users } from "lucide-react";
 import { AdminPasswordGate } from "@/components/features/admin/admin-password-gate";
 import { logError } from "@/lib/logger";
 
@@ -50,16 +50,6 @@ export default function AdminLayout({
 
     checkAuth();
   }, [pathname, router]);
-
-  const handleLogout = async () => {
-    try {
-      await fetch("/api/admin/logout", { method: "POST" });
-      setIsAdmin(false);
-      router.push("/admin");
-    } catch (error) {
-      logError("Logout failed:", error);
-    }
-  };
 
   // Show login page without layout
   if (pathname === "/admin") {
@@ -139,10 +129,6 @@ export default function AdminLayout({
                   חזור לאתר
                 </Button>
               </Link>
-              <Button variant="ghost" size="sm" onClick={handleLogout}>
-                <LogOut className="h-4 w-4 me-2" />
-                התנתק מהניהול
-              </Button>
             </div>
           </div>
         </div>
