@@ -94,7 +94,7 @@ describe("Authentication Middleware", () => {
       expect(user?.classNumber).toBe(1);
     });
 
-    it("returns null when database is not available for regular user", async () => {
+    it("returns fallback user from JWT when database is not available", async () => {
       mockGet.mockReturnValue({ value: "valid-token" });
       vi.mocked(verifyToken).mockReturnValue({
         userId: "user-123",
@@ -104,7 +104,14 @@ describe("Authentication Middleware", () => {
 
       const user = await getCurrentUser();
 
-      expect(user).toBeNull();
+      // Should return a user constructed from JWT payload, not null
+      // This ensures users stay authenticated during temporary DB issues
+      expect(user).not.toBeNull();
+      expect(user?.id).toBe("user-123");
+      expect(user?.username).toBe("testuser");
+      expect(user?.displayName).toBe("testuser"); // Falls back to username
+      expect(user?.isTeacher).toBe(false); // Conservative default
+      expect(getUserById).not.toHaveBeenCalled(); // DB was not queried
     });
 
     it("returns user from database when authenticated", async () => {

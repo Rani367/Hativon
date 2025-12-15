@@ -26,6 +26,7 @@ export default function EditPostPage({
     description: "",
     content: "",
     coverImage: "",
+    customAuthor: "",
     status: "draft" as "draft" | "published",
   });
 
@@ -45,6 +46,7 @@ export default function EditPostPage({
             description: data.description || "",
             content: data.content,
             coverImage: data.coverImage || "",
+            customAuthor: data.author || "",
             status: data.status,
           });
         } else {
@@ -88,6 +90,7 @@ export default function EditPostPage({
           description: form.description || undefined,
           content: form.content,
           coverImage: form.coverImage,
+          author: form.customAuthor || undefined,
           status,
         }),
       });
@@ -153,6 +156,10 @@ export default function EditPostPage({
     setForm({ ...form, coverImage: url });
   };
 
+  const handleCustomAuthorChange = (value: string) => {
+    setForm({ ...form, customAuthor: value });
+  };
+
   if (loading) {
     return <div className="text-center py-8">טוען...</div>;
   }
@@ -184,11 +191,14 @@ export default function EditPostPage({
             description={form.description}
             content={form.content}
             coverImage={form.coverImage}
+            customAuthor={form.customAuthor}
             onTitleChange={handleTitleChange}
             onDescriptionChange={handleDescriptionChange}
             onContentChange={handleContentChange}
             onCoverImageChange={handleCoverImageChange}
+            onCustomAuthorChange={handleCustomAuthorChange}
             showImageUrlInput={true}
+            showCustomAuthor={true}
           />
         </CardContent>
       </Card>
