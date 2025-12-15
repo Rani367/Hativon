@@ -64,12 +64,14 @@ export function PostPreview({
   return (
     <article className="max-w-4xl mx-auto prose prose-lg dark:prose-invert">
       {coverImage && (
-        <div className="relative aspect-video w-full mb-10 rounded-lg overflow-hidden">
+        <div className="relative w-full mb-10 rounded-lg overflow-hidden">
           <Image
             src={coverImage}
             alt={title || "תצוגה מקדימה"}
-            fill
-            className="object-cover"
+            width={1200}
+            height={800}
+            className="w-full h-auto"
+            quality={90}
             sizes="(max-width: 768px) 100vw, 896px"
             placeholder="blur"
             blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTkyMCIgaGVpZ2h0PSIxMDgwIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZlcnNpb249IjEuMSIvPg=="
