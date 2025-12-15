@@ -24,27 +24,29 @@ export default function PostCard({ post, priority = false }: PostCardProps) {
   const readingTime = calculateReadingTime(wordCount);
 
   return (
-    <Card className="group relative pt-0 overflow-hidden hover:shadow-xl transition-shadow duration-200 bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <Card className="group relative pt-0 overflow-hidden hover:shadow-xl transition-shadow duration-200 bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-background/60 break-inside-avoid mb-6">
       <Link
         href={`/posts/${post.slug}`}
         className="absolute inset-0 z-10"
         aria-label={post.title}
         prefetch={true}
       />
-      <div className="relative aspect-[16/9] w-full overflow-hidden rounded-t-lg">
+      <div className="relative w-full overflow-hidden rounded-t-lg">
         {post.coverImage ? (
           <Image
             src={post.coverImage}
             alt={post.title}
-            fill
+            width={800}
+            height={600}
             priority={priority}
             sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
-            className="object-cover"
+            className="w-full h-auto"
+            quality={90}
             placeholder="blur"
             blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNzAwIiBoZWlnaHQ9IjQ3NSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB2ZXJzaW9uPSIxLjEiLz4="
           />
         ) : (
-          <div className="absolute inset-0 bg-muted/80" />
+          <div className="aspect-[16/9] bg-muted/80" />
         )}
         {post.category && (
           <div className="absolute top-4 start-4 z-20">
