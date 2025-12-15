@@ -200,6 +200,7 @@ export const postUpdateSchema = z
     content: postContentSchema.optional(),
     description: postDescriptionSchema,
     coverImage: coverImageSchema,
+    author: z.string().max(100).optional(),
     tags: tagsSchema,
     category: categorySchema,
     status: postStatusSchema.optional(),
