@@ -23,9 +23,11 @@ export function PostCardSkeleton() {
 
 export function PostGridSkeleton({ count = 12 }: { count?: number }) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-6">
+    <div className="columns-1 md:columns-2 lg:columns-3 2xl:columns-4 gap-6">
       {Array.from({ length: count }).map((_, i) => (
-        <PostCardSkeleton key={i} />
+        <div key={i} className="break-inside-avoid mb-6">
+          <PostCardSkeleton />
+        </div>
       ))}
     </div>
   );
@@ -50,17 +52,17 @@ export function PostPageSkeleton() {
   return (
     <article className="max-w-4xl mx-auto prose prose-lg dark:prose-invert">
       <Skeleton className="aspect-video w-full mb-10 rounded-lg" />
-      
+
       <header className="mb-10">
         <div className="flex items-center gap-4 mb-6">
           <Skeleton className="h-5 w-32" />
           <Skeleton className="h-5 w-40" />
           <Skeleton className="h-5 w-24" />
         </div>
-        
+
         <Skeleton className="h-14 w-full mb-6" />
         <Skeleton className="h-14 w-3/4 mb-6" />
-        
+
         <div className="flex gap-3 mb-4">
           <Skeleton className="h-7 w-20" />
           <Skeleton className="h-7 w-24" />
