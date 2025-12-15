@@ -40,15 +40,31 @@ export async function getCurrentUser(): Promise<User | null> {
       };
     }
 
-    // Check if database is available
+    // Try to fetch fresh user data from database
+    // If database is unavailable, fall back to JWT payload to keep user authenticated
     const dbAvailable = await isDatabaseAvailable();
     if (!dbAvailable) {
-      return null;
+      // Database unavailable - construct user from valid JWT payload
+      // This ensures users stay authenticated during temporary DB issues
+      return {
+        id: payload.userId,
+        username: payload.username,
+        displayName: payload.username, // Best we can do without DB
+        email: undefined,
+        grade: undefined,
+        classNumber: undefined,
+        isTeacher: false, // Conservative default
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        lastLogin: undefined,
+      };
     }
 
     // Fetch fresh user data from database
     const user = await getUserById(payload.userId);
 
+    // If user not found in DB but JWT was valid, they may have been deleted
+    // In this case, return null to force re-authentication
     return user;
   } catch (error) {
     console.error("Error getting current user:", error);
