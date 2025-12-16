@@ -27,39 +27,54 @@ const nextConfig: NextConfig = {
     ],
     // Use modern image formats for better compression
     formats: ["image/avif", "image/webp"],
-    // Define responsive image sizes
-    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
-    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
-    // Minimize cumulative layout shift
-    minimumCacheTTL: 60 * 60 * 24 * 30, // 30 days
+    // Optimized device sizes - fewer breakpoints = smaller HTML
+    deviceSizes: [640, 828, 1200, 1920],
+    imageSizes: [32, 64, 128, 256],
+    // Long cache TTL for images
+    minimumCacheTTL: 60 * 60 * 24 * 365, // 1 year
     // Enable unoptimized for faster local development
     unoptimized: process.env.NODE_ENV === "development",
+    // Reduce quality slightly for faster loading (still looks great)
+    qualities: [75, 85],
   },
 
   // Optimize bundle size with better code splitting
   experimental: {
+    // Aggressive tree-shaking for all heavy packages
     optimizePackageImports: [
       "lucide-react",
       "@radix-ui/react-dialog",
       "@radix-ui/react-dropdown-menu",
       "@radix-ui/react-select",
       "@radix-ui/react-toast",
+      "@radix-ui/react-tabs",
+      "@radix-ui/react-label",
+      "@radix-ui/react-slot",
       "react-markdown",
       "react-syntax-highlighter",
       "remark-gfm",
       "remark-math",
+      "rehype-sanitize",
       "date-fns",
       "@tiptap/react",
       "@tiptap/starter-kit",
       "@tiptap/extension-link",
       "@tiptap/extension-placeholder",
       "framer-motion",
+      "class-variance-authority",
+      "clsx",
+      "tailwind-merge",
     ],
-    // Enable optimistic client cache
+    // Enable optimistic client cache for instant navigation
     optimisticClientCache: true,
-    // Speed up builds with parallel compilation
+    // Parallel compilation for faster builds
     webpackBuildWorker: true,
+    // Inline CSS for faster first paint
+    inlineCss: true,
   },
+
+  // Enable React strict mode for better performance patterns
+  reactStrictMode: true,
 
   // Skip type checking during build (done locally via pre-deploy)
   // Note: ESLint is not run during Next.js 16 builds (removed in v16)
