@@ -15,6 +15,7 @@ import {
 /**
  * Cached version of getPosts
  * Revalidates: 60 seconds or when 'posts' tag is invalidated
+ * Staggered revalidation to prevent cache thundering
  */
 export const getCachedPosts = unstable_cache(
   async (filterPublished = false) => {
@@ -29,7 +30,7 @@ export const getCachedPosts = unstable_cache(
 
 /**
  * Cached version of getPostStats
- * Revalidates: 60 seconds or when 'posts' tag is invalidated
+ * Revalidates: 90 seconds (staggered) or when 'posts' tag is invalidated
  */
 export const getCachedPostStats = unstable_cache(
   async () => {
@@ -37,14 +38,15 @@ export const getCachedPostStats = unstable_cache(
   },
   ["posts-stats"],
   {
-    revalidate: 60,
+    revalidate: 90,
     tags: ["posts"],
   },
 );
 
 /**
  * Cached version of getPostBySlug
- * Revalidates: 60 seconds or when 'posts' tag is invalidated
+ * Revalidates: 120 seconds (staggered) or when 'posts' tag is invalidated
+ * Individual posts change less frequently
  */
 export const getCachedPostBySlug = unstable_cache(
   async (slug: string) => {
@@ -52,14 +54,15 @@ export const getCachedPostBySlug = unstable_cache(
   },
   ["posts-by-slug"],
   {
-    revalidate: 60,
+    revalidate: 120,
     tags: ["posts"],
   },
 );
 
 /**
  * Cached version of getPostsByMonth
- * Revalidates: 60 seconds or when 'posts' tag is invalidated
+ * Revalidates: 180 seconds (staggered) or when 'posts' tag is invalidated
+ * Archive data is more static
  */
 export const getCachedPostsByMonth = unstable_cache(
   async (year: number, month: number) => {
@@ -67,14 +70,15 @@ export const getCachedPostsByMonth = unstable_cache(
   },
   ["posts-by-month"],
   {
-    revalidate: 60,
+    revalidate: 180,
     tags: ["posts"],
   },
 );
 
 /**
  * Cached version of getArchiveMonths
- * Revalidates: 60 seconds or when 'posts' tag is invalidated
+ * Revalidates: 300 seconds (staggered) or when 'posts' tag is invalidated
+ * Archive months list rarely changes
  */
 export const getCachedArchiveMonths = unstable_cache(
   async () => {
@@ -82,7 +86,7 @@ export const getCachedArchiveMonths = unstable_cache(
   },
   ["archive-months"],
   {
-    revalidate: 60,
+    revalidate: 300,
     tags: ["posts"],
   },
 );
