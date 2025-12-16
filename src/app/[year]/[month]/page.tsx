@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import {
   getCachedPostsByMonth,
@@ -34,6 +35,44 @@ interface ArchivePageProps {
   }>;
 }
 
+// Loading skeleton for posts - instant display while streaming
+function PostsSkeleton() {
+  return (
+    <div className="columns-1 md:columns-2 lg:columns-3 2xl:columns-4 gap-6 md:gap-8">
+      {Array.from({ length: 6 }).map((_, i) => (
+        <div
+          key={i}
+          className="break-inside-avoid mb-6 rounded-lg bg-card/50 animate-pulse"
+        >
+          <div className="aspect-[4/3] bg-muted rounded-t-lg" />
+          <div className="p-4 space-y-3">
+            <div className="h-4 bg-muted rounded w-1/3" />
+            <div className="h-6 bg-muted rounded w-full" />
+            <div className="h-4 bg-muted rounded w-2/3" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// Async component that fetches and renders posts - streamable
+async function PostsContent({
+  year,
+  monthNumber,
+}: {
+  year: number;
+  monthNumber: number;
+}) {
+  const posts = await getCachedPostsByMonth(year, monthNumber);
+
+  if (posts.length === 0) {
+    return <EmptyPostsState />;
+  }
+
+  return <PaginatedPosts initialPosts={posts} postsPerPage={12} />;
+}
+
 export default async function ArchivePage({ params }: ArchivePageProps) {
   const { year: yearStr, month: monthStr } = await params;
 
@@ -53,11 +92,11 @@ export default async function ArchivePage({ params }: ArchivePageProps) {
     notFound();
   }
 
-  // Get posts for this month (cached for instant loading)
-  const posts = await getCachedPostsByMonth(year, monthNumber);
-
-  // Get Hebrew month name for display
+  // Get Hebrew month name for display - instant, no async
   const hebrewMonth = englishToHebrewMonth(monthStr);
+
+  // Get post count for header (fast query, can run in parallel)
+  const posts = await getCachedPostsByMonth(year, monthNumber);
 
   return (
     <div className="container mx-auto px-4 py-12">
@@ -70,11 +109,9 @@ export default async function ArchivePage({ params }: ArchivePageProps) {
         </p>
       </div>
 
-      {posts.length === 0 ? (
-        <EmptyPostsState />
-      ) : (
-        <PaginatedPosts initialPosts={posts} postsPerPage={12} />
-      )}
+      <Suspense fallback={<PostsSkeleton />}>
+        <PostsContent year={year} monthNumber={monthNumber} />
+      </Suspense>
     </div>
   );
 }

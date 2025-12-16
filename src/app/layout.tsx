@@ -4,6 +4,7 @@ import "./globals.css";
 import Layout from "@/components/layout/layout";
 import { ClientProviders } from "@/components/shared/client-providers";
 
+// Optimized font loading - only load what's needed, with aggressive preloading
 const heebo = localFont({
   src: [
     {
@@ -23,9 +24,10 @@ const heebo = localFont({
     },
   ],
   variable: "--font-heebo",
-  display: "swap",
-  preload: true,
-  fallback: ["system-ui", "arial"],
+  display: "swap", // Show text immediately with fallback, swap when loaded
+  preload: true, // Preload for fastest loading
+  fallback: ["system-ui", "-apple-system", "Segoe UI", "Arial", "sans-serif"],
+  adjustFontFallback: "Arial", // Reduce layout shift with font metrics adjustment
 });
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://your-site.com";
@@ -93,8 +95,25 @@ export default function RootLayout({
   return (
     <html lang="he" dir="rtl" suppressHydrationWarning>
       <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+        {/* Preconnect to external resources for faster loading */}
+        <link
+          rel="preconnect"
+          href="https://hqsluqjwqsbrbrz6.public.blob.vercel-storage.com"
+          crossOrigin="anonymous"
+        />
+        {/* DNS prefetch for image CDN */}
+        <link
+          rel="dns-prefetch"
+          href="https://hqsluqjwqsbrbrz6.public.blob.vercel-storage.com"
+        />
+        {/* Preload critical above-the-fold image if exists */}
+        <link
+          rel="preload"
+          as="image"
+          href="/main.jpg"
+          type="image/jpeg"
+          fetchPriority="high"
+        />
       </head>
       <body className={heebo.className}>
         <ClientProviders>

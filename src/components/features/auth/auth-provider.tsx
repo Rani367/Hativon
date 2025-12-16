@@ -6,6 +6,7 @@ import React, {
   useState,
   useEffect,
   useCallback,
+  useTransition,
 } from "react";
 import { User, UserLogin, UserRegistration } from "@/types/user.types";
 import { logError } from "@/lib/logger";
@@ -28,23 +29,32 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [, startTransition] = useTransition();
 
-  // Check authentication status
+  // Check authentication status - deferred to not block initial render
   const checkAuth = useCallback(async () => {
     try {
-      const response = await fetch("/api/auth/session");
+      // Use low priority fetch to not block main thread
+      const response = await fetch("/api/auth/session", {
+        priority: "low",
+      } as RequestInit);
       const data = await response.json();
 
-      if (data.authenticated && data.user) {
-        setUser(data.user);
-      } else {
-        setUser(null);
-      }
+      // Use transition to mark this as non-urgent update
+      startTransition(() => {
+        if (data.authenticated && data.user) {
+          setUser(data.user);
+        } else {
+          setUser(null);
+        }
+        setLoading(false);
+      });
     } catch (error) {
       logError("Auth check failed:", error);
-      setUser(null);
-    } finally {
-      setLoading(false);
+      startTransition(() => {
+        setUser(null);
+        setLoading(false);
+      });
     }
   }, []);
 
@@ -109,9 +119,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  // Check auth on mount
+  // Check auth on mount - use requestIdleCallback to defer until browser is idle
   useEffect(() => {
-    checkAuth();
+    // Defer auth check to not block initial paint
+    if (typeof window !== "undefined" && "requestIdleCallback" in window) {
+      const idleId = window.requestIdleCallback(
+        () => {
+          checkAuth();
+        },
+        { timeout: 2000 },
+      ); // Max 2 second delay
+      return () => window.cancelIdleCallback(idleId);
+    } else {
+      // Fallback for browsers without requestIdleCallback
+      const timeoutId = setTimeout(checkAuth, 100);
+      return () => clearTimeout(timeoutId);
+    }
   }, [checkAuth]);
 
   return (

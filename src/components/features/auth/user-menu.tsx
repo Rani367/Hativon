@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, lazy, Suspense } from "react";
 import Link from "next/link";
 import { useAuth } from "./auth-provider";
 import { Button } from "@/components/ui/button";
@@ -12,8 +12,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { AuthDialog } from "./auth-dialog";
 import { User, LogOut, FileText, LayoutDashboard, UserCog } from "lucide-react";
+
+// Lazy load auth dialog - not needed until user clicks login
+const AuthDialog = lazy(() =>
+  import("./auth-dialog").then((mod) => ({ default: mod.AuthDialog })),
+);
 
 export function UserMenu() {
   const { user, logout, loading } = useAuth();
@@ -34,7 +38,15 @@ export function UserMenu() {
         >
           התחבר
         </Button>
-        <AuthDialog open={authDialogOpen} onOpenChange={setAuthDialogOpen} />
+        {/* Only load dialog when opened */}
+        {authDialogOpen && (
+          <Suspense fallback={null}>
+            <AuthDialog
+              open={authDialogOpen}
+              onOpenChange={setAuthDialogOpen}
+            />
+          </Suspense>
+        )}
       </>
     );
   }
