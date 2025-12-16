@@ -514,6 +514,30 @@ The project is optimized for fast builds and deployments:
 
 **Result:** Build times reduced by 30-40% compared to running full validation suite.
 
+### Static Site Generation (SSG)
+
+All public pages are pre-rendered at build time for instant loading:
+
+**Pre-rendered Pages:**
+- **Post pages** (`/posts/[slug]`) - All published posts pre-rendered with `generateStaticParams`
+- **Archive pages** (`/[year]/[month]`) - All months with posts pre-rendered
+- **Homepage** (`/`) - Pre-rendered redirect to current month
+
+**Configuration:**
+- `dynamicParams = false` - Returns 404 for unknown slugs (no on-demand rendering)
+- `revalidate` - ISR revalidation intervals:
+  - Post pages: 300 seconds (5 minutes)
+  - Archive pages: 60 seconds (1 minute)
+  - Homepage: 86400 seconds (24 hours)
+
+**Benefits:**
+- First visitor gets instant page load (no server rendering wait)
+- Pages are served from CDN edge locations
+- New posts appear after revalidation period or on next deploy
+- Unknown URLs return 404 immediately without server processing
+
+**Note:** Dashboard and admin pages remain dynamic (client-side rendered) since they require authentication.
+
 ### Hebrew/RTL Support
 
 The entire UI is configured for Hebrew (RTL) text:

@@ -18,7 +18,10 @@ interface PostPageProps {
 // Enable ISR with 5 minute revalidation for instant loading
 export const revalidate = 300;
 
-// Add cache control headers
+// Pre-render all posts at build time - return 404 for unknown slugs
+export const dynamicParams = false;
+
+// Generate static params for all published posts
 export async function generateStaticParams() {
   const posts = await getPosts(); // Only published posts
   return posts.map((post) => ({
