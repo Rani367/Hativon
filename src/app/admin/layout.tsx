@@ -32,12 +32,8 @@ export default function AdminLayout({
         const response = await fetch("/api/check-auth");
         const data = await response.json();
 
-        // Teachers get automatic admin access
+        // Teachers get automatic admin access (cookie set in check-auth)
         if (data.authenticated && data.isTeacher) {
-          // Set admin auth cookie for teacher so API routes work
-          if (!data.isAdmin) {
-            await fetch("/api/admin/teacher-auth", { method: "POST" });
-          }
           setAuthState("authorized");
         } else if (data.isAdmin) {
           setAuthState("authorized");

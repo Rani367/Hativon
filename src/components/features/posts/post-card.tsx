@@ -13,6 +13,7 @@ import {
   CardHeader,
 } from "@/components/ui/card";
 import { Clock, Calendar } from "lucide-react";
+import { memo } from "react";
 
 interface PostCardProps {
   post: Post;
@@ -23,7 +24,11 @@ interface PostCardProps {
 const BLUR_DATA_URL =
   "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iOCIgaGVpZ2h0PSI2IiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiNlNWU3ZWIiLz48L3N2Zz4=";
 
-export default function PostCard({ post, priority = false }: PostCardProps) {
+// Memoized to prevent unnecessary re-renders when parent state changes
+const PostCard = memo(function PostCard({
+  post,
+  priority = false,
+}: PostCardProps) {
   const wordCount = post.content ? getWordCount(post.content) : 0;
   const readingTime = calculateReadingTime(wordCount);
 
@@ -123,4 +128,6 @@ export default function PostCard({ post, priority = false }: PostCardProps) {
       )}
     </Card>
   );
-}
+});
+
+export default PostCard;
