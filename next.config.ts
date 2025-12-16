@@ -51,7 +51,7 @@ const nextConfig: NextConfig = {
       "@radix-ui/react-label",
       "@radix-ui/react-slot",
       "react-markdown",
-      "react-syntax-highlighter",
+      "shiki",
       "remark-gfm",
       "remark-math",
       "rehype-sanitize",

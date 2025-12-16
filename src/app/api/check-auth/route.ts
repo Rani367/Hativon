@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth/middleware";
-import { isAdminAuthenticated } from "@/lib/auth/admin";
+import { isAdminAuthenticated, setAdminAuth } from "@/lib/auth/admin";
 import { logError } from "@/lib/logger";
 
 /**
  * Check authentication status
  * Only reveals admin status when user is authenticated to prevent information leakage
+ * Auto-sets admin auth for teachers to avoid extra round-trip
  */
 export async function GET() {
   try {
@@ -13,7 +14,15 @@ export async function GET() {
 
     if (user) {
       // Only check and return admin status for authenticated users
-      const adminAuth = await isAdminAuthenticated();
+      let adminAuth = await isAdminAuthenticated();
+
+      // Auto-set admin auth for teachers if not already set
+      // This avoids the extra round-trip to /api/admin/teacher-auth
+      if (user.isTeacher && !adminAuth) {
+        await setAdminAuth();
+        adminAuth = true;
+      }
+
       return NextResponse.json({
         authenticated: true,
         user,

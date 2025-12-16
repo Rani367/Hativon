@@ -86,7 +86,10 @@ export function validateImports(
 
   try {
     const depcheck = JSON.parse(depcheckResult.output);
-    const unusedDeps = Object.keys(depcheck.dependencies || {});
+    // depcheck.dependencies is an array of unused dependency names
+    const unusedDeps = Array.isArray(depcheck.dependencies)
+      ? depcheck.dependencies
+      : [];
 
     if (unusedDeps.length > 0) {
       addResult(
