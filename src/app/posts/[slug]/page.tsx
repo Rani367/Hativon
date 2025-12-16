@@ -1,15 +1,38 @@
+import { Suspense } from "react";
 import { getPosts, getPost, getWordCount } from "@/lib/posts";
 import { format } from "date-fns";
 import { he } from "date-fns/locale";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { Metadata } from "next";
-import ReactMarkdown from "react-markdown";
 import { Badge } from "@/components/ui/badge";
 import { calculateReadingTime } from "@/lib/utils";
-import { components } from "@/components/features/posts/mdx-component";
-import remarkGfm from "remark-gfm";
-import rehypeSanitize from "rehype-sanitize";
+
+// Async component for rendering markdown content - streamable
+async function PostContent({ content }: { content: string }) {
+  const [remarkGfmPlugin, rehypeSanitizePlugin, mdxComponents] =
+    await Promise.all([
+      import("remark-gfm").then((mod) => mod.default),
+      import("rehype-sanitize").then((mod) => mod.default),
+      import("@/components/features/posts/mdx-component").then(
+        (mod) => mod.components,
+      ),
+    ]);
+
+  const ReactMarkdownComponent = (await import("react-markdown")).default;
+
+  return (
+    <div className="max-w-none">
+      <ReactMarkdownComponent
+        components={mdxComponents}
+        remarkPlugins={[remarkGfmPlugin]}
+        rehypePlugins={[rehypeSanitizePlugin]}
+      >
+        {content}
+      </ReactMarkdownComponent>
+    </div>
+  );
+}
 
 interface PostPageProps {
   params: Promise<{ slug: string }>;
@@ -140,10 +163,12 @@ export default async function PostPage({ params }: PostPageProps) {
               height={800}
               className="w-full h-auto"
               priority
-              quality={90}
+              loading="eager"
+              fetchPriority="high"
+              quality={75}
               sizes="(max-width: 768px) 100vw, 896px"
               placeholder="blur"
-              blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTkyMCIgaGVpZ2h0PSIxMDgwIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZlcnNpb249IjEuMSIvPg=="
+              blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iOCIgaGVpZ2h0PSI2IiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiNlNWU3ZWIiLz48L3N2Zz4="
             />
           </div>
         )}
@@ -199,15 +224,19 @@ export default async function PostPage({ params }: PostPageProps) {
           </div>
         </header>
 
-        <div className="max-w-none">
-          <ReactMarkdown
-            components={components}
-            remarkPlugins={[remarkGfm]}
-            rehypePlugins={[rehypeSanitize]}
-          >
-            {post.content}
-          </ReactMarkdown>
-        </div>
+        <Suspense
+          fallback={
+            <div className="animate-pulse space-y-4">
+              <div className="h-4 bg-muted rounded w-full" />
+              <div className="h-4 bg-muted rounded w-5/6" />
+              <div className="h-4 bg-muted rounded w-4/6" />
+              <div className="h-4 bg-muted rounded w-full" />
+              <div className="h-4 bg-muted rounded w-3/4" />
+            </div>
+          }
+        >
+          <PostContent content={post.content} />
+        </Suspense>
       </article>
     </>
   );
