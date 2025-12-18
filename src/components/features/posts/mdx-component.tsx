@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { cn } from "@/lib/utils";
 import Image from "next/image";
@@ -11,120 +11,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+// Use Prism version for better compatibility with Next.js
+import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
+// Use ESM version instead of CJS for better tree-shaking
+import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { Badge } from "@/components/ui/badge";
-import { useState, useEffect, memo } from "react";
-
-// Code block skeleton for loading state
-function CodeBlockSkeleton() {
-  return (
-    <div className="rounded-md bg-[#1e1e1e] p-4 animate-pulse">
-      <div className="h-4 bg-gray-700 rounded w-3/4 mb-2" />
-      <div className="h-4 bg-gray-700 rounded w-1/2 mb-2" />
-      <div className="h-4 bg-gray-700 rounded w-5/6" />
-    </div>
-  );
-}
-
-// Escape HTML for fallback rendering
-function escapeHtml(text: string): string {
-  return text
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
-
-// Commonly used languages in a school newspaper context
-const SUPPORTED_LANGUAGES = [
-  "javascript",
-  "typescript",
-  "python",
-  "html",
-  "css",
-  "json",
-  "markdown",
-  "bash",
-  "shell",
-  "text",
-  "plaintext",
-];
-
-// Map common aliases to supported languages
-function normalizeLanguage(lang: string): string {
-  const aliases: Record<string, string> = {
-    js: "javascript",
-    ts: "typescript",
-    py: "python",
-    sh: "bash",
-    zsh: "bash",
-    txt: "text",
-    plain: "plaintext",
-  };
-  return aliases[lang.toLowerCase()] || lang.toLowerCase();
-}
-
-// Highlighted code component using Shiki with limited languages
-const HighlightedCode = memo(function HighlightedCode({
-  code,
-  language,
-}: {
-  code: string;
-  language: string;
-}) {
-  const [html, setHtml] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    let mounted = true;
-
-    async function highlight() {
-      const normalizedLang = normalizeLanguage(language);
-
-      // Check if language is supported, fallback to plaintext if not
-      const langToUse = SUPPORTED_LANGUAGES.includes(normalizedLang)
-        ? normalizedLang
-        : "text";
-
-      try {
-        // Use shiki/bundle/web which only includes web-related languages
-        const { codeToHtml } = await import("shiki/bundle/web");
-        const result = await codeToHtml(code, {
-          lang: langToUse,
-          theme: "github-dark",
-        });
-        if (mounted) {
-          setHtml(result);
-          setIsLoading(false);
-        }
-      } catch {
-        // Fallback to plain pre/code for any errors
-        if (mounted) {
-          setHtml(
-            `<pre class="shiki" style="background-color:#24292e;padding:1rem;border-radius:0.375rem;overflow-x:auto"><code style="color:#e1e4e8">${escapeHtml(code)}</code></pre>`,
-          );
-          setIsLoading(false);
-        }
-      }
-    }
-
-    highlight();
-    return () => {
-      mounted = false;
-    };
-  }, [code, language]);
-
-  if (isLoading || !html) {
-    return <CodeBlockSkeleton />;
-  }
-
-  return (
-    <div
-      className="rounded-md overflow-hidden [&>pre]:p-4 [&>pre]:overflow-x-auto [&>pre]:text-sm"
-      dangerouslySetInnerHTML={{ __html: html }}
-    />
-  );
-});
 
 const components = {
   h1: ({ children }: { children?: React.ReactNode }) => (
@@ -155,15 +46,22 @@ const components = {
   code: ({
     className,
     children,
+    ...props
   }: {
     className?: string;
     children?: React.ReactNode;
   }) => {
     const match = /language-(\w+)/.exec(className || "");
-    const code = String(children).replace(/\n$/, "");
-
     return match ? (
-      <HighlightedCode code={code} language={match[1]} />
+      <SyntaxHighlighter
+        style={vscDarkPlus}
+        language={match[1]}
+        PreTag="div"
+        {...props}
+        className="rounded-md [&>code]:bg-transparent [&>code]:p-2 [&>code]:rounded-md"
+      >
+        {String(children).replace(/\n$/, "")}
+      </SyntaxHighlighter>
     ) : (
       <Badge variant="pre" className="font-mono rounded-md text-sm">
         {children}
