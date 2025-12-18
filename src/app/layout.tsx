@@ -34,6 +34,7 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://your-site.com";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
+  applicationName: "חטיבון",
   title: {
     default: "חטיבון - עיתון בית הספר",
     template: `%s | חטיבון`,
@@ -95,6 +96,27 @@ export default function RootLayout({
   return (
     <html lang="he" dir="rtl" suppressHydrationWarning>
       <head>
+        {/* Structured data for Google Search - controls site name in results */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "WebSite",
+              name: "חטיבון",
+              alternateName: "Hativon",
+              url: siteUrl,
+              description:
+                "עיתון התלמידים של חטיבת הביניים - חדשות, כתבות ועדכונים מבית הספר",
+              inLanguage: "he",
+              publisher: {
+                "@type": "Organization",
+                name: "חטיבון",
+                url: siteUrl,
+              },
+            }),
+          }}
+        />
         {/* Preconnect to external resources for faster loading */}
         <link
           rel="preconnect"
