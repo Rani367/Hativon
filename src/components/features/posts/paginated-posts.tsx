@@ -20,9 +20,8 @@ const PRIORITY_COUNT = 6;
 
 // Breakpoints for masonry columns (max-width -> number of columns)
 const MASONRY_BREAKPOINTS = {
-  default: 3, // lg and above (3 columns)
-  1024: 2, // md-lg (2 columns)
-  768: 1, // below md (1 column)
+  default: 2, // desktop (2 columns for wider cards)
+  768: 1, // mobile (1 column)
 };
 
 function PaginatedPosts({
