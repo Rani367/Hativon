@@ -50,3 +50,6 @@ next-env.d.ts
 
 # cache
 /cache
+
+# migration backups
+scripts/description-backup.json
