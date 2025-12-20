@@ -98,10 +98,10 @@ describe("generateDescription", () => {
       expect(generateDescription(content)).toBe(content);
     });
 
-    it("truncates long Hebrew text to 160 characters", () => {
-      const longContent = "א".repeat(200);
+    it("truncates long Hebrew text to 300 characters", () => {
+      const longContent = "א".repeat(400);
       const result = generateDescription(longContent);
-      expect(result).toHaveLength(163); // 160 + '...'
+      expect(result).toHaveLength(303); // 300 + '...'
       expect(result.endsWith("...")).toBe(true);
     });
 
