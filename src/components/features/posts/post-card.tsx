@@ -93,9 +93,7 @@ export default function PostCard({ post, priority = false }: PostCardProps) {
             {post.title}
           </h2>
         </div>
-        <p className="text-muted-foreground line-clamp-2 text-base">
-          {post.description}
-        </p>
+        <p className="text-muted-foreground text-base">{post.description}</p>
       </CardHeader>
       <CardContent>
         {post.author && (
