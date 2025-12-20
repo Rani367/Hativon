@@ -1,7 +1,7 @@
 import type { DbPostRow } from "@/types/database.types";
 import type { Post } from "@/types/post.types";
 
-export const MAX_DESCRIPTION_LENGTH = 160;
+export const MAX_DESCRIPTION_LENGTH = 300;
 
 // converts title to url-friendly slug, keeps hebrew chars
 export function generateSlug(title: string): string {
