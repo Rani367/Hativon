@@ -135,6 +135,9 @@ importers:
       react-markdown:
         specifier: ^10.1.0
         version: 10.1.0(@types/react@19.2.7)(react@19.2.1)
+      react-masonry-css:
+        specifier: ^1.0.16
+        version: 1.0.16(react@19.2.1)
       react-syntax-highlighter:
         specifier: ^16.1.0
         version: 16.1.0(react@19.2.1)
@@ -3080,6 +3083,11 @@ packages:
     peerDependencies:
       '@types/react': 19.2.7
       react: '>=18'
+
+  react-masonry-css@1.0.16:
+    resolution: {integrity: sha512-KSW0hR2VQmltt/qAa3eXOctQDyOu7+ZBevtKgpNDSzT7k5LA/0XntNa9z9HKCdz3QlxmJHglTZ18e4sX4V8zZQ==}
+    peerDependencies:
+      react: '>=16.0.0'
 
   react-refresh@0.18.0:
     resolution: {integrity: sha512-QgT5//D3jfjJb6Gsjxv0Slpj23ip+HtOpnNgnb2S5zU3CB26G/IDPGoy4RJB42wzFE46DRsstbW6tKHoKbhAxw==}
@@ -6485,6 +6493,10 @@ snapshots:
       vfile: 6.0.3
     transitivePeerDependencies:
       - supports-color
+
+  react-masonry-css@1.0.16(react@19.2.1):
+    dependencies:
+      react: 19.2.1
 
   react-refresh@0.18.0: {}
 
