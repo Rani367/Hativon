@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition, useCallback, memo } from "react";
+import Masonry from "react-masonry-css";
 import { Post } from "@/types/post.types";
 import PostCard from "@/components/features/posts/post-card";
 import { Button } from "@/components/ui/button";
@@ -16,6 +17,16 @@ const MemoizedPostCard = memo(PostCard);
 
 // Number of posts to prioritize (above-the-fold) - increased for faster LCP
 const PRIORITY_COUNT = 6;
+
+// Breakpoints for masonry columns (screen width -> number of columns)
+const MASONRY_BREAKPOINTS = {
+  default: 4, // 2xl and above
+  1536: 4, // 2xl
+  1280: 3, // xl
+  1024: 3, // lg
+  768: 2, // md
+  640: 1, // sm and below
+};
 
 function PaginatedPosts({
   initialPosts,
@@ -37,15 +48,17 @@ function PaginatedPosts({
 
   return (
     <>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-6 md:gap-8 items-start">
+      <Masonry
+        breakpointCols={MASONRY_BREAKPOINTS}
+        className="flex gap-6 md:gap-8 -ml-6 md:-ml-8"
+        columnClassName="pl-6 md:pl-8 bg-clip-padding"
+      >
         {visiblePosts.map((post, index) => (
-          <MemoizedPostCard
-            key={post.id}
-            post={post}
-            priority={index < PRIORITY_COUNT}
-          />
+          <div key={post.id} className="mb-6 md:mb-8">
+            <MemoizedPostCard post={post} priority={index < PRIORITY_COUNT} />
+          </div>
         ))}
-      </div>
+      </Masonry>
 
       {hasMore && (
         <div className="flex justify-center mt-12">
