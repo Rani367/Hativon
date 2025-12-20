@@ -25,7 +25,10 @@ export function PostGridSkeleton({ count = 12 }: { count?: number }) {
   return (
     <div className="columns-1 md:columns-2 lg:columns-3 2xl:columns-4 gap-6">
       {Array.from({ length: count }).map((_, i) => (
-        <div key={i} className="break-inside-avoid mb-6">
+        <div
+          key={i}
+          className="break-inside-avoid mb-6 inline-block w-full transform-gpu"
+        >
           <PostCardSkeleton />
         </div>
       ))}
