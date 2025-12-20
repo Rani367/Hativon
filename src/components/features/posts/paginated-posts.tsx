@@ -18,14 +18,11 @@ const MemoizedPostCard = memo(PostCard);
 // Number of posts to prioritize (above-the-fold) - increased for faster LCP
 const PRIORITY_COUNT = 6;
 
-// Breakpoints for masonry columns (screen width -> number of columns)
+// Breakpoints for masonry columns (max-width -> number of columns)
 const MASONRY_BREAKPOINTS = {
-  default: 4, // 2xl and above
-  1536: 4, // 2xl
-  1280: 3, // xl
-  1024: 3, // lg
-  768: 2, // md
-  640: 1, // sm and below
+  default: 3, // lg and above (3 columns)
+  1024: 2, // md-lg (2 columns)
+  768: 1, // below md (1 column)
 };
 
 function PaginatedPosts({
