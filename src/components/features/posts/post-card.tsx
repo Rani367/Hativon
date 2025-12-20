@@ -28,7 +28,7 @@ export default function PostCard({ post, priority = false }: PostCardProps) {
   const readingTime = calculateReadingTime(wordCount);
 
   return (
-    <Card className="group relative pt-0 overflow-hidden hover:shadow-xl transition-shadow duration-200 bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-background/60 break-inside-avoid mb-6 inline-block w-full transform-gpu">
+    <Card className="group relative pt-0 overflow-hidden hover:shadow-xl transition-shadow duration-200 bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-background/60 break-inside-avoid mb-6">
       <Link
         href={`/posts/${post.slug}`}
         className="absolute inset-0 z-10"

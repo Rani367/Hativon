@@ -42,7 +42,7 @@ function PostsSkeleton() {
       {Array.from({ length: 6 }).map((_, i) => (
         <div
           key={i}
-          className="break-inside-avoid mb-6 rounded-lg bg-card/50 animate-pulse inline-block w-full transform-gpu"
+          className="break-inside-avoid mb-6 rounded-lg bg-card/50 animate-pulse"
         >
           <div className="aspect-[4/3] bg-muted rounded-t-lg" />
           <div className="p-4 space-y-3">
