@@ -23,9 +23,9 @@ export function PostCardSkeleton() {
 
 export function PostGridSkeleton({ count = 12 }: { count?: number }) {
   return (
-    <div className="columns-1 md:columns-2 lg:columns-3 2xl:columns-4 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-6 items-start">
       {Array.from({ length: count }).map((_, i) => (
-        <div key={i} className="break-inside-avoid-column mb-6 backface-hidden">
+        <div key={i}>
           <PostCardSkeleton />
         </div>
       ))}
