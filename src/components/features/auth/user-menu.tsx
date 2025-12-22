@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, lazy, Suspense } from "react";
+import { useState, lazy, Suspense, useEffect } from "react";
 import Link from "next/link";
 import { useAuth } from "./auth-provider";
 import { Button } from "@/components/ui/button";
@@ -14,14 +14,39 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { User, LogOut, FileText, LayoutDashboard, UserCog } from "lucide-react";
 
-// Lazy load auth dialog - not needed until user clicks login
+// Lazy load auth dialog
 const AuthDialog = lazy(() =>
   import("./auth-dialog").then((mod) => ({ default: mod.AuthDialog })),
 );
 
+// Preload function - call this to start loading the chunk
+const preloadAuthDialog = () => {
+  import("./auth-dialog");
+};
+
 export function UserMenu() {
   const { user, logout, loading } = useAuth();
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
+  const [isReady, setIsReady] = useState(false);
+
+  // Preload auth dialog after initial page load (only when not logged in)
+  useEffect(() => {
+    if (user || loading) return;
+
+    if ("requestIdleCallback" in window) {
+      const id = requestIdleCallback(() => {
+        preloadAuthDialog();
+        setIsReady(true);
+      });
+      return () => cancelIdleCallback(id);
+    } else {
+      const id = setTimeout(() => {
+        preloadAuthDialog();
+        setIsReady(true);
+      }, 1000);
+      return () => clearTimeout(id);
+    }
+  }, [user, loading]);
 
   if (loading) {
     return <div className="h-9 w-24 rounded-md bg-muted animate-pulse" />;
@@ -38,8 +63,7 @@ export function UserMenu() {
         >
           התחבר
         </Button>
-        {/* Only load dialog when opened */}
-        {authDialogOpen && (
+        {isReady && (
           <Suspense fallback={null}>
             <AuthDialog
               open={authDialogOpen}
