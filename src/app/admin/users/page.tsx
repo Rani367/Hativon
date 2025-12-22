@@ -31,8 +31,7 @@ import {
   UserPlus,
   Terminal,
 } from "lucide-react";
-import { format } from "date-fns";
-import { he } from "date-fns/locale";
+import { formatHebrewDate } from "@/lib/date/format";
 import { toast } from "sonner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
@@ -296,15 +295,11 @@ export default function UsersManagementPage() {
                         {user.grade}'{user.classNumber}
                       </TableCell>
                       <TableCell>
-                        {format(new Date(user.createdAt), "d בMMMM yyyy", {
-                          locale: he,
-                        })}
+                        {formatHebrewDate(user.createdAt)}
                       </TableCell>
                       <TableCell>
                         {user.lastLogin
-                          ? format(new Date(user.lastLogin), "d בMMMM yyyy", {
-                              locale: he,
-                            })
+                          ? formatHebrewDate(user.lastLogin)
                           : "אף פעם"}
                       </TableCell>
                       <TableCell className="text-left">

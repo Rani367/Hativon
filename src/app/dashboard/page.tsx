@@ -17,8 +17,7 @@ import {
   ChevronLeft,
 } from "lucide-react";
 import { Post } from "@/types/post.types";
-import { format } from "date-fns";
-import { he } from "date-fns/locale";
+import { formatHebrewDate } from "@/lib/date/format";
 import { toast } from "sonner";
 import { logError } from "@/lib/logger";
 import {
@@ -368,9 +367,7 @@ export default function DashboardPage() {
                           )}
                         </td>
                         <td className="p-3 sm:p-4 text-sm text-muted-foreground hidden lg:table-cell">
-                          {format(new Date(post.createdAt), "d בMMMM yyyy", {
-                            locale: he,
-                          })}
+                          {formatHebrewDate(post.createdAt)}
                         </td>
                         <td className="p-3 sm:p-4">
                           <Badge

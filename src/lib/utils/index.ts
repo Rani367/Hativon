@@ -5,10 +5,7 @@
  */
 
 // Re-export text utilities
-export * from './text-utils';
+export * from "./text-utils";
 
 // Re-export UI utilities
-export * from './utils';
-
-// Re-export animation utilities
-export * from './animations';
+export * from "./utils";

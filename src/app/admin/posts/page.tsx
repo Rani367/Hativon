@@ -7,9 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Search, Trash2 } from "lucide-react";
 import { Post } from "@/types/post.types";
-import { format } from "date-fns";
-import { he } from "date-fns/locale";
-import { logError } from '@/lib/logger';
+import { formatHebrewDate } from "@/lib/date/format";
+import { logError } from "@/lib/logger";
 
 export default function PostsListPage() {
   const [posts, setPosts] = useState<Post[]>([]);
@@ -225,7 +224,7 @@ export default function PostsListPage() {
                       )}
                     </td>
                     <td className="p-3 sm:p-4 text-sm text-muted-foreground hidden lg:table-cell">
-                      {format(new Date(post.createdAt), "d בMMMM yyyy", { locale: he })}
+                      {formatHebrewDate(post.createdAt)}
                     </td>
                     <td className="p-3 sm:p-4">
                       <Badge
