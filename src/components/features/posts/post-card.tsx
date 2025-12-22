@@ -1,7 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { format } from "date-fns";
-import { he } from "date-fns/locale";
+import { formatHebrewDate } from "@/lib/date/format";
 import { Post } from "@/types/post.types";
 import { getWordCount } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -79,9 +78,7 @@ export default function PostCard({ post, priority = false }: PostCardProps) {
         <div className="flex items-center gap-3 sm:gap-4 text-sm text-muted-foreground">
           <div className="flex items-center gap-2">
             <Calendar className="h-4 w-4" />
-            <span>
-              {format(new Date(post.date), "d בMMMM yyyy", { locale: he })}
-            </span>
+            <span>{formatHebrewDate(post.date)}</span>
           </div>
           <div className="hidden sm:flex items-center gap-2">
             <Clock className="h-4 w-4" />

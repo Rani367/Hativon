@@ -6,9 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FileText, Eye, EyeOff, Calendar, TrendingUp } from "lucide-react";
 import { PostStats, Post } from "@/types/post.types";
-import { format } from "date-fns";
-import { he } from "date-fns/locale";
-import { logError } from '@/lib/logger';
+import { formatHebrewDate } from "@/lib/date/format";
+import { logError } from "@/lib/logger";
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState<PostStats | null>(null);
@@ -210,7 +209,7 @@ export default function AdminDashboard() {
                       {post.title}
                     </div>
                     <div className="flex items-center gap-3 mt-1 text-sm text-muted-foreground">
-                      <span>{format(new Date(post.createdAt), "d בMMMM yyyy", { locale: he })}</span>
+                      <span>{formatHebrewDate(post.createdAt)}</span>
                       <span className={`px-2 py-0.5 rounded-full text-xs ${
                         post.status === 'published'
                           ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
