@@ -3,7 +3,9 @@
 import * as React from 'react';
 import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { X } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { scaleVariants, fadeInVariants } from '@/lib/utils';
 
 const AnimatedDialog = DialogPrimitive.Root;
 
@@ -92,9 +94,14 @@ const AnimatedDialogTitle = React.forwardRef<
     )}
     {...props}
   >
-    <span className="block animate-fade-in-up animate-delay-1">
+    <motion.span
+      className="block"
+      initial={{ opacity: 0, y: -10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.1, duration: 0.3 }}
+    >
       {children}
-    </span>
+    </motion.span>
   </DialogPrimitive.Title>
 ));
 AnimatedDialogTitle.displayName = DialogPrimitive.Title.displayName;
@@ -108,9 +115,14 @@ const AnimatedDialogDescription = React.forwardRef<
     className={cn('text-sm text-muted-foreground', className)}
     {...props}
   >
-    <span className="block animate-fade-in-up animate-delay-2">
+    <motion.span
+      className="block"
+      initial={{ opacity: 0, y: -10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.15, duration: 0.3 }}
+    >
       {children}
-    </span>
+    </motion.span>
   </DialogPrimitive.Description>
 ));
 AnimatedDialogDescription.displayName = DialogPrimitive.Description.displayName;
