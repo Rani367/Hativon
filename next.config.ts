@@ -55,12 +55,10 @@ const nextConfig: NextConfig = {
       "remark-gfm",
       "remark-math",
       "rehype-sanitize",
-      "date-fns",
       "@tiptap/react",
       "@tiptap/starter-kit",
       "@tiptap/extension-link",
       "@tiptap/extension-placeholder",
-      "framer-motion",
       "class-variance-authority",
       "clsx",
       "tailwind-merge",
@@ -98,9 +96,30 @@ const nextConfig: NextConfig = {
   // Optimize power consumption
   poweredByHeader: false,
 
-  // Security headers
+  // Security and cache headers
   async headers() {
     return [
+      // Immutable cache for static assets (1 year)
+      {
+        source: "/_next/static/:path*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=31536000, immutable",
+          },
+        ],
+      },
+      // Immutable cache for fonts
+      {
+        source: "/fonts/:path*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=31536000, immutable",
+          },
+        ],
+      },
+      // Security headers for all routes
       {
         source: "/:path*",
         headers: [
