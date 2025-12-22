@@ -1,45 +1,16 @@
 'use client';
 
-import { useState, lazy, Suspense, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../auth/auth-provider';
 import { Button } from '@/components/ui/button';
+import { AuthDialog } from '../auth/auth-dialog';
 import { PenSquare } from 'lucide-react';
-
-// Lazy load auth dialog
-const AuthDialog = lazy(() =>
-  import('../auth/auth-dialog').then((mod) => ({ default: mod.AuthDialog })),
-);
-
-// Preload function
-const preloadAuthDialog = () => {
-  import('../auth/auth-dialog');
-};
 
 export function EmptyPostsState() {
   const { user, loading } = useAuth();
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
-  const [isReady, setIsReady] = useState(false);
   const router = useRouter();
-
-  // Preload auth dialog after initial page load (only when not logged in)
-  useEffect(() => {
-    if (user || loading) return;
-
-    if ("requestIdleCallback" in window) {
-      const id = requestIdleCallback(() => {
-        preloadAuthDialog();
-        setIsReady(true);
-      });
-      return () => cancelIdleCallback(id);
-    } else {
-      const id = setTimeout(() => {
-        preloadAuthDialog();
-        setIsReady(true);
-      }, 1000);
-      return () => clearTimeout(id);
-    }
-  }, [user, loading]);
 
   const handleClick = () => {
     if (!user) {
@@ -72,11 +43,7 @@ export function EmptyPostsState() {
           <span>צור פוסט ראשון</span>
         </Button>
       </div>
-      {isReady && (
-        <Suspense fallback={null}>
-          <AuthDialog open={authDialogOpen} onOpenChange={setAuthDialogOpen} />
-        </Suspense>
-      )}
+      <AuthDialog open={authDialogOpen} onOpenChange={setAuthDialogOpen} />
     </>
   );
 }
