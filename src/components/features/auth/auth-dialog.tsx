@@ -11,6 +11,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { LoginForm } from './login-form';
 import { RegisterForm } from './register-form';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface AuthDialogProps {
   open: boolean;
@@ -36,23 +37,41 @@ export function AuthDialog({ open, onOpenChange, defaultTab = 'login' }: AuthDia
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'login' | 'register')}>
-          <div className="animate-fade-in-up will-animate" style={{ animationDelay: '200ms' }}>
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2, duration: 0.3 }}
+          >
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="login">התחברות</TabsTrigger>
               <TabsTrigger value="register">הרשמה</TabsTrigger>
             </TabsList>
-          </div>
+          </motion.div>
 
           <div className="mt-4">
-            {activeTab === 'login' ? (
-              <div key="login" className="animate-slide-in-left will-animate">
-                <LoginForm onSuccess={handleSuccess} />
-              </div>
-            ) : (
-              <div key="register" className="animate-slide-in-left will-animate">
-                <RegisterForm onSuccess={handleSuccess} />
-              </div>
-            )}
+            <AnimatePresence mode="wait">
+              {activeTab === 'login' ? (
+                <motion.div
+                  key="login"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <LoginForm onSuccess={handleSuccess} />
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="register"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <RegisterForm onSuccess={handleSuccess} />
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </Tabs>
       </DialogContent>
