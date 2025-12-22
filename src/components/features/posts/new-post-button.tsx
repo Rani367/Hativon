@@ -1,45 +1,20 @@
 "use client";
 
-import { useState, lazy, Suspense, useEffect } from "react";
+import { useState, lazy, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../auth/auth-provider";
 import { Button } from "@/components/ui/button";
 import { PenSquare } from "lucide-react";
 
-// Lazy load auth dialog
+// Lazy load auth dialog - not needed until user clicks without being logged in
 const AuthDialog = lazy(() =>
   import("../auth/auth-dialog").then((mod) => ({ default: mod.AuthDialog })),
 );
 
-// Preload function
-const preloadAuthDialog = () => {
-  import("../auth/auth-dialog");
-};
-
 export function NewPostButton() {
   const { user, loading } = useAuth();
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
-  const [isReady, setIsReady] = useState(false);
   const router = useRouter();
-
-  // Preload auth dialog after initial page load (only when not logged in)
-  useEffect(() => {
-    if (user || loading) return;
-
-    if ("requestIdleCallback" in window) {
-      const id = requestIdleCallback(() => {
-        preloadAuthDialog();
-        setIsReady(true);
-      });
-      return () => cancelIdleCallback(id);
-    } else {
-      const id = setTimeout(() => {
-        preloadAuthDialog();
-        setIsReady(true);
-      }, 1000);
-      return () => clearTimeout(id);
-    }
-  }, [user, loading]);
 
   const handleClick = () => {
     if (!user) {
@@ -66,7 +41,8 @@ export function NewPostButton() {
         <PenSquare className="h-4 w-4" />
         <span className="hidden sm:inline">פוסט חדש</span>
       </Button>
-      {isReady && (
+      {/* Only load dialog when needed */}
+      {authDialogOpen && (
         <Suspense fallback={null}>
           <AuthDialog open={authDialogOpen} onOpenChange={setAuthDialogOpen} />
         </Suspense>

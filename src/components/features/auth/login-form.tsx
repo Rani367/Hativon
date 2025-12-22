@@ -4,6 +4,8 @@ import { useAuth } from "./auth-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { motion } from "framer-motion";
+import { buttonVariants } from "@/lib/utils";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { userLoginSchema, type UserLoginInput } from "@/lib/validation/schemas";
@@ -44,7 +46,12 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      <div className="space-y-2 animate-fade-in-up animate-delay-1 will-animate">
+      <motion.div
+        className="space-y-2"
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.05, duration: 0.3 }}
+      >
         <Label htmlFor="login-username" className="text-right block">
           שם משתמש
         </Label>
@@ -61,9 +68,14 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
             {errors.username.message}
           </p>
         )}
-      </div>
+      </motion.div>
 
-      <div className="space-y-2 animate-fade-in-up animate-delay-2 will-animate">
+      <motion.div
+        className="space-y-2"
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1, duration: 0.3 }}
+      >
         <Label htmlFor="login-password" className="text-right block">
           סיסמה
         </Label>
@@ -80,23 +92,31 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
             {errors.password.message}
           </p>
         )}
-      </div>
+      </motion.div>
 
       {errors.root && (
-        <div className="text-sm text-red-600 dark:text-red-400 text-center animate-scale-in">
+        <motion.div
+          className="text-sm text-red-600 dark:text-red-400 text-center"
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.2 }}
+        >
           {errors.root.message}
-        </div>
+        </motion.div>
       )}
 
-      <div className="animate-fade-in-up animate-delay-3 will-animate">
-        <Button
-          type="submit"
-          className="w-full transition-transform active:scale-[0.98]"
-          disabled={isSubmitting}
-        >
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.15, duration: 0.3 }}
+        whileHover="hover"
+        whileTap="tap"
+        variants={buttonVariants}
+      >
+        <Button type="submit" className="w-full" disabled={isSubmitting}>
           {isSubmitting ? "מתחבר..." : "התחבר"}
         </Button>
-      </div>
+      </motion.div>
     </form>
   );
 }
