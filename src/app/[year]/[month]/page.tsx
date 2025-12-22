@@ -4,6 +4,7 @@ import {
   getCachedPostsByMonth,
   getCachedArchiveMonths,
 } from "@/lib/posts/cached-queries";
+import type { Post } from "@/types/post.types";
 import {
   englishMonthToNumber,
   englishToHebrewMonth,
@@ -53,16 +54,8 @@ function PostsSkeleton() {
   );
 }
 
-// Async component that fetches and renders posts - streamable
-async function PostsContent({
-  year,
-  monthNumber,
-}: {
-  year: number;
-  monthNumber: number;
-}) {
-  const posts = await getCachedPostsByMonth(year, monthNumber);
-
+// Component that renders posts - receives pre-fetched data
+function PostsContent({ posts }: { posts: Post[] }) {
   if (posts.length === 0) {
     return <EmptyPostsState />;
   }
@@ -107,7 +100,7 @@ export default async function ArchivePage({ params }: ArchivePageProps) {
       </div>
 
       <Suspense fallback={<PostsSkeleton />}>
-        <PostsContent year={year} monthNumber={monthNumber} />
+        <PostsContent posts={posts} />
       </Suspense>
     </div>
   );

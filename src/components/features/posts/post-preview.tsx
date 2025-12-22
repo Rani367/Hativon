@@ -8,8 +8,7 @@ import remarkGfm from "remark-gfm";
 // This blocks: script, style, iframe, form elements, event handlers
 // See: https://github.com/syntax-tree/hast-util-sanitize#schema
 import rehypeSanitize from "rehype-sanitize";
-import { format } from "date-fns";
-import { he } from "date-fns/locale";
+import { formatHebrewDate } from "@/lib/date/format";
 import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { components } from "./mdx-component";
@@ -81,7 +80,7 @@ export function PostPreview({
 
       <header className="mb-10">
         <div className="flex items-center gap-4 text-base text-muted-foreground mb-6">
-          <time>{format(date, "d בMMMM yyyy", { locale: he })}</time>
+          <time>{formatHebrewDate(date)}</time>
           {author && (
             <span>
               מאת {author}

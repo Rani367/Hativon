@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { ChevronDown, ChevronUp, Calendar } from "lucide-react";
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import type { ArchiveMonth } from "@/lib/posts/queries";
 import {
@@ -102,23 +101,16 @@ export function ArchiveSidebar({ archives }: ArchiveSidebarProps) {
             <ChevronDown className="w-4 h-4" />
           )}
         </button>
-        <AnimatePresence>
-          {isOpen && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.3, ease: "easeInOut" }}
-              className="overflow-hidden"
-            >
-              <div className="px-4 pb-4">
-                <p className="text-sm text-muted-foreground">
-                  אין כתבות בארכיון
-                </p>
-              </div>
-            </motion.div>
+        <div
+          className={cn(
+            "overflow-hidden transition-all duration-300 ease-out",
+            isOpen ? "max-h-20 opacity-100" : "max-h-0 opacity-0",
           )}
-        </AnimatePresence>
+        >
+          <div className="px-4 pb-4">
+            <p className="text-sm text-muted-foreground">אין כתבות בארכיון</p>
+          </div>
+        </div>
       </aside>
     );
   }
@@ -140,106 +132,98 @@ export function ArchiveSidebar({ archives }: ArchiveSidebarProps) {
         )}
       </button>
 
-      <AnimatePresence>
-        {isOpen && (
-          <motion.nav
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.3, ease: "easeInOut" }}
-            className="space-y-2 px-4 pb-4 overflow-hidden"
-          >
-            <div className="overflow-y-auto max-h-[calc(100vh-12rem)]">
-              <Link
-                href={`/${latestYear}/${latestMonth}`}
-                className={cn(
-                  "block px-3 py-2 rounded-lg text-sm font-semibold transition-colors mb-2",
-                  "hover:bg-accent",
-                  isLatestPage &&
-                    "bg-primary text-primary-foreground hover:bg-primary/90",
-                )}
-              >
-                הגיליון האחרון
-              </Link>
-
-              {yearGroups.map((yearGroup) => {
-                const isExpanded = expandedYears.has(yearGroup.year);
-                const isCurrentYear = currentYear === yearGroup.year;
-
-                return (
-                  <div key={yearGroup.year}>
-                    <button
-                      onClick={() => toggleYear(yearGroup.year)}
-                      className={cn(
-                        "w-full flex items-center justify-between px-3 py-2 rounded-lg transition-colors",
-                        "hover:bg-accent",
-                        isCurrentYear && "bg-accent/50",
-                      )}
-                    >
-                      <span className="font-semibold">{yearGroup.year}</span>
-                      {isExpanded ? (
-                        <ChevronUp className="w-4 h-4" />
-                      ) : (
-                        <ChevronDown className="w-4 h-4" />
-                      )}
-                    </button>
-
-                    <AnimatePresence>
-                      {isExpanded && (
-                        <motion.div
-                          initial={{ height: 0, opacity: 0 }}
-                          animate={{ height: "auto", opacity: 1 }}
-                          exit={{ height: 0, opacity: 0 }}
-                          transition={{ duration: 0.2, ease: "easeInOut" }}
-                          className="overflow-hidden"
-                        >
-                          <div className="mt-1 me-4 space-y-1">
-                            {yearGroup.months.map((month) => {
-                              const isActive =
-                                isCurrentYear &&
-                                currentMonth === month.monthNameEn;
-
-                              return (
-                                <Link
-                                  key={month.month}
-                                  href={`/${yearGroup.year}/${month.monthNameEn}`}
-                                  className={cn(
-                                    "block px-3 py-2 rounded-lg text-sm transition-colors",
-                                    "hover:bg-accent",
-                                    isActive &&
-                                      "bg-primary text-primary-foreground hover:bg-primary/90",
-                                  )}
-                                >
-                                  <div className="flex items-center justify-between">
-                                    <span>
-                                      גיליון {month.monthNameHe}{" "}
-                                      {yearGroup.year}
-                                    </span>
-                                    <span
-                                      className={cn(
-                                        "text-xs",
-                                        isActive
-                                          ? "text-primary-foreground/70"
-                                          : "text-muted-foreground",
-                                      )}
-                                    >
-                                      ({month.count})
-                                    </span>
-                                  </div>
-                                </Link>
-                              );
-                            })}
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
-                );
-              })}
-            </div>
-          </motion.nav>
+      <div
+        className={cn(
+          "overflow-hidden transition-all duration-300 ease-out",
+          isOpen ? "max-h-[calc(100vh-12rem)] opacity-100" : "max-h-0 opacity-0",
         )}
-      </AnimatePresence>
+      >
+        <nav className="space-y-2 px-4 pb-4">
+          <div className="overflow-y-auto max-h-[calc(100vh-12rem)]">
+            <Link
+              href={`/${latestYear}/${latestMonth}`}
+              className={cn(
+                "block px-3 py-2 rounded-lg text-sm font-semibold transition-colors mb-2",
+                "hover:bg-accent",
+                isLatestPage &&
+                  "bg-primary text-primary-foreground hover:bg-primary/90",
+              )}
+            >
+              הגיליון האחרון
+            </Link>
+
+            {yearGroups.map((yearGroup) => {
+              const isExpanded = expandedYears.has(yearGroup.year);
+              const isCurrentYear = currentYear === yearGroup.year;
+
+              return (
+                <div key={yearGroup.year}>
+                  <button
+                    onClick={() => toggleYear(yearGroup.year)}
+                    className={cn(
+                      "w-full flex items-center justify-between px-3 py-2 rounded-lg transition-colors",
+                      "hover:bg-accent",
+                      isCurrentYear && "bg-accent/50",
+                    )}
+                  >
+                    <span className="font-semibold">{yearGroup.year}</span>
+                    {isExpanded ? (
+                      <ChevronUp className="w-4 h-4" />
+                    ) : (
+                      <ChevronDown className="w-4 h-4" />
+                    )}
+                  </button>
+
+                  <div
+                    className={cn(
+                      "overflow-hidden transition-all duration-200 ease-out",
+                      isExpanded
+                        ? "max-h-96 opacity-100"
+                        : "max-h-0 opacity-0",
+                    )}
+                  >
+                    <div className="mt-1 me-4 space-y-1">
+                      {yearGroup.months.map((month) => {
+                        const isActive =
+                          isCurrentYear && currentMonth === month.monthNameEn;
+
+                        return (
+                          <Link
+                            key={month.month}
+                            href={`/${yearGroup.year}/${month.monthNameEn}`}
+                            className={cn(
+                              "block px-3 py-2 rounded-lg text-sm transition-colors",
+                              "hover:bg-accent",
+                              isActive &&
+                                "bg-primary text-primary-foreground hover:bg-primary/90",
+                            )}
+                          >
+                            <div className="flex items-center justify-between">
+                              <span>
+                                גיליון {month.monthNameHe} {yearGroup.year}
+                              </span>
+                              <span
+                                className={cn(
+                                  "text-xs",
+                                  isActive
+                                    ? "text-primary-foreground/70"
+                                    : "text-muted-foreground",
+                                )}
+                              >
+                                ({month.count})
+                              </span>
+                            </div>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </nav>
+      </div>
     </aside>
   );
 }
