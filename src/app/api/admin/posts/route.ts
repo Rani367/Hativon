@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { revalidatePath } from "next/cache";
 import {
   getAllPosts,
   createPost,
@@ -233,9 +232,6 @@ export async function POST(request: NextRequest) {
     }
 
     const newPost = await createPost(postData);
-
-    // Revalidate all pages to show the new post immediately
-    revalidatePath("/", "layout");
 
     return NextResponse.json(newPost, { status: 201 });
   } catch (error) {
