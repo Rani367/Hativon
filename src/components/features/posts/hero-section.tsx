@@ -1,6 +1,8 @@
 "use client";
 
 import Image from "next/image";
+import { motion } from "framer-motion";
+import { pageVariants } from "@/lib/utils";
 
 export function HeroSection() {
   return (
@@ -17,14 +19,29 @@ export function HeroSection() {
         blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTkyMCIgaGVpZ2h0PSI2MDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgdmVyc2lvbj0iMS4xIi8+"
       />
       <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-        <div className="text-center text-white px-4 sm:px-6 will-animate">
-          <h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl mb-4 sm:mb-6 animate-fade-in-up">
+        <motion.div
+          className="text-center text-white px-4 sm:px-6"
+          variants={pageVariants}
+          initial="initial"
+          animate="animate"
+        >
+          <motion.h1
+            className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl mb-4 sm:mb-6"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+          >
             ברוכים הבאים לחטיבון
-          </h1>
-          <p className="text-lg sm:text-xl md:text-2xl xl:text-3xl animate-fade-in-up animate-delay-2">
+          </motion.h1>
+          <motion.p
+            className="text-lg sm:text-xl md:text-2xl xl:text-3xl"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+          >
             עיתון התלמידים של חטיבת הנדסאים
-          </p>
-        </div>
+          </motion.p>
+        </motion.div>
       </div>
     </div>
   );

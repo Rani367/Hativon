@@ -1,5 +1,7 @@
 "use client";
 
+import { motion, AnimatePresence } from "framer-motion";
+import { usePathname } from "next/navigation";
 import { ReactNode } from "react";
 
 interface PageTransitionProps {
@@ -7,8 +9,22 @@ interface PageTransitionProps {
 }
 
 export function PageTransition({ children }: PageTransitionProps) {
-  // Simple CSS-based fade transition - faster than Framer Motion
+  const pathname = usePathname();
+
   return (
-    <div className="animate-fade-in will-animate">{children}</div>
+    <AnimatePresence mode="wait" initial={false}>
+      <motion.div
+        key={pathname}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{
+          duration: 0.08,
+          ease: "linear",
+        }}
+      >
+        {children}
+      </motion.div>
+    </AnimatePresence>
   );
 }
