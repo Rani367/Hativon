@@ -16,15 +16,10 @@ vi.mock("@/lib/logger", () => ({
   logError: vi.fn(),
 }));
 
-vi.mock("next/cache", () => ({
-  revalidatePath: vi.fn(),
-}));
-
 import { GET, PATCH, DELETE } from "../[id]/route";
 import { getCurrentUser } from "@/lib/auth/middleware";
 import { getPostById, updatePost, deletePost } from "@/lib/posts";
 import { logError } from "@/lib/logger";
-import { revalidatePath } from "next/cache";
 import type { Post } from "@/types/post.types";
 import type { User } from "@/types/user.types";
 
@@ -206,7 +201,6 @@ describe("User Posts API Routes", () => {
       expect(updatePost).toHaveBeenCalledWith("post-456", {
         title: "Updated Title",
       });
-      expect(revalidatePath).toHaveBeenCalledWith("/", "layout");
     });
 
     it("returns 404 when updatePost returns null", async () => {
@@ -301,7 +295,6 @@ describe("User Posts API Routes", () => {
       expect(response.status).toBe(200);
       expect(body.success).toBe(true);
       expect(deletePost).toHaveBeenCalledWith("post-456");
-      expect(revalidatePath).toHaveBeenCalledWith("/", "layout");
     });
 
     it("returns 404 when deletePost returns false", async () => {

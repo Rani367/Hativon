@@ -2,7 +2,6 @@ import type { Post, PostStats } from "@/types/post.types";
 import type { PostQueryResult, StatsQueryResult } from "@/types/database.types";
 import { db } from "../db/client";
 import { rowToPost } from "./utils";
-import { memoize } from "../cache";
 
 /**
  * Pagination options for querying posts

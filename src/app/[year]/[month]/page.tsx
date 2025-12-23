@@ -1,5 +1,5 @@
-import { Suspense } from "react";
 import { notFound } from "next/navigation";
+import type { Post } from "@/types/post.types";
 import {
   getCachedPostsByMonth,
   getCachedArchiveMonths,
@@ -35,34 +35,8 @@ interface ArchivePageProps {
   }>;
 }
 
-// Loading skeleton for posts - instant display while streaming
-function PostsSkeleton() {
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-6 md:gap-8 items-start">
-      {Array.from({ length: 6 }).map((_, i) => (
-        <div key={i} className="rounded-lg bg-card/50 animate-pulse">
-          <div className="aspect-[4/3] bg-muted rounded-t-lg" />
-          <div className="p-4 space-y-3">
-            <div className="h-4 bg-muted rounded w-1/3" />
-            <div className="h-6 bg-muted rounded w-full" />
-            <div className="h-4 bg-muted rounded w-2/3" />
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-// Async component that fetches and renders posts - streamable
-async function PostsContent({
-  year,
-  monthNumber,
-}: {
-  year: number;
-  monthNumber: number;
-}) {
-  const posts = await getCachedPostsByMonth(year, monthNumber);
-
+// Component that renders posts - receives pre-fetched data
+function PostsContent({ posts }: { posts: Post[] }) {
   if (posts.length === 0) {
     return <EmptyPostsState />;
   }
@@ -92,7 +66,7 @@ export default async function ArchivePage({ params }: ArchivePageProps) {
   // Get Hebrew month name for display - instant, no async
   const hebrewMonth = englishToHebrewMonth(monthStr);
 
-  // Get post count for header (fast query, can run in parallel)
+  // Fetch posts once for both header count and content display
   const posts = await getCachedPostsByMonth(year, monthNumber);
 
   return (
@@ -106,9 +80,7 @@ export default async function ArchivePage({ params }: ArchivePageProps) {
         </p>
       </div>
 
-      <Suspense fallback={<PostsSkeleton />}>
-        <PostsContent year={year} monthNumber={monthNumber} />
-      </Suspense>
+      <PostsContent posts={posts} />
     </div>
   );
 }

@@ -86,16 +86,3 @@ export const getCachedArchiveMonths = unstable_cache(
     tags: ["posts"],
   },
 );
-
-/**
- * Invalidate all post caches
- * Call this after creating, updating, or deleting posts
- * Note: This is now handled by revalidateTag('posts') in mutation handlers
- */
-export function invalidatePostCache(): void {
-  // This function is kept for backward compatibility
-  // but is no longer needed since we use revalidateTag('posts') directly
-  console.warn(
-    '[DEPRECATED] Use revalidateTag("posts") instead of invalidatePostCache()',
-  );
-}
