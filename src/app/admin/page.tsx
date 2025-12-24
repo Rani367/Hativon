@@ -15,17 +15,22 @@ export default function AdminLoginPage() {
   useEffect(() => {
     async function checkAuth() {
       try {
-        const response = await fetch("/api/check-auth");
-        const data = await response.json();
+        // First check if user is a teacher
+        const userResponse = await fetch("/api/check-auth");
+        const userData = await userResponse.json();
 
-        // Teachers get automatic admin access - redirect straight to dashboard
-        if (data.authenticated && data.isTeacher) {
+        if (userData.authenticated && userData.isTeacher) {
+          // Teachers get automatic admin access - redirect straight to dashboard
           setAuthState("authenticated");
           router.replace("/admin/dashboard");
           return;
         }
 
-        if (data.isAdmin) {
+        // Check admin session cookie directly
+        const adminResponse = await fetch("/api/admin/check-session");
+        const adminData = await adminResponse.json();
+
+        if (adminData.authenticated) {
           // Already authenticated with admin password, redirect to dashboard
           setAuthState("authenticated");
           router.replace("/admin/dashboard");

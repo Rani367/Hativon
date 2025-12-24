@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { useEffect, useState, useCallback } from "react";
+import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Home, FileText, Menu, Users } from "lucide-react";
@@ -15,43 +15,63 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const router = useRouter();
   const pathname = usePathname();
   const [authState, setAuthState] = useState<AuthState>("checking");
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [hasCheckedAuth, setHasCheckedAuth] = useState(false);
 
-  // Check admin password authentication or teacher status
-  useEffect(() => {
-    async function checkAuth() {
-      if (pathname === "/admin") {
-        setAuthState("login-page");
+  // Memoized auth check function
+  const checkAuth = useCallback(async () => {
+    // Skip if already authorized (prevents re-checking on navigation)
+    if (authState === "authorized") {
+      return;
+    }
+
+    try {
+      // First check if user is a teacher (via user auth)
+      const userResponse = await fetch("/api/check-auth");
+      const userData = await userResponse.json();
+
+      if (userData.authenticated && userData.isTeacher) {
+        // Teachers get automatic admin access
+        if (!userData.isAdmin) {
+          await fetch("/api/admin/teacher-auth", { method: "POST" });
+        }
+        setAuthState("authorized");
+        setHasCheckedAuth(true);
         return;
       }
 
-      try {
-        const response = await fetch("/api/check-auth");
-        const data = await response.json();
+      // Check admin session cookie directly
+      const adminResponse = await fetch("/api/admin/check-session");
+      const adminData = await adminResponse.json();
 
-        // Teachers get automatic admin access
-        if (data.authenticated && data.isTeacher) {
-          // Set admin auth cookie for teacher so API routes work
-          if (!data.isAdmin) {
-            await fetch("/api/admin/teacher-auth", { method: "POST" });
-          }
-          setAuthState("authorized");
-        } else if (data.isAdmin) {
-          setAuthState("authorized");
-        } else {
-          setAuthState("needs-password");
-        }
-      } catch (error) {
-        logError("Auth check failed:", error);
+      if (adminData.authenticated) {
+        setAuthState("authorized");
+      } else {
         setAuthState("needs-password");
       }
+      setHasCheckedAuth(true);
+    } catch (error) {
+      logError("Auth check failed:", error);
+      setAuthState("needs-password");
+      setHasCheckedAuth(true);
+    }
+  }, [authState]);
+
+  // Check auth only once on mount (not on every navigation)
+  useEffect(() => {
+    // Login page is handled by page.tsx directly
+    if (pathname === "/admin") {
+      setAuthState("login-page");
+      return;
     }
 
-    checkAuth();
-  }, [pathname, router]);
+    // Only check auth once, not on every navigation
+    if (!hasCheckedAuth && authState !== "authorized") {
+      checkAuth();
+    }
+  }, [pathname, hasCheckedAuth, authState, checkAuth]);
 
   // Show login page without layout (handled by page.tsx)
   if (authState === "login-page") {
