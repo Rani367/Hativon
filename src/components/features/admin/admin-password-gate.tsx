@@ -55,6 +55,9 @@ export function AdminPasswordGate({ onSuccess }: AdminPasswordGateProps) {
           <CardDescription>
             הזן את סיסמת המנהל כדי לגשת לפאנל הניהול
           </CardDescription>
+          <p className="text-sm text-red-600 pt-2">
+            מומלץ להשתמש בחשבון מורה לגישה מאובטחת יותר
+          </p>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
