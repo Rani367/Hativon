@@ -2,6 +2,29 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## CRITICAL RULE: Always Verify Before Finishing
+
+**ALWAYS run `pnpm run verify` at the end of your work. Do NOT stop until everything passes.**
+
+This is mandatory for every task that modifies code:
+1. After completing your changes, run: `pnpm run verify`
+2. This runs all tests (441+), validation (100+ checks), and production build
+3. If ANY test or check fails, FIX the issue and run `pnpm run verify` again
+4. Keep iterating until the command completes successfully with zero failures
+5. Only then should you report completion to the user
+
+**What `pnpm run verify` does:**
+- Runs all tests (`vitest run`)
+- Runs comprehensive validation (`tsx scripts/validate-comprehensive.ts`)
+- Runs production build (`next build`)
+- Skips the commit step (unlike `pnpm run pre-deploy`)
+
+**Important:**
+- Do NOT consider your work done until `pnpm run verify` passes completely
+- If you encounter failures, analyze the output, fix the issues, and re-run
+- Common issues: TypeScript errors, test assertion mismatches, ESLint violations
+- The user expects all checks to pass before you finish
+
 ## CRITICAL RULE: NO EMOJIS
 
 **NEVER use emojis in any code, comments, console output, or documentation.**
@@ -79,11 +102,13 @@ This is a strict project requirement for maintaining type safety:
 **ONLY use `pnpm run pre-deploy` to commit changes.**
 
 This command:
-1. Runs all tests (162 tests must pass)
+1. Runs all tests (441+ tests must pass)
 2. Runs comprehensive validation (100+ checks)
 3. Runs production build
 4. Prompts for commit message (if all above pass)
 5. Creates the commit
+
+**For validation without committing, use `pnpm run verify` instead.**
 
 **The user will push to GitHub manually. DO NOT run `git push`.**
 
@@ -219,7 +244,7 @@ This file is Claude's primary source of truth about the project. When it's outda
 
 Hativon - a school newspaper built with Next.js 16. Features Hebrew/RTL support, multi-user authentication, role-based access control, and dual-mode operation (database-backed or admin-only).
 
-**Stack**: Next.js 16.0.6 (App Router), React 19.2, TypeScript, Tailwind CSS 4, PostgreSQL (Vercel Postgres), Vercel Blob, JWT authentication
+**Stack**: Next.js 16.1.1 (App Router), React 19.2.3, TypeScript, Tailwind CSS 4, PostgreSQL (Vercel Postgres), Vercel Blob, JWT authentication
 
 ## Essential Commands
 
@@ -289,8 +314,11 @@ pnpm test:ui              # Open Vitest UI for visual test exploration
 ### Deployment
 ```bash
 pnpm run validate         # Run comprehensive validation (all checks below)
+pnpm run verify           # Run tests + validation + build (NO commit)
+                          # Use this to verify changes without committing
+                          # Claude should run this at the end of every task
 pnpm run pre-deploy       # ONE COMMAND that runs:
-                          # 1. All tests (244 tests must pass)
+                          # 1. All tests (441+ tests must pass)
                           # 2. Comprehensive validation (100+ checks)
                           # 3. Production build
                           # 4. Git commit (prompts for message)
@@ -793,11 +821,16 @@ All utility scripts are in `scripts/`:
 **Zero-Check Vercel Build**: All validation, testing, and checks run locally via `pnpm run pre-deploy`. Vercel only runs `next build` with no additional checks.
 
 **Local Pre-Deploy** (`pnpm run pre-deploy`):
-- Runs all 244 tests
+- Runs all 441+ tests
 - Runs comprehensive validation (100+ checks)
 - Builds the application
 - Prompts for git commit
 - Use this before committing code locally
+
+**Local Verify** (`pnpm run verify`):
+- Same as pre-deploy but skips the commit step
+- Claude should run this at the end of every task
+- Use `--no-commit` or `-n` flag with post-build-deploy.ts directly
 
 **Vercel Build** (automatic on deploy):
 - Runs ONLY `next build` - no checks, no validation, no tests
@@ -850,7 +883,7 @@ Auto-configured by Vercel (don't set manually):
 - **Security Headers**: Added X-Frame-Options, CSP, X-Content-Type-Options, and more to prevent common vulnerabilities
 
 ### Performance Optimizations
-- **Granular Cache Invalidation**: Uses `revalidateTag('posts')` instead of invalidating entire app
+- **Granular Cache Invalidation**: Uses `revalidateTag('posts', 'max')` with SWR semantics instead of invalidating entire app
 - **API Pagination**: Added limit/offset support to `getAllPosts()` for scalability
 - **Next.js Cache Migration**: Migrated from custom cache to `unstable_cache` with automatic revalidation
 

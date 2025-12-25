@@ -95,7 +95,7 @@ export async function PATCH(
     }
 
     // Revalidate posts cache for granular invalidation
-    revalidateTag("posts");
+    revalidateTag("posts", "max");
 
     return NextResponse.json(updatedPost);
   } catch (error) {
@@ -142,7 +142,7 @@ export async function DELETE(
     }
 
     // Revalidate posts cache for granular invalidation
-    revalidateTag("posts");
+    revalidateTag("posts", "max");
 
     return NextResponse.json({ success: true });
   } catch (error) {
