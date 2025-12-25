@@ -1,12 +1,14 @@
-import { Suspense } from "react";
-import { getPosts, getPost, getWordCount } from "@/lib/posts";
-import { format } from "date-fns";
-import { he } from "date-fns/locale";
+import { Suspense, cache } from "react";
+import { getPosts, getPost as getPostBase, getWordCount } from "@/lib/posts";
+import { formatHebrewDate } from "@/lib/date/format";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { Metadata } from "next";
 import { Badge } from "@/components/ui/badge";
 import { calculateReadingTime } from "@/lib/utils";
+
+// Request-level cache for getPost - dedupes calls in generateMetadata and page component
+const getPost = cache(getPostBase);
 
 // Async component for rendering markdown content - streamable
 async function PostContent({ content }: { content: string }) {
@@ -175,9 +177,7 @@ export default async function PostPage({ params }: PostPageProps) {
 
         <header className="mb-10">
           <div className="flex items-center gap-4 text-base text-muted-foreground mb-6">
-            <time>
-              {format(new Date(post.date), "d בMMMM yyyy", { locale: he })}
-            </time>
+            <time>{formatHebrewDate(post.date)}</time>
             {post.author && (
               <span>
                 מאת {post.author}

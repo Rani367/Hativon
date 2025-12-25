@@ -129,7 +129,7 @@ describe("Admin Authentication", () => {
       vi.doUnmock("next/headers");
     });
 
-    it("creates JWT token and sets HTTP-only cookie with 4 hour expiry", async () => {
+    it("creates JWT token and sets HTTP-only session cookie", async () => {
       const { setAdminAuth } = await import("../admin");
 
       await setAdminAuth();
@@ -139,11 +139,11 @@ describe("Admin Authentication", () => {
 
       expect(cookieName).toBe("adminAuth");
       expect(typeof token).toBe("string");
+      // Session cookie: no maxAge means it expires when browser closes
       expect(options).toEqual({
         httpOnly: true,
         secure: false,
         sameSite: "strict",
-        maxAge: 14400, // 4 hours
         path: "/",
       });
 
@@ -170,14 +170,15 @@ describe("Admin Authentication", () => {
       vi.unstubAllEnvs();
     });
 
-    it("creates cookie with 4 hour maxAge", async () => {
+    it("creates session cookie without maxAge (expires on browser close)", async () => {
       const { setAdminAuth } = await import("../admin");
 
       await setAdminAuth();
 
       const [, , options] = mockCookies.set.mock.calls[0];
 
-      expect(options.maxAge).toBe(14400); // 4 hours in seconds
+      // Session cookies have no maxAge - they expire when browser closes
+      expect(options.maxAge).toBeUndefined();
     });
   });
 

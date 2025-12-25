@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 import type { Post } from "@/types/post.types";
 import {
   getCachedPostsByMonth,
@@ -33,6 +34,24 @@ interface ArchivePageProps {
     year: string;
     month: string;
   }>;
+}
+
+// Loading skeleton for posts - instant display while streaming
+function PostsSkeleton() {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-6 md:gap-8 items-start">
+      {Array.from({ length: 6 }).map((_, i) => (
+        <div key={i} className="rounded-lg bg-card/50 animate-pulse">
+          <div className="aspect-[4/3] bg-muted rounded-t-lg" />
+          <div className="p-4 space-y-3">
+            <div className="h-4 bg-muted rounded w-1/3" />
+            <div className="h-6 bg-muted rounded w-full" />
+            <div className="h-4 bg-muted rounded w-2/3" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
 }
 
 // Component that renders posts - receives pre-fetched data
@@ -80,7 +99,9 @@ export default async function ArchivePage({ params }: ArchivePageProps) {
         </p>
       </div>
 
-      <PostsContent posts={posts} />
+      <Suspense fallback={<PostsSkeleton />}>
+        <PostsContent posts={posts} />
+      </Suspense>
     </div>
   );
 }
