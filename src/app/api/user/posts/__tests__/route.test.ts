@@ -206,7 +206,7 @@ describe("User Posts API Routes", () => {
       expect(updatePost).toHaveBeenCalledWith("post-456", {
         title: "Updated Title",
       });
-      expect(revalidateTag).toHaveBeenCalledWith("posts");
+      expect(revalidateTag).toHaveBeenCalledWith("posts", "max");
     });
 
     it("returns 404 when updatePost returns null", async () => {
@@ -301,7 +301,7 @@ describe("User Posts API Routes", () => {
       expect(response.status).toBe(200);
       expect(body.success).toBe(true);
       expect(deletePost).toHaveBeenCalledWith("post-456");
-      expect(revalidateTag).toHaveBeenCalledWith("posts");
+      expect(revalidateTag).toHaveBeenCalledWith("posts", "max");
     });
 
     it("returns 404 when deletePost returns false", async () => {

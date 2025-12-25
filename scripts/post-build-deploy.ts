@@ -10,6 +10,9 @@
  * Usage:
  *   Automatically called after successful pnpm run pre-deploy
  *   tsx scripts/post-build-deploy.ts
+ *
+ * Options:
+ *   --no-commit, -n    Skip the commit step (useful for CI or Claude validation)
  */
 
 import { execSync } from "child_process";
@@ -151,9 +154,26 @@ function pushChanges(): void {
 }
 
 /**
+ * Check for --no-commit or -n flag
+ */
+function shouldSkipCommit(): boolean {
+  const args = process.argv.slice(2);
+  return args.includes("--no-commit") || args.includes("-n");
+}
+
+/**
  * Main function
  */
 async function main() {
+  // Check for --no-commit flag
+  if (shouldSkipCommit()) {
+    console.log(
+      `\n${colors.green}${colors.bold}[OK] Validation passed! Skipping commit (--no-commit flag).${colors.reset}\n`,
+    );
+    rl.close();
+    process.exit(0);
+  }
+
   // Skip git deployment in CI/CD environments (Vercel, GitHub Actions, etc.)
   if (process.env.CI || process.env.VERCEL || process.env.GITHUB_ACTIONS) {
     console.log(
