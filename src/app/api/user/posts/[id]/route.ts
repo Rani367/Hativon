@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import { getPostById, updatePost, deletePost } from "@/lib/posts";
 import { getCurrentUser } from "@/lib/auth/middleware";
 import { logError } from "@/lib/logger";
@@ -93,6 +94,9 @@ export async function PATCH(
       return NextResponse.json({ error: "Post not found" }, { status: 404 });
     }
 
+    // Revalidate posts cache for granular invalidation
+    revalidateTag("posts");
+
     return NextResponse.json(updatedPost);
   } catch (error) {
     logError("Error updating post:", error);
@@ -136,6 +140,9 @@ export async function DELETE(
     if (!deleted) {
       return NextResponse.json({ error: "Post not found" }, { status: 404 });
     }
+
+    // Revalidate posts cache for granular invalidation
+    revalidateTag("posts");
 
     return NextResponse.json({ success: true });
   } catch (error) {

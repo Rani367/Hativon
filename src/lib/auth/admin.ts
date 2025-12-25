@@ -29,8 +29,8 @@ function getJwtSecret(): string {
 const ADMIN_PASSWORD = getAdminPassword();
 const JWT_SECRET = getJwtSecret();
 const ADMIN_COOKIE_NAME = "adminAuth";
-const ADMIN_TOKEN_EXPIRY = "4h"; // 4 hours
-const ADMIN_COOKIE_MAX_AGE = 4 * 60 * 60; // 4 hours in seconds
+// Session-based: token expires after 24h but cookie is session-only (closes with browser)
+const ADMIN_TOKEN_EXPIRY = "24h";
 
 /**
  * Admin authentication payload
@@ -115,17 +115,17 @@ function verifyAdminToken(token: string): boolean {
 }
 
 /**
- * Set admin authentication cookie (expires after 4 hours)
+ * Set admin authentication cookie (session-based - expires when browser closes)
  */
 export async function setAdminAuth(): Promise<void> {
   const token = createAdminToken();
   const cookieStore = await cookies();
 
+  // No maxAge = session cookie (expires when browser closes)
   cookieStore.set(ADMIN_COOKIE_NAME, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "strict",
-    maxAge: ADMIN_COOKIE_MAX_AGE,
     path: "/",
   });
 }
