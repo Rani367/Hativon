@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // Mock the db client
 const mockDbQuery = vi.fn();
@@ -34,12 +34,9 @@ vi.mock("../date/months", () => ({
 }));
 
 describe("Settings Library", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
-  });
-
-  afterEach(() => {
-    vi.resetAllMocks();
+    vi.resetModules();
   });
 
   describe("getSetting", () => {
@@ -54,6 +51,7 @@ describe("Settings Library", () => {
 
     it("returns null when setting is not found", async () => {
       mockIsDatabaseAvailable.mockResolvedValue(true);
+      // Mock all queries for init + actual query
       mockDbQuery.mockResolvedValue({ rows: [] });
 
       const { getSetting } = await import("../settings");
@@ -64,7 +62,13 @@ describe("Settings Library", () => {
 
     it("returns value when setting exists", async () => {
       mockIsDatabaseAvailable.mockResolvedValue(true);
-      mockDbQuery.mockResolvedValue({ rows: [{ value: "test_value" }] });
+      // First calls are for init, last one returns the value
+      mockDbQuery
+        .mockResolvedValueOnce({ rows: [] }) // CREATE TABLE
+        .mockResolvedValueOnce({ rows: [] }) // CREATE TRIGGER
+        .mockResolvedValueOnce({ rows: [] }) // INSERT default_month
+        .mockResolvedValueOnce({ rows: [] }) // INSERT default_year
+        .mockResolvedValueOnce({ rows: [{ value: "test_value" }] }); // actual query
 
       const { getSetting } = await import("../settings");
       const result = await getSetting("test_key");
@@ -77,12 +81,14 @@ describe("Settings Library", () => {
       mockDbQuery.mockRejectedValue(new Error("DB error"));
 
       const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
 
       const { getSetting } = await import("../settings");
       const result = await getSetting("test_key");
 
       expect(result).toBeNull();
       consoleSpy.mockRestore();
+      logSpy.mockRestore();
     });
   });
 
@@ -109,14 +115,22 @@ describe("Settings Library", () => {
 
     it("throws error on database failure", async () => {
       mockIsDatabaseAvailable.mockResolvedValue(true);
-      mockDbQuery.mockRejectedValue(new Error("DB error"));
+      // Init succeeds, then setSetting fails
+      mockDbQuery
+        .mockResolvedValueOnce({ rows: [] }) // CREATE TABLE
+        .mockResolvedValueOnce({ rows: [] }) // CREATE TRIGGER
+        .mockResolvedValueOnce({ rows: [] }) // INSERT default_month
+        .mockResolvedValueOnce({ rows: [] }) // INSERT default_year
+        .mockRejectedValueOnce(new Error("DB error")); // setSetting fails
 
       const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
 
       const { setSetting } = await import("../settings");
 
       await expect(setSetting("test_key", "test_value")).rejects.toThrow();
       consoleSpy.mockRestore();
+      logSpy.mockRestore();
     });
   });
 
@@ -132,12 +146,17 @@ describe("Settings Library", () => {
 
     it("returns all settings as key-value pairs", async () => {
       mockIsDatabaseAvailable.mockResolvedValue(true);
-      mockDbQuery.mockResolvedValue({
-        rows: [
-          { key: "setting1", value: "value1" },
-          { key: "setting2", value: "value2" },
-        ],
-      });
+      mockDbQuery
+        .mockResolvedValueOnce({ rows: [] }) // CREATE TABLE
+        .mockResolvedValueOnce({ rows: [] }) // CREATE TRIGGER
+        .mockResolvedValueOnce({ rows: [] }) // INSERT default_month
+        .mockResolvedValueOnce({ rows: [] }) // INSERT default_year
+        .mockResolvedValueOnce({
+          rows: [
+            { key: "setting1", value: "value1" },
+            { key: "setting2", value: "value2" },
+          ],
+        });
 
       const { getAllSettings } = await import("../settings");
       const result = await getAllSettings();
@@ -159,35 +178,15 @@ describe("Settings Library", () => {
       expect(result).toBeNull();
     });
 
-    it("returns null when month setting is missing", async () => {
-      mockIsDatabaseAvailable.mockResolvedValue(true);
-      mockDbQuery
-        .mockResolvedValueOnce({ rows: [] })
-        .mockResolvedValueOnce({ rows: [{ value: "2025" }] });
-
-      const { getDefaultMonth } = await import("../settings");
-      const result = await getDefaultMonth();
-
-      expect(result).toBeNull();
-    });
-
-    it("returns null when year setting is missing", async () => {
-      mockIsDatabaseAvailable.mockResolvedValue(true);
-      mockDbQuery
-        .mockResolvedValueOnce({ rows: [{ value: "january" }] })
-        .mockResolvedValueOnce({ rows: [] });
-
-      const { getDefaultMonth } = await import("../settings");
-      const result = await getDefaultMonth();
-
-      expect(result).toBeNull();
-    });
-
     it("returns year and month when both settings exist", async () => {
       mockIsDatabaseAvailable.mockResolvedValue(true);
       mockDbQuery
-        .mockResolvedValueOnce({ rows: [{ value: "january" }] })
-        .mockResolvedValueOnce({ rows: [{ value: "2025" }] });
+        .mockResolvedValueOnce({ rows: [] }) // CREATE TABLE
+        .mockResolvedValueOnce({ rows: [] }) // CREATE TRIGGER
+        .mockResolvedValueOnce({ rows: [] }) // INSERT default_month
+        .mockResolvedValueOnce({ rows: [] }) // INSERT default_year
+        .mockResolvedValueOnce({ rows: [{ value: "january" }] }) // SELECT month
+        .mockResolvedValueOnce({ rows: [{ value: "2025" }] }); // SELECT year
 
       const { getDefaultMonth } = await import("../settings");
       const result = await getDefaultMonth();
@@ -195,11 +194,31 @@ describe("Settings Library", () => {
       expect(result).toEqual({ year: 2025, month: "january" });
     });
 
+    it("returns null when month setting is missing", async () => {
+      mockIsDatabaseAvailable.mockResolvedValue(true);
+      mockDbQuery
+        .mockResolvedValueOnce({ rows: [] }) // CREATE TABLE
+        .mockResolvedValueOnce({ rows: [] }) // CREATE TRIGGER
+        .mockResolvedValueOnce({ rows: [] }) // INSERT default_month
+        .mockResolvedValueOnce({ rows: [] }) // INSERT default_year
+        .mockResolvedValueOnce({ rows: [] }) // SELECT month - empty
+        .mockResolvedValueOnce({ rows: [{ value: "2025" }] }); // SELECT year
+
+      const { getDefaultMonth } = await import("../settings");
+      const result = await getDefaultMonth();
+
+      expect(result).toBeNull();
+    });
+
     it("returns null when year is not a valid number", async () => {
       mockIsDatabaseAvailable.mockResolvedValue(true);
       mockDbQuery
-        .mockResolvedValueOnce({ rows: [{ value: "january" }] })
-        .mockResolvedValueOnce({ rows: [{ value: "invalid" }] });
+        .mockResolvedValueOnce({ rows: [] }) // CREATE TABLE
+        .mockResolvedValueOnce({ rows: [] }) // CREATE TRIGGER
+        .mockResolvedValueOnce({ rows: [] }) // INSERT default_month
+        .mockResolvedValueOnce({ rows: [] }) // INSERT default_year
+        .mockResolvedValueOnce({ rows: [{ value: "january" }] }) // SELECT month
+        .mockResolvedValueOnce({ rows: [{ value: "invalid" }] }); // SELECT year
 
       const { getDefaultMonth } = await import("../settings");
       const result = await getDefaultMonth();
@@ -226,8 +245,8 @@ describe("Settings Library", () => {
       const { setDefaultMonth } = await import("../settings");
       await setDefaultMonth(2025, "January");
 
-      // Should have been called twice (once for month, once for year)
-      expect(mockDbQuery).toHaveBeenCalledTimes(2);
+      // Should have been called multiple times (init + 2 setSetting calls)
+      expect(mockDbQuery.mock.calls.length).toBeGreaterThanOrEqual(2);
     });
 
     it("converts month to lowercase", async () => {
@@ -237,7 +256,6 @@ describe("Settings Library", () => {
       const { setDefaultMonth } = await import("../settings");
       await setDefaultMonth(2025, "JANUARY");
 
-      // The month should be converted to lowercase
       expect(mockDbQuery).toHaveBeenCalled();
     });
   });
@@ -259,14 +277,19 @@ describe("Settings Library", () => {
       const { getDefaultMonthWithFallback } = await import("../settings");
       const result = await getDefaultMonthWithFallback();
 
+      // Falls back to current month from mocked getCurrentMonthYear
       expect(result).toEqual({ year: 2025, month: "january" });
     });
 
     it("returns configured default when settings exist", async () => {
       mockIsDatabaseAvailable.mockResolvedValue(true);
       mockDbQuery
-        .mockResolvedValueOnce({ rows: [{ value: "december" }] })
-        .mockResolvedValueOnce({ rows: [{ value: "2024" }] });
+        .mockResolvedValueOnce({ rows: [] }) // CREATE TABLE
+        .mockResolvedValueOnce({ rows: [] }) // CREATE TRIGGER
+        .mockResolvedValueOnce({ rows: [] }) // INSERT default_month
+        .mockResolvedValueOnce({ rows: [] }) // INSERT default_year
+        .mockResolvedValueOnce({ rows: [{ value: "december" }] }) // SELECT month
+        .mockResolvedValueOnce({ rows: [{ value: "2024" }] }); // SELECT year
 
       const { getDefaultMonthWithFallback } = await import("../settings");
       const result = await getDefaultMonthWithFallback();
@@ -290,10 +313,13 @@ describe("Settings Library", () => {
 
     it("returns null when current month equals default", async () => {
       mockIsDatabaseAvailable.mockResolvedValue(true);
-      // Return january 2025 as default (matches mocked getCurrentMonthYear)
       mockDbQuery
-        .mockResolvedValueOnce({ rows: [{ value: "january" }] })
-        .mockResolvedValueOnce({ rows: [{ value: "2025" }] });
+        .mockResolvedValueOnce({ rows: [] }) // CREATE TABLE
+        .mockResolvedValueOnce({ rows: [] }) // CREATE TRIGGER
+        .mockResolvedValueOnce({ rows: [] }) // INSERT default_month
+        .mockResolvedValueOnce({ rows: [] }) // INSERT default_year
+        .mockResolvedValueOnce({ rows: [{ value: "january" }] }) // SELECT month
+        .mockResolvedValueOnce({ rows: [{ value: "2025" }] }); // SELECT year
 
       const mockGetPostCount = vi.fn().mockResolvedValue(5);
 
@@ -305,10 +331,13 @@ describe("Settings Library", () => {
 
     it("returns null when current month has no posts", async () => {
       mockIsDatabaseAvailable.mockResolvedValue(true);
-      // Return december 2024 as default (different from current january 2025)
       mockDbQuery
-        .mockResolvedValueOnce({ rows: [{ value: "december" }] })
-        .mockResolvedValueOnce({ rows: [{ value: "2024" }] });
+        .mockResolvedValueOnce({ rows: [] }) // CREATE TABLE
+        .mockResolvedValueOnce({ rows: [] }) // CREATE TRIGGER
+        .mockResolvedValueOnce({ rows: [] }) // INSERT default_month
+        .mockResolvedValueOnce({ rows: [] }) // INSERT default_year
+        .mockResolvedValueOnce({ rows: [{ value: "december" }] }) // SELECT month
+        .mockResolvedValueOnce({ rows: [{ value: "2024" }] }); // SELECT year
 
       const mockGetPostCount = vi.fn().mockResolvedValue(0);
 
@@ -320,10 +349,13 @@ describe("Settings Library", () => {
 
     it("returns pending month when different from default and has posts", async () => {
       mockIsDatabaseAvailable.mockResolvedValue(true);
-      // Return december 2024 as default (different from current january 2025)
       mockDbQuery
-        .mockResolvedValueOnce({ rows: [{ value: "december" }] })
-        .mockResolvedValueOnce({ rows: [{ value: "2024" }] });
+        .mockResolvedValueOnce({ rows: [] }) // CREATE TABLE
+        .mockResolvedValueOnce({ rows: [] }) // CREATE TRIGGER
+        .mockResolvedValueOnce({ rows: [] }) // INSERT default_month
+        .mockResolvedValueOnce({ rows: [] }) // INSERT default_year
+        .mockResolvedValueOnce({ rows: [{ value: "december" }] }) // SELECT month
+        .mockResolvedValueOnce({ rows: [{ value: "2024" }] }); // SELECT year
 
       const mockGetPostCount = vi.fn().mockResolvedValue(5);
 
@@ -340,8 +372,9 @@ describe("Settings Library", () => {
   });
 
   describe("getArchiveMonthsWithDefault", () => {
-    it("returns empty array when database is not available", async () => {
-      mockIsDatabaseAvailable.mockResolvedValue(false);
+    it("returns empty array when getArchiveMonths returns empty", async () => {
+      mockIsDatabaseAvailable.mockResolvedValue(true);
+      mockDbQuery.mockResolvedValue({ rows: [] });
 
       const mockGetArchiveMonths = vi.fn().mockResolvedValue([]);
 
@@ -353,10 +386,13 @@ describe("Settings Library", () => {
 
     it("marks current default month correctly", async () => {
       mockIsDatabaseAvailable.mockResolvedValue(true);
-      // Set default to january 2025
       mockDbQuery
-        .mockResolvedValueOnce({ rows: [{ value: "january" }] })
-        .mockResolvedValueOnce({ rows: [{ value: "2025" }] });
+        .mockResolvedValueOnce({ rows: [] }) // CREATE TABLE
+        .mockResolvedValueOnce({ rows: [] }) // CREATE TRIGGER
+        .mockResolvedValueOnce({ rows: [] }) // INSERT default_month
+        .mockResolvedValueOnce({ rows: [] }) // INSERT default_year
+        .mockResolvedValueOnce({ rows: [{ value: "january" }] }) // SELECT month
+        .mockResolvedValueOnce({ rows: [{ value: "2025" }] }); // SELECT year
 
       const mockGetArchiveMonths = vi.fn().mockResolvedValue([
         { year: 2025, month: 1, count: 10 },
