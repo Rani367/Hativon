@@ -3,10 +3,69 @@
  *
  * Provides functions to get and set settings stored in the database.
  * Includes specialized functions for default month management.
+ * Auto-creates the settings table on first access if it doesn't exist.
  */
 
 import { db, isDatabaseAvailable } from "./db/client";
 import { getCurrentMonthYear, monthNumberToEnglish } from "./date/months";
+
+let settingsTableInitialized = false;
+
+/**
+ * Ensure the settings table exists, creating it if necessary
+ * This runs automatically on first settings access
+ */
+async function ensureSettingsTable(): Promise<boolean> {
+  if (settingsTableInitialized) {
+    return true;
+  }
+
+  try {
+    const dbAvailable = await isDatabaseAvailable();
+    if (!dbAvailable) {
+      return false;
+    }
+
+    // Create table if not exists
+    await db.query`
+      CREATE TABLE IF NOT EXISTS settings (
+        key VARCHAR(255) PRIMARY KEY,
+        value TEXT NOT NULL,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `;
+
+    // Try to create trigger (may already exist from update_updated_at_column function)
+    try {
+      await db.query`
+        CREATE OR REPLACE TRIGGER update_settings_updated_at
+          BEFORE UPDATE ON settings
+          FOR EACH ROW
+          EXECUTE FUNCTION update_updated_at_column()
+      `;
+    } catch {
+      // Trigger creation may fail if function doesn't exist, that's ok
+    }
+
+    // Insert default values if table is empty
+    const { year, month } = getCurrentMonthYear();
+    await db.query`
+      INSERT INTO settings (key, value) VALUES ('default_month', ${month})
+      ON CONFLICT (key) DO NOTHING
+    `;
+    await db.query`
+      INSERT INTO settings (key, value) VALUES ('default_year', ${year.toString()})
+      ON CONFLICT (key) DO NOTHING
+    `;
+
+    settingsTableInitialized = true;
+    console.log("[SETTINGS] Settings table initialized");
+    return true;
+  } catch (error) {
+    console.error("[SETTINGS] Failed to initialize settings table:", error);
+    return false;
+  }
+}
 
 /**
  * Get a setting value by key
@@ -15,8 +74,8 @@ import { getCurrentMonthYear, monthNumberToEnglish } from "./date/months";
  */
 export async function getSetting(key: string): Promise<string | null> {
   try {
-    const dbAvailable = await isDatabaseAvailable();
-    if (!dbAvailable) {
+    const initialized = await ensureSettingsTable();
+    if (!initialized) {
       return null;
     }
 
@@ -42,8 +101,8 @@ export async function getSetting(key: string): Promise<string | null> {
  */
 export async function setSetting(key: string, value: string): Promise<void> {
   try {
-    const dbAvailable = await isDatabaseAvailable();
-    if (!dbAvailable) {
+    const initialized = await ensureSettingsTable();
+    if (!initialized) {
       throw new Error("Database not available");
     }
 
@@ -65,8 +124,8 @@ export async function setSetting(key: string, value: string): Promise<void> {
  */
 export async function getAllSettings(): Promise<Record<string, string>> {
   try {
-    const dbAvailable = await isDatabaseAvailable();
-    if (!dbAvailable) {
+    const initialized = await ensureSettingsTable();
+    if (!initialized) {
       return {};
     }
 
@@ -93,8 +152,8 @@ export async function getDefaultMonth(): Promise<{
   month: string;
 } | null> {
   try {
-    const dbAvailable = await isDatabaseAvailable();
-    if (!dbAvailable) {
+    const initialized = await ensureSettingsTable();
+    if (!initialized) {
       return null;
     }
 
@@ -133,8 +192,8 @@ export async function setDefaultMonth(
   month: string,
 ): Promise<void> {
   try {
-    const dbAvailable = await isDatabaseAvailable();
-    if (!dbAvailable) {
+    const initialized = await ensureSettingsTable();
+    if (!initialized) {
       throw new Error("Database not available");
     }
 
