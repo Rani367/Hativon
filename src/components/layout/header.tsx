@@ -5,16 +5,16 @@ import { usePathname } from "next/navigation";
 import { UserMenu } from "@/components/features/auth/user-menu";
 import { NewPostButton } from "@/components/features/posts/new-post-button";
 import { ArchiveMenuButton } from "@/components/features/archive/archive-menu-button";
-import { getCurrentMonthYear } from "@/lib/date/months";
 import type { ArchiveMonth } from "@/lib/posts/queries";
 
 interface HeaderProps {
   archives: ArchiveMonth[];
+  defaultMonth: { year: number; month: string };
 }
 
-export function Header({ archives }: HeaderProps) {
+export function Header({ archives, defaultMonth }: HeaderProps) {
   const pathname = usePathname();
-  const { year, month } = getCurrentMonthYear();
+  const { year, month } = defaultMonth;
 
   // Don't render header for admin or dashboard routes
   if (pathname?.startsWith("/admin") || pathname?.startsWith("/dashboard")) {
