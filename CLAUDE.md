@@ -8,7 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is mandatory for every task that modifies code:
 1. After completing your changes, run: `pnpm run verify`
-2. This runs all tests (441+), validation (100+ checks), and production build
+2. This runs all tests (467+), validation (100+ checks), and production build
 3. If ANY test or check fails, FIX the issue and run `pnpm run verify` again
 4. Keep iterating until the command completes successfully with zero failures
 5. Only then should you report completion to the user
@@ -102,7 +102,7 @@ This is a strict project requirement for maintaining type safety:
 **ONLY use `pnpm run pre-deploy` to commit changes.**
 
 This command:
-1. Runs all tests (441+ tests must pass)
+1. Runs all tests (467+ tests must pass)
 2. Runs comprehensive validation (100+ checks)
 3. Runs production build
 4. Prompts for commit message (if all above pass)
@@ -821,7 +821,7 @@ All utility scripts are in `scripts/`:
 **Zero-Check Vercel Build**: All validation, testing, and checks run locally via `pnpm run pre-deploy`. Vercel only runs `next build` with no additional checks.
 
 **Local Pre-Deploy** (`pnpm run pre-deploy`):
-- Runs all 441+ tests
+- Runs all 467+ tests
 - Runs comprehensive validation (100+ checks)
 - Builds the application
 - Prompts for git commit
@@ -874,60 +874,6 @@ Auto-configured by Vercel (don't set manually):
 - `BLOB_READ_WRITE_TOKEN` - Set when enabling Vercel Blob (for image uploads)
 
 **Important**: `ADMIN_PASSWORD` is for the admin panel at `/admin`, completely separate from user accounts. Users register and login through the homepage.
-
-## Recent Improvements (2025-01-29)
-
-### Security Enhancements
-- **Admin Password Hashing**: Upgraded from plain text to bcrypt with constant-time comparison, preventing timing attacks
-- **Database Connection Limits**: Added pool configuration (max 20 connections, 30s idle timeout, 2s connection timeout)
-- **Security Headers**: Added X-Frame-Options, CSP, X-Content-Type-Options, and more to prevent common vulnerabilities
-
-### Performance Optimizations
-- **Granular Cache Invalidation**: Uses `revalidateTag('posts', 'max')` with SWR semantics instead of invalidating entire app
-- **API Pagination**: Added limit/offset support to `getAllPosts()` for scalability
-- **Next.js Cache Migration**: Migrated from custom cache to `unstable_cache` with automatic revalidation
-
-### Code Quality
-- **API Route Consolidation**: Created shared handlers, reduced admin route from 174 to 65 lines (62% reduction)
-- **Standardized API Responses**: Added `ApiResponse<T>`, `ApiErrorResponse`, `ApiSuccessResponse` types
-- **Hebrew Slug Fix**: Updated regex to preserve Hebrew characters (U+0590-U+05FF range)
-
-### Developer Experience
-- **Database Migration System**: Full migration support with up/down, rollback, and version tracking
-- **Environment Variable Types**: Complete TypeScript definitions with IntelliSense
-- **New Utilities**: `hash-admin-password`, `db:migrate`, `db:create-migration` commands
-- **Component Tests**: Added LoginForm tests with accessibility validation
-- **Hebrew/Unicode Tests**: 36 comprehensive tests for RTL/Hebrew edge cases
-
-### Migration System
-The project now includes a professional database migration system:
-
-**Structure**:
-- `src/lib/db/migrations/index.ts` - Migration engine
-- `src/lib/db/migrations/registry.ts` - Migration registry
-- `src/lib/db/migrations/YYYYMMDDHHMMSS_name.ts` - Individual migrations
-
-**Usage**:
-```bash
-pnpm run db:create-migration "add_user_avatar"  # Create new migration
-pnpm run db:migrate                              # Run pending migrations
-pnpm run db:migrate:status                       # Check status
-pnpm run db:migrate:rollback                     # Rollback last migration
-```
-
-**Example Migration**:
-```typescript
-const migration: Migration = {
-  id: '20250101000000',
-  name: 'add_user_avatar',
-  async up() {
-    await db.query`ALTER TABLE users ADD COLUMN avatar VARCHAR(255)`;
-  },
-  async down() {
-    await db.query`ALTER TABLE users DROP COLUMN avatar`;
-  },
-};
-```
 
 ## Additional Notes
 
