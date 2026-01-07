@@ -1,11 +1,28 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { UserMenu } from "@/components/features/auth/user-menu";
-import { NewPostButton } from "@/components/features/posts/new-post-button";
 import { ArchiveMenuButton } from "@/components/features/archive/archive-menu-button";
 import type { ArchiveMonth } from "@/lib/posts/queries";
+
+// Dynamic imports with SSR disabled to prevent hydration mismatch
+// These components use useAuth() which has different loading states on server vs client
+const UserMenu = dynamic(
+  () => import("@/components/features/auth/user-menu").then((mod) => mod.UserMenu),
+  {
+    ssr: false,
+    loading: () => <div className="h-9 w-24 rounded-md bg-muted animate-pulse" />,
+  }
+);
+
+const NewPostButton = dynamic(
+  () => import("@/components/features/posts/new-post-button").then((mod) => mod.NewPostButton),
+  {
+    ssr: false,
+    loading: () => <div className="h-9 w-28 rounded-md bg-muted animate-pulse" />,
+  }
+);
 
 interface HeaderProps {
   archives: ArchiveMonth[];
