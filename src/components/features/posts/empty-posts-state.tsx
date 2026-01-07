@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../auth/auth-provider';
 import { Button } from '@/components/ui/button';
@@ -10,7 +10,13 @@ import { PenSquare } from 'lucide-react';
 export function EmptyPostsState() {
   const { user, loading } = useAuth();
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const router = useRouter();
+
+  // Track mount state for consistent hydration
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleClick = () => {
     if (!user) {
@@ -22,10 +28,6 @@ export function EmptyPostsState() {
     }
   };
 
-  if (loading) {
-    return null;
-  }
-
   return (
     <>
       <div className="flex flex-col items-center justify-center py-12 px-4">
@@ -34,16 +36,22 @@ export function EmptyPostsState() {
             עדיין אין פוסטים
           </h2>
         </div>
-        <Button
-          size="lg"
-          onClick={handleClick}
-          className="gap-2 cursor-pointer"
-        >
-          <PenSquare className="h-5 w-5" />
-          <span>צור פוסט ראשון</span>
-        </Button>
+        {!mounted || loading ? (
+          <div className="h-11 w-40 rounded-md bg-muted animate-pulse" />
+        ) : (
+          <Button
+            size="lg"
+            onClick={handleClick}
+            className="gap-2 cursor-pointer"
+          >
+            <PenSquare className="h-5 w-5" />
+            <span>צור פוסט ראשון</span>
+          </Button>
+        )}
       </div>
-      <AuthDialog open={authDialogOpen} onOpenChange={setAuthDialogOpen} />
+      {mounted && (
+        <AuthDialog open={authDialogOpen} onOpenChange={setAuthDialogOpen} />
+      )}
     </>
   );
 }
