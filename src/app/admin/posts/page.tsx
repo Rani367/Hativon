@@ -99,8 +99,7 @@ export default function PostsListPage() {
                 <tr className="text-start">
                   <th className="p-4"><div className="h-4 w-16 rounded bg-muted animate-pulse" /></th>
                   <th className="p-4 hidden sm:table-cell"><div className="h-4 w-16 rounded bg-muted animate-pulse" /></th>
-                  <th className="p-4 hidden md:table-cell"><div className="h-4 w-20 rounded bg-muted animate-pulse" /></th>
-                  <th className="p-4 hidden lg:table-cell"><div className="h-4 w-16 rounded bg-muted animate-pulse" /></th>
+                  <th className="p-4 hidden md:table-cell"><div className="h-4 w-16 rounded bg-muted animate-pulse" /></th>
                   <th className="p-4"><div className="h-4 w-16 rounded bg-muted animate-pulse" /></th>
                   <th className="p-4 text-end"><div className="h-4 w-16 rounded bg-muted animate-pulse ms-auto" /></th>
                 </tr>
@@ -118,9 +117,6 @@ export default function PostsListPage() {
                       <div className="h-4 w-20 rounded bg-muted animate-pulse" />
                     </td>
                     <td className="p-4 hidden md:table-cell">
-                      <div className="h-5 w-16 rounded-full bg-muted animate-pulse" />
-                    </td>
-                    <td className="p-4 hidden lg:table-cell">
                       <div className="h-4 w-24 rounded bg-muted animate-pulse" />
                     </td>
                     <td className="p-4">
@@ -197,8 +193,7 @@ export default function PostsListPage() {
               <tr className="text-start">
                 <th className="p-3 sm:p-4 font-medium">כותרת</th>
                 <th className="p-3 sm:p-4 font-medium hidden sm:table-cell">כותב</th>
-                <th className="p-3 sm:p-4 font-medium hidden md:table-cell">קטגוריה</th>
-                <th className="p-3 sm:p-4 font-medium hidden lg:table-cell">נוצר</th>
+                <th className="p-3 sm:p-4 font-medium hidden md:table-cell">נוצר</th>
                 <th className="p-3 sm:p-4 font-medium">סטטוס</th>
                 <th className="p-3 sm:p-4 font-medium text-end">פעולות</th>
               </tr>
@@ -206,7 +201,7 @@ export default function PostsListPage() {
             <tbody>
               {filteredPosts.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="p-8 text-center text-muted-foreground">
+                  <td colSpan={5} className="p-8 text-center text-muted-foreground">
                     לא נמצאו כתבות.
                   </td>
                 </tr>
@@ -243,12 +238,7 @@ export default function PostsListPage() {
                         <span className="text-muted-foreground text-sm">-</span>
                       )}
                     </td>
-                    <td className="p-3 sm:p-4 hidden md:table-cell">
-                      {post.category && (
-                        <Badge variant="secondary">{post.category}</Badge>
-                      )}
-                    </td>
-                    <td className="p-3 sm:p-4 text-sm text-muted-foreground hidden lg:table-cell">
+                    <td className="p-3 sm:p-4 text-sm text-muted-foreground hidden md:table-cell">
                       {formatHebrewDate(post.createdAt)}
                     </td>
                     <td className="p-3 sm:p-4">
