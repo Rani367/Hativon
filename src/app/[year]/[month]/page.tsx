@@ -17,8 +17,8 @@ import PaginatedPosts from "@/components/features/posts/paginated-posts";
 // Static generation with ISR - pages are pre-built at build time
 export const revalidate = 60;
 
-// Pre-render all archive pages at build time - return 404 for invalid months
-export const dynamicParams = false;
+// Allow dynamic rendering for months not pre-generated at build time
+export const dynamicParams = true;
 
 // Generate static params for all archive pages at build time
 export async function generateStaticParams() {

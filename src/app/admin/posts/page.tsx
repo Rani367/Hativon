@@ -98,6 +98,7 @@ export default function PostsListPage() {
               <thead className="border-b">
                 <tr className="text-start">
                   <th className="p-4"><div className="h-4 w-16 rounded bg-muted animate-pulse" /></th>
+                  <th className="p-4 hidden sm:table-cell"><div className="h-4 w-16 rounded bg-muted animate-pulse" /></th>
                   <th className="p-4 hidden md:table-cell"><div className="h-4 w-20 rounded bg-muted animate-pulse" /></th>
                   <th className="p-4 hidden lg:table-cell"><div className="h-4 w-16 rounded bg-muted animate-pulse" /></th>
                   <th className="p-4"><div className="h-4 w-16 rounded bg-muted animate-pulse" /></th>
@@ -112,6 +113,9 @@ export default function PostsListPage() {
                         <div className="h-5 w-48 rounded bg-muted animate-pulse" />
                         <div className="h-4 w-32 rounded bg-muted animate-pulse" />
                       </div>
+                    </td>
+                    <td className="p-4 hidden sm:table-cell">
+                      <div className="h-4 w-20 rounded bg-muted animate-pulse" />
                     </td>
                     <td className="p-4 hidden md:table-cell">
                       <div className="h-5 w-16 rounded-full bg-muted animate-pulse" />
@@ -192,6 +196,7 @@ export default function PostsListPage() {
             <thead className="border-b">
               <tr className="text-start">
                 <th className="p-3 sm:p-4 font-medium">כותרת</th>
+                <th className="p-3 sm:p-4 font-medium hidden sm:table-cell">כותב</th>
                 <th className="p-3 sm:p-4 font-medium hidden md:table-cell">קטגוריה</th>
                 <th className="p-3 sm:p-4 font-medium hidden lg:table-cell">נוצר</th>
                 <th className="p-3 sm:p-4 font-medium">סטטוס</th>
@@ -201,7 +206,7 @@ export default function PostsListPage() {
             <tbody>
               {filteredPosts.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="p-8 text-center text-muted-foreground">
+                  <td colSpan={6} className="p-8 text-center text-muted-foreground">
                     לא נמצאו כתבות.
                   </td>
                 </tr>
@@ -217,6 +222,26 @@ export default function PostsListPage() {
                           {post.slug}
                         </p>
                       </div>
+                    </td>
+                    <td className="p-3 sm:p-4 hidden sm:table-cell">
+                      {post.author ? (
+                        <div className="text-sm">
+                          <span>{post.author}</span>
+                          {post.authorDeleted && (
+                            <span className="text-muted-foreground"> (נמחק)</span>
+                          )}
+                          {post.authorGrade && post.authorClass && (
+                            <span className="text-muted-foreground">
+                              {" "}({post.authorGrade}{post.authorClass})
+                            </span>
+                          )}
+                          {post.isTeacherPost && (
+                            <Badge variant="outline" className="ms-2 text-xs">מורה</Badge>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground text-sm">-</span>
+                      )}
                     </td>
                     <td className="p-3 sm:p-4 hidden md:table-cell">
                       {post.category && (
