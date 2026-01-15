@@ -5,10 +5,21 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Search, Trash2 } from "lucide-react";
 import { Post } from "@/types/post.types";
 import { formatHebrewDate } from "@/lib/date/format";
 import { logError } from "@/lib/logger";
+import { useOptimisticList } from "@/hooks/use-optimistic-list";
 
 export default function PostsListPage() {
   const [posts, setPosts] = useState<Post[]>([]);
@@ -16,6 +27,15 @@ export default function PostsListPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "published" | "draft">("all");
   const [loading, setLoading] = useState(true);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [postToDelete, setPostToDelete] = useState<string | null>(null);
+
+  // Optimistic delete hook
+  const { optimisticDelete, isPending } = useOptimisticList({
+    items: posts,
+    setItems: setPosts,
+    getItemId: (post) => post.id,
+  });
 
   useEffect(() => {
     fetchPosts();
@@ -53,20 +73,28 @@ export default function PostsListPage() {
     }
   }
 
-  async function handleDelete(id: string) {
-    if (!confirm("האם אתה בטוח שברצונך למחוק את הכתבה הזו?")) return;
+  function openDeleteDialog(id: string) {
+    if (isPending(id)) return;
+    setPostToDelete(id);
+    setDeleteDialogOpen(true);
+  }
 
-    try {
-      const response = await fetch(`/api/admin/posts/${id}`, {
-        method: "DELETE",
-      });
+  async function confirmDelete() {
+    if (!postToDelete || isPending(postToDelete)) return;
 
-      if (response.ok) {
-        fetchPosts();
-      }
-    } catch (error) {
-      logError("Failed to delete post:", error);
-    }
+    setDeleteDialogOpen(false);
+
+    // Optimistic delete - item disappears instantly, rolls back on error
+    await optimisticDelete(
+      postToDelete,
+      () =>
+        fetch(`/api/admin/posts/${postToDelete}`, {
+          method: "DELETE",
+        }),
+      { errorMessage: "שגיאה במחיקת הכתבה" }
+    );
+
+    setPostToDelete(null);
   }
 
   if (loading) {
@@ -253,7 +281,8 @@ export default function PostsListPage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleDelete(post.id)}
+                          onClick={() => openDeleteDialog(post.id)}
+                          disabled={isPending(post.id)}
                           className="h-10 w-10 sm:h-9 sm:w-9"
                         >
                           <Trash2 className="h-4 w-4 text-destructive" />
@@ -267,6 +296,26 @@ export default function PostsListPage() {
           </table>
         </div>
       </Card>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>מחיקת כתבה</AlertDialogTitle>
+            <AlertDialogDescription>
+              האם אתה בטוח שברצונך למחוק את הכתבה הזו? פעולה זו לא ניתנת לביטול.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>ביטול</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              מחק
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

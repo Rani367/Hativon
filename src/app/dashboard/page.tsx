@@ -20,6 +20,7 @@ import { Post } from "@/types/post.types";
 import { formatHebrewDate } from "@/lib/date/format";
 import { toast } from "sonner";
 import { logError } from "@/lib/logger";
+import { useOptimisticList } from "@/hooks/use-optimistic-list";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -51,6 +52,13 @@ export default function DashboardPage() {
   const [postToDelete, setPostToDelete] = useState<string | null>(null);
   const [totalPosts, setTotalPosts] = useState(0);
   const [hasMore, setHasMore] = useState(false);
+
+  // Optimistic delete hook
+  const { optimisticDelete, isPending } = useOptimisticList({
+    items: posts,
+    setItems: setPosts,
+    getItemId: (post) => post.id,
+  });
 
   // Fetch posts with server-side pagination
   const fetchPosts = useCallback(async () => {
@@ -117,42 +125,29 @@ export default function DashboardPage() {
   const filteredPosts = useMemo(() => posts, [posts]);
 
   function openDeleteDialog(id: string) {
+    // Prevent opening dialog if operation is already pending
+    if (isPending(id)) return;
     setPostToDelete(id);
     setDeleteDialogOpen(true);
   }
 
   async function confirmDelete() {
-    if (!postToDelete) return;
+    if (!postToDelete || isPending(postToDelete)) return;
 
     setDeleteDialogOpen(false);
-    const loadingToast = toast.loading("מוחק כתבה...");
 
-    try {
-      const response = await fetch(`/api/admin/posts/${postToDelete}`, {
-        method: "DELETE",
-        credentials: "include",
-      });
+    // Optimistic delete - item disappears instantly, rolls back on error
+    await optimisticDelete(
+      postToDelete,
+      () =>
+        fetch(`/api/admin/posts/${postToDelete}`, {
+          method: "DELETE",
+          credentials: "include",
+        }),
+      { errorMessage: "שגיאה במחיקת הכתבה" }
+    );
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to delete post");
-      }
-
-      toast.dismiss(loadingToast);
-      toast.success("הכתבה נמחקה בהצלחה!");
-
-      // Refresh to get fresh data from server
-      router.refresh();
-      await fetchPosts();
-    } catch (error) {
-      logError("Failed to delete post:", error);
-      toast.dismiss(loadingToast);
-      toast.error(
-        `שגיאה במחיקת הכתבה: ${error instanceof Error ? error.message : "שגיאה לא ידועה"}`,
-      );
-    } finally {
-      setPostToDelete(null);
-    }
+    setPostToDelete(null);
   }
 
   if (isLoading) {
@@ -395,6 +390,7 @@ export default function DashboardPage() {
                               variant="ghost"
                               size="sm"
                               onClick={() => openDeleteDialog(post.id)}
+                              disabled={isPending(post.id)}
                               className="h-10 w-10 sm:h-9 sm:w-9"
                             >
                               <Trash2 className="h-4 w-4 text-destructive" />

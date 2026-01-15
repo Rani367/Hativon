@@ -34,14 +34,21 @@ import {
 import { formatHebrewDate } from "@/lib/date/format";
 import { toast } from "sonner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useOptimisticList } from "@/hooks/use-optimistic-list";
 
 export default function UsersManagementPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
-  const [deleting, setDeleting] = useState(false);
   const [dbNotConfigured, setDbNotConfigured] = useState(false);
+
+  // Optimistic delete hook
+  const { optimisticDelete, isPending } = useOptimisticList({
+    items: users,
+    setItems: setUsers,
+    getItemId: (user) => user.id,
+  });
 
   useEffect(() => {
     fetchUsers();
@@ -79,35 +86,27 @@ export default function UsersManagementPage() {
   }
 
   function handleDeleteClick(user: User) {
+    if (isPending(user.id)) return;
     setUserToDelete(user);
     setDeleteDialogOpen(true);
   }
 
   async function handleDeleteConfirm() {
-    if (!userToDelete) return;
+    if (!userToDelete || isPending(userToDelete.id)) return;
 
-    try {
-      setDeleting(true);
-      const response = await fetch(`/api/admin/users/${userToDelete.id}`, {
-        method: "DELETE",
-      });
+    setDeleteDialogOpen(false);
 
-      if (!response.ok) {
-        throw new Error("Failed to delete user");
-      }
+    // Optimistic delete - user disappears instantly, rolls back on error
+    await optimisticDelete(
+      userToDelete.id,
+      () =>
+        fetch(`/api/admin/users/${userToDelete.id}`, {
+          method: "DELETE",
+        }),
+      { errorMessage: "שגיאה במחיקת המשתמש" }
+    );
 
-      toast.success(`המשתמש ${userToDelete.username} נמחק בהצלחה`);
-
-      // Remove user from list
-      setUsers(users.filter((u) => u.id !== userToDelete.id));
-      setDeleteDialogOpen(false);
-      setUserToDelete(null);
-    } catch (error) {
-      logError("Failed to delete user:", error);
-      toast.error("שגיאה במחיקת המשתמש");
-    } finally {
-      setDeleting(false);
-    }
+    setUserToDelete(null);
   }
 
   if (loading) {
@@ -307,6 +306,7 @@ export default function UsersManagementPage() {
                           variant="destructive"
                           size="sm"
                           onClick={() => handleDeleteClick(user)}
+                          disabled={isPending(user.id)}
                         >
                           <Trash2 className="h-4 w-4 me-2" />
                           מחק
@@ -335,13 +335,12 @@ export default function UsersManagementPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="gap-2">
-            <AlertDialogCancel disabled={deleting}>ביטול</AlertDialogCancel>
+            <AlertDialogCancel>ביטול</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteConfirm}
-              disabled={deleting}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {deleting ? "מוחק..." : "מחק משתמש"}
+              מחק משתמש
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
