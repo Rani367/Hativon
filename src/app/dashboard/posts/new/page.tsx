@@ -79,10 +79,6 @@ export default function NewPostPage() {
 
     setLoading(true);
 
-    const loadingToast = toast.loading(
-      status === "published" ? "מפרסם כתבה..." : "שומר טיוטה...",
-    );
-
     try {
       const response = await fetch("/api/admin/posts", {
         method: "POST",
@@ -104,18 +100,11 @@ export default function NewPostPage() {
         throw new Error(errorData.error || "Failed to create post");
       }
 
-      toast.dismiss(loadingToast);
-      toast.success(
-        status === "published"
-          ? "הכתבה פורסמה בהצלחה!"
-          : "הטיוטה נשמרה בהצלחה!",
-      );
-
+      // Success - redirect is the confirmation (no toast needed)
       router.refresh();
       router.push("/dashboard");
     } catch (error) {
       logError("Failed to create post:", error);
-      toast.dismiss(loadingToast);
       toast.error(error instanceof Error ? error.message : "יצירת הכתבה נכשלה");
       setLoading(false);
     }

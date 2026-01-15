@@ -99,7 +99,7 @@ export default function EditPostPage({
         throw new Error("Failed to update post");
       }
 
-      toast.success("הכתבה עודכנה בהצלחה");
+      // Success - redirect is the confirmation (no toast needed)
       router.refresh();
       router.push("/dashboard");
     } catch (error) {
@@ -129,14 +129,12 @@ export default function EditPostPage({
         throw new Error(errorData.error || "Failed to delete post");
       }
 
-      toast.success("הכתבה נמחקה בהצלחה");
+      // Success - redirect is the confirmation (no toast needed)
       router.refresh();
       router.push("/dashboard");
     } catch (error) {
       logError("Failed to delete post:", error);
-      toast.error(
-        `מחיקת הכתבה נכשלה: ${error instanceof Error ? error.message : "שגיאה לא ידועה"}`,
-      );
+      toast.error("מחיקת הכתבה נכשלה");
     }
   };
 
