@@ -117,6 +117,12 @@ export const AUTOSAVE_STORAGE_KEY_NEW = "hativon_autosave_new";
 export const AUTOSAVE_STORAGE_KEY_PREFIX = "hativon_autosave_post_";
 
 /**
+ * LocalStorage key for tracking the current draft ID
+ * Used to persist draft across page reloads
+ */
+export const AUTOSAVE_DRAFT_ID_KEY = "hativon_current_draft_id";
+
+/**
  * Get storage key for a specific post
  */
 export function getAutoSaveStorageKey(postId: string | null): string {

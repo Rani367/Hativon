@@ -15,7 +15,10 @@ import { ConflictDialog } from "@/components/features/posts/conflict-dialog";
 import { useAutoSave } from "@/hooks/use-auto-save";
 import { toast } from "sonner";
 import type { PostFormData } from "@/lib/validation/autosave-schemas";
-import { getAutoSaveStorageKey } from "@/lib/validation/autosave-schemas";
+import {
+  getAutoSaveStorageKey,
+  AUTOSAVE_DRAFT_ID_KEY,
+} from "@/lib/validation/autosave-schemas";
 
 export default function EditPostPage({
   params,
@@ -246,6 +249,11 @@ export default function EditPostPage({
       // Clear localStorage backup on successful submit
       if (typeof window !== "undefined") {
         localStorage.removeItem(getAutoSaveStorageKey(id));
+        // Clear draft ID if this was the auto-saved draft
+        const savedDraftId = localStorage.getItem(AUTOSAVE_DRAFT_ID_KEY);
+        if (savedDraftId === id) {
+          localStorage.removeItem(AUTOSAVE_DRAFT_ID_KEY);
+        }
       }
 
       // Success - redirect is the confirmation (no toast needed)
@@ -284,6 +292,11 @@ export default function EditPostPage({
       // Clear localStorage backup on delete
       if (typeof window !== "undefined") {
         localStorage.removeItem(getAutoSaveStorageKey(id));
+        // Clear draft ID if this was the auto-saved draft
+        const savedDraftId = localStorage.getItem(AUTOSAVE_DRAFT_ID_KEY);
+        if (savedDraftId === id) {
+          localStorage.removeItem(AUTOSAVE_DRAFT_ID_KEY);
+        }
       }
 
       // Success - redirect is the confirmation (no toast needed)

@@ -9,6 +9,7 @@ import type {
 import {
   getAutoSaveStorageKey,
   localStorageBackupSchema,
+  AUTOSAVE_DRAFT_ID_KEY,
 } from "@/lib/validation/autosave-schemas";
 
 /**
@@ -236,6 +237,9 @@ export function useAutoSave({
               localStorage.setItem(newKey, existing);
               localStorage.removeItem(oldKey);
             }
+
+            // Store draft ID for persistence across page reloads
+            localStorage.setItem(AUTOSAVE_DRAFT_ID_KEY, result.id);
           }
         }
 
