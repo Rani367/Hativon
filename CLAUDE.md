@@ -257,7 +257,7 @@ pnpm install              # ONE-COMMAND SETUP - Automatically configures everyth
                           # - Falls back to admin-only mode if no PostgreSQL
                           # After this, you're ready to run `pnpm run dev`
                           # Test user: username=user, password=12345678
-                          # Admin panel: /admin with ADMIN_PASSWORD from .env.local
+                          # Admin panel: /admin (requires teacher account)
 
 pnpm run dev              # Start dev server (no validation)
 pnpm run build            # Production build
@@ -277,7 +277,7 @@ pnpm run db:create-migration "name" # Create new migration file
 pnpm run create-test-user # Create test user (username: user, password: 12345678)
 pnpm run hash-admin-password # Hash admin password with bcrypt
 
-# Note: Admin panel access uses ADMIN_PASSWORD from .env.local, NOT user accounts
+# Note: Admin panel requires teacher account. ADMIN_PASSWORD is for teacher registration only
 ```
 
 ### Testing
@@ -358,14 +358,14 @@ The app has TWO SEPARATE authentication systems:
 - Posts stored in `data/posts.json` (local file)
 - Mock admin user with ID `'legacy-admin'` (see `src/lib/auth/middleware.ts:27-40`)
 
-#### 2. Admin Panel Authentication (Separate System)
-**IMPORTANT**: Admin panel access is COMPLETELY INDEPENDENT of user accounts.
+#### 2. Admin Panel Authentication (Teacher-Only)
+**IMPORTANT**: Admin panel access requires teacher authentication.
 - Accessed at `/admin` route
-- Uses `ADMIN_PASSWORD` from `.env.local` (default: `admin123`)
-- Simple password-based authentication (no username)
-- Stored in separate cookie `adminAuth`
-- Anyone with this password can access the admin panel
-- **No connection to the users table** - not a user account!
+- Only users with `isTeacher=true` can access the admin panel
+- Teachers are created via registration with `ADMIN_PASSWORD` verification
+- Stored in cookie `adminAuth` after teacher verification
+- Non-teachers see "Teacher login required" message at `/admin`
+- `ADMIN_PASSWORD` is still required for teacher registration verification only
 
 ### Database Abstraction Layer
 
@@ -425,17 +425,17 @@ All post operations go through PostgreSQL. The legacy `data/posts.json` is only 
 **Permission Model**:
 - **All Users**: Can only edit/delete their own posts (matched by `authorId`)
 - **Post Ownership**: Determined by `post.authorId === user.id`
-- **Admin Panel Users**: Anyone authenticated with `ADMIN_PASSWORD` has full access to all posts and users (this is NOT a user account - it's the admin panel authentication)
+- **Teachers**: Users with `isTeacher=true` have full admin panel access to all posts and users
 
 **Important**: When checking permissions, always use:
 ```typescript
 import { canUserEditPost, canUserDeletePost } from '@/lib/posts-storage';
 
-// isAdmin refers to ADMIN_PASSWORD authentication, not a user role
+// isAdmin refers to teacher/admin panel authentication
 const canEdit = await canUserEditPost(userId, postId, isAdmin);
 ```
 
-**Note**: The `isAdmin` parameter refers to admin panel authentication (via `ADMIN_PASSWORD`), NOT a user account role. There are no admin user accounts - only regular users.
+**Note**: The `isAdmin` parameter refers to admin panel authentication (teacher accounts), which grants full access to all posts and users.
 
 ### API Route Structure
 
@@ -452,15 +452,16 @@ All API routes follow Next.js 16 App Router conventions (`src/app/api/`):
 - `/api/user/profile` - User profile management (GET, PATCH)
 - `/api/upload` - Image upload to Vercel Blob (POST)
 
-**Admin Panel APIs** (require `ADMIN_PASSWORD` authentication):
-- `/api/admin/verify-password` - Verify admin panel password (POST)
+**Admin Panel APIs** (require teacher authentication):
+- `/api/admin/verify-password` - Verify admin password for teacher registration (POST) - DEPRECATED for admin access
+- `/api/admin/teacher-auth` - Authenticate teacher for admin panel (POST)
 - `/api/admin/logout` - Logout from admin panel (POST)
 - `/api/admin/posts` - Post management (GET, POST)
 - `/api/admin/posts/[id]` - Single post operations (GET, PUT, DELETE)
 - `/api/admin/users` - User management (GET, POST)
 - `/api/admin/users/[id]` - Single user operations (GET, PUT, DELETE)
 
-**Important**: `/api/admin/*` routes use admin panel authentication (ADMIN_PASSWORD), NOT user account authentication. These are two separate systems.
+**Important**: `/api/admin/*` routes require teacher authentication (users with `isTeacher=true`). The `/api/admin/verify-password` endpoint is deprecated for admin access and only used for teacher registration verification.
 
 **API Error Response Pattern**:
 All API error responses use `createErrorResponse()` helper from `src/lib/api/response.ts`. Error details are only exposed in development mode, never in production.
@@ -804,7 +805,7 @@ All utility scripts are in `scripts/`:
 | `validate-build.ts` | Validate build configuration |
 | `post-build-deploy.ts` | Git commit workflow (interactive) |
 
-**Note**: There are no "create-admin" scripts because admin panel uses `ADMIN_PASSWORD` from `.env.local`, not user accounts.
+**Note**: There are no "create-admin" scripts because admin panel uses teacher accounts (users with `isTeacher=true`). Teachers are created via registration with `ADMIN_PASSWORD` verification.
 
 ## Deployment Process
 
@@ -857,15 +858,15 @@ pnpm run db:init
 pnpm run create-test-user
 
 # 3. Test admin panel at yourdomain.com/admin
-#    Use ADMIN_PASSWORD from environment variables
+#    Requires a teacher account (created via registration with ADMIN_PASSWORD)
 ```
 
-**Note**: Admin panel access uses `ADMIN_PASSWORD` environment variable, NOT a user account. Set this in Vercel dashboard.
+**Note**: Admin panel access requires a teacher account. Create a teacher by registering with `ADMIN_PASSWORD` verification.
 
 ### Environment Variables in Vercel
 
 Required in Vercel dashboard:
-- `ADMIN_PASSWORD` - Password for admin panel access at `/admin` (not a user account)
+- `ADMIN_PASSWORD` - Password for teacher registration verification (not for admin login)
 - `JWT_SECRET` - Generated via `openssl rand -base64 32` (for user JWT tokens)
 - `NEXT_PUBLIC_SITE_URL` - Your production domain (https://...)
 
@@ -873,7 +874,7 @@ Auto-configured by Vercel (don't set manually):
 - `POSTGRES_URL` - Set when enabling Vercel Postgres (enables user authentication)
 - `BLOB_READ_WRITE_TOKEN` - Set when enabling Vercel Blob (for image uploads)
 
-**Important**: `ADMIN_PASSWORD` is for the admin panel at `/admin`, completely separate from user accounts. Users register and login through the homepage.
+**Important**: `ADMIN_PASSWORD` is used during teacher registration to verify the user is authorized to become a teacher. Admin panel access at `/admin` requires a teacher account, not the password directly.
 
 ## Additional Notes
 

@@ -11,6 +11,13 @@ interface AdminPasswordGateProps {
   onSuccess: () => void;
 }
 
+/**
+ * @deprecated This component is deprecated for admin panel access.
+ * Admin panel now requires teacher authentication instead of password-based access.
+ * This component is kept for reference only and may be removed in a future version.
+ * See `/admin/page.tsx` for the new teacher-only authentication flow.
+ */
+
 export function AdminPasswordGate({ onSuccess }: AdminPasswordGateProps) {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");

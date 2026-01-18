@@ -11,7 +11,12 @@ const adminPasswordRateLimiter = createRateLimiter({
 
 /**
  * POST /api/admin/verify-password - Verify admin password
- * No user authentication required - admin panel is accessible to anyone with the password
+ *
+ * @deprecated This endpoint is deprecated for admin panel access.
+ * Admin panel now requires teacher authentication instead of password-based access.
+ * This endpoint is kept only for teacher registration verification (where ADMIN_PASSWORD
+ * is used to verify that the registering user is authorized to create a teacher account).
+ *
  * Rate limited: 5 attempts per 15 minutes
  */
 export async function POST(request: NextRequest) {

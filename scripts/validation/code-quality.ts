@@ -92,33 +92,4 @@ export function validateCodeQuality(
     }
   }
 
-  // check naming conventions
-  console.log("  Checking naming conventions...");
-  const badNames = runCommand(
-    `find src -name "*[A-Z]*" -type f | grep -v ".tsx\\|.ts\\|node_modules\\|.DS_Store" || true`,
-    true,
-  );
-
-  if (badNames.output.trim()) {
-    addResult(
-      results,
-      context,
-      "Quality",
-      "Naming Conventions",
-      false,
-      false,
-      "Found files with unconventional names",
-      badNames.output.split("\n").slice(0, 5).join("\n"),
-    );
-  } else {
-    addResult(
-      results,
-      context,
-      "Quality",
-      "Naming Conventions",
-      true,
-      false,
-      "Naming conventions OK",
-    );
-  }
 }

@@ -92,6 +92,18 @@ export default function EditPostPage({
             status: data.status,
           });
         } else {
+          // Check for orphaned auto-saved draft reference
+          if (typeof window !== "undefined") {
+            const savedDraftId = localStorage.getItem(AUTOSAVE_DRAFT_ID_KEY);
+            if (savedDraftId === id) {
+              // Draft was deleted externally (e.g., via admin panel)
+              // Clear localStorage and redirect to new post form
+              localStorage.removeItem(AUTOSAVE_DRAFT_ID_KEY);
+              localStorage.removeItem(getAutoSaveStorageKey(id));
+              router.replace("/dashboard/posts/new");
+              return;
+            }
+          }
           toast.error("הכתבה לא נמצאה");
           router.push("/dashboard");
         }
