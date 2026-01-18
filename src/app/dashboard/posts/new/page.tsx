@@ -1,18 +1,27 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { logError } from "@/lib/logger";
 import { PostFormFields } from "@/components/features/posts/post-form-fields";
 import { PostFormActions } from "@/components/features/posts/post-form-actions";
+import { AutoSaveIndicator } from "@/components/features/posts/auto-save-indicator";
+import { RecoveryDialog } from "@/components/features/posts/recovery-dialog";
+import { useAutoSave } from "@/hooks/use-auto-save";
 import type { User } from "@/types/user.types";
+import type { PostFormData } from "@/lib/validation/autosave-schemas";
+import {
+  getAutoSaveStorageKey,
+  AUTOSAVE_STORAGE_KEY_NEW,
+} from "@/lib/validation/autosave-schemas";
 
 export default function NewPostPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<User | null>(null);
+  const [showRecoveryDialog, setShowRecoveryDialog] = useState(false);
   const [form, setForm] = useState({
     title: "",
     description: "",
@@ -27,6 +36,37 @@ export default function NewPostPage() {
     content?: string;
     coverImage?: string;
   }>({});
+
+  // Auto-save hook
+  const {
+    status: autoSaveStatus,
+    lastSaved,
+    errorMessage,
+    recoveryData,
+    currentPostId,
+    updateFormData,
+    triggerSave,
+    recoverFromLocal,
+    clearRecovery,
+    cancelPendingSave,
+  } = useAutoSave({
+    postId: null,
+    enabled: true,
+    onSaveComplete: (id) => {
+      // If auto-save created a new post, we could navigate to edit page
+      // but for now we just track the ID silently
+      if (id && !currentPostId) {
+        // Post was created, user can continue editing
+      }
+    },
+  });
+
+  // Show recovery dialog when recovery data is available
+  useEffect(() => {
+    if (recoveryData) {
+      setShowRecoveryDialog(true);
+    }
+  }, [recoveryData]);
 
   // Fetch current user for metadata
   useEffect(() => {
@@ -51,6 +91,59 @@ export default function NewPostPage() {
       isMounted = false;
     };
   }, []);
+
+  // Trigger auto-save when form changes
+  const triggerAutoSave = useCallback(
+    (formData: typeof form) => {
+      // Only auto-save if there's meaningful content
+      if (formData.title || formData.content) {
+        const autoSaveData: PostFormData = {
+          title: formData.title,
+          content: formData.content,
+          description: formData.description || undefined,
+          coverImage: formData.coverImage || undefined,
+          customAuthor: formData.customAuthor || undefined,
+        };
+        updateFormData(autoSaveData);
+      }
+    },
+    [updateFormData],
+  );
+
+  // Handle recovery
+  const handleRecover = useCallback(() => {
+    const recovered = recoverFromLocal();
+    if (recovered) {
+      setForm({
+        title: recovered.title || "",
+        description: recovered.description || "",
+        content: recovered.content || "",
+        coverImage: recovered.coverImage || "",
+        customAuthor: recovered.customAuthor || "",
+        status: "draft",
+      });
+      toast.success("הטיוטה שוחזרה בהצלחה");
+    }
+    setShowRecoveryDialog(false);
+  }, [recoverFromLocal]);
+
+  // Handle discard recovery
+  const handleDiscardRecovery = useCallback(() => {
+    clearRecovery();
+    setShowRecoveryDialog(false);
+  }, [clearRecovery]);
+
+  // Handle retry auto-save
+  const handleRetryAutoSave = useCallback(() => {
+    const autoSaveData: PostFormData = {
+      title: form.title,
+      content: form.content,
+      description: form.description || undefined,
+      coverImage: form.coverImage || undefined,
+      customAuthor: form.customAuthor || undefined,
+    };
+    triggerSave(autoSaveData);
+  }, [form, triggerSave]);
 
   const validateForm = (): boolean => {
     const newErrors: typeof errors = {};
@@ -77,11 +170,20 @@ export default function NewPostPage() {
       return;
     }
 
+    // Cancel any pending auto-save
+    cancelPendingSave();
+
     setLoading(true);
 
     try {
-      const response = await fetch("/api/admin/posts", {
-        method: "POST",
+      // If auto-save already created a draft, update it instead
+      const url = currentPostId
+        ? `/api/user/posts/${currentPostId}`
+        : "/api/admin/posts";
+      const method = currentPostId ? "PATCH" : "POST";
+
+      const response = await fetch(url, {
+        method,
         headers: {
           "Content-Type": "application/json",
         },
@@ -100,6 +202,14 @@ export default function NewPostPage() {
         throw new Error(errorData.error || "Failed to create post");
       }
 
+      // Clear localStorage backup on successful submit
+      if (typeof window !== "undefined") {
+        const storageKey = getAutoSaveStorageKey(currentPostId);
+        localStorage.removeItem(storageKey);
+        // Also clear the "new" key if we had one
+        localStorage.removeItem(AUTOSAVE_STORAGE_KEY_NEW);
+      }
+
       // Success - redirect is the confirmation (no toast needed)
       router.refresh();
       router.push("/dashboard");
@@ -111,34 +221,52 @@ export default function NewPostPage() {
   };
 
   const handleTitleChange = (value: string) => {
-    setForm({ ...form, title: value });
+    const newForm = { ...form, title: value };
+    setForm(newForm);
     if (errors.title) setErrors({ ...errors, title: undefined });
+    triggerAutoSave(newForm);
   };
 
   const handleDescriptionChange = (value: string) => {
-    setForm({ ...form, description: value });
+    const newForm = { ...form, description: value };
+    setForm(newForm);
     if (errors.description) setErrors({ ...errors, description: undefined });
+    triggerAutoSave(newForm);
   };
 
   const handleContentChange = (value: string) => {
-    setForm({ ...form, content: value });
+    const newForm = { ...form, content: value };
+    setForm(newForm);
     if (errors.content) setErrors({ ...errors, content: undefined });
+    triggerAutoSave(newForm);
   };
 
   const handleCoverImageChange = (url: string) => {
-    setForm({ ...form, coverImage: url });
+    const newForm = { ...form, coverImage: url };
+    setForm(newForm);
     if (errors.coverImage) setErrors({ ...errors, coverImage: undefined });
+    triggerAutoSave(newForm);
   };
 
   const handleCustomAuthorChange = (value: string) => {
-    setForm({ ...form, customAuthor: value });
+    const newForm = { ...form, customAuthor: value };
+    setForm(newForm);
+    triggerAutoSave(newForm);
   };
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">צור כתבה חדשה</h1>
-        <p className="text-muted-foreground mt-1">כתוב כתבה חדשה לבלוג</p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">צור כתבה חדשה</h1>
+          <p className="text-muted-foreground mt-1">כתוב כתבה חדשה לבלוג</p>
+        </div>
+        <AutoSaveIndicator
+          status={autoSaveStatus}
+          lastSaved={lastSaved}
+          errorMessage={errorMessage}
+          onRetry={handleRetryAutoSave}
+        />
       </div>
 
       <Card>
@@ -169,6 +297,17 @@ export default function NewPostPage() {
         onSaveDraft={() => handleSubmit("draft")}
         onPublish={() => handleSubmit("published")}
       />
+
+      {/* Recovery Dialog */}
+      {recoveryData && (
+        <RecoveryDialog
+          open={showRecoveryDialog}
+          onOpenChange={setShowRecoveryDialog}
+          recoveryData={recoveryData}
+          onRecover={handleRecover}
+          onDiscard={handleDiscardRecovery}
+        />
+      )}
     </div>
   );
 }
