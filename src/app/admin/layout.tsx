@@ -1,14 +1,13 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Home, FileText, Menu, Users, Settings } from "lucide-react";
-import { AdminPasswordGate } from "@/components/features/admin/admin-password-gate";
 import { logError } from "@/lib/logger";
 
-type AuthState = "checking" | "authorized" | "needs-password" | "login-page";
+type AuthState = "checking" | "authorized" | "unauthorized" | "login-page";
 
 export default function AdminLayout({
   children,
@@ -16,6 +15,7 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [authState, setAuthState] = useState<AuthState>("checking");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [hasCheckedAuth, setHasCheckedAuth] = useState(false);
@@ -29,7 +29,7 @@ export default function AdminLayout({
     }
 
     try {
-      // First check if user is a teacher (via user auth)
+      // Check if user is a teacher (via user auth)
       const userResponse = await fetch("/api/check-auth");
       const userData = await userResponse.json();
 
@@ -43,19 +43,12 @@ export default function AdminLayout({
         return;
       }
 
-      // Check admin session cookie directly
-      const adminResponse = await fetch("/api/admin/check-session");
-      const adminData = await adminResponse.json();
-
-      if (adminData.authenticated) {
-        setAuthState("authorized");
-      } else {
-        setAuthState("needs-password");
-      }
+      // Not a teacher - redirect to admin login page
+      setAuthState("unauthorized");
       setHasCheckedAuth(true);
     } catch (error) {
       logError("Auth check failed:", error);
-      setAuthState("needs-password");
+      setAuthState("unauthorized");
       setHasCheckedAuth(true);
     }
   }, [authState]);
@@ -73,6 +66,13 @@ export default function AdminLayout({
       checkAuth();
     }
   }, [pathname, hasCheckedAuth, authState, checkAuth]);
+
+  // Redirect unauthorized users to admin login page
+  useEffect(() => {
+    if (authState === "unauthorized") {
+      router.replace("/admin");
+    }
+  }, [authState, router]);
 
   // Check for pending month when authorized
   useEffect(() => {
@@ -98,8 +98,8 @@ export default function AdminLayout({
     return children;
   }
 
-  // Show loading state while checking authentication
-  if (authState === "checking") {
+  // Show loading state while checking authentication or redirecting
+  if (authState === "checking" || authState === "unauthorized") {
     return (
       <div className="min-h-screen bg-background">
         {/* Header Skeleton */}
@@ -139,11 +139,6 @@ export default function AdminLayout({
         </div>
       </div>
     );
-  }
-
-  // Show admin password gate only when explicitly needed
-  if (authState === "needs-password") {
-    return <AdminPasswordGate onSuccess={() => setAuthState("authorized")} />;
   }
 
   const navItems = [
