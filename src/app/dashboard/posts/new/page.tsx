@@ -15,11 +15,13 @@ import type { PostFormData } from "@/lib/validation/autosave-schemas";
 import {
   getAutoSaveStorageKey,
   AUTOSAVE_STORAGE_KEY_NEW,
+  AUTOSAVE_DRAFT_ID_KEY,
 } from "@/lib/validation/autosave-schemas";
 
 export default function NewPostPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [checkingDraft, setCheckingDraft] = useState(true);
   const [user, setUser] = useState<User | null>(null);
   const [showRecoveryDialog, setShowRecoveryDialog] = useState(false);
   const [form, setForm] = useState({
@@ -61,12 +63,28 @@ export default function NewPostPage() {
     },
   });
 
+  // Check for existing draft ID on mount and redirect
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      setCheckingDraft(false);
+      return;
+    }
+
+    const savedDraftId = localStorage.getItem(AUTOSAVE_DRAFT_ID_KEY);
+    if (savedDraftId) {
+      // Redirect to edit the existing draft
+      router.replace(`/dashboard/posts/${savedDraftId}`);
+    } else {
+      setCheckingDraft(false);
+    }
+  }, [router]);
+
   // Show recovery dialog when recovery data is available
   useEffect(() => {
-    if (recoveryData) {
+    if (recoveryData && !checkingDraft) {
       setShowRecoveryDialog(true);
     }
-  }, [recoveryData]);
+  }, [recoveryData, checkingDraft]);
 
   // Fetch current user for metadata
   useEffect(() => {
@@ -208,6 +226,8 @@ export default function NewPostPage() {
         localStorage.removeItem(storageKey);
         // Also clear the "new" key if we had one
         localStorage.removeItem(AUTOSAVE_STORAGE_KEY_NEW);
+        // Clear the draft ID so next visit shows empty form
+        localStorage.removeItem(AUTOSAVE_DRAFT_ID_KEY);
       }
 
       // Success - redirect is the confirmation (no toast needed)
@@ -253,6 +273,11 @@ export default function NewPostPage() {
     setForm(newForm);
     triggerAutoSave(newForm);
   };
+
+  // Show loading while checking for existing draft
+  if (checkingDraft) {
+    return <div className="text-center py-8">טוען...</div>;
+  }
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
