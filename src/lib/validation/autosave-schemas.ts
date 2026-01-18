@@ -4,13 +4,23 @@
  */
 
 import { z } from "zod";
-import {
-  postTitleSchema,
-  postContentSchema,
-  postDescriptionSchema,
-  coverImageSchema,
-  postStatusSchema,
-} from "./schemas";
+import { postDescriptionSchema, coverImageSchema } from "./schemas";
+
+/**
+ * Relaxed title schema for auto-save - allows empty strings
+ */
+const autoSaveTitleSchema = z
+  .string()
+  .max(200, "כותרת לא יכולה להיות יותר מ-200 תווים")
+  .optional();
+
+/**
+ * Relaxed content schema for auto-save - allows empty strings
+ */
+const autoSaveContentSchema = z
+  .string()
+  .max(50000, "תוכן לא יכול להיות יותר מ-50,000 תווים")
+  .optional();
 
 /**
  * Auto-save payload schema - allows partial post data
@@ -20,9 +30,9 @@ export const autoSavePayloadSchema = z.object({
   // Post identification - postId is null for new posts
   postId: z.string().uuid().nullable().optional(),
 
-  // Content fields - all optional for auto-save
-  title: postTitleSchema.optional(),
-  content: postContentSchema.optional(),
+  // Content fields - all optional for auto-save (allows empty strings)
+  title: autoSaveTitleSchema,
+  content: autoSaveContentSchema,
   description: postDescriptionSchema,
   coverImage: coverImageSchema,
   customAuthor: z.string().max(100).optional(),
