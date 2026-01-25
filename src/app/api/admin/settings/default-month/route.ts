@@ -173,6 +173,7 @@ export async function PUT(
     // Invalidate caches
     revalidatePath("/");
     revalidateTag("posts", "max");
+    revalidateTag("default-month", "max");
 
     return NextResponse.json({ success: true });
   } catch (error) {
