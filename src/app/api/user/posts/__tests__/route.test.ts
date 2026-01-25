@@ -43,7 +43,6 @@ const mockUser: User = {
 const mockPost: Post = {
   id: "post-456",
   title: "Test Post",
-  slug: "test-post",
   content: "Test content for the post",
   description: "Test description",
   date: "2024-01-01",

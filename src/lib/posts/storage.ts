@@ -2,7 +2,7 @@ import type { Post, PostInput } from "@/types/post.types";
 import type { PostQueryResult, DbMutationResult } from "@/types/database.types";
 import { db } from "../db/client";
 import { v4 as uuidv4 } from "uuid";
-import { generateSlug, generateDescription, rowToPost } from "./utils";
+import { generateDescription, rowToPost } from "./utils";
 import { getPostById } from "./queries";
 import { revalidateTag } from "next/cache";
 
@@ -13,7 +13,7 @@ const DEFAULT_POST_STATUS = "draft" as const;
 
 /**
  * Create a new post
- * Automatically generates ID, slug, and description
+ * Automatically generates ID and description
  *
  * @param input - Post data (without auto-generated fields)
  * @returns Created Post object
@@ -22,7 +22,6 @@ const DEFAULT_POST_STATUS = "draft" as const;
 export async function createPost(input: PostInput): Promise<Post> {
   const id = uuidv4();
   const now = new Date();
-  const slug = generateSlug(input.title);
   // Use custom description if provided, otherwise auto-generate from content
   const description =
     input.description && input.description.trim()
@@ -33,14 +32,13 @@ export async function createPost(input: PostInput): Promise<Post> {
   try {
     const result = (await db.query`
       INSERT INTO posts (
-        id, title, slug, content, cover_image, description,
+        id, title, content, cover_image, description,
         date, author, author_id, author_grade, author_class,
         is_teacher_post, tags, category, status, created_at, updated_at
       )
       VALUES (
         ${id},
         ${input.title},
-        ${slug},
         ${input.content},
         ${input.coverImage},
         ${description},
@@ -73,7 +71,7 @@ export async function createPost(input: PostInput): Promise<Post> {
 
 /**
  * Update an existing post
- * Only updates provided fields, regenerates slug/description if title/content change
+ * Only updates provided fields, regenerates description if content changes
  *
  * @param id - Post UUID
  * @param input - Partial post data to update
@@ -96,7 +94,6 @@ export async function updatePost(
 
     if (input.title !== undefined) {
       updates.title = input.title;
-      updates.slug = generateSlug(input.title);
     }
 
     if (input.content !== undefined) {

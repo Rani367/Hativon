@@ -12,7 +12,6 @@ import { getPostById } from "../queries";
 const createMockPost = (overrides: Partial<Post> = {}): Post => ({
   id: "post-123",
   title: "Test Post",
-  slug: "test-post",
   content: "Test content",
   description: "Test description",
   date: "2024-01-01",

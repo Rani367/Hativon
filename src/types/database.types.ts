@@ -54,7 +54,6 @@ export interface DbUserWithPassword extends DbUserRow {
 export interface DbPostRow {
   id: string;
   title: string;
-  slug: string;
   content: string;
   cover_image: string | null;
   description: string;

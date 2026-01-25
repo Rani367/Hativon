@@ -147,7 +147,6 @@ export async function POST(request: NextRequest) {
       CREATE TABLE IF NOT EXISTS posts (
         id TEXT PRIMARY KEY,
         title TEXT NOT NULL,
-        slug TEXT NOT NULL UNIQUE,
         content TEXT NOT NULL,
         cover_image TEXT,
         description TEXT NOT NULL,
@@ -166,7 +165,6 @@ export async function POST(request: NextRequest) {
 
     // Create indexes
     await db.query`CREATE INDEX IF NOT EXISTS idx_users_username ON users(username)`;
-    await db.query`CREATE INDEX IF NOT EXISTS idx_posts_slug ON posts(slug)`;
     await db.query`CREATE INDEX IF NOT EXISTS idx_posts_author_id ON posts(author_id)`;
     await db.query`CREATE INDEX IF NOT EXISTS idx_posts_status ON posts(status)`;
     await db.query`CREATE INDEX IF NOT EXISTS idx_posts_created_at ON posts(created_at DESC)`;
@@ -223,14 +221,13 @@ export async function POST(request: NextRequest) {
             try {
               await db.query`
                 INSERT INTO posts (
-                  id, title, slug, content, cover_image, description,
+                  id, title, content, cover_image, description,
                   date, author, author_id, author_grade, author_class,
                   tags, category, status, created_at, updated_at
                 )
                 VALUES (
                   ${post.id},
                   ${post.title},
-                  ${post.slug},
                   ${post.content},
                   ${post.coverImage || null},
                   ${post.description},

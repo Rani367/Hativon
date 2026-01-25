@@ -351,9 +351,6 @@ export default function DashboardPage() {
                             >
                               {post.title}
                             </Link>
-                            <p className="text-sm text-muted-foreground mt-1">
-                              {post.slug}
-                            </p>
                           </div>
                         </td>
                         <td className="p-3 sm:p-4 hidden md:table-cell">

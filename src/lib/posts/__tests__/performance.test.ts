@@ -23,7 +23,7 @@ import { db } from "@/lib/db/client";
 import {
   getPosts,
   getPostById,
-  getPostBySlug,
+  getPublishedPostById,
   getPostsByMonth,
   getArchiveMonths,
   getPostStats,
@@ -66,7 +66,6 @@ async function measureTime<T>(
 const mockPostRow = {
   id: "test-id-123",
   title: "Test Post",
-  slug: "test-post",
   content: "Test content",
   cover_image: null,
   description: "Test description",
@@ -97,10 +96,10 @@ describe("Post Fetching Performance", () => {
       expect(timeMs).toBeLessThan(TIMING_REQUIREMENTS.SINGLE_POST_MAX_MS);
     });
 
-    it(`getPostBySlug completes under ${TIMING_REQUIREMENTS.SINGLE_POST_MAX_MS}ms`, async () => {
+    it(`getPublishedPostById completes under ${TIMING_REQUIREMENTS.SINGLE_POST_MAX_MS}ms`, async () => {
       vi.mocked(db.query).mockResolvedValue(mockQueryResult([mockPostRow]));
 
-      const { timeMs } = await measureTime(() => getPostBySlug("test-slug"));
+      const { timeMs } = await measureTime(() => getPublishedPostById("test-id"));
 
       expect(timeMs).toBeLessThan(TIMING_REQUIREMENTS.SINGLE_POST_MAX_MS);
     });
@@ -124,7 +123,6 @@ describe("Post Fetching Performance", () => {
         .map((p, i) => ({
           ...p,
           id: `post-${i}`,
-          slug: `post-${i}`,
         }));
       vi.mocked(db.query).mockResolvedValue(mockQueryResult(manyPosts));
 
@@ -139,7 +137,6 @@ describe("Post Fetching Performance", () => {
         .map((p, i) => ({
           ...p,
           id: `post-${i}`,
-          slug: `post-${i}`,
         }));
       vi.mocked(db.query).mockResolvedValue(mockQueryResult(manyPosts));
 
@@ -154,7 +151,6 @@ describe("Post Fetching Performance", () => {
         .map((p, i) => ({
           ...p,
           id: `post-${i}`,
-          slug: `post-${i}`,
         }));
       vi.mocked(db.query).mockResolvedValue(mockQueryResult(monthPosts));
 
@@ -241,8 +237,8 @@ describe("Post Fetching Performance", () => {
         getPostById("id-1"),
         getPostById("id-2"),
         getPostById("id-3"),
-        getPostBySlug("slug-1"),
-        getPostBySlug("slug-2"),
+        getPublishedPostById("id-4"),
+        getPublishedPostById("id-5"),
         getPosts(true),
         getPosts(false),
         getArchiveMonths(),
@@ -265,7 +261,6 @@ describe("Post Fetching Performance", () => {
         .map((p, i) => ({
           ...p,
           id: `post-${i}`,
-          slug: `post-${i}`,
           title: `Post Title ${i}`,
           content: `Content for post ${i}. `.repeat(100), // ~2KB per post
           tags: ["tag1", "tag2", "tag3"],

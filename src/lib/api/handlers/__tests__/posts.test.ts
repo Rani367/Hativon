@@ -33,7 +33,6 @@ import type { Post } from "@/types/post.types";
 const mockPost: Post = {
   id: "post-123",
   title: "Test Post",
-  slug: "test-post",
   content: "Test content",
   description: "Test description",
   date: "2024-01-01",

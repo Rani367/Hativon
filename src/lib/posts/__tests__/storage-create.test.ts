@@ -25,11 +25,10 @@ describe("Post Storage - Create Operations", () => {
   });
 
   describe("createPost", () => {
-    it("creates post with auto-generated ID, slug, and description", async () => {
+    it("creates post with auto-generated ID and description", async () => {
       const mockRow = {
         id: "test-uuid-1234",
         title: "Test Post",
-        slug: "test-post",
         content: "This is test content",
         cover_image: null,
         description: "This is test content",
@@ -61,7 +60,6 @@ describe("Post Storage - Create Operations", () => {
       const result = await createPost(input);
 
       expect(result.id).toBe("test-uuid-1234");
-      expect(result.slug).toBe("test-post");
       expect(result.description).toBe("This is test content");
       expect(mockDb.query).toHaveBeenCalledTimes(1);
     });
@@ -70,7 +68,6 @@ describe("Post Storage - Create Operations", () => {
       const mockRow = {
         id: "test-uuid-1234",
         title: "Test Post",
-        slug: "test-post",
         content:
           "This is test content that is very long and would normally be truncated",
         cover_image: null,
@@ -107,7 +104,6 @@ describe("Post Storage - Create Operations", () => {
       const mockRow = {
         id: "test-uuid-1234",
         title: "Test Post",
-        slug: "test-post",
         content: "Content",
         cover_image: null,
         description: "Trimmed description",
@@ -142,7 +138,6 @@ describe("Post Storage - Create Operations", () => {
       const mockRow = {
         id: "test-uuid-1234",
         title: "Test Post",
-        slug: "test-post",
         content: "Auto-generated content",
         cover_image: null,
         description: "Auto-generated content",
@@ -177,7 +172,6 @@ describe("Post Storage - Create Operations", () => {
       const mockRow = {
         id: "test-uuid-1234",
         title: "Complete Post",
-        slug: "complete-post",
         content: "Full content",
         cover_image: "https://example.com/image.jpg",
         description: "Full description",
@@ -223,7 +217,6 @@ describe("Post Storage - Create Operations", () => {
       const mockRow = {
         id: "test-uuid-1234",
         title: "Minimal Post",
-        slug: "minimal-post",
         content: "Minimal content",
         cover_image: null,
         description: "Minimal content",
@@ -260,7 +253,6 @@ describe("Post Storage - Create Operations", () => {
       const mockRow = {
         id: "test-uuid-1234",
         title: "Draft Post",
-        slug: "draft-post",
         content: "Content",
         cover_image: null,
         description: "Content",
@@ -320,7 +312,6 @@ describe("Post Storage - Create Operations", () => {
       const mockRow = {
         id: "test-uuid-1234",
         title: "Test & Special <> Characters!",
-        slug: "test-special-characters",
         content: "Content",
         cover_image: null,
         description: "Content",
@@ -347,7 +338,7 @@ describe("Post Storage - Create Operations", () => {
 
       const result = await createPost(input);
 
-      expect(result.slug).toBe("test-special-characters");
+      expect(result.title).toBe("Test & Special <> Characters!");
     });
 
     it("handles very long content", async () => {
@@ -355,7 +346,6 @@ describe("Post Storage - Create Operations", () => {
       const mockRow = {
         id: "test-uuid-1234",
         title: "Long Content Post",
-        slug: "long-content-post",
         content: longContent,
         cover_image: null,
         description: longContent.substring(0, 160),

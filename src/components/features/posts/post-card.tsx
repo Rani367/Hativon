@@ -29,7 +29,7 @@ export default function PostCard({ post, priority = false }: PostCardProps) {
   return (
     <Card className="group relative pt-0 overflow-hidden hover:shadow-xl transition-shadow duration-200 bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-background/60 h-fit">
       <Link
-        href={`/posts/${post.slug}`}
+        href={`/posts/${post.id}`}
         className="absolute inset-0 z-10"
         aria-label={post.title}
         prefetch={true}
