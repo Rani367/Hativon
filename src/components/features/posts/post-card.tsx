@@ -34,24 +34,24 @@ export default function PostCard({ post, priority = false }: PostCardProps) {
         aria-label={post.title}
         prefetch={true}
       />
-      <div className="relative w-full overflow-hidden rounded-t-lg">
+      <div className="relative w-full aspect-square overflow-hidden rounded-t-lg">
         {post.coverImage ? (
           <Image
             src={post.coverImage}
             alt={post.title}
-            width={1200}
+            width={800}
             height={800}
             priority={priority}
             loading={priority ? "eager" : "lazy"}
             fetchPriority={priority ? "high" : "auto"}
-            sizes="(max-width: 768px) 100vw, 896px"
-            className="w-full h-auto"
+            sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 25vw"
+            className="absolute inset-0 w-full h-full object-cover"
             quality={75}
             placeholder="blur"
             blurDataURL={BLUR_DATA_URL}
           />
         ) : (
-          <div className="aspect-[16/9] bg-muted/80" />
+          <div className="w-full h-full bg-muted/80" />
         )}
         {post.category && (
           <div className="absolute top-4 start-4 z-20">
@@ -90,7 +90,9 @@ export default function PostCard({ post, priority = false }: PostCardProps) {
             {post.title}
           </h2>
         </div>
-        <p className="text-muted-foreground text-base">{post.description}</p>
+        <p className="text-muted-foreground text-base line-clamp-2">
+          {post.description}
+        </p>
       </CardHeader>
       <CardContent>
         {post.author && (
