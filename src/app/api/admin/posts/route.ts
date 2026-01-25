@@ -117,9 +117,7 @@ export async function GET(request: NextRequest) {
     if (search) {
       const searchLower = search.toLowerCase();
       posts = posts.filter(
-        (post) =>
-          post.title.toLowerCase().includes(searchLower) ||
-          post.slug.toLowerCase().includes(searchLower),
+        (post) => post.title.toLowerCase().includes(searchLower),
       );
     }
 

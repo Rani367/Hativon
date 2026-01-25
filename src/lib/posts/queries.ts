@@ -159,13 +159,13 @@ export async function getPostById(id: string): Promise<Post | null> {
 }
 
 /**
- * Get a single published post by its slug
+ * Get a single published post by its ID
  * Only returns published posts for security
  *
- * @param slug - URL-friendly post identifier
+ * @param id - Post UUID
  * @returns Post object or null if not found or not published
  */
-export async function getPostBySlug(slug: string): Promise<Post | null> {
+export async function getPublishedPostById(id: string): Promise<Post | null> {
   try {
     const result = (await db.query`
       SELECT
@@ -173,7 +173,7 @@ export async function getPostBySlug(slug: string): Promise<Post | null> {
         CASE WHEN u.id IS NULL AND p.author_id IS NOT NULL AND p.author_id != 'legacy-admin' THEN true ELSE false END as author_deleted
       FROM posts p
       LEFT JOIN users u ON p.author_id = u.id::text
-      WHERE p.slug = ${slug} AND p.status = 'published'
+      WHERE p.id = ${id} AND p.status = 'published'
     `) as PostQueryResult;
 
     if (result.rows.length === 0) {
@@ -185,7 +185,7 @@ export async function getPostBySlug(slug: string): Promise<Post | null> {
     // Suppress error if posts table doesn't exist (common in fresh installs)
     const errorMessage = error instanceof Error ? error.message : String(error);
     if (!errorMessage.includes('relation "posts" does not exist')) {
-      console.error("[ERROR] Failed to fetch post by slug:", error);
+      console.error("[ERROR] Failed to fetch published post by ID:", error);
     }
     return null;
   }

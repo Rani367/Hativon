@@ -51,9 +51,7 @@ export default function PostsListPage() {
     if (search) {
       const searchLower = search.toLowerCase();
       filtered = filtered.filter(
-        (post) =>
-          post.title.toLowerCase().includes(searchLower) ||
-          post.slug.toLowerCase().includes(searchLower)
+        (post) => post.title.toLowerCase().includes(searchLower)
       );
     }
 
@@ -241,9 +239,6 @@ export default function PostsListPage() {
                         <div className="font-medium">
                           {post.title}
                         </div>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          {post.slug}
-                        </p>
                       </div>
                     </td>
                     <td className="p-3 sm:p-4 hidden sm:table-cell">

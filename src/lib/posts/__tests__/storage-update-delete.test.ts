@@ -31,7 +31,6 @@ describe("Post Storage - Update and Delete Operations", () => {
       const existingPost = {
         id: "post-123",
         title: "Original Title",
-        slug: "original-title",
         content: "Original content",
         description: "Original content",
         date: "2025-01-01T00:00:00.000Z",
@@ -45,7 +44,6 @@ describe("Post Storage - Update and Delete Operations", () => {
       const updatedRow = {
         id: "post-123",
         title: "Updated Title",
-        slug: "updated-title",
         content: "Original content",
         cover_image: null,
         description: "Original content",
@@ -69,21 +67,18 @@ describe("Post Storage - Update and Delete Operations", () => {
 
       expect(result).not.toBeNull();
       expect(result?.title).toBe("Updated Title");
-      expect(result?.slug).toBe("updated-title");
       expect(mockGetPostById).toHaveBeenCalledWith("post-123");
     });
 
-    it("regenerates slug when title changes", async () => {
+    it("updates title without affecting other fields", async () => {
       mockGetPostById.mockResolvedValue({
         id: "post-123",
         title: "Old Title",
-        slug: "old-title",
       });
 
       const updatedRow = {
         id: "post-123",
         title: "New Title",
-        slug: "new-title",
         content: "Content",
         cover_image: null,
         description: "Content",
@@ -105,7 +100,7 @@ describe("Post Storage - Update and Delete Operations", () => {
 
       const result = await updatePost("post-123", { title: "New Title" });
 
-      expect(result?.slug).toBe("new-title");
+      expect(result?.title).toBe("New Title");
     });
 
     it("regenerates description when content changes", async () => {
@@ -119,7 +114,6 @@ describe("Post Storage - Update and Delete Operations", () => {
       const updatedRow = {
         id: "post-123",
         title: "Title",
-        slug: "title",
         content: newContent,
         cover_image: null,
         description: newContent,
@@ -161,7 +155,6 @@ describe("Post Storage - Update and Delete Operations", () => {
       const updatedRow = {
         id: "post-123",
         title: "Title",
-        slug: "title",
         content: "Content",
         cover_image: "new-image.jpg",
         description: "Content",
@@ -243,7 +236,6 @@ describe("Post Storage - Update and Delete Operations", () => {
       const updatedRow = {
         id: "post-123",
         title: "Title",
-        slug: "title",
         content: "Content",
         cover_image: null,
         description: "Content",

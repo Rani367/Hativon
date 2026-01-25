@@ -7,7 +7,7 @@ import { unstable_cache } from "next/cache";
 import {
   getPosts as getPostsUncached,
   getPostStats as getPostStatsUncached,
-  getPostBySlug as getPostBySlugUncached,
+  getPublishedPostById as getPublishedPostByIdUncached,
   getPostsByMonth as getPostsByMonthUncached,
   getArchiveMonths as getArchiveMonthsUncached,
 } from "./queries";
@@ -43,14 +43,14 @@ export const getCachedPostStats = unstable_cache(
 );
 
 /**
- * Cached version of getPostBySlug
+ * Cached version of getPublishedPostById
  * Revalidates: 60 seconds or when 'posts' tag is invalidated
  */
-export const getCachedPostBySlug = unstable_cache(
-  async (slug: string) => {
-    return getPostBySlugUncached(slug);
+export const getCachedPublishedPostById = unstable_cache(
+  async (id: string) => {
+    return getPublishedPostByIdUncached(id);
   },
-  ["posts-by-slug"],
+  ["posts-by-id"],
   {
     revalidate: 60,
     tags: ["posts"],
