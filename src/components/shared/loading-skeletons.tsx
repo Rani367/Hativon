@@ -3,7 +3,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 export function PostCardSkeleton() {
   return (
     <div className="group relative overflow-hidden rounded-lg border border-border bg-card transition-all">
-      <Skeleton className="aspect-video w-full" />
+      <Skeleton className="aspect-square w-full" />
       <div className="p-6 space-y-4">
         <div className="flex gap-2">
           <Skeleton className="h-5 w-16" />

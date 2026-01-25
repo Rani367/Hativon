@@ -37,12 +37,14 @@ function PaginatedPosts({
 
   return (
     <>
-      {/* CSS columns-based masonry layout - no JS library needed */}
-      <div className="columns-1 md:columns-2 gap-6 md:gap-8">
+      {/* Uniform CSS grid layout */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-6">
         {visiblePosts.map((post, index) => (
-          <div key={post.id} className="mb-6 md:mb-8 break-inside-avoid">
-            <MemoizedPostCard post={post} priority={index < PRIORITY_COUNT} />
-          </div>
+          <MemoizedPostCard
+            key={post.id}
+            post={post}
+            priority={index < PRIORITY_COUNT}
+          />
         ))}
       </div>
 
