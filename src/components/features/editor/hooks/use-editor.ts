@@ -8,7 +8,14 @@
 import { useEditor as useTiptapEditor, Editor } from "@tiptap/react";
 import { useCallback, useEffect, useRef } from "react";
 import TurndownService from "turndown";
+import { marked } from "marked";
 import { createExtensions, editorProps } from "../extensions";
+
+// Configure marked for consistent HTML output
+marked.setOptions({
+  breaks: true, // Convert \n to <br>
+  gfm: true, // GitHub Flavored Markdown
+});
 
 // Configure Turndown for markdown conversion
 const turndownService = new TurndownService({
@@ -58,6 +65,18 @@ function htmlToMarkdown(html: string): string {
 }
 
 /**
+ * Converts Markdown to HTML for the editor
+ * Tiptap expects HTML content, not raw markdown
+ */
+function markdownToHtml(markdown: string): string {
+  if (!markdown) {
+    return "";
+  }
+  // marked.parse returns string when async is false (default)
+  return marked.parse(markdown, { async: false }) as string;
+}
+
+/**
  * Custom hook that wraps Tiptap's useEditor with markdown conversion
  */
 export function useEditor({
@@ -71,7 +90,7 @@ export function useEditor({
   const editor = useTiptapEditor({
     extensions: createExtensions(placeholder),
     editorProps,
-    content: initialContent,
+    content: markdownToHtml(initialContent),
     immediatelyRender: false, // Prevent SSR hydration issues
     onUpdate: ({ editor }) => {
       // Skip if we're updating from props
@@ -101,8 +120,8 @@ export function useEditor({
       isUpdatingFromProps.current = true;
       lastMarkdown.current = initialContent;
 
-      // Set content without triggering onUpdate
-      editor.commands.setContent(initialContent, { emitUpdate: false });
+      // Set content without triggering onUpdate (convert markdown to HTML)
+      editor.commands.setContent(markdownToHtml(initialContent), { emitUpdate: false });
 
       // Reset flag after a tick
       setTimeout(() => {
