@@ -37,30 +37,28 @@ async function PostContent({ content }: { content: string }) {
 }
 
 interface PostPageProps {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ id: string }>;
 }
 
 // Enable ISR with 5 minute revalidation for instant loading
 export const revalidate = 300;
 
-// Pre-render all posts at build time - return 404 for unknown slugs
+// Pre-render all posts at build time - return 404 for unknown IDs
 export const dynamicParams = false;
 
 // Generate static params for all published posts
 export async function generateStaticParams() {
   const posts = await getPosts(); // Only published posts
   return posts.map((post) => ({
-    slug: post.slug,
+    id: post.id,
   }));
 }
 
 export async function generateMetadata({
   params,
 }: PostPageProps): Promise<Metadata> {
-  const { slug: rawSlug } = await params;
-  // Decode URL-encoded slug (handles Hebrew characters)
-  const slug = decodeURIComponent(rawSlug);
-  const post = await getPost(slug);
+  const { id } = await params;
+  const post = await getPost(id);
 
   if (!post) {
     return {
@@ -74,13 +72,13 @@ export async function generateMetadata({
     title: post.title,
     description: post.description,
     alternates: {
-      canonical: `${siteUrl}/posts/${post.slug}`,
+      canonical: `${siteUrl}/posts/${post.id}`,
     },
     openGraph: {
       title: post.title,
       description: post.description,
       type: "article",
-      url: `${siteUrl}/posts/${post.slug}`,
+      url: `${siteUrl}/posts/${post.id}`,
       publishedTime: new Date(post.date).toISOString(),
       authors: post.author ? [post.author] : [],
       tags: post.tags,
@@ -108,10 +106,8 @@ export async function generateMetadata({
 }
 
 export default async function PostPage({ params }: PostPageProps) {
-  const { slug: rawSlug } = await params;
-  // Decode URL-encoded slug (handles Hebrew characters)
-  const slug = decodeURIComponent(rawSlug);
-  const post = await getPost(slug);
+  const { id } = await params;
+  const post = await getPost(id);
 
   if (!post) {
     notFound();
@@ -142,7 +138,7 @@ export default async function PostPage({ params }: PostPageProps) {
     },
     mainEntityOfPage: {
       "@type": "WebPage",
-      "@id": `${siteUrl}/posts/${post.slug}`,
+      "@id": `${siteUrl}/posts/${post.id}`,
     },
   };
 

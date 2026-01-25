@@ -3,14 +3,6 @@ import type { Post } from "@/types/post.types";
 
 export const MAX_DESCRIPTION_LENGTH = 300;
 
-// converts title to url-friendly slug, keeps hebrew chars
-export function generateSlug(title: string): string {
-  return title
-    .toLowerCase()
-    .replace(/[^\u0590-\u05FFa-z0-9]+/gi, "-")
-    .replace(/^-+|-+$/g, "");
-}
-
 // strips markdown and truncates for preview
 export function generateDescription(content: string): string {
   const plainText = content
@@ -30,7 +22,6 @@ export function rowToPost(row: DbPostRow): Post {
   return {
     id: row.id,
     title: row.title,
-    slug: row.slug,
     content: row.content,
     coverImage: row.cover_image || undefined,
     description: row.description,

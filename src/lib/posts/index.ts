@@ -3,9 +3,9 @@
  *
  * This module provides a complete API for managing school newspaper posts including:
  * - CRUD operations (create, read, update, delete)
- * - Query functions (get posts, filter by author, search by slug)
+ * - Query functions (get posts, filter by author, search by ID)
  * - Permission checking (who can edit/delete posts)
- * - Utility functions (slug generation, description extraction)
+ * - Utility functions (description extraction)
  *
  * All exports are organized into focused submodules for maintainability.
  */
@@ -14,7 +14,7 @@
 export {
   getPosts as getAllPosts,
   getPostById,
-  getPostBySlug,
+  getPublishedPostById,
   getPostsByAuthor,
   getPostStats,
 } from "./queries";
@@ -33,7 +33,6 @@ export { canUserEditPost, canUserDeletePost } from "./permissions";
 
 // Utility functions
 export {
-  generateSlug,
   generateDescription,
   rowToPost,
   MAX_DESCRIPTION_LENGTH,

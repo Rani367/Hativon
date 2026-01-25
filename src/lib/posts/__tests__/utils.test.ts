@@ -1,95 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { generateSlug, generateDescription, rowToPost } from "../utils";
+import { generateDescription, rowToPost } from "../utils";
 import type { DbPostRow } from "@/types/database.types";
-
-describe("generateSlug", () => {
-  describe("Hebrew text handling", () => {
-    it("preserves Hebrew characters", () => {
-      expect(generateSlug("כותרת בעברית")).toBe("כותרת-בעברית");
-    });
-
-    it("handles Hebrew with punctuation", () => {
-      expect(generateSlug("כותרת: תת-כותרת!")).toBe("כותרת-תת-כותרת");
-    });
-
-    it("handles mixed Hebrew and English", () => {
-      expect(generateSlug("Hello עולם")).toBe("hello-עולם");
-    });
-
-    it("handles Hebrew with numbers", () => {
-      expect(generateSlug("כותרת 123")).toBe("כותרת-123");
-    });
-
-    it("handles Hebrew with special characters", () => {
-      expect(generateSlug("כותרת@#$%^&*()")).toBe("כותרת");
-    });
-
-    it("handles multiple spaces in Hebrew text", () => {
-      expect(generateSlug("כותרת    עם    רווחים")).toBe("כותרת-עם-רווחים");
-    });
-
-    it("handles leading and trailing spaces", () => {
-      expect(generateSlug("  כותרת  ")).toBe("כותרת");
-    });
-
-    it("handles empty string", () => {
-      expect(generateSlug("")).toBe("");
-    });
-
-    it("handles only special characters", () => {
-      expect(generateSlug("@#$%^&*()")).toBe("");
-    });
-  });
-
-  describe("English text handling", () => {
-    it("converts English to lowercase", () => {
-      expect(generateSlug("Hello World")).toBe("hello-world");
-    });
-
-    it("replaces spaces with hyphens", () => {
-      expect(generateSlug("my blog post")).toBe("my-blog-post");
-    });
-
-    it("removes special characters", () => {
-      expect(generateSlug("Hello! World?")).toBe("hello-world");
-    });
-
-    it("handles consecutive special characters", () => {
-      expect(generateSlug("hello---world")).toBe("hello-world");
-    });
-  });
-
-  describe("Edge cases", () => {
-    it("handles very long Hebrew text", () => {
-      const longText = "כותרת ".repeat(100);
-      const result = generateSlug(longText);
-      expect(result).toContain("כותרת");
-      expect(result.split("-").filter(Boolean).length).toBeGreaterThan(50);
-    });
-
-    it("handles Unicode emoji (should be removed)", () => {
-      expect(generateSlug("כותרת  בעברית")).toBe("כותרת-בעברית");
-    });
-
-    it("handles RTL marks and zero-width characters", () => {
-      const textWithMarks = "כותרת\u200F\u200Eבעברית";
-      const result = generateSlug(textWithMarks);
-      // RTL and zero-width marks are replaced with hyphens by the regex
-      expect(result).toBe("כותרת-בעברית");
-    });
-
-    it("is case-insensitive for English", () => {
-      expect(generateSlug("HELLO")).toBe(generateSlug("hello"));
-    });
-
-    it("handles Hebrew nikud (diacritics) - should be removed", () => {
-      const textWithNikud = "כָּתוּב";
-      const result = generateSlug(textWithNikud);
-      // Nikud characters (U+0591-U+05C7) are outside our range
-      expect(result).not.toContain("\u05B0");
-    });
-  });
-});
 
 describe("generateDescription", () => {
   describe("Hebrew text handling", () => {
@@ -192,7 +103,6 @@ describe("rowToPost", () => {
     const mockRow: DbPostRow = {
       id: "test-id",
       title: "כותרת בדיקה",
-      slug: "כותרת-בדיקה",
       content: "תוכן בדיקה",
       cover_image: "https://example.com/image.jpg",
       description: "תיאור בדיקה",
@@ -214,7 +124,6 @@ describe("rowToPost", () => {
     expect(result).toEqual({
       id: "test-id",
       title: "כותרת בדיקה",
-      slug: "כותרת-בדיקה",
       content: "תוכן בדיקה",
       coverImage: "https://example.com/image.jpg",
       description: "תיאור בדיקה",
@@ -237,7 +146,6 @@ describe("rowToPost", () => {
     const mockRow: DbPostRow = {
       id: "test-id",
       title: "Test",
-      slug: "test",
       content: "Content",
       cover_image: null,
       description: "Desc",
