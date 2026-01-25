@@ -2,6 +2,8 @@
 
 A school newspaper application with Hebrew/RTL support.
 
+**Live Site:** https://hativon.vercel.app
+
 ## Setup
 
 ```bash
