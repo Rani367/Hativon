@@ -39,12 +39,12 @@ export default function PostCard({ post, priority = false }: PostCardProps) {
           <Image
             src={post.coverImage}
             alt={post.title}
-            width={800}
-            height={600}
+            width={1200}
+            height={800}
             priority={priority}
             loading={priority ? "eager" : "lazy"}
             fetchPriority={priority ? "high" : "auto"}
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            sizes="(max-width: 768px) 100vw, 896px"
             className="w-full h-auto"
             quality={75}
             placeholder="blur"
