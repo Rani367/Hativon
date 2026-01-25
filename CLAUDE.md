@@ -2,6 +2,8 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+the deployed site of this project it at https://hativon.vercel.app/
+
 ## CRITICAL RULE: Always Verify Before Finishing
 
 **ALWAYS run `pnpm run verify` at the end of your work. Do NOT stop until everything passes.**
