@@ -11,6 +11,7 @@ import {
   getPostsByMonth as getPostsByMonthUncached,
   getArchiveMonths as getArchiveMonthsUncached,
 } from "./queries";
+import { getDefaultMonthWithFallback as getDefaultMonthUncached } from "@/lib/settings";
 
 /**
  * Cached version of getPosts
@@ -84,5 +85,20 @@ export const getCachedArchiveMonths = unstable_cache(
   {
     revalidate: 60,
     tags: ["posts"],
+  },
+);
+
+/**
+ * Cached version of getDefaultMonthWithFallback
+ * Revalidates: 300 seconds or when 'default-month' tag is invalidated
+ */
+export const getCachedDefaultMonth = unstable_cache(
+  async () => {
+    return getDefaultMonthUncached();
+  },
+  ["default-month"],
+  {
+    revalidate: 300,
+    tags: ["default-month"],
   },
 );

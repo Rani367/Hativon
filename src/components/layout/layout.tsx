@@ -1,6 +1,8 @@
 import { ReactNode, Suspense } from "react";
-import { getCachedArchiveMonths } from "@/lib/posts/cached-queries";
-import { getDefaultMonthWithFallback } from "@/lib/settings";
+import {
+  getCachedArchiveMonths,
+  getCachedDefaultMonth,
+} from "@/lib/posts/cached-queries";
 import { getCurrentMonthYear } from "@/lib/date/months";
 import { LayoutClient } from "./layout-client";
 
@@ -12,7 +14,7 @@ interface LayoutProps {
 async function ArchivesProvider({ children }: { children: ReactNode }) {
   const [archives, defaultMonth] = await Promise.all([
     getCachedArchiveMonths(),
-    getDefaultMonthWithFallback(),
+    getCachedDefaultMonth(),
   ]);
   return (
     <LayoutClient archives={archives} defaultMonth={defaultMonth}>
