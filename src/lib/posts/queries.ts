@@ -251,7 +251,7 @@ export async function getPostsByMonth(
       WHERE p.status = 'published'
         AND EXTRACT(YEAR FROM p.date) = $1
         AND EXTRACT(MONTH FROM p.date) = $2
-      ORDER BY p.date DESC, p.created_at DESC`,
+      ORDER BY (p.cover_image IS NOT NULL AND p.cover_image != '') DESC, p.date DESC, p.created_at DESC`,
       year,
       month,
     ])) as PostQueryResult;
