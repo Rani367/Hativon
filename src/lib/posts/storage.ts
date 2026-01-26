@@ -32,11 +32,12 @@ export async function createPost(input: PostInput): Promise<Post> {
   try {
     const result = (await db.query`
       INSERT INTO posts (
-        id, title, content, cover_image, description,
+        id, slug, title, content, cover_image, description,
         date, author, author_id, author_grade, author_class,
         is_teacher_post, tags, category, status, created_at, updated_at
       )
       VALUES (
+        ${id},
         ${id},
         ${input.title},
         ${input.content},
