@@ -13,6 +13,8 @@ import Placeholder from "@tiptap/extension-placeholder";
 export function createExtensions(placeholder?: string) {
   return [
     StarterKit.configure({
+      // Disable built-in Link - we configure it separately below with custom settings
+      link: false,
       // Heading configuration - levels 1-3 only
       heading: {
         levels: [1, 2, 3],

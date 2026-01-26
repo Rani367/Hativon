@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { revalidateTag } from "next/cache";
+import { safeRevalidateTag } from "@/lib/cache/revalidate";
 import { createPost, updatePost, getPostById } from "@/lib/posts";
 import { getCurrentUser } from "@/lib/auth/middleware";
 import { logError } from "@/lib/logger";
@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
         status: "draft",
       });
 
-      revalidateTag("posts", "max");
+      safeRevalidateTag("posts", "max");
 
       return NextResponse.json({
         success: true,
@@ -146,7 +146,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Post not found" }, { status: 404 });
     }
 
-    revalidateTag("posts", "max");
+    safeRevalidateTag("posts", "max");
 
     return NextResponse.json({
       success: true,

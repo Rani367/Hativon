@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { revalidateTag } from "next/cache";
+import { safeRevalidateTag } from "@/lib/cache/revalidate";
 import { getPostById, updatePost, deletePost } from "@/lib/posts";
 import { getCurrentUser } from "@/lib/auth/middleware";
 import { logError } from "@/lib/logger";
@@ -95,7 +95,7 @@ export async function PATCH(
     }
 
     // Revalidate posts cache for granular invalidation
-    revalidateTag("posts", "max");
+    safeRevalidateTag("posts", "max");
 
     return NextResponse.json(updatedPost);
   } catch (error) {
@@ -142,7 +142,7 @@ export async function DELETE(
     }
 
     // Revalidate posts cache for granular invalidation
-    revalidateTag("posts", "max");
+    safeRevalidateTag("posts", "max");
 
     return NextResponse.json({ success: true });
   } catch (error) {

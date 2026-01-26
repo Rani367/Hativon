@@ -9,7 +9,7 @@ import {
 } from "@/lib/settings";
 import { getArchiveMonths, getPostsByMonth } from "@/lib/posts/queries";
 import { getCurrentMonthYear, englishToHebrewMonth } from "@/lib/date/months";
-import { revalidatePath, revalidateTag } from "next/cache";
+import { safeRevalidatePath, safeRevalidateTag } from "@/lib/cache/revalidate";
 
 interface DefaultMonthResponse {
   currentDefault: { year: number; month: string; hebrewMonth: string } | null;
@@ -171,9 +171,9 @@ export async function PUT(
     await setDefaultMonth(year, month.toLowerCase());
 
     // Invalidate caches
-    revalidatePath("/");
-    revalidateTag("posts", "max");
-    revalidateTag("default-month", "max");
+    safeRevalidatePath("/");
+    safeRevalidateTag("posts", "max");
+    safeRevalidateTag("default-month", "max");
 
     return NextResponse.json({ success: true });
   } catch (error) {
