@@ -4,7 +4,7 @@ import { db } from "../db/client";
 import { v4 as uuidv4 } from "uuid";
 import { generateDescription, rowToPost } from "./utils";
 import { getPostById } from "./queries";
-import { revalidateTag } from "next/cache";
+import { safeRevalidateTag } from "../cache/revalidate";
 
 /**
  * Default post status for new posts
@@ -40,7 +40,7 @@ export async function createPost(input: PostInput): Promise<Post> {
         ${id},
         ${input.title},
         ${input.content},
-        ${input.coverImage},
+        ${input.coverImage || null},
         ${description},
         ${now},
         ${input.author || null},
@@ -60,7 +60,7 @@ export async function createPost(input: PostInput): Promise<Post> {
     const post = rowToPost(result.rows[0]);
 
     // Revalidate cache to show new post instantly
-    revalidateTag("posts", "max");
+    safeRevalidateTag("posts", "max");
 
     return post;
   } catch (error) {
@@ -136,7 +136,7 @@ export async function updatePost(
     const post = rowToPost(result.rows[0]);
 
     // Revalidate cache to show updates instantly
-    revalidateTag("posts", "max");
+    safeRevalidateTag("posts", "max");
 
     return post;
   } catch (error) {
@@ -162,7 +162,7 @@ export async function deletePost(id: string): Promise<boolean> {
 
     // Revalidate cache to remove deleted post instantly
     if (deleted) {
-      revalidateTag("posts", "max");
+      safeRevalidateTag("posts", "max");
     }
 
     return deleted;

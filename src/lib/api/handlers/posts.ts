@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { revalidateTag } from "next/cache";
+import { safeRevalidateTag } from "@/lib/cache/revalidate";
 import {
   getPostById,
   updatePost,
@@ -99,7 +99,7 @@ export async function handleUpdatePost(
     }
 
     // Granular cache invalidation - only revalidate posts tag
-    revalidateTag("posts", "max");
+    safeRevalidateTag("posts", "max");
 
     return NextResponse.json(updatedPost);
   } catch (error) {
@@ -146,7 +146,7 @@ export async function handleDeletePost(
     }
 
     // Granular cache invalidation - only revalidate posts tag
-    revalidateTag("posts", "max");
+    safeRevalidateTag("posts", "max");
 
     return NextResponse.json({ success: true });
   } catch (error) {
