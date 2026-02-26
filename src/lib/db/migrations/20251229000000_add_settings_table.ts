@@ -26,7 +26,10 @@ const migration: Migration = {
 
     // Add trigger for auto-updating updated_at
     await db.query`
-      CREATE TRIGGER IF NOT EXISTS update_settings_updated_at
+      DROP TRIGGER IF EXISTS update_settings_updated_at ON settings
+    `;
+    await db.query`
+      CREATE TRIGGER update_settings_updated_at
         BEFORE UPDATE ON settings
         FOR EACH ROW
         EXECUTE FUNCTION update_updated_at_column()
