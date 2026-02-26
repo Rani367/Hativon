@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -22,6 +23,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
 import { User } from "@/types/user.types";
 import {
   Trash2,
@@ -30,6 +32,7 @@ import {
   AlertCircle,
   UserPlus,
   Terminal,
+  KeyRound,
 } from "lucide-react";
 import { formatHebrewDate } from "@/lib/date/format";
 import { toast } from "sonner";
@@ -42,6 +45,9 @@ export default function UsersManagementPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
   const [dbNotConfigured, setDbNotConfigured] = useState(false);
+  const [resetUserId, setResetUserId] = useState<string | null>(null);
+  const [resetPassword, setResetPassword] = useState("");
+  const [resetting, setResetting] = useState(false);
 
   // Optimistic delete hook
   const { optimisticDelete, isPending } = useOptimisticList({
@@ -107,6 +113,53 @@ export default function UsersManagementPage() {
     );
 
     setUserToDelete(null);
+  }
+
+  function handleResetClick(userId: string) {
+    if (resetUserId === userId) {
+      setResetUserId(null);
+      setResetPassword("");
+    } else {
+      setResetUserId(userId);
+      setResetPassword("");
+    }
+  }
+
+  async function handleResetSubmit(userId: string) {
+    if (!resetPassword.trim() || resetPassword.length < 8) {
+      toast.error("הסיסמה חייבת להכיל לפחות 8 תווים");
+      return;
+    }
+
+    setResetting(true);
+    try {
+      const response = await fetch(`/api/admin/users/${userId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: resetPassword }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || "Failed to reset password");
+      }
+
+      // Clear the reset request badge
+      setUsers((prev) =>
+        prev.map((u) =>
+          u.id === userId ? { ...u, passwordResetRequested: false } : u,
+        ),
+      );
+
+      setResetUserId(null);
+      setResetPassword("");
+      toast.success("הסיסמה אופסה בהצלחה");
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : String(error);
+      toast.error(`שגיאה באיפוס הסיסמה: ${msg}`);
+    } finally {
+      setResetting(false);
+    }
   }
 
   if (loading) {
@@ -230,6 +283,8 @@ export default function UsersManagementPage() {
     );
   }
 
+  const pendingResets = users.filter((u) => u.passwordResetRequested).length;
+
   return (
     <div className="space-y-6">
       <div>
@@ -244,6 +299,11 @@ export default function UsersManagementPage() {
           <CardTitle className="flex items-center gap-2">
             <Users className="h-5 w-5" />
             רשימת משתמשים ({users.length})
+            {pendingResets > 0 && (
+              <Badge variant="destructive" className="mr-2">
+                {pendingResets} בקשות איפוס
+              </Badge>
+            )}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -287,11 +347,18 @@ export default function UsersManagementPage() {
                   {users.map((user) => (
                     <TableRow key={user.id}>
                       <TableCell className="font-medium">
-                        {user.username}
+                        <span className="flex items-center gap-2">
+                          {user.username}
+                          {user.passwordResetRequested && (
+                            <Badge variant="destructive" className="text-xs">
+                              איפוס סיסמה
+                            </Badge>
+                          )}
+                        </span>
                       </TableCell>
                       <TableCell>{user.displayName}</TableCell>
                       <TableCell>
-                        {user.grade}'{user.classNumber}
+                        {user.grade}&apos;{user.classNumber}
                       </TableCell>
                       <TableCell>
                         {formatHebrewDate(user.createdAt)}
@@ -302,15 +369,56 @@ export default function UsersManagementPage() {
                           : "אף פעם"}
                       </TableCell>
                       <TableCell className="text-left">
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => handleDeleteClick(user)}
-                          disabled={isPending(user.id)}
-                        >
-                          <Trash2 className="h-4 w-4 me-2" />
-                          מחק
-                        </Button>
+                        <div className="flex flex-col gap-2">
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleResetClick(user.id)}
+                            >
+                              <KeyRound className="h-4 w-4 me-2" />
+                              איפוס סיסמה
+                            </Button>
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => handleDeleteClick(user)}
+                              disabled={isPending(user.id)}
+                            >
+                              <Trash2 className="h-4 w-4 me-2" />
+                              מחק
+                            </Button>
+                          </div>
+                          {resetUserId === user.id && (
+                            <div className="flex items-center gap-2">
+                              <Input
+                                type="password"
+                                value={resetPassword}
+                                onChange={(e) =>
+                                  setResetPassword(e.target.value)
+                                }
+                                placeholder="סיסמה חדשה (לפחות 8 תווים)"
+                                className="text-right h-8 text-sm"
+                                disabled={resetting}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") {
+                                    e.preventDefault();
+                                    handleResetSubmit(user.id);
+                                  }
+                                }}
+                              />
+                              <Button
+                                size="sm"
+                                onClick={() => handleResetSubmit(user.id)}
+                                disabled={
+                                  resetting || resetPassword.length < 8
+                                }
+                              >
+                                {resetting ? "מאפס..." : "אישור"}
+                              </Button>
+                            </div>
+                          )}
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}

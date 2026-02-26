@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS users (
   grade VARCHAR(10) CHECK (grade IN ('ז', 'ח', 'ט', 'י')),
   class_number INTEGER CHECK (class_number >= 1 AND class_number <= 4),
   is_teacher BOOLEAN DEFAULT FALSE,
+  password_reset_requested BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   last_login TIMESTAMP

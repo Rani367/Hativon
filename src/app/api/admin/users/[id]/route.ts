@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getUserById, updateUser, deleteUser } from "@/lib/users";
+import { getUserById, updateUser, deleteUser, resetUserPassword } from "@/lib/users";
 import { requireAdminAuth } from "@/lib/auth/admin";
 import { isDatabaseAvailable } from "@/lib/db/client";
 import { logError } from "@/lib/logger";
 import { userUpdateSchema } from "@/lib/validation/schemas";
 import { createErrorResponse } from "@/lib/api/response";
+import { z } from "zod";
 
 /**
  * GET /api/admin/users/[id] - Get single user (admin only)
@@ -65,7 +66,29 @@ export async function PATCH(
     const { id } = await params;
     const body = await request.json();
 
-    // Validate request body with Zod
+    // Password reset request
+    if (body.password !== undefined) {
+      const passwordSchema = z.object({
+        password: z.string().min(8, "הסיסמה חייבת להכיל לפחות 8 תווים"),
+      });
+      const pwValidation = passwordSchema.safeParse(body);
+      if (!pwValidation.success) {
+        return NextResponse.json(
+          { error: pwValidation.error.issues[0].message },
+          { status: 400 },
+        );
+      }
+
+      const user = await getUserById(id);
+      if (!user) {
+        return NextResponse.json({ error: "User not found" }, { status: 404 });
+      }
+
+      await resetUserPassword(id, pwValidation.data.password);
+      return NextResponse.json({ success: true });
+    }
+
+    // Regular profile update
     const validation = userUpdateSchema.safeParse(body);
 
     if (!validation.success) {

@@ -34,6 +34,8 @@ export interface DbUserRow {
   email: string | null;
   grade: string;
   classNumber: number;
+  isTeacher?: boolean;
+  passwordResetRequested?: boolean;
   createdAt: string;
   updatedAt: string;
   lastLogin: string | null;
