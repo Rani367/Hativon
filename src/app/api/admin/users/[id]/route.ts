@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getUserById, updateUser, deleteUser, resetUserPassword } from "@/lib/users";
+import { getUserById, updateUser, deleteUser, resetUserPassword, clearPasswordResetFlag } from "@/lib/users";
 import { requireAdminAuth } from "@/lib/auth/admin";
 import { isDatabaseAvailable } from "@/lib/db/client";
 import { logError } from "@/lib/logger";
@@ -65,6 +65,17 @@ export async function PATCH(
 
     const { id } = await params;
     const body = await request.json();
+
+    // Dismiss password reset request
+    if (body.dismissResetRequest === true) {
+      const user = await getUserById(id);
+      if (!user) {
+        return NextResponse.json({ error: "User not found" }, { status: 404 });
+      }
+
+      await clearPasswordResetFlag(id);
+      return NextResponse.json({ success: true });
+    }
 
     // Password reset request
     if (body.password !== undefined) {

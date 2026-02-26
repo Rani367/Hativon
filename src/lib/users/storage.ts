@@ -105,6 +105,14 @@ export async function setPasswordResetFlag(username: string): Promise<void> {
   `) as unknown as DbMutationResult;
 }
 
+export async function clearPasswordResetFlag(userId: string): Promise<void> {
+  (await db.query`
+    UPDATE users
+    SET password_reset_requested = FALSE
+    WHERE id = ${userId}
+  `) as unknown as DbMutationResult;
+}
+
 export async function resetUserPassword(
   userId: string,
   newPassword: string,

@@ -25,6 +25,7 @@ export {
   updateLastLogin,
   deleteUser,
   setPasswordResetFlag,
+  clearPasswordResetFlag,
   resetUserPassword,
 } from './storage';
 
