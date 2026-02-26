@@ -12,6 +12,7 @@ export interface User {
   grade?: Grade;
   classNumber?: number;
   isTeacher: boolean;
+  passwordResetRequested?: boolean;
   createdAt: string;
   updatedAt: string;
   lastLogin?: string;

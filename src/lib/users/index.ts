@@ -24,6 +24,8 @@ export {
   updateUser,
   updateLastLogin,
   deleteUser,
+  setPasswordResetFlag,
+  resetUserPassword,
 } from './storage';
 
 // Authentication

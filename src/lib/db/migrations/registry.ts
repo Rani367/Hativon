@@ -9,6 +9,7 @@ import type { Migration } from "./index";
 import initialSchema from "./20250101000000_initial_schema";
 import addTeacherSupport from "./20250115000000_add_teacher_support";
 import addSettingsTable from "./20251229000000_add_settings_table";
+import addPasswordReset from "./20260226000000_add_password_reset";
 
 /**
  * All registered migrations in execution order
@@ -17,6 +18,7 @@ export const migrations: Migration[] = [
   initialSchema,
   addTeacherSupport,
   addSettingsTable,
+  addPasswordReset,
 ];
 
 /**

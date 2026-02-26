@@ -22,6 +22,7 @@ export async function createUser(data: UserRegistration): Promise<User> {
         grade,
         class_number as "classNumber",
         is_teacher as "isTeacher",
+        password_reset_requested as "passwordResetRequested",
         created_at as "createdAt",
         updated_at as "updatedAt",
         last_login as "lastLogin"
@@ -68,6 +69,7 @@ export async function updateUser(
       grade,
       class_number as "classNumber",
       is_teacher as "isTeacher",
+      password_reset_requested as "passwordResetRequested",
       created_at as "createdAt",
       updated_at as "updatedAt",
       last_login as "lastLogin"
@@ -91,6 +93,30 @@ export async function updateLastLogin(userId: string): Promise<void> {
 export async function deleteUser(userId: string): Promise<void> {
   (await db.query`
     DELETE FROM users
+    WHERE id = ${userId}
+  `) as unknown as DbMutationResult;
+}
+
+export async function setPasswordResetFlag(username: string): Promise<void> {
+  (await db.query`
+    UPDATE users
+    SET password_reset_requested = TRUE
+    WHERE username = ${username}
+  `) as unknown as DbMutationResult;
+}
+
+export async function resetUserPassword(
+  userId: string,
+  newPassword: string,
+): Promise<void> {
+  const passwordHash = await bcrypt.hash(newPassword, BCRYPT_SALT_ROUNDS);
+
+  (await db.query`
+    UPDATE users
+    SET
+      password_hash = ${passwordHash},
+      password_reset_requested = FALSE,
+      updated_at = CURRENT_TIMESTAMP
     WHERE id = ${userId}
   `) as unknown as DbMutationResult;
 }
