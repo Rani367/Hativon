@@ -28,16 +28,15 @@ import { User } from "@/types/user.types";
 import {
   Trash2,
   Users,
-  Database,
-  AlertCircle,
   UserPlus,
   Terminal,
   KeyRound,
+  X,
 } from "lucide-react";
 import { formatHebrewDate } from "@/lib/date/format";
 import { toast } from "sonner";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useOptimisticList } from "@/hooks/use-optimistic-list";
+import { DbNotConfiguredView } from "./db-not-configured";
 
 export default function UsersManagementPage() {
   const [users, setUsers] = useState<User[]>([]);
@@ -48,6 +47,8 @@ export default function UsersManagementPage() {
   const [resetUserId, setResetUserId] = useState<string | null>(null);
   const [resetPassword, setResetPassword] = useState("");
   const [resetting, setResetting] = useState(false);
+  const [dismissDialogOpen, setDismissDialogOpen] = useState(false);
+  const [userToDismiss, setUserToDismiss] = useState<User | null>(null);
 
   // Optimistic delete hook
   const { optimisticDelete, isPending } = useOptimisticList({
@@ -113,6 +114,51 @@ export default function UsersManagementPage() {
     );
 
     setUserToDelete(null);
+  }
+
+  function handleDismissClick(user: User) {
+    setUserToDismiss(user);
+    setDismissDialogOpen(true);
+  }
+
+  async function handleDismissConfirm() {
+    if (!userToDismiss) return;
+
+    setDismissDialogOpen(false);
+    const userId = userToDismiss.id;
+
+    // Optimistic update
+    setUsers((prev) =>
+      prev.map((u) =>
+        u.id === userId ? { ...u, passwordResetRequested: false } : u,
+      ),
+    );
+
+    try {
+      const response = await fetch(`/api/admin/users/${userId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ dismissResetRequest: true }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || "Failed to dismiss request");
+      }
+
+      toast.success("בקשת איפוס הסיסמה נדחתה");
+    } catch (error) {
+      // Rollback on failure
+      setUsers((prev) =>
+        prev.map((u) =>
+          u.id === userId ? { ...u, passwordResetRequested: true } : u,
+        ),
+      );
+      const msg = error instanceof Error ? error.message : String(error);
+      toast.error(`שגיאה בדחיית הבקשה: ${msg}`);
+    } finally {
+      setUserToDismiss(null);
+    }
   }
 
   function handleResetClick(userId: string) {
@@ -186,101 +232,8 @@ export default function UsersManagementPage() {
     );
   }
 
-  // Show database not configured message
   if (dbNotConfigured) {
-    return (
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold">ניהול משתמשים</h1>
-          <p className="text-muted-foreground mt-1">
-            צפייה ומחיקה של משתמשים במערכת
-          </p>
-        </div>
-
-        <Alert variant="warning">
-          <Database className="h-4 w-4" />
-          <AlertTitle>מסד נתונים לא מוגדר</AlertTitle>
-          <AlertDescription className="mt-2 space-y-2">
-            <p>
-              ניהול משתמשים דורש חיבור למסד נתונים PostgreSQL. התכונה הזו פועלת
-              רק כאשר המערכת מחוברת למסד נתונים.
-            </p>
-            <div className="mt-4 space-y-2">
-              <p className="font-medium">אפשרויות:</p>
-              <ul className="list-disc list-inside space-y-1 mr-4">
-                <li>
-                  <strong>פיתוח מקומי:</strong> הגדר{" "}
-                  <code className="bg-muted px-1 py-0.5 rounded">
-                    POSTGRES_URL
-                  </code>{" "}
-                  בקובץ{" "}
-                  <code className="bg-muted px-1 py-0.5 rounded">
-                    .env.local
-                  </code>
-                </li>
-                <li>
-                  <strong>ייצור (מומלץ):</strong> פרוס לVercel - מסד הנתונים
-                  יוגדר אוטומטית עם Vercel Postgres
-                </li>
-              </ul>
-            </div>
-            <p className="text-xs mt-3 text-muted-foreground">
-              לאחר הגדרת מסד הנתונים, רענן את הדף כדי לראות את רשימת המשתמשים.
-            </p>
-          </AlertDescription>
-        </Alert>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <AlertCircle className="h-5 w-5" />
-              הוראות התקנה
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <h3 className="font-medium mb-2">להגדרה מקומית:</h3>
-              <ol className="list-decimal list-inside space-y-1 text-sm mr-4">
-                <li>התקן PostgreSQL במחשב שלך</li>
-                <li>
-                  הוסף{" "}
-                  <code className="bg-muted px-1 py-0.5 rounded">
-                    POSTGRES_URL
-                  </code>{" "}
-                  לקובץ{" "}
-                  <code className="bg-muted px-1 py-0.5 rounded">
-                    .env.local
-                  </code>
-                </li>
-                <li>
-                  הרץ{" "}
-                  <code className="bg-muted px-1 py-0.5 rounded">
-                    pnpm run db:init
-                  </code>{" "}
-                  ליצירת הטבלאות
-                </li>
-                <li>
-                  הרץ{" "}
-                  <code className="bg-muted px-1 py-0.5 rounded">
-                    pnpm run create-admin
-                  </code>{" "}
-                  ליצירת משתמש ראשון
-                </li>
-                <li>רענן את הדף</li>
-              </ol>
-            </div>
-            <div>
-              <h3 className="font-medium mb-2">לפריסה בVercel (מומלץ):</h3>
-              <ol className="list-decimal list-inside space-y-1 text-sm mr-4">
-                <li>פרוס את הפרויקט לVercel</li>
-                <li>הוסף Vercel Postgres דרך לוח הבקרה</li>
-                <li>התכונה תעבוד אוטומטית ללא הגדרות נוספות</li>
-              </ol>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
+    return <DbNotConfiguredView />;
   }
 
   const pendingResets = users.filter((u) => u.passwordResetRequested).length;
@@ -350,9 +303,22 @@ export default function UsersManagementPage() {
                         <span className="flex items-center gap-2">
                           {user.username}
                           {user.passwordResetRequested && (
-                            <Badge variant="destructive" className="text-xs">
-                              איפוס סיסמה
-                            </Badge>
+                            <span className="inline-flex items-center gap-1">
+                              <Badge variant="destructive" className="text-xs">
+                                איפוס סיסמה
+                              </Badge>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDismissClick(user);
+                                }}
+                                className="inline-flex items-center justify-center rounded-full h-4 w-4 bg-destructive/20 text-destructive hover:bg-destructive/40 transition-colors"
+                                title="דחה בקשת איפוס"
+                              >
+                                <X className="h-3 w-3" />
+                              </button>
+                            </span>
                           )}
                         </span>
                       </TableCell>
@@ -449,6 +415,28 @@ export default function UsersManagementPage() {
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               מחק משתמש
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Dismiss Reset Request Dialog */}
+      <AlertDialog open={dismissDialogOpen} onOpenChange={setDismissDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>דחיית בקשת איפוס סיסמה</AlertDialogTitle>
+            <AlertDialogDescription className="text-right">
+              האם לדחות את בקשת איפוס הסיסמה של{" "}
+              <strong className="text-foreground">
+                {userToDismiss?.username}
+              </strong>{" "}
+              ({userToDismiss?.displayName})? הבקשה תוסר מהרשימה.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2">
+            <AlertDialogCancel>ביטול</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDismissConfirm}>
+              דחה בקשה
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
