@@ -1,4 +1,5 @@
 import type { User } from "@/types/user.types";
+import bcrypt from "bcryptjs";
 import { getUserWithPassword } from "./queries";
 
 /**
@@ -19,7 +20,7 @@ export async function validatePassword(
     return null;
   }
 
-  const isValid = await Bun.password.verify(password, user.passwordHash);
+  const isValid = await bcrypt.compare(password, user.passwordHash);
 
   if (!isValid) {
     return null;

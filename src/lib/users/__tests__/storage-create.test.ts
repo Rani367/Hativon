@@ -1,10 +1,10 @@
-import { describe, it, expect, mock, beforeEach, afterEach } from "bun:test";
+import { describe, it, expect, mock, beforeEach } from "bun:test";
 import type { UserRegistration } from "@/types/user.types";
 
 // Use global delegate for db mock (set up in test/setup.ts)
 const _g = globalThis as Record<string, unknown>;
 let mockDbQuery: ReturnType<typeof mock>;
-let originalBunPasswordHash: typeof Bun.password.hash;
+let mockBcryptHash: ReturnType<typeof mock>;
 
 // Path to storage module for cache clearing between tests
 const storageModulePath = require.resolve("../storage");
@@ -17,12 +17,14 @@ describe("User Storage - Create Operations", () => {
     mockDbQuery = mock(() => undefined);
     _g.__dbQueryMock = mockDbQuery;
 
-    // Save and mock Bun.password.hash
-    originalBunPasswordHash = Bun.password.hash;
-  });
-
-  afterEach(() => {
-    Bun.password.hash = originalBunPasswordHash;
+    // Mock bcryptjs module
+    mockBcryptHash = mock(() => Promise.resolve("hashed-password"));
+    mock.module("bcryptjs", () => ({
+      default: {
+        hash: mockBcryptHash,
+        compare: mock(() => Promise.resolve(true)),
+      },
+    }));
   });
 
   describe("createUser", () => {
@@ -39,7 +41,7 @@ describe("User Storage - Create Operations", () => {
         lastLogin: null,
       };
 
-      Bun.password.hash = mock(() => Promise.resolve("hashed-password-abc123")) as typeof Bun.password.hash;
+      mockBcryptHash.mockResolvedValue("hashed-password-abc123");
       mockDbQuery.mockResolvedValue({ rows: [mockUserRow] });
 
       const { createUser } = await import("../storage");
@@ -54,7 +56,7 @@ describe("User Storage - Create Operations", () => {
 
       const result = await createUser(input);
 
-      expect(Bun.password.hash).toHaveBeenCalledWith("plaintext-password", { algorithm: "bcrypt", cost: 12 });
+      expect(mockBcryptHash).toHaveBeenCalledWith("plaintext-password", 12);
       expect(result.id).toBe("user-123");
       expect(result.username).toBe("testuser");
       expect(result.displayName).toBe("Test User");
@@ -76,7 +78,7 @@ describe("User Storage - Create Operations", () => {
       };
 
       const hashedPassword = "bcrypt-hashed-value-different-from-plaintext";
-      Bun.password.hash = mock(() => Promise.resolve(hashedPassword)) as typeof Bun.password.hash;
+      mockBcryptHash.mockResolvedValue(hashedPassword);
       mockDbQuery.mockResolvedValue({ rows: [mockUserRow] });
 
       const { createUser } = await import("../storage");
@@ -91,7 +93,7 @@ describe("User Storage - Create Operations", () => {
 
       await createUser(input);
 
-      expect(Bun.password.hash).toHaveBeenCalledWith("mysecretpassword", { algorithm: "bcrypt", cost: 12 });
+      expect(mockBcryptHash).toHaveBeenCalledWith("mysecretpassword", 12);
       expect(mockDbQuery).toHaveBeenCalledTimes(1);
     });
 
@@ -108,7 +110,7 @@ describe("User Storage - Create Operations", () => {
         lastLogin: null,
       };
 
-      Bun.password.hash = mock(() => Promise.resolve("hashed-password")) as typeof Bun.password.hash;
+      mockBcryptHash.mockResolvedValue("hashed-password");
       mockDbQuery.mockResolvedValue({ rows: [mockUserRow] });
 
       const { createUser } = await import("../storage");
@@ -141,7 +143,7 @@ describe("User Storage - Create Operations", () => {
         'duplicate key value violates unique constraint "users_username_key"',
       );
 
-      Bun.password.hash = mock(() => Promise.resolve("hashed-password")) as typeof Bun.password.hash;
+      mockBcryptHash.mockResolvedValue("hashed-password");
       mockDbQuery.mockRejectedValue(dbError);
 
       const { createUser } = await import("../storage");
@@ -164,7 +166,7 @@ describe("User Storage - Create Operations", () => {
         'duplicate key value violates unique constraint "users_email_key"',
       );
 
-      Bun.password.hash = mock(() => Promise.resolve("hashed-password")) as typeof Bun.password.hash;
+      mockBcryptHash.mockResolvedValue("hashed-password");
       mockDbQuery.mockRejectedValue(dbError);
 
       const { createUser } = await import("../storage");
@@ -185,7 +187,7 @@ describe("User Storage - Create Operations", () => {
     it("re-throws other database errors without modification", async () => {
       const dbError = new Error("Connection timeout");
 
-      Bun.password.hash = mock(() => Promise.resolve("hashed-password")) as typeof Bun.password.hash;
+      mockBcryptHash.mockResolvedValue("hashed-password");
       mockDbQuery.mockRejectedValue(dbError);
 
       const { createUser } = await import("../storage");
@@ -202,7 +204,7 @@ describe("User Storage - Create Operations", () => {
     });
 
     it("handles non-Error thrown objects", async () => {
-      Bun.password.hash = mock(() => Promise.resolve("hashed-password")) as typeof Bun.password.hash;
+      mockBcryptHash.mockResolvedValue("hashed-password");
       mockDbQuery.mockRejectedValue("String error message");
 
       const { createUser } = await import("../storage");
@@ -231,7 +233,7 @@ describe("User Storage - Create Operations", () => {
         lastLogin: null,
       };
 
-      Bun.password.hash = mock(() => Promise.resolve("hashed-password")) as typeof Bun.password.hash;
+      mockBcryptHash.mockResolvedValue("hashed-password");
       mockDbQuery.mockResolvedValue({ rows: [mockUserRow] });
 
       const { createUser } = await import("../storage");
@@ -262,7 +264,7 @@ describe("User Storage - Create Operations", () => {
         lastLogin: null,
       };
 
-      Bun.password.hash = mock(() => Promise.resolve("hashed-with-10-rounds")) as typeof Bun.password.hash;
+      mockBcryptHash.mockResolvedValue("hashed-with-10-rounds");
       mockDbQuery.mockResolvedValue({ rows: [mockUserRow] });
 
       const { createUser } = await import("../storage");
@@ -277,7 +279,7 @@ describe("User Storage - Create Operations", () => {
 
       await createUser(input);
 
-      expect(Bun.password.hash).toHaveBeenCalledWith("testpassword", { algorithm: "bcrypt", cost: 12 });
+      expect(mockBcryptHash).toHaveBeenCalledWith("testpassword", 12);
     });
   });
 });

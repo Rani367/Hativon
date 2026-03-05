@@ -2,6 +2,7 @@
 
 import { readFileSync, writeFileSync } from "fs";
 import { resolve } from "path";
+import bcrypt from "bcryptjs";
 import readline from "readline";
 
 const ENV_FILE = resolve(process.cwd(), ".env.local");
@@ -79,7 +80,7 @@ async function hashAdminPassword() {
 
   // Hash password
   console.log("\n[SETUP] Hashing password...");
-  const hash = await Bun.password.hash(newPassword, { algorithm: "bcrypt", cost: 10 });
+  const hash = await bcrypt.hash(newPassword, 10);
 
   // Update .env.local
   const newEnvContent = envContent.replace(
