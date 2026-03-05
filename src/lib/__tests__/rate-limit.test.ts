@@ -1,19 +1,19 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, mock, beforeEach, afterEach } from "bun:test";
 import { NextRequest } from "next/server";
 
 // Mock the Upstash modules before importing
-vi.mock("@upstash/ratelimit", () => ({
-  Ratelimit: vi.fn().mockImplementation(() => ({
-    limit: vi.fn().mockResolvedValue({
+mock.module("@upstash/ratelimit", () => ({
+  Ratelimit: mock(() => ({
+    limit: mock(() => Promise.resolve({
       success: true,
       remaining: 4,
       reset: Date.now() + 60000,
-    }),
+    })),
   })),
 }));
 
-vi.mock("@upstash/redis", () => ({
-  Redis: vi.fn().mockImplementation(() => ({})),
+mock.module("@upstash/redis", () => ({
+  Redis: mock(() => ({})),
 }));
 
 import {
@@ -26,15 +26,27 @@ import {
 } from "../rate-limit";
 
 describe("Rate Limiting", () => {
+  let savedEnv: Record<string, string | undefined>;
+
   beforeEach(() => {
-    vi.clearAllMocks();
+    savedEnv = {
+      UPSTASH_REDIS_REST_URL: process.env.UPSTASH_REDIS_REST_URL,
+      UPSTASH_REDIS_REST_TOKEN: process.env.UPSTASH_REDIS_REST_TOKEN,
+    };
     // Reset environment variables
-    vi.stubEnv("UPSTASH_REDIS_REST_URL", "");
-    vi.stubEnv("UPSTASH_REDIS_REST_TOKEN", "");
+    process.env.UPSTASH_REDIS_REST_URL = "";
+    process.env.UPSTASH_REDIS_REST_TOKEN = "";
   });
 
   afterEach(() => {
-    vi.unstubAllEnvs();
+    // Restore env vars
+    for (const [key, value] of Object.entries(savedEnv)) {
+      if (value === undefined) {
+        delete process.env[key];
+      } else {
+        process.env[key] = value;
+      }
+    }
   });
 
   describe("InMemoryRateLimiter (via createRateLimiter)", () => {
@@ -94,7 +106,10 @@ describe("Rate Limiting", () => {
     });
 
     it("resets after window expires", async () => {
-      vi.useFakeTimers();
+      // Use Bun's timer mocking
+      const originalDateNow = Date.now;
+      let currentTime = Date.now();
+      Date.now = () => currentTime;
 
       const limiter = createRateLimiter({ limit: 2, window: 1000 }); // 1 second window
 
@@ -105,14 +120,14 @@ describe("Rate Limiting", () => {
       expect(blockedResult.success).toBe(false);
 
       // Advance time past the window
-      vi.advanceTimersByTime(1500);
+      currentTime += 1500;
 
       const resetResult = await limiter.check("test-user-5");
 
       expect(resetResult.success).toBe(true);
       expect(resetResult.remaining).toBe(1);
 
-      vi.useRealTimers();
+      Date.now = originalDateNow;
     });
 
     it("handles single request limit", async () => {
@@ -343,8 +358,8 @@ describe("Rate Limiting", () => {
 
   describe("Upstash Redis integration", () => {
     it("uses in-memory limiter when Upstash is not configured", async () => {
-      vi.stubEnv("UPSTASH_REDIS_REST_URL", "");
-      vi.stubEnv("UPSTASH_REDIS_REST_TOKEN", "");
+      process.env.UPSTASH_REDIS_REST_URL = "";
+      process.env.UPSTASH_REDIS_REST_TOKEN = "";
 
       const limiter = createRateLimiter({ limit: 5, window: 60000 });
       const result = await limiter.check("test-identifier");

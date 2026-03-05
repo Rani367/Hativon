@@ -275,7 +275,7 @@ export default function UsersManagementPage() {
                 <div className="flex items-start gap-2">
                   <Terminal className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
                   <code className="text-sm font-mono break-all">
-                    pnpm run create-test-user
+                    bun run create-test-user
                   </code>
                 </div>
               </div>

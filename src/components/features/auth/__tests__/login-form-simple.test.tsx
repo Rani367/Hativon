@@ -1,9 +1,9 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, mock } from "bun:test";
 import { render, screen } from "@testing-library/react";
 import { LoginForm } from "../login-form";
 
 // Mock framer-motion
-vi.mock("framer-motion", () => ({
+mock.module("framer-motion", () => ({
   motion: {
     div: ({ children, ...props }: React.PropsWithChildren) => (
       <div {...props}>{children}</div>
@@ -15,11 +15,11 @@ vi.mock("framer-motion", () => ({
 }));
 
 // Mock auth provider
-vi.mock("../auth-provider", () => ({
+mock.module("../auth-provider", () => ({
   useAuth: () => ({
-    login: vi.fn(),
-    logout: vi.fn(),
-    register: vi.fn(),
+    login: mock(() => undefined),
+    logout: mock(() => undefined),
+    register: mock(() => undefined),
     user: null,
     isAuthenticated: false,
     isLoading: false,

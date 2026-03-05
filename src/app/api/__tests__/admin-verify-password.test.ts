@@ -1,26 +1,25 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, mock } from "bun:test";
 import { NextRequest } from "next/server";
 
 // Mock dependencies before importing
-vi.mock("@/lib/auth/admin", () => ({
-  verifyAdminPassword: vi.fn(),
-  setAdminAuth: vi.fn(),
+mock.module("@/lib/auth/admin", () => ({
+  verifyAdminPassword: mock(() => undefined),
+  setAdminAuth: mock(() => undefined),
 }));
 
-vi.mock("@/lib/logger", () => ({
-  logError: vi.fn(),
-}));
+// @/lib/logger is mocked via global delegates in test/setup.ts.
 
-// Mock rate limiter to always allow requests in tests
-vi.mock("@/lib/rate-limit", () => ({
-  createRateLimiter: vi.fn(() => ({
-    check: vi.fn().mockResolvedValue({
-      success: true,
-      remaining: 5,
-      reset: Date.now() + 60000,
-    }),
-  })),
-  getClientIdentifier: vi.fn().mockReturnValue("test-ip"),
+// Mock rate-limit with ALL exports to avoid contaminating rate-limit.test.ts
+const _rlCheck = mock(() =>
+  Promise.resolve({ success: true, remaining: 5, reset: Date.now() + 60000 }),
+);
+mock.module("@/lib/rate-limit", () => ({
+  checkRateLimit: mock(() => Promise.resolve({ limited: false })),
+  createRateLimiter: mock(() => ({ check: _rlCheck })),
+  getClientIdentifier: mock(() => "test-ip"),
+  loginRateLimiter: { check: _rlCheck },
+  registerRateLimiter: { check: _rlCheck },
+  authRateLimiter: { check: _rlCheck },
 }));
 
 import { POST } from "@/app/api/admin/verify-password/route";
@@ -38,7 +37,8 @@ const createRequest = (body: Record<string, unknown>): NextRequest => {
 
 describe("POST /api/admin/verify-password", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    (verifyAdminPassword as ReturnType<typeof mock>).mockReset();
+    (setAdminAuth as ReturnType<typeof mock>).mockReset();
   });
 
   describe("Validation", () => {
@@ -59,8 +59,8 @@ describe("POST /api/admin/verify-password", () => {
 
   describe("Password Verification", () => {
     it("returns 200 for correct password", async () => {
-      vi.mocked(verifyAdminPassword).mockResolvedValue(true);
-      vi.mocked(setAdminAuth).mockResolvedValue(undefined);
+      (verifyAdminPassword as ReturnType<typeof mock>).mockResolvedValue(true);
+      (setAdminAuth as ReturnType<typeof mock>).mockResolvedValue(undefined);
 
       const request = createRequest({ password: "correct-password" });
       const response = await POST(request);
@@ -71,8 +71,8 @@ describe("POST /api/admin/verify-password", () => {
     });
 
     it("calls verifyAdminPassword with provided password", async () => {
-      vi.mocked(verifyAdminPassword).mockResolvedValue(true);
-      vi.mocked(setAdminAuth).mockResolvedValue(undefined);
+      (verifyAdminPassword as ReturnType<typeof mock>).mockResolvedValue(true);
+      (setAdminAuth as ReturnType<typeof mock>).mockResolvedValue(undefined);
 
       const request = createRequest({ password: "test-password" });
       await POST(request);
@@ -81,8 +81,8 @@ describe("POST /api/admin/verify-password", () => {
     });
 
     it("sets admin auth cookie on success", async () => {
-      vi.mocked(verifyAdminPassword).mockResolvedValue(true);
-      vi.mocked(setAdminAuth).mockResolvedValue(undefined);
+      (verifyAdminPassword as ReturnType<typeof mock>).mockResolvedValue(true);
+      (setAdminAuth as ReturnType<typeof mock>).mockResolvedValue(undefined);
 
       const request = createRequest({ password: "correct-password" });
       await POST(request);
@@ -91,7 +91,7 @@ describe("POST /api/admin/verify-password", () => {
     });
 
     it("returns 401 for incorrect password", async () => {
-      vi.mocked(verifyAdminPassword).mockResolvedValue(false);
+      (verifyAdminPassword as ReturnType<typeof mock>).mockResolvedValue(false);
 
       const request = createRequest({ password: "wrong-password" });
       const response = await POST(request);
@@ -102,7 +102,7 @@ describe("POST /api/admin/verify-password", () => {
     });
 
     it("does not set auth cookie on failed verification", async () => {
-      vi.mocked(verifyAdminPassword).mockResolvedValue(false);
+      (verifyAdminPassword as ReturnType<typeof mock>).mockResolvedValue(false);
 
       const request = createRequest({ password: "wrong-password" });
       await POST(request);
@@ -113,8 +113,8 @@ describe("POST /api/admin/verify-password", () => {
 
   describe("Error Handling", () => {
     it("returns 500 on setAdminAuth error", async () => {
-      vi.mocked(verifyAdminPassword).mockResolvedValue(true);
-      vi.mocked(setAdminAuth).mockRejectedValue(new Error("Cookie error"));
+      (verifyAdminPassword as ReturnType<typeof mock>).mockResolvedValue(true);
+      (setAdminAuth as ReturnType<typeof mock>).mockRejectedValue(new Error("Cookie error"));
 
       const request = createRequest({ password: "correct-password" });
       const response = await POST(request);
@@ -144,7 +144,7 @@ describe("POST /api/admin/verify-password", () => {
 
   describe("Security", () => {
     it("does not leak information about admin password", async () => {
-      vi.mocked(verifyAdminPassword).mockResolvedValue(false);
+      (verifyAdminPassword as ReturnType<typeof mock>).mockResolvedValue(false);
 
       const request = createRequest({ password: "wrong" });
       const response = await POST(request);

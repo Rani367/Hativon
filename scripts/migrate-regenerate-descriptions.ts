@@ -7,9 +7,9 @@
  * 3. Can be rolled back to restore original descriptions
  *
  * Usage:
- *   pnpm tsx scripts/migrate-regenerate-descriptions.ts          # Dry run (preview changes)
- *   pnpm tsx scripts/migrate-regenerate-descriptions.ts --run    # Apply changes
- *   pnpm tsx scripts/migrate-regenerate-descriptions.ts --rollback  # Restore backup
+ *   bun scripts/migrate-regenerate-descriptions.ts          # Dry run (preview changes)
+ *   bun scripts/migrate-regenerate-descriptions.ts --run    # Apply changes
+ *   bun scripts/migrate-regenerate-descriptions.ts --rollback  # Restore backup
  */
 
 import { db } from '../src/lib/db/client';
@@ -90,7 +90,7 @@ async function dryRun(): Promise<void> {
   console.log(`  Will be updated: ${changedCount}`);
   console.log(`  No change needed: ${posts.length - changedCount}`);
   console.log(`\nTo apply these changes, run:`);
-  console.log(`  pnpm tsx scripts/migrate-regenerate-descriptions.ts --run\n`);
+  console.log(`  bun scripts/migrate-regenerate-descriptions.ts --run\n`);
 }
 
 async function applyMigration(): Promise<void> {
@@ -144,7 +144,7 @@ async function applyMigration(): Promise<void> {
 
   console.log(`\nBackup saved to: ${BACKUP_FILE}`);
   console.log(`To rollback, run:`);
-  console.log(`  pnpm tsx scripts/migrate-regenerate-descriptions.ts --rollback\n`);
+  console.log(`  bun scripts/migrate-regenerate-descriptions.ts --rollback\n`);
 }
 
 async function rollback(): Promise<void> {

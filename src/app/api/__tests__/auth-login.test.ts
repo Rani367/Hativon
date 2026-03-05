@@ -1,35 +1,50 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, mock } from "bun:test";
 import { NextRequest } from "next/server";
 import type { User } from "@/types/user.types";
 
 // Mock dependencies before importing
-vi.mock("@/lib/users", () => ({
-  validatePassword: vi.fn(),
-  updateLastLogin: vi.fn(),
+// Must provide ALL barrel exports to avoid contaminating sub-module imports
+mock.module("@/lib/users", () => ({
+  getUserById: mock(() => undefined),
+  getUserByUsername: mock(() => undefined),
+  getAllUsers: mock(() => undefined),
+  usernameExists: mock(() => undefined),
+  createUser: mock(() => undefined),
+  updateUser: mock(() => undefined),
+  updateLastLogin: mock(() => undefined),
+  deleteUser: mock(() => undefined),
+  setPasswordResetFlag: mock(() => undefined),
+  clearPasswordResetFlag: mock(() => undefined),
+  resetUserPassword: mock(() => undefined),
+  validatePassword: mock(() => undefined),
 }));
 
-vi.mock("@/lib/auth/jwt", () => ({
-  createAuthCookie: vi.fn(),
+mock.module("@/lib/auth/jwt", () => ({
+  createAuthCookie: mock(() => undefined),
 }));
 
-vi.mock("@/lib/db/client", () => ({
-  isDatabaseAvailable: vi.fn(),
-}));
+// @/lib/db/client and @/lib/logger are mocked via global delegates in test/setup.ts.
 
-vi.mock("@/lib/logger", () => ({
-  logError: vi.fn(),
-}));
-
-vi.mock("@/lib/rate-limit", () => ({
-  checkRateLimit: vi.fn(),
-  loginRateLimiter: {},
+// Mock rate-limit with ALL exports to avoid contaminating rate-limit.test.ts
+const _rlCheck = mock(() =>
+  Promise.resolve({ success: true, remaining: 5, reset: Date.now() + 60000 }),
+);
+const _rlCheckRateLimit = mock(() => Promise.resolve({ limited: false }));
+mock.module("@/lib/rate-limit", () => ({
+  checkRateLimit: _rlCheckRateLimit,
+  createRateLimiter: mock(() => ({ check: _rlCheck })),
+  getClientIdentifier: mock(() => "test-ip"),
+  loginRateLimiter: { check: _rlCheck },
+  registerRateLimiter: { check: _rlCheck },
+  authRateLimiter: { check: _rlCheck },
 }));
 
 import { POST } from "@/app/api/auth/login/route";
 import { validatePassword, updateLastLogin } from "@/lib/users";
 import { createAuthCookie } from "@/lib/auth/jwt";
-import { isDatabaseAvailable } from "@/lib/db/client";
-import { checkRateLimit } from "@/lib/rate-limit";
+
+// isDatabaseAvailable and checkRateLimit are controlled via global delegates
+const _g = globalThis as Record<string, unknown>;
 
 const mockUser: User = {
   id: "user-123",
@@ -55,10 +70,16 @@ const createRequest = (body: Record<string, unknown>): NextRequest => {
 
 describe("POST /api/auth/login", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
-    vi.mocked(isDatabaseAvailable).mockResolvedValue(true);
-    vi.mocked(createAuthCookie).mockReturnValue("authToken=test; HttpOnly");
-    vi.mocked(checkRateLimit).mockResolvedValue({ limited: false });
+    (validatePassword as ReturnType<typeof mock>).mockReset();
+    (updateLastLogin as ReturnType<typeof mock>).mockReset();
+    (createAuthCookie as ReturnType<typeof mock>).mockReset();
+
+    // Reset global delegate for db/client
+    _g.__isDatabaseAvailableMock = mock(() => Promise.resolve(true));
+    // Reset rate-limit mock
+    _rlCheckRateLimit.mockImplementation(() => Promise.resolve({ limited: false }));
+
+    (createAuthCookie as ReturnType<typeof mock>).mockReturnValue("authToken=test; HttpOnly");
   });
 
   describe("Validation", () => {
@@ -101,7 +122,7 @@ describe("POST /api/auth/login", () => {
 
   describe("Database Authentication", () => {
     it("returns 200 with user data for valid credentials", async () => {
-      vi.mocked(validatePassword).mockResolvedValue(mockUser);
+      (validatePassword as ReturnType<typeof mock>).mockResolvedValue(mockUser);
 
       const request = createRequest({
         username: "testuser",
@@ -117,7 +138,7 @@ describe("POST /api/auth/login", () => {
     });
 
     it("sets auth cookie and clears admin cookie in response headers", async () => {
-      vi.mocked(validatePassword).mockResolvedValue(mockUser);
+      (validatePassword as ReturnType<typeof mock>).mockResolvedValue(mockUser);
 
       const request = createRequest({
         username: "testuser",
@@ -133,7 +154,7 @@ describe("POST /api/auth/login", () => {
     });
 
     it("updates last login timestamp", async () => {
-      vi.mocked(validatePassword).mockResolvedValue(mockUser);
+      (validatePassword as ReturnType<typeof mock>).mockResolvedValue(mockUser);
 
       const request = createRequest({
         username: "testuser",
@@ -146,7 +167,7 @@ describe("POST /api/auth/login", () => {
     });
 
     it("returns 401 for invalid credentials", async () => {
-      vi.mocked(validatePassword).mockResolvedValue(null);
+      (validatePassword as ReturnType<typeof mock>).mockResolvedValue(null);
 
       const request = createRequest({
         username: "testuser",
@@ -164,7 +185,7 @@ describe("POST /api/auth/login", () => {
 
   describe("Legacy Admin Mode", () => {
     beforeEach(() => {
-      vi.mocked(isDatabaseAvailable).mockResolvedValue(false);
+      _g.__isDatabaseAvailableMock = mock(() => Promise.resolve(false));
       process.env.ADMIN_PASSWORD = "admin123";
     });
 
@@ -223,7 +244,7 @@ describe("POST /api/auth/login", () => {
 
   describe("Error Handling", () => {
     it("returns 500 on unexpected error", async () => {
-      vi.mocked(validatePassword).mockRejectedValue(
+      (validatePassword as ReturnType<typeof mock>).mockRejectedValue(
         new Error("Database error"),
       );
 

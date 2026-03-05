@@ -1,10 +1,10 @@
-#!/usr/bin/env tsx
+#!/usr/bin/env bun
 
 /**
  * Create a new database migration file
  *
  * Usage:
- *   pnpm run db:create-migration "add_user_avatar"
+ *   bun run db:create-migration "add_user_avatar"
  */
 
 import { writeFileSync } from 'fs';
@@ -70,7 +70,7 @@ export default migration;
   console.log('\nNext steps:');
   console.log('  1. Edit the migration file to implement up() and down() functions');
   console.log('  2. Add the migration to src/lib/db/migrations/registry.ts');
-  console.log('  3. Run: pnpm run db:migrate');
+  console.log('  3. Run: bun run db:migrate');
 }
 
 function main() {
@@ -79,9 +79,9 @@ function main() {
   if (!name) {
     console.error('[ERROR] Migration name is required');
     console.log('\nUsage:');
-    console.log('  pnpm run db:create-migration "migration_name"');
+    console.log('  bun run db:create-migration "migration_name"');
     console.log('\nExample:');
-    console.log('  pnpm run db:create-migration "add_user_avatar"');
+    console.log('  bun run db:create-migration "add_user_avatar"');
     process.exit(1);
   }
 

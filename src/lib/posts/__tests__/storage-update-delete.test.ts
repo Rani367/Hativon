@@ -1,29 +1,28 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, mock, spyOn, beforeEach } from "bun:test";
+
+// Use global delegate for db mock (set up in test/setup.ts)
+const _g = globalThis as Record<string, unknown>;
+let mockDbQuery: ReturnType<typeof mock>;
+let mockGetPostById: ReturnType<typeof mock>;
+
+mock.module("uuid", () => ({
+  v4: mock(() => "test-uuid-1234"),
+}));
+
+// @/lib/posts/queries is mocked via global delegates in test/setup.ts
+
+// Path to storage module for cache clearing between tests
+const storageModulePath = require.resolve("../storage");
 
 describe("Post Storage - Update and Delete Operations", () => {
-  let mockDb: { query: ReturnType<typeof vi.fn> };
-  let mockGetPostById: ReturnType<typeof vi.fn>;
-
   beforeEach(() => {
-    vi.resetModules();
+    // Clear module cache to get fresh non-contaminated imports
+    delete require.cache[storageModulePath];
 
-    mockDb = {
-      query: vi.fn(),
-    };
-
-    mockGetPostById = vi.fn();
-
-    vi.doMock("@/lib/db/client", () => ({
-      db: mockDb,
-    }));
-
-    vi.doMock("uuid", () => ({
-      v4: vi.fn(() => "test-uuid-1234"),
-    }));
-
-    vi.doMock("@/lib/posts/queries", () => ({
-      getPostById: mockGetPostById,
-    }));
+    mockDbQuery = mock(() => undefined);
+    mockGetPostById = mock(() => undefined);
+    _g.__dbQueryMock = mockDbQuery;
+    _g.__postsQueriesGetPostByIdMock = mockGetPostById;
   });
 
   describe("updatePost", () => {
@@ -59,7 +58,7 @@ describe("Post Storage - Update and Delete Operations", () => {
         updated_at: new Date("2025-01-02"),
       };
 
-      mockDb.query.mockResolvedValue({ rows: [updatedRow] });
+      mockDbQuery.mockResolvedValue({ rows: [updatedRow] });
 
       const { updatePost } = await import("../storage");
 
@@ -94,7 +93,7 @@ describe("Post Storage - Update and Delete Operations", () => {
         updated_at: new Date("2025-01-02"),
       };
 
-      mockDb.query.mockResolvedValue({ rows: [updatedRow] });
+      mockDbQuery.mockResolvedValue({ rows: [updatedRow] });
 
       const { updatePost } = await import("../storage");
 
@@ -129,7 +128,7 @@ describe("Post Storage - Update and Delete Operations", () => {
         updated_at: new Date("2025-01-02"),
       };
 
-      mockDb.query.mockResolvedValue({ rows: [updatedRow] });
+      mockDbQuery.mockResolvedValue({ rows: [updatedRow] });
 
       const { updatePost } = await import("../storage");
 
@@ -146,7 +145,7 @@ describe("Post Storage - Update and Delete Operations", () => {
       const result = await updatePost("non-existent", { title: "New Title" });
 
       expect(result).toBeNull();
-      expect(mockDb.query).not.toHaveBeenCalled();
+      expect(mockDbQuery).not.toHaveBeenCalled();
     });
 
     it("updates all fields independently", async () => {
@@ -170,7 +169,7 @@ describe("Post Storage - Update and Delete Operations", () => {
         updated_at: new Date("2025-01-02"),
       };
 
-      mockDb.query.mockResolvedValue({ rows: [updatedRow] });
+      mockDbQuery.mockResolvedValue({ rows: [updatedRow] });
 
       const { updatePost } = await import("../storage");
 
@@ -197,7 +196,7 @@ describe("Post Storage - Update and Delete Operations", () => {
 
     it("returns null when update query returns no rows", async () => {
       mockGetPostById.mockResolvedValue({ id: "post-123" });
-      mockDb.query.mockResolvedValue({ rows: [] });
+      mockDbQuery.mockResolvedValue({ rows: [] });
 
       const { updatePost } = await import("../storage");
 
@@ -210,11 +209,9 @@ describe("Post Storage - Update and Delete Operations", () => {
       mockGetPostById.mockResolvedValue({ id: "post-123" });
 
       const dbError = new Error("Update failed");
-      mockDb.query.mockRejectedValue(dbError);
+      mockDbQuery.mockRejectedValue(dbError);
 
-      const consoleErrorSpy = vi
-        .spyOn(console, "error")
-        .mockImplementation(() => {});
+      const consoleErrorSpy = spyOn(console, "error").mockImplementation(() => {});
 
       const { updatePost } = await import("../storage");
 
@@ -251,7 +248,7 @@ describe("Post Storage - Update and Delete Operations", () => {
         updated_at: new Date("2025-01-02"),
       };
 
-      mockDb.query.mockResolvedValue({ rows: [updatedRow] });
+      mockDbQuery.mockResolvedValue({ rows: [updatedRow] });
 
       const { updatePost } = await import("../storage");
 
@@ -263,18 +260,18 @@ describe("Post Storage - Update and Delete Operations", () => {
 
   describe("deletePost", () => {
     it("returns true when post is successfully deleted", async () => {
-      mockDb.query.mockResolvedValue({ rowCount: 1 });
+      mockDbQuery.mockResolvedValue({ rowCount: 1 });
 
       const { deletePost } = await import("../storage");
 
       const result = await deletePost("post-123");
 
       expect(result).toBe(true);
-      expect(mockDb.query).toHaveBeenCalledTimes(1);
+      expect(mockDbQuery).toHaveBeenCalledTimes(1);
     });
 
     it("returns false when post is not found", async () => {
-      mockDb.query.mockResolvedValue({ rowCount: 0 });
+      mockDbQuery.mockResolvedValue({ rowCount: 0 });
 
       const { deletePost } = await import("../storage");
 
@@ -285,11 +282,9 @@ describe("Post Storage - Update and Delete Operations", () => {
 
     it("returns false when database deletion fails", async () => {
       const dbError = new Error("Delete failed");
-      mockDb.query.mockRejectedValue(dbError);
+      mockDbQuery.mockRejectedValue(dbError);
 
-      const consoleErrorSpy = vi
-        .spyOn(console, "error")
-        .mockImplementation(() => {});
+      const consoleErrorSpy = spyOn(console, "error").mockImplementation(() => {});
 
       const { deletePost } = await import("../storage");
 
@@ -305,7 +300,7 @@ describe("Post Storage - Update and Delete Operations", () => {
     });
 
     it("handles multiple row deletion (returns true for rowCount > 0)", async () => {
-      mockDb.query.mockResolvedValue({ rowCount: 2 });
+      mockDbQuery.mockResolvedValue({ rowCount: 2 });
 
       const { deletePost } = await import("../storage");
 

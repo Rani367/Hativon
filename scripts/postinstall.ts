@@ -1,9 +1,9 @@
-#!/usr/bin/env tsx
+#!/usr/bin/env bun
 
 /**
  * Post-Install Setup Script
  *
- * Runs automatically after `pnpm install` to set up EVERYTHING needed for local development.
+ * Runs automatically after `bun install` to set up EVERYTHING needed for local development.
  * This is completely automated - no prompts, no extra steps needed.
  *
  * What this does:
@@ -13,7 +13,7 @@
  * - Initializes database schema automatically
  * - Creates default admin user
  *
- * After this completes, just run: pnpm run dev
+ * After this completes, just run: bun run dev
  */
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
@@ -202,7 +202,7 @@ if (postgresUrlMatch && postgresUrlMatch[1]) {
         } catch {
           console.log("[WARNING] Could not start PostgreSQL service");
           console.log(
-            "   Please start PostgreSQL manually and run: pnpm run setup",
+            "   Please start PostgreSQL manually and run: bun run db:init",
           );
         }
       }
@@ -211,7 +211,7 @@ if (postgresUrlMatch && postgresUrlMatch[1]) {
     console.log("[WARNING] PostgreSQL not detected");
     console.log("   App will run in admin-only mode (posts stored locally)");
     console.log(
-      "   To enable full features, install PostgreSQL and run: pnpm run setup",
+      "   To enable full features, install PostgreSQL and run: bun run db:init",
     );
   }
 }
@@ -297,7 +297,7 @@ if (hasPostgres && !dbConfigured && pgBinPath) {
     } catch {
       console.log("   [WARNING] Could not connect to database");
       console.log("   App will run in admin-only mode");
-      console.log("   For manual setup, run: pnpm run setup");
+      console.log("   For manual setup, run: bun run db:init");
     }
   } catch {
     console.log("   [WARNING] Database auto-configuration failed");
@@ -350,7 +350,7 @@ if (dbConfigured) {
             ? `${pgBinPath}:${process.env.PATH}`
             : process.env.PATH,
         };
-        execSync("npx tsx scripts/init-db.ts --silent", {
+        execSync("bun scripts/init-db.ts --silent", {
           stdio: "pipe",
           cwd: projectRoot,
           env: initEnv,
@@ -373,7 +373,7 @@ if (dbConfigured) {
             : process.env.PATH,
         };
         try {
-          execSync("npx tsx scripts/create-test-user-simple.ts", {
+          execSync("bun scripts/create-test-user-simple.ts", {
             stdio: "pipe",
             cwd: projectRoot,
             env: userEnv,
@@ -389,7 +389,7 @@ if (dbConfigured) {
     }
   } catch {
     console.log("[WARNING] Database initialization skipped");
-    console.log("   You can run manually: pnpm run db:init");
+    console.log("   You can run manually: bun run db:init");
   }
 }
 
@@ -398,7 +398,7 @@ console.log("\n" + "═".repeat(60));
 console.log("[OK] Setup complete! Everything is ready to go.");
 console.log("═".repeat(60));
 console.log("\n[INFO] Start developing:\n");
-console.log("   pnpm run dev");
+console.log("   bun run dev");
 console.log("\n   Then open http://localhost:3000\n");
 
 if (dbConfigured) {
