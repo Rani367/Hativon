@@ -1,32 +1,28 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, mock } from "bun:test";
 import { NextRequest } from "next/server";
 
-// Mock dependencies before importing route handlers
-vi.mock("@/lib/auth/middleware", () => ({
-  getCurrentUser: vi.fn(),
+// Access global delegates for assertions and mock control
+const _g = globalThis as Record<string, unknown>;
+_g.__getCurrentUserMock = mock(() => undefined);
+
+// @/lib/auth/middleware needs its own mock since it's not in setup.ts yet
+mock.module("@/lib/auth/middleware", () => ({
+  getCurrentUser: (...args: unknown[]) =>
+    (_g.__getCurrentUserMock as (...a: unknown[]) => unknown)(...args),
 }));
 
-vi.mock("@/lib/posts", () => ({
-  getPostById: vi.fn(),
-  updatePost: vi.fn(),
-  deletePost: vi.fn(),
-}));
-
-vi.mock("@/lib/logger", () => ({
-  logError: vi.fn(),
-}));
-
-vi.mock("next/cache", () => ({
-  revalidateTag: vi.fn(),
-}));
+// @/lib/posts barrel, @/lib/logger, and next/cache are mocked via global delegates in test/setup.ts
 
 import { GET, PATCH, DELETE } from "../[id]/route";
-import { getCurrentUser } from "@/lib/auth/middleware";
-import { getPostById, updatePost, deletePost } from "@/lib/posts";
-import { logError } from "@/lib/logger";
 import { revalidateTag } from "next/cache";
 import type { Post } from "@/types/post.types";
 import type { User } from "@/types/user.types";
+
+// Local references to delegates for convenient mock control
+let mockGetCurrentUser: ReturnType<typeof mock>;
+let mockGetPostById: ReturnType<typeof mock>;
+let mockUpdatePost: ReturnType<typeof mock>;
+let mockDeletePost: ReturnType<typeof mock>;
 
 const mockUser: User = {
   id: "user-123",
@@ -55,19 +51,29 @@ const mockPost: Post = {
 
 function createMockRequest(body?: Record<string, unknown>): NextRequest {
   return {
-    json: vi.fn().mockResolvedValue(body || {}),
+    json: mock(() => Promise.resolve(body || {})),
     headers: new Headers(),
   } as unknown as NextRequest;
 }
 
 describe("User Posts API Routes", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    mockGetCurrentUser = mock(() => undefined);
+    mockGetPostById = mock(() => undefined);
+    mockUpdatePost = mock(() => undefined);
+    mockDeletePost = mock(() => undefined);
+
+    _g.__getCurrentUserMock = mockGetCurrentUser;
+    _g.__postsBarrelGetPostByIdMock = mockGetPostById;
+    _g.__postsBarrelUpdatePostMock = mockUpdatePost;
+    _g.__postsBarrelDeletePostMock = mockDeletePost;
+    _g.__logErrorMock = mock(() => undefined);
+    (revalidateTag as ReturnType<typeof mock>).mockReset();
   });
 
   describe("GET /api/user/posts/[id]", () => {
     it("returns 401 when user is not authenticated", async () => {
-      vi.mocked(getCurrentUser).mockResolvedValue(null);
+      mockGetCurrentUser.mockResolvedValue(null);
 
       const request = createMockRequest();
       const response = await GET(request, {
@@ -80,8 +86,8 @@ describe("User Posts API Routes", () => {
     });
 
     it("returns 404 when post does not exist", async () => {
-      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-      vi.mocked(getPostById).mockResolvedValue(null);
+      mockGetCurrentUser.mockResolvedValue(mockUser);
+      mockGetPostById.mockResolvedValue(null);
 
       const request = createMockRequest();
       const response = await GET(request, {
@@ -94,8 +100,8 @@ describe("User Posts API Routes", () => {
     });
 
     it("returns 403 when user does not own the post", async () => {
-      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-      vi.mocked(getPostById).mockResolvedValue({
+      mockGetCurrentUser.mockResolvedValue(mockUser);
+      mockGetPostById.mockResolvedValue({
         ...mockPost,
         authorId: "different-user",
       });
@@ -112,8 +118,8 @@ describe("User Posts API Routes", () => {
     });
 
     it("returns post when user owns it", async () => {
-      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-      vi.mocked(getPostById).mockResolvedValue(mockPost);
+      mockGetCurrentUser.mockResolvedValue(mockUser);
+      mockGetPostById.mockResolvedValue(mockPost);
 
       const request = createMockRequest();
       const response = await GET(request, {
@@ -127,8 +133,8 @@ describe("User Posts API Routes", () => {
     });
 
     it("returns 500 on database errors", async () => {
-      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-      vi.mocked(getPostById).mockRejectedValue(new Error("Database error"));
+      mockGetCurrentUser.mockResolvedValue(mockUser);
+      mockGetPostById.mockRejectedValue(new Error("Database error"));
 
       const request = createMockRequest();
       const response = await GET(request, {
@@ -138,13 +144,13 @@ describe("User Posts API Routes", () => {
 
       expect(response.status).toBe(500);
       expect(body.error).toBe("Failed to fetch post");
-      expect(logError).toHaveBeenCalled();
+      expect(_g.__logErrorMock as ReturnType<typeof mock>).toHaveBeenCalled();
     });
   });
 
   describe("PATCH /api/user/posts/[id]", () => {
     it("returns 401 when user is not authenticated", async () => {
-      vi.mocked(getCurrentUser).mockResolvedValue(null);
+      mockGetCurrentUser.mockResolvedValue(null);
 
       const request = createMockRequest({ title: "Updated" });
       const response = await PATCH(request, {
@@ -157,8 +163,8 @@ describe("User Posts API Routes", () => {
     });
 
     it("returns 404 when post does not exist", async () => {
-      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-      vi.mocked(getPostById).mockResolvedValue(null);
+      mockGetCurrentUser.mockResolvedValue(mockUser);
+      mockGetPostById.mockResolvedValue(null);
 
       const request = createMockRequest({ title: "Updated" });
       const response = await PATCH(request, {
@@ -171,8 +177,8 @@ describe("User Posts API Routes", () => {
     });
 
     it("returns 403 when user does not own the post", async () => {
-      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-      vi.mocked(getPostById).mockResolvedValue({
+      mockGetCurrentUser.mockResolvedValue(mockUser);
+      mockGetPostById.mockResolvedValue({
         ...mockPost,
         authorId: "different-user",
       });
@@ -190,9 +196,9 @@ describe("User Posts API Routes", () => {
 
     it("updates post when user owns it", async () => {
       const updatedPost = { ...mockPost, title: "Updated Title" };
-      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-      vi.mocked(getPostById).mockResolvedValue(mockPost);
-      vi.mocked(updatePost).mockResolvedValue(updatedPost);
+      mockGetCurrentUser.mockResolvedValue(mockUser);
+      mockGetPostById.mockResolvedValue(mockPost);
+      mockUpdatePost.mockResolvedValue(updatedPost);
 
       const request = createMockRequest({ title: "Updated Title" });
       const response = await PATCH(request, {
@@ -202,16 +208,16 @@ describe("User Posts API Routes", () => {
 
       expect(response.status).toBe(200);
       expect(body.title).toBe("Updated Title");
-      expect(updatePost).toHaveBeenCalledWith("post-456", {
+      expect(mockUpdatePost).toHaveBeenCalledWith("post-456", {
         title: "Updated Title",
       });
       expect(revalidateTag).toHaveBeenCalledWith("posts", "max");
     });
 
     it("returns 404 when updatePost returns null", async () => {
-      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-      vi.mocked(getPostById).mockResolvedValue(mockPost);
-      vi.mocked(updatePost).mockResolvedValue(null);
+      mockGetCurrentUser.mockResolvedValue(mockUser);
+      mockGetPostById.mockResolvedValue(mockPost);
+      mockUpdatePost.mockResolvedValue(null);
 
       const request = createMockRequest({ title: "Updated" });
       const response = await PATCH(request, {
@@ -224,9 +230,9 @@ describe("User Posts API Routes", () => {
     });
 
     it("returns 500 on database errors", async () => {
-      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-      vi.mocked(getPostById).mockResolvedValue(mockPost);
-      vi.mocked(updatePost).mockRejectedValue(new Error("Database error"));
+      mockGetCurrentUser.mockResolvedValue(mockUser);
+      mockGetPostById.mockResolvedValue(mockPost);
+      mockUpdatePost.mockRejectedValue(new Error("Database error"));
 
       const request = createMockRequest({ title: "Updated" });
       const response = await PATCH(request, {
@@ -236,13 +242,13 @@ describe("User Posts API Routes", () => {
 
       expect(response.status).toBe(500);
       expect(body.error).toBe("Failed to update post");
-      expect(logError).toHaveBeenCalled();
+      expect(_g.__logErrorMock as ReturnType<typeof mock>).toHaveBeenCalled();
     });
   });
 
   describe("DELETE /api/user/posts/[id]", () => {
     it("returns 401 when user is not authenticated", async () => {
-      vi.mocked(getCurrentUser).mockResolvedValue(null);
+      mockGetCurrentUser.mockResolvedValue(null);
 
       const request = createMockRequest();
       const response = await DELETE(request, {
@@ -255,8 +261,8 @@ describe("User Posts API Routes", () => {
     });
 
     it("returns 404 when post does not exist", async () => {
-      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-      vi.mocked(getPostById).mockResolvedValue(null);
+      mockGetCurrentUser.mockResolvedValue(mockUser);
+      mockGetPostById.mockResolvedValue(null);
 
       const request = createMockRequest();
       const response = await DELETE(request, {
@@ -269,8 +275,8 @@ describe("User Posts API Routes", () => {
     });
 
     it("returns 403 when user does not own the post", async () => {
-      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-      vi.mocked(getPostById).mockResolvedValue({
+      mockGetCurrentUser.mockResolvedValue(mockUser);
+      mockGetPostById.mockResolvedValue({
         ...mockPost,
         authorId: "different-user",
       });
@@ -287,9 +293,9 @@ describe("User Posts API Routes", () => {
     });
 
     it("deletes post when user owns it", async () => {
-      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-      vi.mocked(getPostById).mockResolvedValue(mockPost);
-      vi.mocked(deletePost).mockResolvedValue(true);
+      mockGetCurrentUser.mockResolvedValue(mockUser);
+      mockGetPostById.mockResolvedValue(mockPost);
+      mockDeletePost.mockResolvedValue(true);
 
       const request = createMockRequest();
       const response = await DELETE(request, {
@@ -299,14 +305,14 @@ describe("User Posts API Routes", () => {
 
       expect(response.status).toBe(200);
       expect(body.success).toBe(true);
-      expect(deletePost).toHaveBeenCalledWith("post-456");
+      expect(mockDeletePost).toHaveBeenCalledWith("post-456");
       expect(revalidateTag).toHaveBeenCalledWith("posts", "max");
     });
 
     it("returns 404 when deletePost returns false", async () => {
-      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-      vi.mocked(getPostById).mockResolvedValue(mockPost);
-      vi.mocked(deletePost).mockResolvedValue(false);
+      mockGetCurrentUser.mockResolvedValue(mockUser);
+      mockGetPostById.mockResolvedValue(mockPost);
+      mockDeletePost.mockResolvedValue(false);
 
       const request = createMockRequest();
       const response = await DELETE(request, {
@@ -319,9 +325,9 @@ describe("User Posts API Routes", () => {
     });
 
     it("returns 500 on database errors", async () => {
-      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-      vi.mocked(getPostById).mockResolvedValue(mockPost);
-      vi.mocked(deletePost).mockRejectedValue(new Error("Database error"));
+      mockGetCurrentUser.mockResolvedValue(mockUser);
+      mockGetPostById.mockResolvedValue(mockPost);
+      mockDeletePost.mockRejectedValue(new Error("Database error"));
 
       const request = createMockRequest();
       const response = await DELETE(request, {
@@ -331,15 +337,15 @@ describe("User Posts API Routes", () => {
 
       expect(response.status).toBe(500);
       expect(body.error).toBe("Failed to delete post");
-      expect(logError).toHaveBeenCalled();
+      expect(_g.__logErrorMock as ReturnType<typeof mock>).toHaveBeenCalled();
     });
   });
 
   describe("Edge Cases", () => {
     it("handles post with undefined authorId", async () => {
       const postWithoutAuthor = { ...mockPost, authorId: undefined };
-      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-      vi.mocked(getPostById).mockResolvedValue(postWithoutAuthor);
+      mockGetCurrentUser.mockResolvedValue(mockUser);
+      mockGetPostById.mockResolvedValue(postWithoutAuthor);
 
       const request = createMockRequest();
       const response = await GET(request, {
@@ -352,8 +358,8 @@ describe("User Posts API Routes", () => {
     });
 
     it("handles concurrent request params resolution", async () => {
-      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-      vi.mocked(getPostById).mockResolvedValue(mockPost);
+      mockGetCurrentUser.mockResolvedValue(mockUser);
+      mockGetPostById.mockResolvedValue(mockPost);
 
       const request = createMockRequest();
       const paramsPromise = Promise.resolve({ id: "post-456" });
@@ -361,7 +367,7 @@ describe("User Posts API Routes", () => {
       const response = await GET(request, { params: paramsPromise });
 
       expect(response.status).toBe(200);
-      expect(getPostById).toHaveBeenCalledWith("post-456");
+      expect(mockGetPostById).toHaveBeenCalledWith("post-456");
     });
   });
 });

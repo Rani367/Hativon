@@ -7,7 +7,7 @@
  * 3. Edge cases are handled properly
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from 'bun:test';
 import { generateDescription, MAX_DESCRIPTION_LENGTH } from '../utils';
 
 describe('Description Regeneration Migration', () => {

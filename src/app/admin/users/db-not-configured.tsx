@@ -72,14 +72,14 @@ export function DbNotConfiguredView() {
               <li>
                 הרץ{" "}
                 <code className="bg-muted px-1 py-0.5 rounded">
-                  pnpm run db:init
+                  bun run db:init
                 </code>{" "}
                 ליצירת הטבלאות
               </li>
               <li>
                 הרץ{" "}
                 <code className="bg-muted px-1 py-0.5 rounded">
-                  pnpm run create-admin
+                  bun run create-admin
                 </code>{" "}
                 ליצירת משתמש ראשון
               </li>

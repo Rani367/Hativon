@@ -13,7 +13,7 @@ declare global {
        * Password for accessing the admin panel at /admin
        * Can be plain text (legacy) or bcrypt hash
        * Minimum 8 characters recommended
-       * To hash: pnpm run hash-admin-password
+       * To hash: bun run hash-admin-password
        */
       ADMIN_PASSWORD: string;
 

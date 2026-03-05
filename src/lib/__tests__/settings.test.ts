@@ -1,18 +1,13 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, mock, spyOn } from "bun:test";
 
-// Mock the db client
-const mockDbQuery = vi.fn();
-const mockIsDatabaseAvailable = vi.fn();
-
-vi.mock("../db/client", () => ({
-  db: {
-    query: (...args: unknown[]) => mockDbQuery(...args),
-  },
-  isDatabaseAvailable: () => mockIsDatabaseAvailable(),
-}));
+// @/lib/db/client is mocked via global delegates in test/setup.ts.
+// Use the global delegates to control db behaviour per test.
+const _g = globalThis as Record<string, unknown>;
+let mockDbQuery: ReturnType<typeof mock>;
+let mockIsDatabaseAvailable: ReturnType<typeof mock>;
 
 // Mock the date/months module
-vi.mock("../date/months", () => ({
+mock.module("../date/months", () => ({
   getCurrentMonthYear: () => ({ year: 2025, month: "january" }),
   monthNumberToEnglish: (month: number) => {
     const months: Record<number, string> = {
@@ -33,10 +28,18 @@ vi.mock("../date/months", () => ({
   },
 }));
 
+// Path to settings module for cache clearing between tests
+const settingsModulePath = require.resolve("../settings");
+
 describe("Settings Library", () => {
   beforeEach(async () => {
-    vi.clearAllMocks();
-    vi.resetModules();
+    // Clear module cache to reset settingsTableInitialized flag
+    delete require.cache[settingsModulePath];
+
+    mockDbQuery = mock(() => undefined);
+    mockIsDatabaseAvailable = mock(() => undefined);
+    _g.__dbQueryMock = mockDbQuery;
+    _g.__isDatabaseAvailableMock = mockIsDatabaseAvailable;
   });
 
   describe("getSetting", () => {
@@ -80,8 +83,8 @@ describe("Settings Library", () => {
       mockIsDatabaseAvailable.mockResolvedValue(true);
       mockDbQuery.mockRejectedValue(new Error("DB error"));
 
-      const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-      const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+      const consoleSpy = spyOn(console, "error").mockImplementation(() => {});
+      const logSpy = spyOn(console, "log").mockImplementation(() => {});
 
       const { getSetting } = await import("../settings");
       const result = await getSetting("test_key");
@@ -123,8 +126,8 @@ describe("Settings Library", () => {
         .mockResolvedValueOnce({ rows: [] }) // INSERT default_year
         .mockRejectedValueOnce(new Error("DB error")); // setSetting fails
 
-      const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-      const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+      const consoleSpy = spyOn(console, "error").mockImplementation(() => {});
+      const logSpy = spyOn(console, "log").mockImplementation(() => {});
 
       const { setSetting } = await import("../settings");
 
@@ -303,7 +306,7 @@ describe("Settings Library", () => {
       mockIsDatabaseAvailable.mockResolvedValue(true);
       mockDbQuery.mockResolvedValue({ rows: [] });
 
-      const mockGetPostCount = vi.fn().mockResolvedValue(5);
+      const mockGetPostCount = mock(() => Promise.resolve(5));
 
       const { getPendingMonth } = await import("../settings");
       const result = await getPendingMonth(mockGetPostCount);
@@ -321,7 +324,7 @@ describe("Settings Library", () => {
         .mockResolvedValueOnce({ rows: [{ value: "january" }] }) // SELECT month
         .mockResolvedValueOnce({ rows: [{ value: "2025" }] }); // SELECT year
 
-      const mockGetPostCount = vi.fn().mockResolvedValue(5);
+      const mockGetPostCount = mock(() => Promise.resolve(5));
 
       const { getPendingMonth } = await import("../settings");
       const result = await getPendingMonth(mockGetPostCount);
@@ -339,7 +342,7 @@ describe("Settings Library", () => {
         .mockResolvedValueOnce({ rows: [{ value: "december" }] }) // SELECT month
         .mockResolvedValueOnce({ rows: [{ value: "2024" }] }); // SELECT year
 
-      const mockGetPostCount = vi.fn().mockResolvedValue(0);
+      const mockGetPostCount = mock(() => Promise.resolve(0));
 
       const { getPendingMonth } = await import("../settings");
       const result = await getPendingMonth(mockGetPostCount);
@@ -357,7 +360,7 @@ describe("Settings Library", () => {
         .mockResolvedValueOnce({ rows: [{ value: "december" }] }) // SELECT month
         .mockResolvedValueOnce({ rows: [{ value: "2024" }] }); // SELECT year
 
-      const mockGetPostCount = vi.fn().mockResolvedValue(5);
+      const mockGetPostCount = mock(() => Promise.resolve(5));
 
       const { getPendingMonth } = await import("../settings");
       const result = await getPendingMonth(mockGetPostCount);
@@ -376,7 +379,7 @@ describe("Settings Library", () => {
       mockIsDatabaseAvailable.mockResolvedValue(true);
       mockDbQuery.mockResolvedValue({ rows: [] });
 
-      const mockGetArchiveMonths = vi.fn().mockResolvedValue([]);
+      const mockGetArchiveMonths = mock(() => Promise.resolve([]));
 
       const { getArchiveMonthsWithDefault } = await import("../settings");
       const result = await getArchiveMonthsWithDefault(mockGetArchiveMonths);
@@ -394,10 +397,10 @@ describe("Settings Library", () => {
         .mockResolvedValueOnce({ rows: [{ value: "january" }] }) // SELECT month
         .mockResolvedValueOnce({ rows: [{ value: "2025" }] }); // SELECT year
 
-      const mockGetArchiveMonths = vi.fn().mockResolvedValue([
+      const mockGetArchiveMonths = mock(() => Promise.resolve([
         { year: 2025, month: 1, count: 10 },
         { year: 2024, month: 12, count: 5 },
-      ]);
+      ]));
 
       const { getArchiveMonthsWithDefault } = await import("../settings");
       const result = await getArchiveMonthsWithDefault(mockGetArchiveMonths);
@@ -413,9 +416,9 @@ describe("Settings Library", () => {
       mockIsDatabaseAvailable.mockResolvedValue(true);
       mockDbQuery.mockResolvedValue({ rows: [] });
 
-      const mockGetArchiveMonths = vi.fn().mockResolvedValue([
+      const mockGetArchiveMonths = mock(() => Promise.resolve([
         { year: 2025, month: 1, count: 10 },
-      ]);
+      ]));
 
       const { getArchiveMonthsWithDefault } = await import("../settings");
       const result = await getArchiveMonthsWithDefault(mockGetArchiveMonths);

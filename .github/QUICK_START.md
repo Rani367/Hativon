@@ -2,20 +2,15 @@
 
 ## Prerequisites
 
-Install pnpm first:
+Install Bun:
 
 ```bash
-npm install -g pnpm
+curl -fsSL https://bun.sh/install | bash
 ```
 
 Or using Homebrew (macOS):
 ```bash
-brew install pnpm
-```
-
-Or enable corepack (Node.js 16.13+):
-```bash
-corepack enable
+brew install oven-sh/bun/bun
 ```
 
 ## Two Simple Commands
@@ -23,7 +18,7 @@ corepack enable
 ### Development (No Validation)
 
 ```bash
-pnpm run dev
+bun run dev
 ```
 
 Starts the development server immediately. No checks, fast startup.
@@ -31,15 +26,12 @@ Starts the development server immediately. No checks, fast startup.
 ### Pre-Deployment (Full Validation)
 
 ```bash
-pnpm run pre-deploy
+bun run pre-deploy
 ```
 
-Runs all checks and builds:
-- Environment variables validated
-- TypeScript compilation
-- ESLint (warnings only)
-- All critical files present
-- Production build
+Runs tests and builds:
+- All tests pass
+- Production build succeeds
 
 **If this passes, your Vercel deployment will succeed!**
 
@@ -66,14 +58,14 @@ Runs all checks and builds:
 
 4. Test everything:
    ```bash
-   pnpm run pre-deploy
+   bun run pre-deploy
    ```
 
 5. Start developing:
    ```bash
-   pnpm run dev
+   bun run dev
    ```
 
 ---
 
-For more details, see [README.md](../README.md) or [DEPLOYMENT.md](../DEPLOYMENT.md).
+For more details, see [README.md](../README.md).

@@ -3,23 +3,8 @@
  * These tests enforce strict timing requirements to ensure instant loading
  */
 
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, mock } from "bun:test";
 import type { QueryResult, QueryResultRow } from "pg";
-
-// Mock the database client
-vi.mock("@/lib/db/client", () => ({
-  db: {
-    query: vi.fn(),
-  },
-}));
-
-// Mock next/cache
-vi.mock("next/cache", () => ({
-  unstable_cache: vi.fn((fn) => fn),
-  revalidateTag: vi.fn(),
-}));
-
-import { db } from "@/lib/db/client";
 import {
   getPosts,
   getPostById,
@@ -27,7 +12,12 @@ import {
   getPostsByMonth,
   getArchiveMonths,
   getPostStats,
-} from "../queries";
+} from "@/lib/posts/queries";
+
+// @/lib/db/client and @/lib/posts/queries are mocked via global delegates in test/setup.ts.
+// The queries delegates default to the real implementations, which use the mocked db.query.
+const _g = globalThis as Record<string, unknown>;
+let mockDbQuery: ReturnType<typeof mock>;
 
 // Helper to create a properly typed mock QueryResult
 function mockQueryResult<T extends QueryResultRow>(rows: T[]): QueryResult<T> {
@@ -84,12 +74,24 @@ const mockPostRow = {
 
 describe("Post Fetching Performance", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    mockDbQuery = mock(() => undefined);
+    _g.__dbQueryMock = mockDbQuery;
+    _g.__isDatabaseAvailableMock = mock(() => Promise.resolve(false));
+
+    // Ensure queries delegates point to the real implementations (captured in setup.ts)
+    const realQueries = _g.__realPostsQueries as Record<string, (...args: unknown[]) => unknown>;
+    _g.__postsQueriesGetPostsMock = realQueries.getPosts;
+    _g.__postsQueriesGetPostByIdMock = realQueries.getPostById;
+    _g.__postsQueriesGetPublishedPostByIdMock = realQueries.getPublishedPostById;
+    _g.__postsQueriesGetPostsByAuthorMock = realQueries.getPostsByAuthor;
+    _g.__postsQueriesGetPostsByMonthMock = realQueries.getPostsByMonth;
+    _g.__postsQueriesGetArchiveMonthsMock = realQueries.getArchiveMonths;
+    _g.__postsQueriesGetPostStatsMock = realQueries.getPostStats;
   });
 
   describe("Single Post Queries", () => {
     it(`getPostById completes under ${TIMING_REQUIREMENTS.SINGLE_POST_MAX_MS}ms`, async () => {
-      vi.mocked(db.query).mockResolvedValue(mockQueryResult([mockPostRow]));
+      mockDbQuery.mockResolvedValue(mockQueryResult([mockPostRow]));
 
       const { timeMs } = await measureTime(() => getPostById("test-id"));
 
@@ -97,7 +99,7 @@ describe("Post Fetching Performance", () => {
     });
 
     it(`getPublishedPostById completes under ${TIMING_REQUIREMENTS.SINGLE_POST_MAX_MS}ms`, async () => {
-      vi.mocked(db.query).mockResolvedValue(mockQueryResult([mockPostRow]));
+      mockDbQuery.mockResolvedValue(mockQueryResult([mockPostRow]));
 
       const { timeMs } = await measureTime(() => getPublishedPostById("test-id"));
 
@@ -105,7 +107,7 @@ describe("Post Fetching Performance", () => {
     });
 
     it("getPostById returns null for non-existent post quickly", async () => {
-      vi.mocked(db.query).mockResolvedValue(mockQueryResult([]));
+      mockDbQuery.mockResolvedValue(mockQueryResult([]));
 
       const { result, timeMs } = await measureTime(() =>
         getPostById("non-existent"),
@@ -124,7 +126,7 @@ describe("Post Fetching Performance", () => {
           ...p,
           id: `post-${i}`,
         }));
-      vi.mocked(db.query).mockResolvedValue(mockQueryResult(manyPosts));
+      mockDbQuery.mockResolvedValue(mockQueryResult(manyPosts));
 
       const { timeMs } = await measureTime(() => getPosts(false));
 
@@ -138,7 +140,7 @@ describe("Post Fetching Performance", () => {
           ...p,
           id: `post-${i}`,
         }));
-      vi.mocked(db.query).mockResolvedValue(mockQueryResult(manyPosts));
+      mockDbQuery.mockResolvedValue(mockQueryResult(manyPosts));
 
       const { timeMs } = await measureTime(() => getPosts(true));
 
@@ -152,7 +154,7 @@ describe("Post Fetching Performance", () => {
           ...p,
           id: `post-${i}`,
         }));
-      vi.mocked(db.query).mockResolvedValue(mockQueryResult(monthPosts));
+      mockDbQuery.mockResolvedValue(mockQueryResult(monthPosts));
 
       const { timeMs } = await measureTime(() => getPostsByMonth(2025, 12));
 
@@ -160,7 +162,7 @@ describe("Post Fetching Performance", () => {
     });
 
     it("handles empty results quickly", async () => {
-      vi.mocked(db.query).mockResolvedValue(mockQueryResult([]));
+      mockDbQuery.mockResolvedValue(mockQueryResult([]));
 
       const { result, timeMs } = await measureTime(() => getPosts(true));
 
@@ -177,7 +179,7 @@ describe("Post Fetching Performance", () => {
         { year: 2025, month: 10, count: "8" },
         { year: 2024, month: 12, count: "12" },
       ];
-      vi.mocked(db.query).mockResolvedValue(mockQueryResult(archiveData));
+      mockDbQuery.mockResolvedValue(mockQueryResult(archiveData));
 
       const { timeMs } = await measureTime(() => getArchiveMonths());
 
@@ -195,7 +197,7 @@ describe("Post Fetching Performance", () => {
         this_week: "15",
         this_month: "30",
       };
-      vi.mocked(db.query).mockResolvedValue(mockQueryResult([statsData]));
+      mockDbQuery.mockResolvedValue(mockQueryResult([statsData]));
 
       const { timeMs } = await measureTime(() => getPostStats());
 
@@ -205,7 +207,7 @@ describe("Post Fetching Performance", () => {
 
   describe("Error Handling Performance", () => {
     it("handles database errors quickly without hanging", async () => {
-      vi.mocked(db.query).mockRejectedValue(new Error("Connection timeout"));
+      mockDbQuery.mockRejectedValue(new Error("Connection timeout"));
 
       const { result, timeMs } = await measureTime(() => getPosts(true));
 
@@ -215,7 +217,7 @@ describe("Post Fetching Performance", () => {
     });
 
     it("handles missing table error gracefully and quickly", async () => {
-      vi.mocked(db.query).mockRejectedValue(
+      mockDbQuery.mockRejectedValue(
         new Error('relation "posts" does not exist'),
       );
 
@@ -228,7 +230,7 @@ describe("Post Fetching Performance", () => {
 
   describe("Concurrent Query Performance", () => {
     it("handles multiple concurrent queries efficiently", async () => {
-      vi.mocked(db.query).mockResolvedValue(mockQueryResult([mockPostRow]));
+      mockDbQuery.mockResolvedValue(mockQueryResult([mockPostRow]));
 
       const start = performance.now();
 
@@ -265,7 +267,7 @@ describe("Post Fetching Performance", () => {
           content: `Content for post ${i}. `.repeat(100), // ~2KB per post
           tags: ["tag1", "tag2", "tag3"],
         }));
-      vi.mocked(db.query).mockResolvedValue(mockQueryResult(largePosts));
+      mockDbQuery.mockResolvedValue(mockQueryResult(largePosts));
 
       const { result, timeMs } = await measureTime(() => getPosts(false));
 
@@ -281,11 +283,12 @@ describe("Post Fetching Performance", () => {
 
 describe("Cached Query Performance", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    mockDbQuery = mock(() => undefined);
+    _g.__dbQueryMock = mockDbQuery;
   });
 
   it("cached functions have minimal overhead", async () => {
-    vi.mocked(db.query).mockResolvedValue(mockQueryResult([mockPostRow]));
+    mockDbQuery.mockResolvedValue(mockQueryResult([mockPostRow]));
 
     // Import cached versions
     const { getCachedPostsByMonth, getCachedArchiveMonths } =

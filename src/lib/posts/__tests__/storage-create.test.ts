@@ -1,27 +1,26 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, mock, spyOn, beforeEach } from "bun:test";
 import type { PostInput } from "@/types/post.types";
 
+// Use global delegate for db mock (set up in test/setup.ts)
+const _g = globalThis as Record<string, unknown>;
+let mockDbQuery: ReturnType<typeof mock>;
+
+mock.module("uuid", () => ({
+  v4: mock(() => "test-uuid-1234"),
+}));
+
+// @/lib/posts/queries is mocked via global delegates in test/setup.ts
+
+// Path to storage module for cache clearing between tests
+const storageModulePath = require.resolve("../storage");
+
 describe("Post Storage - Create Operations", () => {
-  let mockDb: { query: ReturnType<typeof vi.fn> };
-
   beforeEach(() => {
-    vi.resetModules();
+    // Clear module cache to get fresh non-contaminated imports
+    delete require.cache[storageModulePath];
 
-    mockDb = {
-      query: vi.fn(),
-    };
-
-    vi.doMock("@/lib/db/client", () => ({
-      db: mockDb,
-    }));
-
-    vi.doMock("uuid", () => ({
-      v4: vi.fn(() => "test-uuid-1234"),
-    }));
-
-    vi.doMock("@/lib/posts/queries", () => ({
-      getPostById: vi.fn(),
-    }));
+    mockDbQuery = mock(() => undefined);
+    _g.__dbQueryMock = mockDbQuery;
   });
 
   describe("createPost", () => {
@@ -44,7 +43,7 @@ describe("Post Storage - Create Operations", () => {
         updated_at: new Date("2025-01-01"),
       };
 
-      mockDb.query.mockResolvedValue({ rows: [mockRow] });
+      mockDbQuery.mockResolvedValue({ rows: [mockRow] });
 
       const { createPost } = await import("../storage");
 
@@ -61,7 +60,7 @@ describe("Post Storage - Create Operations", () => {
 
       expect(result.id).toBe("test-uuid-1234");
       expect(result.description).toBe("This is test content");
-      expect(mockDb.query).toHaveBeenCalledTimes(1);
+      expect(mockDbQuery).toHaveBeenCalledTimes(1);
     });
 
     it("uses custom description when provided", async () => {
@@ -84,7 +83,7 @@ describe("Post Storage - Create Operations", () => {
         updated_at: new Date("2025-01-01"),
       };
 
-      mockDb.query.mockResolvedValue({ rows: [mockRow] });
+      mockDbQuery.mockResolvedValue({ rows: [mockRow] });
 
       const { createPost } = await import("../storage");
 
@@ -119,7 +118,7 @@ describe("Post Storage - Create Operations", () => {
         updated_at: new Date("2025-01-01"),
       };
 
-      mockDb.query.mockResolvedValue({ rows: [mockRow] });
+      mockDbQuery.mockResolvedValue({ rows: [mockRow] });
 
       const { createPost } = await import("../storage");
 
@@ -153,7 +152,7 @@ describe("Post Storage - Create Operations", () => {
         updated_at: new Date("2025-01-01"),
       };
 
-      mockDb.query.mockResolvedValue({ rows: [mockRow] });
+      mockDbQuery.mockResolvedValue({ rows: [mockRow] });
 
       const { createPost } = await import("../storage");
 
@@ -187,7 +186,7 @@ describe("Post Storage - Create Operations", () => {
         updated_at: new Date("2025-01-01"),
       };
 
-      mockDb.query.mockResolvedValue({ rows: [mockRow] });
+      mockDbQuery.mockResolvedValue({ rows: [mockRow] });
 
       const { createPost } = await import("../storage");
 
@@ -232,7 +231,7 @@ describe("Post Storage - Create Operations", () => {
         updated_at: new Date("2025-01-01"),
       };
 
-      mockDb.query.mockResolvedValue({ rows: [mockRow] });
+      mockDbQuery.mockResolvedValue({ rows: [mockRow] });
 
       const { createPost } = await import("../storage");
 
@@ -268,7 +267,7 @@ describe("Post Storage - Create Operations", () => {
         updated_at: new Date("2025-01-01"),
       };
 
-      mockDb.query.mockResolvedValue({ rows: [mockRow] });
+      mockDbQuery.mockResolvedValue({ rows: [mockRow] });
 
       const { createPost } = await import("../storage");
 
@@ -284,11 +283,9 @@ describe("Post Storage - Create Operations", () => {
 
     it("throws error when database insertion fails", async () => {
       const dbError = new Error("Database connection failed");
-      mockDb.query.mockRejectedValue(dbError);
+      mockDbQuery.mockRejectedValue(dbError);
 
-      const consoleErrorSpy = vi
-        .spyOn(console, "error")
-        .mockImplementation(() => {});
+      const consoleErrorSpy = spyOn(console, "error").mockImplementation(() => {});
 
       const { createPost } = await import("../storage");
 
@@ -327,7 +324,7 @@ describe("Post Storage - Create Operations", () => {
         updated_at: new Date("2025-01-01"),
       };
 
-      mockDb.query.mockResolvedValue({ rows: [mockRow] });
+      mockDbQuery.mockResolvedValue({ rows: [mockRow] });
 
       const { createPost } = await import("../storage");
 
@@ -361,7 +358,7 @@ describe("Post Storage - Create Operations", () => {
         updated_at: new Date("2025-01-01"),
       };
 
-      mockDb.query.mockResolvedValue({ rows: [mockRow] });
+      mockDbQuery.mockResolvedValue({ rows: [mockRow] });
 
       const { createPost } = await import("../storage");
 

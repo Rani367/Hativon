@@ -7,8 +7,8 @@ A school newspaper application with Hebrew/RTL support.
 ## Setup
 
 ```bash
-pnpm install    # Installs dependencies and auto-configures everything
-pnpm run dev    # Start development server at http://localhost:3000
+bun install    # Installs dependencies and auto-configures everything
+bun run dev    # Start development server at http://localhost:3000
 ```
 
 Default credentials after setup:
@@ -19,31 +19,30 @@ Default credentials after setup:
 
 ### Development
 ```bash
-pnpm run dev              # Start dev server
-pnpm run build            # Production build
-pnpm run lint             # ESLint check
+bun run dev              # Start dev server
+bun run build            # Production build
+bun run lint             # ESLint check
 ```
 
 ### Testing
 ```bash
-pnpm test                 # Watch mode
-pnpm test:run             # Run once
-pnpm test:coverage        # With coverage
+bun test                 # Run tests
+bun test --coverage      # With coverage
 ```
 
 ### Database
 ```bash
-pnpm run db:init          # Initialize schema
-pnpm run db:migrate       # Run migrations
-pnpm run db:migrate:status
-pnpm run db:migrate:rollback
-pnpm run create-test-user # Create test user
+bun run db:init          # Initialize schema
+bun run db:migrate       # Run migrations
+bun run db:migrate:status
+bun run db:migrate:rollback
+bun run create-test-user # Create test user
 ```
 
 ### Deployment
 ```bash
-pnpm run pre-deploy       # Tests + validation + build + commit
-git push                  # Triggers Vercel deployment
+bun run pre-deploy       # Tests + build + commit
+git push                 # Triggers Vercel deployment
 ```
 
 ## Documentation

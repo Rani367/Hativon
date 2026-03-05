@@ -1,44 +1,28 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, mock, beforeEach, afterEach } from "bun:test";
 import type { UserRegistration } from "@/types/user.types";
 
-// Mock bcrypt before importing
-vi.mock("bcrypt", () => {
-  const hash = vi.fn().mockResolvedValue("hashed-password");
-  const compare = vi.fn().mockResolvedValue(true);
+// Use global delegate for db mock (set up in test/setup.ts)
+const _g = globalThis as Record<string, unknown>;
+let mockDbQuery: ReturnType<typeof mock>;
+let originalBunPasswordHash: typeof Bun.password.hash;
 
-  return {
-    default: { hash, compare },
-    hash,
-    compare,
-  };
-});
+// Path to storage module for cache clearing between tests
+const storageModulePath = require.resolve("../storage");
 
 describe("User Storage - Create Operations", () => {
-  let mockDb: { query: ReturnType<typeof vi.fn> };
-  let mockBcrypt: {
-    hash: ReturnType<typeof vi.fn>;
-    compare: ReturnType<typeof vi.fn>;
-  };
-
   beforeEach(() => {
-    vi.resetModules();
+    // Clear module cache to get fresh non-contaminated imports
+    delete require.cache[storageModulePath];
 
-    mockDb = {
-      query: vi.fn(),
-    };
+    mockDbQuery = mock(() => undefined);
+    _g.__dbQueryMock = mockDbQuery;
 
-    mockBcrypt = {
-      hash: vi.fn(),
-      compare: vi.fn(),
-    };
+    // Save and mock Bun.password.hash
+    originalBunPasswordHash = Bun.password.hash;
+  });
 
-    vi.doMock("@/lib/db/client", () => ({
-      db: mockDb,
-    }));
-
-    vi.doMock("bcrypt", () => ({
-      default: mockBcrypt,
-    }));
+  afterEach(() => {
+    Bun.password.hash = originalBunPasswordHash;
   });
 
   describe("createUser", () => {
@@ -55,8 +39,8 @@ describe("User Storage - Create Operations", () => {
         lastLogin: null,
       };
 
-      mockBcrypt.hash.mockResolvedValue("hashed-password-abc123");
-      mockDb.query.mockResolvedValue({ rows: [mockUserRow] });
+      Bun.password.hash = mock(() => Promise.resolve("hashed-password-abc123")) as typeof Bun.password.hash;
+      mockDbQuery.mockResolvedValue({ rows: [mockUserRow] });
 
       const { createUser } = await import("../storage");
 
@@ -70,7 +54,7 @@ describe("User Storage - Create Operations", () => {
 
       const result = await createUser(input);
 
-      expect(mockBcrypt.hash).toHaveBeenCalledWith("plaintext-password", 12);
+      expect(Bun.password.hash).toHaveBeenCalledWith("plaintext-password", { algorithm: "bcrypt", cost: 12 });
       expect(result.id).toBe("user-123");
       expect(result.username).toBe("testuser");
       expect(result.displayName).toBe("Test User");
@@ -92,8 +76,8 @@ describe("User Storage - Create Operations", () => {
       };
 
       const hashedPassword = "bcrypt-hashed-value-different-from-plaintext";
-      mockBcrypt.hash.mockResolvedValue(hashedPassword);
-      mockDb.query.mockResolvedValue({ rows: [mockUserRow] });
+      Bun.password.hash = mock(() => Promise.resolve(hashedPassword)) as typeof Bun.password.hash;
+      mockDbQuery.mockResolvedValue({ rows: [mockUserRow] });
 
       const { createUser } = await import("../storage");
 
@@ -107,8 +91,8 @@ describe("User Storage - Create Operations", () => {
 
       await createUser(input);
 
-      expect(mockBcrypt.hash).toHaveBeenCalledWith("mysecretpassword", 12);
-      expect(mockDb.query).toHaveBeenCalledTimes(1);
+      expect(Bun.password.hash).toHaveBeenCalledWith("mysecretpassword", { algorithm: "bcrypt", cost: 12 });
+      expect(mockDbQuery).toHaveBeenCalledTimes(1);
     });
 
     it("populates all user fields correctly", async () => {
@@ -124,8 +108,8 @@ describe("User Storage - Create Operations", () => {
         lastLogin: null,
       };
 
-      mockBcrypt.hash.mockResolvedValue("hashed-password");
-      mockDb.query.mockResolvedValue({ rows: [mockUserRow] });
+      Bun.password.hash = mock(() => Promise.resolve("hashed-password")) as typeof Bun.password.hash;
+      mockDbQuery.mockResolvedValue({ rows: [mockUserRow] });
 
       const { createUser } = await import("../storage");
 
@@ -156,8 +140,9 @@ describe("User Storage - Create Operations", () => {
       const dbError = new Error(
         'duplicate key value violates unique constraint "users_username_key"',
       );
-      mockBcrypt.hash.mockResolvedValue("hashed-password");
-      mockDb.query.mockRejectedValue(dbError);
+
+      Bun.password.hash = mock(() => Promise.resolve("hashed-password")) as typeof Bun.password.hash;
+      mockDbQuery.mockRejectedValue(dbError);
 
       const { createUser } = await import("../storage");
 
@@ -178,8 +163,9 @@ describe("User Storage - Create Operations", () => {
       const dbError = new Error(
         'duplicate key value violates unique constraint "users_email_key"',
       );
-      mockBcrypt.hash.mockResolvedValue("hashed-password");
-      mockDb.query.mockRejectedValue(dbError);
+
+      Bun.password.hash = mock(() => Promise.resolve("hashed-password")) as typeof Bun.password.hash;
+      mockDbQuery.mockRejectedValue(dbError);
 
       const { createUser } = await import("../storage");
 
@@ -198,8 +184,9 @@ describe("User Storage - Create Operations", () => {
 
     it("re-throws other database errors without modification", async () => {
       const dbError = new Error("Connection timeout");
-      mockBcrypt.hash.mockResolvedValue("hashed-password");
-      mockDb.query.mockRejectedValue(dbError);
+
+      Bun.password.hash = mock(() => Promise.resolve("hashed-password")) as typeof Bun.password.hash;
+      mockDbQuery.mockRejectedValue(dbError);
 
       const { createUser } = await import("../storage");
 
@@ -215,8 +202,8 @@ describe("User Storage - Create Operations", () => {
     });
 
     it("handles non-Error thrown objects", async () => {
-      mockBcrypt.hash.mockResolvedValue("hashed-password");
-      mockDb.query.mockRejectedValue("String error message");
+      Bun.password.hash = mock(() => Promise.resolve("hashed-password")) as typeof Bun.password.hash;
+      mockDbQuery.mockRejectedValue("String error message");
 
       const { createUser } = await import("../storage");
 
@@ -244,8 +231,8 @@ describe("User Storage - Create Operations", () => {
         lastLogin: null,
       };
 
-      mockBcrypt.hash.mockResolvedValue("hashed-password");
-      mockDb.query.mockResolvedValue({ rows: [mockUserRow] });
+      Bun.password.hash = mock(() => Promise.resolve("hashed-password")) as typeof Bun.password.hash;
+      mockDbQuery.mockResolvedValue({ rows: [mockUserRow] });
 
       const { createUser } = await import("../storage");
 
@@ -275,8 +262,8 @@ describe("User Storage - Create Operations", () => {
         lastLogin: null,
       };
 
-      mockBcrypt.hash.mockResolvedValue("hashed-with-10-rounds");
-      mockDb.query.mockResolvedValue({ rows: [mockUserRow] });
+      Bun.password.hash = mock(() => Promise.resolve("hashed-with-10-rounds")) as typeof Bun.password.hash;
+      mockDbQuery.mockResolvedValue({ rows: [mockUserRow] });
 
       const { createUser } = await import("../storage");
 
@@ -290,7 +277,7 @@ describe("User Storage - Create Operations", () => {
 
       await createUser(input);
 
-      expect(mockBcrypt.hash).toHaveBeenCalledWith("testpassword", 12);
+      expect(Bun.password.hash).toHaveBeenCalledWith("testpassword", { algorithm: "bcrypt", cost: 12 });
     });
   });
 });

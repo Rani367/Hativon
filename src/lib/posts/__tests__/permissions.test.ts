@@ -1,9 +1,9 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, mock } from "bun:test";
 import type { Post } from "@/types/post.types";
 
 // Mock dependencies before importing
-vi.mock("../queries", () => ({
-  getPostById: vi.fn(),
+mock.module("../queries", () => ({
+  getPostById: mock(() => undefined),
 }));
 
 import { canUserEditPost, canUserDeletePost } from "../permissions";
@@ -29,13 +29,13 @@ const createMockPost = (overrides: Partial<Post> = {}): Post => ({
 
 describe("Post Permissions", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    (getPostById as ReturnType<typeof mock>).mockReset();
   });
 
   describe("canUserEditPost", () => {
     it("allows admin to edit any post", async () => {
       const mockPost = createMockPost();
-      vi.mocked(getPostById).mockResolvedValue(mockPost);
+      (getPostById as ReturnType<typeof mock>).mockResolvedValue(mockPost);
 
       const canEdit = await canUserEditPost("different-user", "post-123", true);
 
@@ -52,7 +52,7 @@ describe("Post Permissions", () => {
 
     it("allows author to edit their own post", async () => {
       const mockPost = createMockPost({ authorId: "author-123" });
-      vi.mocked(getPostById).mockResolvedValue(mockPost);
+      (getPostById as ReturnType<typeof mock>).mockResolvedValue(mockPost);
 
       const canEdit = await canUserEditPost("author-123", "post-123", false);
 
@@ -62,7 +62,7 @@ describe("Post Permissions", () => {
 
     it("denies non-author from editing post", async () => {
       const mockPost = createMockPost({ authorId: "author-123" });
-      vi.mocked(getPostById).mockResolvedValue(mockPost);
+      (getPostById as ReturnType<typeof mock>).mockResolvedValue(mockPost);
 
       const canEdit = await canUserEditPost(
         "different-user",
@@ -74,7 +74,7 @@ describe("Post Permissions", () => {
     });
 
     it("returns false when post does not exist", async () => {
-      vi.mocked(getPostById).mockResolvedValue(null);
+      (getPostById as ReturnType<typeof mock>).mockResolvedValue(null);
 
       const canEdit = await canUserEditPost("any-user", "non-existent", false);
 
@@ -83,7 +83,7 @@ describe("Post Permissions", () => {
 
     it("handles post without authorId", async () => {
       const mockPost = createMockPost({ authorId: undefined });
-      vi.mocked(getPostById).mockResolvedValue(mockPost);
+      (getPostById as ReturnType<typeof mock>).mockResolvedValue(mockPost);
 
       const canEdit = await canUserEditPost("user-123", "post-123", false);
 
@@ -92,7 +92,7 @@ describe("Post Permissions", () => {
 
     it("compares authorId exactly", async () => {
       const mockPost = createMockPost({ authorId: "author-123" });
-      vi.mocked(getPostById).mockResolvedValue(mockPost);
+      (getPostById as ReturnType<typeof mock>).mockResolvedValue(mockPost);
 
       // Similar but not exact match
       const canEdit = await canUserEditPost("author-12", "post-123", false);
@@ -104,7 +104,7 @@ describe("Post Permissions", () => {
   describe("canUserDeletePost", () => {
     it("allows admin to delete any post", async () => {
       const mockPost = createMockPost();
-      vi.mocked(getPostById).mockResolvedValue(mockPost);
+      (getPostById as ReturnType<typeof mock>).mockResolvedValue(mockPost);
 
       const canDelete = await canUserDeletePost(
         "different-user",
@@ -125,7 +125,7 @@ describe("Post Permissions", () => {
 
     it("allows author to delete their own post", async () => {
       const mockPost = createMockPost({ authorId: "author-123" });
-      vi.mocked(getPostById).mockResolvedValue(mockPost);
+      (getPostById as ReturnType<typeof mock>).mockResolvedValue(mockPost);
 
       const canDelete = await canUserDeletePost(
         "author-123",
@@ -139,7 +139,7 @@ describe("Post Permissions", () => {
 
     it("denies non-author from deleting post", async () => {
       const mockPost = createMockPost({ authorId: "author-123" });
-      vi.mocked(getPostById).mockResolvedValue(mockPost);
+      (getPostById as ReturnType<typeof mock>).mockResolvedValue(mockPost);
 
       const canDelete = await canUserDeletePost(
         "different-user",
@@ -151,7 +151,7 @@ describe("Post Permissions", () => {
     });
 
     it("returns false when post does not exist", async () => {
-      vi.mocked(getPostById).mockResolvedValue(null);
+      (getPostById as ReturnType<typeof mock>).mockResolvedValue(null);
 
       const canDelete = await canUserDeletePost(
         "any-user",
@@ -164,7 +164,7 @@ describe("Post Permissions", () => {
 
     it("handles post without authorId", async () => {
       const mockPost = createMockPost({ authorId: undefined });
-      vi.mocked(getPostById).mockResolvedValue(mockPost);
+      (getPostById as ReturnType<typeof mock>).mockResolvedValue(mockPost);
 
       const canDelete = await canUserDeletePost("user-123", "post-123", false);
 
@@ -173,7 +173,7 @@ describe("Post Permissions", () => {
 
     it("compares authorId exactly", async () => {
       const mockPost = createMockPost({ authorId: "author-123" });
-      vi.mocked(getPostById).mockResolvedValue(mockPost);
+      (getPostById as ReturnType<typeof mock>).mockResolvedValue(mockPost);
 
       // Similar but not exact match
       const canDelete = await canUserDeletePost("author-12", "post-123", false);

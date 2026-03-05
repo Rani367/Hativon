@@ -1,35 +1,50 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, mock } from "bun:test";
 import { NextRequest } from "next/server";
 import type { User } from "@/types/user.types";
 
 // Mock dependencies before importing
-vi.mock("@/lib/users", () => ({
-  createUser: vi.fn(),
-  usernameExists: vi.fn(),
+// Must provide ALL barrel exports to avoid contaminating sub-module imports
+mock.module("@/lib/users", () => ({
+  getUserById: mock(() => undefined),
+  getUserByUsername: mock(() => undefined),
+  getAllUsers: mock(() => undefined),
+  usernameExists: mock(() => undefined),
+  createUser: mock(() => undefined),
+  updateUser: mock(() => undefined),
+  updateLastLogin: mock(() => undefined),
+  deleteUser: mock(() => undefined),
+  setPasswordResetFlag: mock(() => undefined),
+  clearPasswordResetFlag: mock(() => undefined),
+  resetUserPassword: mock(() => undefined),
+  validatePassword: mock(() => undefined),
 }));
 
-vi.mock("@/lib/auth/jwt", () => ({
-  createAuthCookie: vi.fn(),
+mock.module("@/lib/auth/jwt", () => ({
+  createAuthCookie: mock(() => undefined),
 }));
 
-vi.mock("@/lib/db/client", () => ({
-  isDatabaseAvailable: vi.fn(),
-}));
+// @/lib/db/client and @/lib/logger are mocked via global delegates in test/setup.ts.
 
-vi.mock("@/lib/logger", () => ({
-  logError: vi.fn(),
-}));
-
-vi.mock("@/lib/rate-limit", () => ({
-  checkRateLimit: vi.fn(),
-  registerRateLimiter: {},
+// Mock rate-limit with ALL exports to avoid contaminating rate-limit.test.ts
+const _rlCheck = mock(() =>
+  Promise.resolve({ success: true, remaining: 5, reset: Date.now() + 60000 }),
+);
+const _rlCheckRateLimit = mock(() => Promise.resolve({ limited: false }));
+mock.module("@/lib/rate-limit", () => ({
+  checkRateLimit: _rlCheckRateLimit,
+  createRateLimiter: mock(() => ({ check: _rlCheck })),
+  getClientIdentifier: mock(() => "test-ip"),
+  loginRateLimiter: { check: _rlCheck },
+  registerRateLimiter: { check: _rlCheck },
+  authRateLimiter: { check: _rlCheck },
 }));
 
 import { POST } from "@/app/api/auth/register/route";
 import { createUser, usernameExists } from "@/lib/users";
 import { createAuthCookie } from "@/lib/auth/jwt";
-import { isDatabaseAvailable } from "@/lib/db/client";
-import { checkRateLimit } from "@/lib/rate-limit";
+
+// isDatabaseAvailable is controlled via global delegate
+const _g = globalThis as Record<string, unknown>;
 
 const mockUser: User = {
   id: "user-123",
@@ -63,17 +78,23 @@ const validRegistrationData = {
 
 describe("POST /api/auth/register", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
-    vi.mocked(isDatabaseAvailable).mockResolvedValue(true);
-    vi.mocked(usernameExists).mockResolvedValue(false);
-    vi.mocked(createUser).mockResolvedValue(mockUser);
-    vi.mocked(createAuthCookie).mockReturnValue("authToken=test; HttpOnly");
-    vi.mocked(checkRateLimit).mockResolvedValue({ limited: false });
+    (createUser as ReturnType<typeof mock>).mockReset();
+    (usernameExists as ReturnType<typeof mock>).mockReset();
+    (createAuthCookie as ReturnType<typeof mock>).mockReset();
+
+    // Reset global delegate for db/client
+    _g.__isDatabaseAvailableMock = mock(() => Promise.resolve(true));
+    // Reset rate-limit mock
+    _rlCheckRateLimit.mockImplementation(() => Promise.resolve({ limited: false }));
+
+    (usernameExists as ReturnType<typeof mock>).mockResolvedValue(false);
+    (createUser as ReturnType<typeof mock>).mockResolvedValue(mockUser);
+    (createAuthCookie as ReturnType<typeof mock>).mockReturnValue("authToken=test; HttpOnly");
   });
 
   describe("Database Availability", () => {
     it("returns 503 when database is not available", async () => {
-      vi.mocked(isDatabaseAvailable).mockResolvedValue(false);
+      _g.__isDatabaseAvailableMock = mock(() => Promise.resolve(false));
 
       const request = createRequest(validRegistrationData);
       const response = await POST(request);
@@ -248,7 +269,7 @@ describe("POST /api/auth/register", () => {
 
   describe("Duplicate Username", () => {
     it("returns 409 when username already exists", async () => {
-      vi.mocked(usernameExists).mockResolvedValue(true);
+      (usernameExists as ReturnType<typeof mock>).mockResolvedValue(true);
 
       const request = createRequest(validRegistrationData);
       const response = await POST(request);
@@ -294,7 +315,7 @@ describe("POST /api/auth/register", () => {
 
   describe("Error Handling", () => {
     it("returns 500 on unexpected error", async () => {
-      vi.mocked(createUser).mockRejectedValue(new Error("Database error"));
+      (createUser as ReturnType<typeof mock>).mockRejectedValue(new Error("Database error"));
 
       const request = createRequest(validRegistrationData);
       const response = await POST(request);
@@ -303,7 +324,7 @@ describe("POST /api/auth/register", () => {
     });
 
     it("returns 409 when createUser throws duplicate error", async () => {
-      vi.mocked(createUser).mockRejectedValue(
+      (createUser as ReturnType<typeof mock>).mockRejectedValue(
         new Error("שם המשתמש כבר קיים במערכת"),
       );
 
@@ -314,7 +335,7 @@ describe("POST /api/auth/register", () => {
     });
 
     it("handles non-Error thrown objects", async () => {
-      vi.mocked(createUser).mockRejectedValue("String error");
+      (createUser as ReturnType<typeof mock>).mockRejectedValue("String error");
 
       const request = createRequest(validRegistrationData);
       const response = await POST(request);

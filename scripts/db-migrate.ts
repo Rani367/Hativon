@@ -1,13 +1,13 @@
-#!/usr/bin/env tsx
+#!/usr/bin/env bun
 
 /**
  * Database migration runner
  *
  * Usage:
- *   pnpm run db:migrate        - Run all pending migrations
- *   pnpm run db:migrate status - Show migration status
- *   pnpm run db:migrate rollback - Rollback last migration
- *   pnpm run db:migrate rollback N - Rollback last N migrations
+ *   bun run db:migrate        - Run all pending migrations
+ *   bun run db:migrate status - Show migration status
+ *   bun run db:migrate rollback - Rollback last migration
+ *   bun run db:migrate rollback N - Rollback last N migrations
  */
 
 import { runMigrations, rollbackMigrations, getMigrationStatus } from '../src/lib/db/migrations';
@@ -51,9 +51,9 @@ async function main() {
       default:
         console.error(`[ERROR] Unknown command: ${command}`);
         console.log('\nUsage:');
-        console.log('  pnpm run db:migrate        - Run pending migrations');
-        console.log('  pnpm run db:migrate status - Show migration status');
-        console.log('  pnpm run db:migrate rollback [N] - Rollback last N migrations');
+        console.log('  bun run db:migrate        - Run pending migrations');
+        console.log('  bun run db:migrate status - Show migration status');
+        console.log('  bun run db:migrate rollback [N] - Rollback last N migrations');
         process.exit(1);
     }
   } catch (error) {
