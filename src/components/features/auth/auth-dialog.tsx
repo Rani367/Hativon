@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   AnimatedDialog as Dialog,
   AnimatedDialogContent as DialogContent,
@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { LoginForm } from './login-form';
 import { RegisterForm } from './register-form';
 import { motion, AnimatePresence } from 'framer-motion';
+import { triggerLoginHaptic } from '@/lib/utils';
 
 interface AuthDialogProps {
   open: boolean;
@@ -21,6 +22,12 @@ interface AuthDialogProps {
 
 export function AuthDialog({ open, onOpenChange, defaultTab = 'login' }: AuthDialogProps) {
   const [activeTab, setActiveTab] = useState(defaultTab);
+
+  useEffect(() => {
+    if (open) {
+      triggerLoginHaptic();
+    }
+  }, [open]);
 
   const handleSuccess = () => {
     onOpenChange(false);
