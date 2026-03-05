@@ -1,4 +1,4 @@
-#!/usr/bin/env ts-node
+#!/usr/bin/env bun
 
 import { config } from "dotenv";
 import { resolve } from "path";

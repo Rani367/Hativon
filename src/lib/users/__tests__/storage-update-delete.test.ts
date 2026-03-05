@@ -1,44 +1,20 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, mock, beforeEach } from "bun:test";
 import type { UserUpdate } from "@/types/user.types";
 
-// Mock bcrypt before importing
-vi.mock("bcrypt", () => {
-  const hash = vi.fn().mockResolvedValue("hashed-password");
-  const compare = vi.fn().mockResolvedValue(true);
+// Use global delegate for db mock (set up in test/setup.ts)
+const _g = globalThis as Record<string, unknown>;
+let mockDbQuery: ReturnType<typeof mock>;
 
-  return {
-    default: { hash, compare },
-    hash,
-    compare,
-  };
-});
+// Path to storage module for cache clearing between tests
+const storageModulePath = require.resolve("../storage");
 
 describe("User Storage - Update and Delete Operations", () => {
-  let mockDb: { query: ReturnType<typeof vi.fn> };
-  let mockBcrypt: {
-    hash: ReturnType<typeof vi.fn>;
-    compare: ReturnType<typeof vi.fn>;
-  };
-
   beforeEach(() => {
-    vi.resetModules();
+    // Clear module cache to get fresh non-contaminated imports
+    delete require.cache[storageModulePath];
 
-    mockDb = {
-      query: vi.fn(),
-    };
-
-    mockBcrypt = {
-      hash: vi.fn(),
-      compare: vi.fn(),
-    };
-
-    vi.doMock("@/lib/db/client", () => ({
-      db: mockDb,
-    }));
-
-    vi.doMock("bcrypt", () => ({
-      default: mockBcrypt,
-    }));
+    mockDbQuery = mock(() => undefined);
+    _g.__dbQueryMock = mockDbQuery;
   });
 
   describe("updateUser", () => {
@@ -55,7 +31,7 @@ describe("User Storage - Update and Delete Operations", () => {
         lastLogin: null,
       };
 
-      mockDb.query.mockResolvedValue({ rows: [mockUserRow] });
+      mockDbQuery.mockResolvedValue({ rows: [mockUserRow] });
 
       const { updateUser } = await import("../storage");
 
@@ -66,7 +42,7 @@ describe("User Storage - Update and Delete Operations", () => {
       const result = await updateUser("user-123", updates);
 
       expect(result.displayName).toBe("Updated Name");
-      expect(mockDb.query).toHaveBeenCalledTimes(1);
+      expect(mockDbQuery).toHaveBeenCalledTimes(1);
     });
 
     it("updates email using COALESCE", async () => {
@@ -82,7 +58,7 @@ describe("User Storage - Update and Delete Operations", () => {
         lastLogin: null,
       };
 
-      mockDb.query.mockResolvedValue({ rows: [mockUserRow] });
+      mockDbQuery.mockResolvedValue({ rows: [mockUserRow] });
 
       const { updateUser } = await import("../storage");
 
@@ -108,7 +84,7 @@ describe("User Storage - Update and Delete Operations", () => {
         lastLogin: null,
       };
 
-      mockDb.query.mockResolvedValue({ rows: [mockUserRow] });
+      mockDbQuery.mockResolvedValue({ rows: [mockUserRow] });
 
       const { updateUser } = await import("../storage");
 
@@ -134,7 +110,7 @@ describe("User Storage - Update and Delete Operations", () => {
         lastLogin: null,
       };
 
-      mockDb.query.mockResolvedValue({ rows: [mockUserRow] });
+      mockDbQuery.mockResolvedValue({ rows: [mockUserRow] });
 
       const { updateUser } = await import("../storage");
 
@@ -160,7 +136,7 @@ describe("User Storage - Update and Delete Operations", () => {
         lastLogin: null,
       };
 
-      mockDb.query.mockResolvedValue({ rows: [mockUserRow] });
+      mockDbQuery.mockResolvedValue({ rows: [mockUserRow] });
 
       const { updateUser } = await import("../storage");
 
@@ -180,7 +156,7 @@ describe("User Storage - Update and Delete Operations", () => {
     });
 
     it("throws Hebrew error when user not found", async () => {
-      mockDb.query.mockResolvedValue({ rows: [] });
+      mockDbQuery.mockResolvedValue({ rows: [] });
 
       const { updateUser } = await import("../storage");
 
@@ -209,7 +185,7 @@ describe("User Storage - Update and Delete Operations", () => {
         lastLogin: null,
       };
 
-      mockDb.query.mockResolvedValue({ rows: [mockUserRow] });
+      mockDbQuery.mockResolvedValue({ rows: [mockUserRow] });
 
       const { updateUser } = await import("../storage");
 
@@ -236,7 +212,7 @@ describe("User Storage - Update and Delete Operations", () => {
         lastLogin: null,
       };
 
-      mockDb.query.mockResolvedValue({ rows: [mockUserRow] });
+      mockDbQuery.mockResolvedValue({ rows: [mockUserRow] });
 
       const { updateUser } = await import("../storage");
 
@@ -254,17 +230,17 @@ describe("User Storage - Update and Delete Operations", () => {
 
   describe("updateLastLogin", () => {
     it("updates last login timestamp to current time", async () => {
-      mockDb.query.mockResolvedValue({ rowCount: 1 });
+      mockDbQuery.mockResolvedValue({ rowCount: 1 });
 
       const { updateLastLogin } = await import("../storage");
 
       await updateLastLogin("user-123");
 
-      expect(mockDb.query).toHaveBeenCalledTimes(1);
+      expect(mockDbQuery).toHaveBeenCalledTimes(1);
     });
 
     it("does not throw error for non-existent user", async () => {
-      mockDb.query.mockResolvedValue({ rowCount: 0 });
+      mockDbQuery.mockResolvedValue({ rowCount: 0 });
 
       const { updateLastLogin } = await import("../storage");
 
@@ -272,7 +248,7 @@ describe("User Storage - Update and Delete Operations", () => {
     });
 
     it("handles database errors silently", async () => {
-      mockDb.query.mockRejectedValue(new Error("Database error"));
+      mockDbQuery.mockRejectedValue(new Error("Database error"));
 
       const { updateLastLogin } = await import("../storage");
 
@@ -284,17 +260,17 @@ describe("User Storage - Update and Delete Operations", () => {
 
   describe("deleteUser", () => {
     it("deletes user successfully", async () => {
-      mockDb.query.mockResolvedValue({ rowCount: 1 });
+      mockDbQuery.mockResolvedValue({ rowCount: 1 });
 
       const { deleteUser } = await import("../storage");
 
       await deleteUser("user-123");
 
-      expect(mockDb.query).toHaveBeenCalledTimes(1);
+      expect(mockDbQuery).toHaveBeenCalledTimes(1);
     });
 
     it("does not throw error for non-existent user", async () => {
-      mockDb.query.mockResolvedValue({ rowCount: 0 });
+      mockDbQuery.mockResolvedValue({ rowCount: 0 });
 
       const { deleteUser } = await import("../storage");
 
@@ -302,17 +278,17 @@ describe("User Storage - Update and Delete Operations", () => {
     });
 
     it("cascades deletion to related data", async () => {
-      mockDb.query.mockResolvedValue({ rowCount: 1 });
+      mockDbQuery.mockResolvedValue({ rowCount: 1 });
 
       const { deleteUser } = await import("../storage");
 
       await deleteUser("user-with-posts");
 
-      expect(mockDb.query).toHaveBeenCalledTimes(1);
+      expect(mockDbQuery).toHaveBeenCalledTimes(1);
     });
 
     it("handles database errors", async () => {
-      mockDb.query.mockRejectedValue(new Error("Deletion failed"));
+      mockDbQuery.mockRejectedValue(new Error("Deletion failed"));
 
       const { deleteUser } = await import("../storage");
 

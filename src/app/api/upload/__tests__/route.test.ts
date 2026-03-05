@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, mock, beforeEach, afterEach } from "bun:test";
 import { NextRequest } from "next/server";
 
 // Valid image magic bytes for testing
@@ -15,7 +15,6 @@ function createMockImageFile(
   type: string,
   sizeInBytes?: number,
 ): File {
-  // Get the appropriate magic bytes
   let magicBytes: Uint8Array;
   if (type === "image/jpeg") {
     magicBytes = IMAGE_MAGIC_BYTES.jpeg;
@@ -26,35 +25,28 @@ function createMockImageFile(
   } else if (type === "image/webp") {
     magicBytes = IMAGE_MAGIC_BYTES.webp;
   } else {
-    magicBytes = IMAGE_MAGIC_BYTES.jpeg; // default to jpeg
+    magicBytes = IMAGE_MAGIC_BYTES.jpeg;
   }
 
-  // If a specific size is requested, create a larger buffer
   let data: Uint8Array;
   if (sizeInBytes && sizeInBytes > magicBytes.length) {
     data = new Uint8Array(sizeInBytes);
-    data.set(magicBytes, 0); // Set magic bytes at the beginning
+    data.set(magicBytes, 0);
   } else {
-    // Add some padding after magic bytes for a realistic file
     data = new Uint8Array(magicBytes.length + 100);
     data.set(magicBytes, 0);
   }
 
-  // Create explicit ArrayBuffer (not ArrayBufferLike) to satisfy TypeScript
   const arrayBuffer = new ArrayBuffer(data.byteLength);
   new Uint8Array(arrayBuffer).set(data);
 
-  // Create the file using the ArrayBuffer
   const file = new File([arrayBuffer], name, { type });
 
-  // Create a copy of the ArrayBuffer for slice operations
   const fullArrayBuffer = arrayBuffer.slice(0);
 
-  // Override arrayBuffer to work in jsdom (for base64 conversion)
   (file as File & { arrayBuffer: () => Promise<ArrayBuffer> }).arrayBuffer =
     async (): Promise<ArrayBuffer> => fullArrayBuffer;
 
-  // Override slice to return a Blob with proper arrayBuffer method
   const originalSlice = file.slice.bind(file);
   (file as File & { slice: typeof file.slice }).slice = (
     start?: number,
@@ -64,10 +56,8 @@ function createMockImageFile(
     const slicedBlob = originalSlice(start, end, contentType);
     const sliceStart = start ?? 0;
     const sliceEnd = end ?? data.length;
-    // Create a proper ArrayBuffer for the sliced data
     const slicedArrayBuffer = fullArrayBuffer.slice(sliceStart, sliceEnd);
 
-    // Add arrayBuffer method to the sliced blob
     (
       slicedBlob as Blob & { arrayBuffer: () => Promise<ArrayBuffer> }
     ).arrayBuffer = async (): Promise<ArrayBuffer> => slicedArrayBuffer;
@@ -78,72 +68,43 @@ function createMockImageFile(
   return file;
 }
 
-// Helper to create a mock File with arrayBuffer support (for non-image files)
-function createMockFile(
-  content: string | Uint8Array,
-  name: string,
-  type: string,
-): File {
-  const data =
-    typeof content === "string" ? new TextEncoder().encode(content) : content;
-
-  // Create ArrayBuffer from data (avoids Uint8Array/BlobPart type issues)
-  const arrayBuffer = new ArrayBuffer(data.byteLength);
-  new Uint8Array(arrayBuffer).set(data);
-  const file = new File([arrayBuffer], name, { type });
-
-  // Ensure arrayBuffer method works in jsdom by creating a proper ArrayBuffer
-  if (!file.arrayBuffer || typeof file.arrayBuffer !== "function") {
-    const fileWithArrayBuffer = file as File & {
-      arrayBuffer: () => Promise<ArrayBuffer>;
-    };
-    fileWithArrayBuffer.arrayBuffer = async (): Promise<ArrayBuffer> => {
-      return arrayBuffer;
-    };
-  }
-
-  return file;
-}
-
 // Helper to create a mock request with formData method
 function createMockRequest(formData: FormData): NextRequest {
   return {
-    formData: vi.fn().mockResolvedValue(formData),
+    formData: mock(() => Promise.resolve(formData)),
   } as unknown as NextRequest;
 }
 
+// Track mock state
+let mockGetCurrentUser: ReturnType<typeof mock>;
+let mockPut: ReturnType<typeof mock>;
+
+// logError is controlled via global delegate in test/setup.ts
+const _g = globalThis as Record<string, unknown>;
+
 describe("POST /api/upload", () => {
-  let mockGetCurrentUser: ReturnType<typeof vi.fn>;
-  let mockPut: ReturnType<typeof vi.fn>;
-  let mockLogError: ReturnType<typeof vi.fn>;
   let originalBlobToken: string | undefined;
 
   beforeEach(() => {
-    vi.resetModules();
-
-    // Save and clear the BLOB_READ_WRITE_TOKEN for test isolation
     originalBlobToken = process.env.BLOB_READ_WRITE_TOKEN;
     delete process.env.BLOB_READ_WRITE_TOKEN;
 
-    mockGetCurrentUser = vi.fn();
-    mockPut = vi.fn();
-    mockLogError = vi.fn();
+    mockGetCurrentUser = mock(() => undefined);
+    mockPut = mock(() => undefined);
+    _g.__logErrorMock = mock(() => undefined);
 
-    vi.doMock("@/lib/auth/middleware", () => ({
+    mock.module("@/lib/auth/middleware", () => ({
       getCurrentUser: mockGetCurrentUser,
     }));
 
-    vi.doMock("@vercel/blob", () => ({
+    mock.module("@vercel/blob", () => ({
       put: mockPut,
     }));
 
-    vi.doMock("@/lib/logger", () => ({
-      logError: mockLogError,
-    }));
+    // @/lib/logger is mocked via global delegate in test/setup.ts
   });
 
   afterEach(() => {
-    // Restore original token
     if (originalBlobToken) {
       process.env.BLOB_READ_WRITE_TOKEN = originalBlobToken;
     } else {
@@ -219,7 +180,6 @@ describe("POST /api/upload", () => {
     const { POST } = await import("../route");
 
     const formData = new FormData();
-    // Create a large file with valid JPEG magic bytes
     const file = createMockImageFile(
       "large.jpg",
       "image/jpeg",
@@ -236,7 +196,6 @@ describe("POST /api/upload", () => {
   });
 
   it("returns base64 data URL when BLOB_READ_WRITE_TOKEN is not set", async () => {
-    // Token is already deleted in beforeEach
     mockGetCurrentUser.mockResolvedValue({
       id: "user-123",
       username: "testuser",
@@ -399,7 +358,7 @@ describe("POST /api/upload", () => {
 
     expect(response.status).toBe(500);
     expect(data.error).toBe("Failed to upload image");
-    expect(mockLogError).toHaveBeenCalledWith(
+    expect(_g.__logErrorMock as ReturnType<typeof mock>).toHaveBeenCalledWith(
       "Image upload error:",
       uploadError,
     );
@@ -455,7 +414,6 @@ describe("POST /api/upload", () => {
     const { POST } = await import("../route");
 
     const formData = new FormData();
-    // Create exactly 5MB file with valid JPEG magic bytes
     const file = createMockImageFile(
       "exact.jpg",
       "image/jpeg",
@@ -486,6 +444,6 @@ describe("POST /api/upload", () => {
 
     expect(response.status).toBe(500);
     expect(data.error).toBe("Failed to upload image");
-    expect(mockLogError).toHaveBeenCalled();
+    expect(_g.__logErrorMock as ReturnType<typeof mock>).toHaveBeenCalled();
   });
 });

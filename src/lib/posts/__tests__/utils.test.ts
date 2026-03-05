@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect } from "bun:test";
 import { generateDescription, rowToPost } from "../utils";
 import type { DbPostRow } from "@/types/database.types";
 

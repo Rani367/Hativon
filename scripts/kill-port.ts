@@ -1,4 +1,4 @@
-#!/usr/bin/env tsx
+#!/usr/bin/env bun
 
 /**
  * Kill process running on a specific port

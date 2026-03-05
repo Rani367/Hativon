@@ -1,4 +1,4 @@
-#!/usr/bin/env ts-node
+#!/usr/bin/env bun
 
 /**
  * Database Initialization Script
@@ -7,8 +7,8 @@
  * Run this once after enabling Vercel Postgres or setting up local Postgres.
  *
  * Usage:
- *   pnpm run db:init
- *   or: pnpm exec tsx scripts/init-db.ts
+ *   bun run db:init
+ *   or: bun scripts/init-db.ts
  *
  * Requirements:
  *   - POSTGRES_URL or POSTGRES_URL_NON_POOLING environment variable must be set
@@ -66,8 +66,8 @@ async function main() {
     if (!isSilent) {
       console.log('\n[OK] Database initialized successfully!');
       console.log('\n[INFO] Next steps:');
-      console.log('   1. Create an admin user: pnpm run create-admin');
-      console.log('   2. Start the development server: pnpm run dev');
+      console.log('   1. Create an admin user: bun run create-admin');
+      console.log('   2. Start the development server: bun run dev');
       console.log('   3. Visit /admin to log in\n');
     }
 

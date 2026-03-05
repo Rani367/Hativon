@@ -4,12 +4,12 @@ Deployed site: https://hativon.vercel.app/
 
 ## Project Overview
 
-Hativon - a Hebrew school newspaper built with Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS 4, PostgreSQL (Vercel Postgres), Vercel Blob, JWT auth. Uses pnpm.
+Hativon - a Hebrew school newspaper built with Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS 4, PostgreSQL (Vercel Postgres), Vercel Blob, JWT auth. Uses Bun as package manager, script runner, and test runner.
 
 ## Rules
 
 ### Always Verify
-Run `pnpm run verify` at the end of every task that modifies code. Keep iterating until it passes with zero failures. It runs tests, validation (100+ checks), and production build.
+Run `bun run verify` at the end of every task that modifies code. Keep iterating until it passes with zero failures. It runs tests (`bun test`) and production build (`next build`).
 
 ### No Emojis
 Never use emojis in code, comments, console output, or documentation. Use text prefixes like `[OK]`, `[ERROR]`, `[WARNING]` instead.
@@ -27,12 +27,12 @@ For error handling (the tricky one):
 Only exception: test files mocking complex external dependencies.
 
 ### Git Workflow
-- Never commit directly with `git commit`. Use `pnpm run pre-deploy` (runs tests + validation + build + commit).
+- Never commit directly with `git commit`. Use `bun run pre-deploy` (runs tests + build + commit).
 - Never push to GitHub. The user does that manually.
-- For validation without committing, use `pnpm run verify`.
+- For verification without committing, use `bun run verify`.
 
-### Never Edit Validation/Tests Without Permission
-Never modify files in `scripts/`, test files, ESLint config, or `tsconfig.json` unless explicitly asked. If validation fails, fix the source code, not the checks.
+### Never Edit Tests Without Permission
+Never modify test files, ESLint config, or `tsconfig.json` unless explicitly asked. If tests fail, fix the source code, not the tests.
 
 ### Commit Messages
 Imperative mood, concise. Examples: "Add user auth middleware", "Fix responsive layout on mobile".

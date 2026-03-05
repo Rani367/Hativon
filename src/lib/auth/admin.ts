@@ -1,7 +1,6 @@
 import { cookies } from "next/headers";
 import { serialize } from "cookie";
 import jwt from "jsonwebtoken";
-import bcrypt from "bcrypt";
 import { timingSafeEqual } from "crypto";
 
 // Require ADMIN_PASSWORD to be set - no fallback for security
@@ -63,20 +62,20 @@ export async function verifyAdminPassword(password: string): Promise<boolean> {
   const isBcryptHash = /^\$2[aby]\$/.test(ADMIN_PASSWORD);
 
   if (isBcryptHash) {
-    // Use bcrypt comparison for hashed passwords (constant-time)
-    return await bcrypt.compare(password, ADMIN_PASSWORD);
+    // Use Bun.password for hashed password verification (constant-time)
+    return await Bun.password.verify(password, ADMIN_PASSWORD);
   } else {
     // For plain text passwords (backward compatibility)
     // Use constant-time comparison to prevent timing attacks
     console.warn(
-      "[SECURITY WARNING] Admin password is not hashed. Run: pnpm run hash-admin-password",
+      "[SECURITY WARNING] Admin password is not hashed. Run: bun run hash-admin-password",
     );
 
     // Reject plain-text passwords in production for security
     if (process.env.NODE_ENV === "production") {
       console.error(
         "[SECURITY] Plain-text admin passwords are not allowed in production. " +
-          "Hash your password with: pnpm run hash-admin-password",
+          "Hash your password with: bun run hash-admin-password",
       );
       return false;
     }

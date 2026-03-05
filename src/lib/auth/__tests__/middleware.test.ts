@@ -1,25 +1,39 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { cookies } from "next/headers";
+import { describe, it, expect, beforeEach, mock, spyOn } from "bun:test";
 import type { User } from "@/types/user.types";
 import type { ReadonlyRequestCookies } from "next/dist/server/web/spec-extension/adapters/request-cookies";
 
 // Mock dependencies before importing the module under test
-vi.mock("next/headers");
-vi.mock("../jwt", () => ({
-  verifyToken: vi.fn(),
+mock.module("next/headers", () => ({
+  cookies: mock(() => undefined),
 }));
-vi.mock("../../users", () => ({
-  getUserById: vi.fn(),
+mock.module("../jwt", () => ({
+  verifyToken: mock(() => undefined),
 }));
-vi.mock("../../db/client", () => ({
-  isDatabaseAvailable: vi.fn(),
+// Must provide ALL barrel exports to avoid contaminating sub-module imports
+mock.module("../../users", () => ({
+  getUserById: mock(() => undefined),
+  getUserByUsername: mock(() => undefined),
+  getAllUsers: mock(() => undefined),
+  usernameExists: mock(() => undefined),
+  createUser: mock(() => undefined),
+  updateUser: mock(() => undefined),
+  updateLastLogin: mock(() => undefined),
+  deleteUser: mock(() => undefined),
+  setPasswordResetFlag: mock(() => undefined),
+  clearPasswordResetFlag: mock(() => undefined),
+  resetUserPassword: mock(() => undefined),
+  validatePassword: mock(() => undefined),
 }));
+// @/lib/db/client is mocked via global delegates in test/setup.ts
 
 // Import after mocking
 import { getCurrentUser, requireAuth, isAuthenticated } from "../middleware";
+import { cookies } from "next/headers";
 import { verifyToken } from "../jwt";
 import { getUserById } from "../../users";
-import { isDatabaseAvailable } from "../../db/client";
+
+// isDatabaseAvailable is controlled via global delegate
+const _g = globalThis as Record<string, unknown>;
 
 const mockUser: User = {
   id: "user-123",
@@ -34,12 +48,20 @@ const mockUser: User = {
 };
 
 describe("Authentication Middleware", () => {
-  const mockGet = vi.fn();
-  const mockSet = vi.fn();
-  const mockDelete = vi.fn();
+  const mockGet = mock(() => undefined);
+  const mockSet = mock(() => undefined);
+  const mockDelete = mock(() => undefined);
 
   beforeEach(() => {
-    vi.clearAllMocks();
+    mockGet.mockReset();
+    mockSet.mockReset();
+    mockDelete.mockReset();
+    (cookies as ReturnType<typeof mock>).mockReset();
+    (verifyToken as ReturnType<typeof mock>).mockReset();
+    (getUserById as ReturnType<typeof mock>).mockReset();
+
+    // Reset global delegate for isDatabaseAvailable
+    _g.__isDatabaseAvailableMock = mock(() => Promise.resolve(true));
 
     const mockCookieStore = {
       get: mockGet,
@@ -47,8 +69,7 @@ describe("Authentication Middleware", () => {
       delete: mockDelete,
     } as unknown as ReadonlyRequestCookies;
 
-    vi.mocked(cookies).mockResolvedValue(mockCookieStore);
-    vi.mocked(isDatabaseAvailable).mockResolvedValue(true);
+    (cookies as ReturnType<typeof mock>).mockResolvedValue(mockCookieStore);
   });
 
   describe("getCurrentUser", () => {
@@ -70,7 +91,7 @@ describe("Authentication Middleware", () => {
 
     it("returns null when token verification fails", async () => {
       mockGet.mockReturnValue({ value: "invalid-token" });
-      vi.mocked(verifyToken).mockReturnValue(null);
+      (verifyToken as ReturnType<typeof mock>).mockReturnValue(null);
 
       const user = await getCurrentUser();
 
@@ -79,7 +100,7 @@ describe("Authentication Middleware", () => {
 
     it("returns legacy admin user for legacy-admin userId", async () => {
       mockGet.mockReturnValue({ value: "valid-token" });
-      vi.mocked(verifyToken).mockReturnValue({
+      (verifyToken as ReturnType<typeof mock>).mockReturnValue({
         userId: "legacy-admin",
         username: "admin",
       });
@@ -96,11 +117,11 @@ describe("Authentication Middleware", () => {
 
     it("returns fallback user from JWT when database is not available", async () => {
       mockGet.mockReturnValue({ value: "valid-token" });
-      vi.mocked(verifyToken).mockReturnValue({
+      (verifyToken as ReturnType<typeof mock>).mockReturnValue({
         userId: "user-123",
         username: "testuser",
       });
-      vi.mocked(isDatabaseAvailable).mockResolvedValue(false);
+      _g.__isDatabaseAvailableMock = mock(() => Promise.resolve(false));
 
       const user = await getCurrentUser();
 
@@ -116,11 +137,11 @@ describe("Authentication Middleware", () => {
 
     it("returns user from database when authenticated", async () => {
       mockGet.mockReturnValue({ value: "valid-token" });
-      vi.mocked(verifyToken).mockReturnValue({
+      (verifyToken as ReturnType<typeof mock>).mockReturnValue({
         userId: "user-123",
         username: "testuser",
       });
-      vi.mocked(getUserById).mockResolvedValue(mockUser);
+      (getUserById as ReturnType<typeof mock>).mockResolvedValue(mockUser);
 
       const user = await getCurrentUser();
 
@@ -130,11 +151,11 @@ describe("Authentication Middleware", () => {
 
     it("returns null when user not found in database", async () => {
       mockGet.mockReturnValue({ value: "valid-token" });
-      vi.mocked(verifyToken).mockReturnValue({
+      (verifyToken as ReturnType<typeof mock>).mockReturnValue({
         userId: "user-123",
         username: "testuser",
       });
-      vi.mocked(getUserById).mockResolvedValue(null);
+      (getUserById as ReturnType<typeof mock>).mockResolvedValue(null);
 
       const user = await getCurrentUser();
 
@@ -142,10 +163,8 @@ describe("Authentication Middleware", () => {
     });
 
     it("returns null on unexpected error", async () => {
-      const consoleErrorSpy = vi
-        .spyOn(console, "error")
-        .mockImplementation(() => {});
-      vi.mocked(cookies).mockRejectedValue(new Error("Cookie access failed"));
+      const consoleErrorSpy = spyOn(console, "error").mockImplementation(() => {});
+      (cookies as ReturnType<typeof mock>).mockRejectedValue(new Error("Cookie access failed"));
 
       const user = await getCurrentUser();
 
@@ -159,11 +178,11 @@ describe("Authentication Middleware", () => {
   describe("requireAuth", () => {
     it("returns user when authenticated", async () => {
       mockGet.mockReturnValue({ value: "valid-token" });
-      vi.mocked(verifyToken).mockReturnValue({
+      (verifyToken as ReturnType<typeof mock>).mockReturnValue({
         userId: "user-123",
         username: "testuser",
       });
-      vi.mocked(getUserById).mockResolvedValue(mockUser);
+      (getUserById as ReturnType<typeof mock>).mockResolvedValue(mockUser);
 
       const user = await requireAuth();
 
@@ -178,18 +197,18 @@ describe("Authentication Middleware", () => {
 
     it("throws error when token is invalid", async () => {
       mockGet.mockReturnValue({ value: "invalid-token" });
-      vi.mocked(verifyToken).mockReturnValue(null);
+      (verifyToken as ReturnType<typeof mock>).mockReturnValue(null);
 
       await expect(requireAuth()).rejects.toThrow("Authentication required");
     });
 
     it("throws error when user not found in database", async () => {
       mockGet.mockReturnValue({ value: "valid-token" });
-      vi.mocked(verifyToken).mockReturnValue({
+      (verifyToken as ReturnType<typeof mock>).mockReturnValue({
         userId: "user-123",
         username: "testuser",
       });
-      vi.mocked(getUserById).mockResolvedValue(null);
+      (getUserById as ReturnType<typeof mock>).mockResolvedValue(null);
 
       await expect(requireAuth()).rejects.toThrow("Authentication required");
     });
@@ -198,11 +217,11 @@ describe("Authentication Middleware", () => {
   describe("isAuthenticated", () => {
     it("returns true when user is authenticated", async () => {
       mockGet.mockReturnValue({ value: "valid-token" });
-      vi.mocked(verifyToken).mockReturnValue({
+      (verifyToken as ReturnType<typeof mock>).mockReturnValue({
         userId: "user-123",
         username: "testuser",
       });
-      vi.mocked(getUserById).mockResolvedValue(mockUser);
+      (getUserById as ReturnType<typeof mock>).mockResolvedValue(mockUser);
 
       const result = await isAuthenticated();
 
@@ -219,7 +238,7 @@ describe("Authentication Middleware", () => {
 
     it("returns false when token is invalid", async () => {
       mockGet.mockReturnValue({ value: "invalid-token" });
-      vi.mocked(verifyToken).mockReturnValue(null);
+      (verifyToken as ReturnType<typeof mock>).mockReturnValue(null);
 
       const result = await isAuthenticated();
 
@@ -228,7 +247,7 @@ describe("Authentication Middleware", () => {
 
     it("returns true for legacy admin user", async () => {
       mockGet.mockReturnValue({ value: "valid-token" });
-      vi.mocked(verifyToken).mockReturnValue({
+      (verifyToken as ReturnType<typeof mock>).mockReturnValue({
         userId: "legacy-admin",
         username: "admin",
       });
