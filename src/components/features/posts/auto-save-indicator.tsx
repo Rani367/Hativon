@@ -1,6 +1,6 @@
 "use client";
 
-import { cn } from "@/lib/utils";
+import { cn, triggerHaptic } from "@/lib/utils";
 import { Loader2, Check, AlertCircle, RefreshCw } from "lucide-react";
 import type { AutoSaveStatus } from "@/lib/validation/autosave-schemas";
 
@@ -88,7 +88,7 @@ export function AutoSaveIndicator({
           {onRetry && (
             <button
               type="button"
-              onClick={onRetry}
+              onClick={() => { triggerHaptic(); onRetry?.(); }}
               className="flex items-center gap-1 text-primary hover:underline"
             >
               <RefreshCw className="h-3 w-3" />
