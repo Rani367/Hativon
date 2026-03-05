@@ -1,6 +1,5 @@
 import { describe, it, expect, mock, spyOn, beforeEach } from "bun:test";
 import type { User } from "@/types/user.types";
-import bcrypt from "bcryptjs";
 
 // Mock the queries dependency for getUserWithPassword
 mock.module("../queries", () => ({
@@ -19,7 +18,7 @@ mock.module("../auth", () => ({
       | Promise<(User & { passwordHash: string }) | null>;
     const resolvedUser = await user;
     if (!resolvedUser) return null;
-    const isValid = await bcrypt.compare(password, resolvedUser.passwordHash);
+    const isValid = await Bun.password.verify(password, resolvedUser.passwordHash);
     if (!isValid) return null;
     const { passwordHash, ...userWithoutPassword } = resolvedUser;
     return userWithoutPassword;
@@ -45,7 +44,7 @@ const createMockUserWithPassword = async (
   isTeacher: false,
   createdAt: "2024-01-01T00:00:00.000Z",
   updatedAt: "2024-01-01T00:00:00.000Z",
-  passwordHash: await bcrypt.hash("correctpassword", 10),
+  passwordHash: await Bun.password.hash("correctpassword", { algorithm: "bcrypt", cost: 10 }),
   ...overrides,
 });
 
@@ -105,7 +104,7 @@ describe("User Authentication", () => {
 
     it("is case-sensitive for passwords", async () => {
       const mockUser = await createMockUserWithPassword({
-        passwordHash: await bcrypt.hash("CaseSensitive", 10),
+        passwordHash: await Bun.password.hash("CaseSensitive", { algorithm: "bcrypt", cost: 10 }),
       });
       (getUserWithPassword as ReturnType<typeof mock>).mockResolvedValue(mockUser);
 
@@ -117,7 +116,7 @@ describe("User Authentication", () => {
     it("handles special characters in password", async () => {
       const specialPassword = "P@ssw0rd!#$%^&*()";
       const mockUser = await createMockUserWithPassword({
-        passwordHash: await bcrypt.hash(specialPassword, 10),
+        passwordHash: await Bun.password.hash(specialPassword, { algorithm: "bcrypt", cost: 10 }),
       });
       (getUserWithPassword as ReturnType<typeof mock>).mockResolvedValue(mockUser);
 
@@ -129,7 +128,7 @@ describe("User Authentication", () => {
     it("handles long passwords", async () => {
       const longPassword = "A".repeat(100);
       const mockUser = await createMockUserWithPassword({
-        passwordHash: await bcrypt.hash(longPassword, 10),
+        passwordHash: await Bun.password.hash(longPassword, { algorithm: "bcrypt", cost: 10 }),
       });
       (getUserWithPassword as ReturnType<typeof mock>).mockResolvedValue(mockUser);
 
@@ -141,7 +140,7 @@ describe("User Authentication", () => {
     it("handles unicode in password", async () => {
       const unicodePassword = "סיסמה123";
       const mockUser = await createMockUserWithPassword({
-        passwordHash: await bcrypt.hash(unicodePassword, 10),
+        passwordHash: await Bun.password.hash(unicodePassword, { algorithm: "bcrypt", cost: 10 }),
       });
       (getUserWithPassword as ReturnType<typeof mock>).mockResolvedValue(mockUser);
 
@@ -182,7 +181,7 @@ describe("User Authentication", () => {
 
     it("handles whitespace-only password", async () => {
       const mockUser = await createMockUserWithPassword({
-        passwordHash: await bcrypt.hash("   ", 10),
+        passwordHash: await Bun.password.hash("   ", { algorithm: "bcrypt", cost: 10 }),
       });
       (getUserWithPassword as ReturnType<typeof mock>).mockResolvedValue(mockUser);
 
@@ -192,30 +191,30 @@ describe("User Authentication", () => {
     });
   });
 
-  describe("bcrypt integration", () => {
-    it("uses bcrypt.compare for password verification", async () => {
-      const compareSpy = spyOn(bcrypt, "compare");
+  describe("Bun.password integration", () => {
+    it("uses Bun.password.verify for password verification", async () => {
+      const verifySpy = spyOn(Bun.password, "verify");
       const mockUser = await createMockUserWithPassword();
       (getUserWithPassword as ReturnType<typeof mock>).mockResolvedValue(mockUser);
 
       await validatePassword("testuser", "correctpassword");
 
-      expect(compareSpy).toHaveBeenCalled();
-      compareSpy.mockRestore();
+      expect(verifySpy).toHaveBeenCalled();
+      verifySpy.mockRestore();
     });
 
-    it("passes correct arguments to bcrypt.compare", async () => {
-      const compareSpy = spyOn(bcrypt, "compare");
+    it("passes correct arguments to Bun.password.verify", async () => {
+      const verifySpy = spyOn(Bun.password, "verify");
       const mockUser = await createMockUserWithPassword();
       (getUserWithPassword as ReturnType<typeof mock>).mockResolvedValue(mockUser);
 
       await validatePassword("testuser", "testpassword");
 
-      expect(compareSpy).toHaveBeenCalledWith(
+      expect(verifySpy).toHaveBeenCalledWith(
         "testpassword",
         mockUser.passwordHash,
       );
-      compareSpy.mockRestore();
+      verifySpy.mockRestore();
     });
   });
 });
