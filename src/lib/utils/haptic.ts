@@ -14,12 +14,9 @@ export function triggerHaptic(): void {
 }
 
 /**
- * Triggers a staggered haptic pattern matching the login form
- * field animations (username at 50ms, password at 100ms, button at 150ms).
+ * Triggers a buzz haptic that lasts for the full duration of the
+ * login form animations (last field finishes at ~500ms).
  */
 export function triggerLoginHaptic(): void {
-  const haptics = getInstance();
-  setTimeout(() => haptics.trigger(20), 50);
-  setTimeout(() => haptics.trigger(20), 100);
-  setTimeout(() => haptics.trigger(25), 150);
+  getInstance().trigger(500);
 }
