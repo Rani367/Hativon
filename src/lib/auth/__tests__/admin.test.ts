@@ -2,7 +2,6 @@ import { describe, it, expect, mock, spyOn, beforeEach, afterEach } from "bun:te
 import jwt from "jsonwebtoken";
 import { serialize } from "cookie";
 import { timingSafeEqual } from "crypto";
-import bcrypt from "bcryptjs";
 
 const TEST_ADMIN_PASSWORD = "test-admin-password";
 // Must match setup.ts preload value since admin.ts reads JWT_SECRET at module load time
@@ -52,7 +51,7 @@ mock.module("../admin", () => ({
   async verifyAdminPassword(password: string): Promise<boolean> {
     const isBcryptHash = /^\$2[aby]\$/.test(TEST_ADMIN_PASSWORD);
     if (isBcryptHash) {
-      return await bcrypt.compare(password, TEST_ADMIN_PASSWORD);
+      return await Bun.password.verify(password, TEST_ADMIN_PASSWORD);
     } else {
       console.warn("[SECURITY WARNING] Admin password is not hashed. Run: bun run hash-admin-password");
       if (process.env.NODE_ENV === "production") {
@@ -203,9 +202,10 @@ describe("Admin Authentication", () => {
     });
 
     it("verifies bcrypt hashed passwords correctly", async () => {
-      const hashedPassword = await bcrypt.hash(TEST_ADMIN_PASSWORD, 10);
-      expect(await bcrypt.compare(TEST_ADMIN_PASSWORD, hashedPassword)).toBe(true);
-      expect(await bcrypt.compare("wrong-password", hashedPassword)).toBe(false);
+      // Test bcrypt verification using Bun.password directly
+      const hashedPassword = await Bun.password.hash(TEST_ADMIN_PASSWORD, { algorithm: "bcrypt", cost: 10 });
+      expect(await Bun.password.verify(TEST_ADMIN_PASSWORD, hashedPassword)).toBe(true);
+      expect(await Bun.password.verify("wrong-password", hashedPassword)).toBe(false);
     });
 
     it("shows warning for plain text passwords", async () => {

@@ -1,14 +1,13 @@
 import type { User, UserRegistration, UserUpdate } from "@/types/user.types";
 import type { UserQueryResult, DbMutationResult } from "@/types/database.types";
 import { db } from "../db/client";
-import bcrypt from "bcryptjs";
 import { BCRYPT_SALT_ROUNDS } from "../constants/auth";
 
 export async function createUser(data: UserRegistration): Promise<User> {
   const { username, password, displayName, grade, classNumber, isTeacher } =
     data;
 
-  const passwordHash = await bcrypt.hash(password, BCRYPT_SALT_ROUNDS);
+  const passwordHash = await Bun.password.hash(password, { algorithm: "bcrypt", cost: BCRYPT_SALT_ROUNDS });
 
   try {
     const result = (await db.query`
@@ -117,7 +116,7 @@ export async function resetUserPassword(
   userId: string,
   newPassword: string,
 ): Promise<void> {
-  const passwordHash = await bcrypt.hash(newPassword, BCRYPT_SALT_ROUNDS);
+  const passwordHash = await Bun.password.hash(newPassword, { algorithm: "bcrypt", cost: BCRYPT_SALT_ROUNDS });
 
   (await db.query`
     UPDATE users
