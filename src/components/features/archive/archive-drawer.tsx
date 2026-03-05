@@ -5,7 +5,7 @@ import { useParams } from "next/navigation";
 import { X, ChevronDown, ChevronUp, Calendar } from "lucide-react";
 import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { cn } from "@/lib/utils";
+import { cn, triggerHaptic } from "@/lib/utils";
 import type { ArchiveMonth } from "@/lib/posts/queries";
 import {
   monthNumberToEnglish,
@@ -118,7 +118,7 @@ export function ArchiveDrawer({
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
             className="fixed inset-0 bg-black/50 z-50"
-            onClick={onClose}
+            onClick={() => { triggerHaptic(); onClose(); }}
           />
 
           {/* Drawer */}
@@ -136,7 +136,7 @@ export function ArchiveDrawer({
                 <h2 className="text-lg font-semibold">ארכיון</h2>
               </div>
               <button
-                onClick={onClose}
+                onClick={() => { triggerHaptic(); onClose(); }}
                 className="p-2 hover:bg-accent rounded-lg transition-colors"
                 aria-label="סגור תפריט"
               >
@@ -157,7 +157,7 @@ export function ArchiveDrawer({
                   {/* Latest Issue Link */}
                   <Link
                     href={`/${latestYear}/${latestMonth}`}
-                    onClick={onClose}
+                    onClick={() => { triggerHaptic(); onClose(); }}
                     className={cn(
                       "block px-3 py-2 rounded-lg text-sm font-semibold transition-colors",
                       "hover:bg-accent",
@@ -176,7 +176,7 @@ export function ArchiveDrawer({
                     return (
                       <div key={yearGroup.year}>
                         <button
-                          onClick={() => toggleYear(yearGroup.year)}
+                          onClick={() => { triggerHaptic(); toggleYear(yearGroup.year); }}
                           className={cn(
                             "w-full flex items-center justify-between px-3 py-2 rounded-lg transition-colors",
                             "hover:bg-accent",
@@ -212,7 +212,7 @@ export function ArchiveDrawer({
                                     <Link
                                       key={month.month}
                                       href={`/${yearGroup.year}/${month.monthNameEn}`}
-                                      onClick={onClose}
+                                      onClick={() => { triggerHaptic(); onClose(); }}
                                       className={cn(
                                         "block px-3 py-2 rounded-lg text-sm transition-colors",
                                         "hover:bg-accent",

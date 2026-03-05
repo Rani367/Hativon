@@ -13,6 +13,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { logError } from "@/lib/logger";
+import { triggerHaptic } from "@/lib/utils";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -311,6 +312,7 @@ export default function UsersManagementPage() {
                                 type="button"
                                 onClick={(e) => {
                                   e.stopPropagation();
+                                  triggerHaptic();
                                   handleDismissClick(user);
                                 }}
                                 className="inline-flex items-center justify-center rounded-full h-4 w-4 bg-destructive/20 text-destructive hover:bg-destructive/40 transition-colors"

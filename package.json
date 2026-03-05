@@ -79,6 +79,7 @@
     "tailwind-merge": "^3.4.0",
     "turndown": "^7.2.2",
     "uuid": "^13.0.0",
+    "web-haptics": "^0.0.6",
     "zod": "^4.2.1"
   },
   "devDependencies": {

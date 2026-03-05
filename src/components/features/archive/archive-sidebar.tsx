@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { ChevronDown, ChevronUp, Calendar } from "lucide-react";
 import { useState } from "react";
-import { cn } from "@/lib/utils";
+import { cn, triggerHaptic } from "@/lib/utils";
 import type { ArchiveMonth } from "@/lib/posts/queries";
 import {
   monthNumberToEnglish,
@@ -88,7 +88,7 @@ export function ArchiveSidebar({ archives }: ArchiveSidebarProps) {
     return (
       <aside className="w-full lg:w-64 bg-card overflow-hidden">
         <button
-          onClick={() => setIsOpen(!isOpen)}
+          onClick={() => { triggerHaptic(); setIsOpen(!isOpen); }}
           className="w-full flex items-center justify-between px-4 py-3 hover:bg-accent transition-colors"
         >
           <div className="flex items-center gap-2">
@@ -118,7 +118,7 @@ export function ArchiveSidebar({ archives }: ArchiveSidebarProps) {
   return (
     <aside className="w-full lg:w-64 bg-card border-s border-border overflow-hidden">
       <button
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => { triggerHaptic(); setIsOpen(!isOpen); }}
         className="w-full flex items-center justify-between px-4 py-3 hover:bg-accent transition-colors"
       >
         <div className="flex items-center gap-2">
@@ -159,7 +159,7 @@ export function ArchiveSidebar({ archives }: ArchiveSidebarProps) {
               return (
                 <div key={yearGroup.year}>
                   <button
-                    onClick={() => toggleYear(yearGroup.year)}
+                    onClick={() => { triggerHaptic(); toggleYear(yearGroup.year); }}
                     className={cn(
                       "w-full flex items-center justify-between px-3 py-2 rounded-lg transition-colors",
                       "hover:bg-accent",
