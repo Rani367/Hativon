@@ -1,16 +1,17 @@
 import { NextResponse } from "next/server";
 import { logError } from "@/lib/logger";
-import { cookies } from "next/headers";
+import { clearAuthCookie } from "@/lib/auth/jwt";
+import { getAdminClearCookie } from "@/lib/auth/admin";
 
 export async function POST() {
   try {
-    // Clear auth cookie using Next.js cookies API
-    const cookieStore = await cookies();
-    cookieStore.delete("authToken");
+    const headers = new Headers();
+    headers.append("Set-Cookie", clearAuthCookie());
+    headers.append("Set-Cookie", getAdminClearCookie());
 
     return NextResponse.json(
       { success: true, message: "התנתקת בהצלחה" },
-      { status: 200 },
+      { status: 200, headers },
     );
   } catch (error) {
     logError("Logout error:", error);
