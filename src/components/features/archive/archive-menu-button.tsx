@@ -2,6 +2,7 @@
 
 import { Menu } from "lucide-react";
 import { useState, lazy, Suspense, useEffect } from "react";
+import { triggerHaptic } from "@/lib/utils";
 import type { ArchiveMonth } from "@/lib/posts/queries";
 
 // Lazy load the drawer
@@ -43,7 +44,7 @@ export function ArchiveMenuButton({ archives }: ArchiveMenuButtonProps) {
   return (
     <>
       <button
-        onClick={() => setIsOpen(true)}
+        onClick={() => { triggerHaptic(); setIsOpen(true); }}
         className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-accent transition-colors"
         aria-label="פתח תפריט ארכיון"
       >

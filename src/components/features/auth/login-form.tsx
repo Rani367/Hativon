@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { motion } from "framer-motion";
-import { buttonVariants } from "@/lib/utils";
+import { buttonVariants, triggerHaptic } from "@/lib/utils";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { userLoginSchema, type UserLoginInput } from "@/lib/validation/schemas";
@@ -150,7 +150,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
         >
           <button
             type="button"
-            onClick={handleForgotClick}
+            onClick={() => { triggerHaptic(); handleForgotClick(); }}
             disabled={forgotState === "sending"}
             className="text-sm text-muted-foreground hover:text-foreground transition-colors underline-offset-4 hover:underline cursor-pointer disabled:opacity-50"
           >

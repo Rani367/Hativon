@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Moon, Sun } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, triggerHaptic } from "@/lib/utils";
 import { useTheme } from "next-themes";
 
 interface ThemeToggleProps {
@@ -48,7 +48,7 @@ export function ModeToggle({ className }: ThemeToggleProps) {
           : "bg-white border border-zinc-200",
         className
       )}
-      onClick={() => setTheme(isDark ? "light" : "dark")}
+      onClick={() => { triggerHaptic(); setTheme(isDark ? "light" : "dark"); }}
       role="button"
       tabIndex={0}
     >

@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Home, FileText, Menu, Users, Settings } from "lucide-react";
 import { logError } from "@/lib/logger";
+import { triggerHaptic } from "@/lib/utils";
 
 type AuthState = "checking" | "authorized" | "unauthorized" | "login-page";
 
@@ -154,7 +155,7 @@ export default function AdminLayout({
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-14 items-center">
           <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
+            onClick={() => { triggerHaptic(); setSidebarOpen(!sidebarOpen); }}
             className="ms-4 lg:hidden"
           >
             <Menu className="h-6 w-6" />
@@ -194,7 +195,7 @@ export default function AdminLayout({
                       ? "bg-primary text-primary-foreground"
                       : "text-muted-foreground hover:bg-muted hover:text-foreground"
                   }`}
-                  onClick={() => setSidebarOpen(false)}
+                  onClick={() => { triggerHaptic(); setSidebarOpen(false); }}
                 >
                   <Icon className="h-4 w-4" />
                   {item.label}
@@ -217,7 +218,7 @@ export default function AdminLayout({
       {sidebarOpen && (
         <div
           className="fixed inset-0 z-50 bg-black/50 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
+          onClick={() => { triggerHaptic(); setSidebarOpen(false); }}
         />
       )}
     </div>
