@@ -87,18 +87,19 @@
 
     /* Custom scrollbar */
     html {
+        overflow-y: scroll;
         scrollbar-width: thin;
-        scrollbar-color: oklch(0.556 0 0 / 0.35) transparent;
+        scrollbar-color: oklch(0.556 0 0 / 0.35) oklch(0.922 0 0 / 0.5);
     }
 
     ::-webkit-scrollbar {
         width: 10px;
         height: 10px;
-        background: transparent;
+        background: oklch(0.922 0 0 / 0.5);
     }
 
     ::-webkit-scrollbar-track {
-        background: transparent;
+        background: oklch(0.922 0 0 / 0.5);
     }
 
     ::-webkit-scrollbar-thumb {
