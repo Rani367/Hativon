@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { User, LogOut, FileText, LayoutDashboard, UserCog } from "lucide-react";
 import { AuthDialog } from "./auth-dialog";
+import { triggerLoginHaptic } from "@/lib/utils";
 
 export function UserMenu() {
   const { user, logout, loading } = useAuth();
@@ -29,7 +30,7 @@ export function UserMenu() {
         <Button
           variant="default"
           size="sm"
-          onClick={() => setAuthDialogOpen(true)}
+          onClick={() => { triggerLoginHaptic(); setAuthDialogOpen(true); }}
           className="cursor-pointer"
         >
           התחבר
