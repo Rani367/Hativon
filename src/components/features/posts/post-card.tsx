@@ -2,7 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { formatHebrewDate } from "@/lib/date/format";
 import { Post } from "@/types/post.types";
-import { getWordCount } from "@/lib/utils";
+import { getWordCount, triggerHaptic } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { calculateReadingTime } from "@/lib/utils";
 import {
@@ -33,6 +33,7 @@ export default function PostCard({ post, priority = false }: PostCardProps) {
         className="absolute inset-0 z-10"
         aria-label={post.title}
         prefetch={true}
+        onClick={() => triggerHaptic()}
       />
       <div className="relative w-full aspect-square overflow-hidden rounded-t-lg">
         {post.coverImage ? (
