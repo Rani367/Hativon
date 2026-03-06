@@ -67,7 +67,7 @@ export async function getCurrentUser(): Promise<User | null> {
     // In this case, return null to force re-authentication
     return user;
   } catch (error) {
-    console.error("Error getting current user:", error);
+    console.error("Issue getting current user:", error);
     return null;
   }
 }

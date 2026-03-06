@@ -81,7 +81,7 @@ const components = {
       <div className="relative mb-4 w-full aspect-video rounded-md overflow-hidden">
         <Image
           src={imageUrl}
-          alt={alt || ""}
+          alt={alt || "תמונה בכתבה"}
           fill
           className="object-contain"
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 70vw"
@@ -123,12 +123,12 @@ const components = {
     <TableRow className="border-border group">{children}</TableRow>
   ),
   td: ({ children }: { children?: React.ReactNode }) => (
-    <TableCell className="border-r border-border last:border-r-0 group-last:first:rounded-bl-md group-last:last:rounded-br-md">
+    <TableCell className="border-e border-border last:border-e-0 group-last:first:rounded-es-md group-last:last:rounded-ee-md">
       {children}
     </TableCell>
   ),
   th: ({ children }: { children?: React.ReactNode }) => (
-    <TableHead className="font-bold  border-r border-border last:border-r-0 first:rounded-tl-md last:rounded-tr-md">
+    <TableHead className="font-bold border-e border-border last:border-e-0 first:rounded-ss-md last:rounded-se-md">
       {children}
     </TableHead>
   ),

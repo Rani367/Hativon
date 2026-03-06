@@ -178,15 +178,15 @@
 }
 
 .rich-text-editor-content .ProseMirror blockquote {
-    @apply border-r-4 border-muted-foreground/30 pr-4 mr-0 my-4 italic text-muted-foreground;
+    @apply border-s-4 border-muted-foreground/30 ps-4 ms-0 my-4 italic text-muted-foreground;
 }
 
 .rich-text-editor-content .ProseMirror ul {
-    @apply list-disc pr-6 mb-4;
+    @apply list-disc ps-6 mb-4;
 }
 
 .rich-text-editor-content .ProseMirror ol {
-    @apply list-decimal pr-6 mb-4;
+    @apply list-decimal ps-6 mb-4;
 }
 
 .rich-text-editor-content .ProseMirror li {
@@ -203,7 +203,7 @@
 
 /* Placeholder styling */
 .rich-text-editor-content .ProseMirror.is-editor-empty:first-child::before {
-    @apply text-muted-foreground pointer-events-none float-right h-0;
+    @apply text-muted-foreground pointer-events-none float-start h-0;
     content: attr(data-placeholder);
 }
 
