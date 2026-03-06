@@ -52,29 +52,25 @@ export async function getPosts(
 
       // Get paginated posts
       const result = filterPublished
-        ? ((await db.query([
-            `SELECT
+        ? ((await db.query`
+            SELECT
               p.*,
               CASE WHEN u.id IS NULL AND p.author_id IS NOT NULL AND p.author_id != 'legacy-admin' THEN true ELSE false END as author_deleted
             FROM posts p
             LEFT JOIN users u ON p.author_id = u.id::text
             WHERE p.status = 'published'
             ORDER BY p.date DESC, p.created_at DESC
-            LIMIT $1 OFFSET $2`,
-            limit,
-            offset,
-          ])) as PostQueryResult)
-        : ((await db.query([
-            `SELECT
+            LIMIT ${limit} OFFSET ${offset}
+          `) as PostQueryResult)
+        : ((await db.query`
+            SELECT
               p.*,
               CASE WHEN u.id IS NULL AND p.author_id IS NOT NULL AND p.author_id != 'legacy-admin' THEN true ELSE false END as author_deleted
             FROM posts p
             LEFT JOIN users u ON p.author_id = u.id::text
             ORDER BY p.date DESC, p.created_at DESC
-            LIMIT $1 OFFSET $2`,
-            limit,
-            offset,
-          ])) as PostQueryResult);
+            LIMIT ${limit} OFFSET ${offset}
+          `) as PostQueryResult);
 
       const posts = result.rows.map(rowToPost);
 
@@ -242,19 +238,17 @@ export async function getPostsByMonth(
   month: number,
 ): Promise<Post[]> {
   try {
-    const result = (await db.query([
-      `SELECT
+    const result = (await db.query`
+      SELECT
         p.*,
         CASE WHEN u.id IS NULL AND p.author_id IS NOT NULL AND p.author_id != 'legacy-admin' THEN true ELSE false END as author_deleted
       FROM posts p
       LEFT JOIN users u ON p.author_id = u.id::text
       WHERE p.status = 'published'
-        AND EXTRACT(YEAR FROM p.date) = $1
-        AND EXTRACT(MONTH FROM p.date) = $2
-      ORDER BY (p.cover_image IS NOT NULL AND p.cover_image != '') DESC, p.date DESC, p.created_at DESC`,
-      year,
-      month,
-    ])) as PostQueryResult;
+        AND EXTRACT(YEAR FROM p.date) = ${year}
+        AND EXTRACT(MONTH FROM p.date) = ${month}
+      ORDER BY (p.cover_image IS NOT NULL AND p.cover_image != '') DESC, p.date DESC, p.created_at DESC
+    `) as PostQueryResult;
 
     return result.rows.map(rowToPost);
   } catch (error) {
