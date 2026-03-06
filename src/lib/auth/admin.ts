@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { serialize } from "cookie";
 import jwt from "jsonwebtoken";
 import { timingSafeEqual } from "crypto";
+import { logError } from "@/lib/logger";
 
 // Require ADMIN_PASSWORD to be set - no fallback for security
 function getAdminPassword(): string {
@@ -67,13 +68,13 @@ export async function verifyAdminPassword(password: string): Promise<boolean> {
   } else {
     // For plain text passwords (backward compatibility)
     // Use constant-time comparison to prevent timing attacks
-    console.warn(
-      "[SECURITY WARNING] Admin password is not hashed. Run: bun run hash-admin-password",
+    logError(
+      "[SECURITY] Admin password is not hashed. Run: bun run hash-admin-password",
     );
 
     // Reject plain-text passwords in production for security
     if (process.env.NODE_ENV === "production") {
-      console.error(
+      logError(
         "[SECURITY] Plain-text admin passwords are not allowed in production. " +
           "Hash your password with: bun run hash-admin-password",
       );
@@ -165,7 +166,7 @@ export async function isAdminAuthenticated(): Promise<boolean> {
 
     return verifyAdminToken(adminToken.value);
   } catch (error) {
-    console.error("Error checking admin authentication:", error);
+    logError("Issue checking admin authentication:", error);
     return false;
   }
 }

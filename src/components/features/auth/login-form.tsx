@@ -112,7 +112,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
             className="text-right transition-all duration-200 focus:scale-[1.01]"
           />
           {errors.username && (
-            <p className="text-sm text-red-600 dark:text-red-400 text-right">
+            <p className="text-sm text-destructive text-right">
               {errors.username.message}
             </p>
           )}
@@ -136,7 +136,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
             className="text-right transition-all duration-200 focus:scale-[1.01]"
           />
           {errors.password && (
-            <p className="text-sm text-red-600 dark:text-red-400 text-right">
+            <p className="text-sm text-destructive text-right">
               {errors.password.message}
             </p>
           )}
@@ -172,7 +172,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
 
         {errors.root && (
           <motion.div
-            className="text-sm text-red-600 dark:text-red-400 text-center"
+            className="text-sm text-destructive text-center"
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.2 }}

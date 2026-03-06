@@ -53,7 +53,7 @@ export function UserMenu() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" className="gap-2">
+        <Button variant="ghost" size="sm" className="gap-2" aria-label={`תפריט משתמש - ${user.displayName}`}>
           <User className="h-4 w-4" />
           <span className="hidden sm:inline max-w-[120px] truncate">
             {user.displayName}
@@ -74,19 +74,19 @@ export function UserMenu() {
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
           <Link href="/dashboard" className="cursor-pointer">
-            <LayoutDashboard className="ltr:mr-2 rtl:ml-2 h-4 w-4" />
+            <LayoutDashboard className="me-2 h-4 w-4" />
             <span>הפוסטים שלי</span>
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <Link href="/dashboard/posts/new" className="cursor-pointer">
-            <FileText className="ltr:mr-2 rtl:ml-2 h-4 w-4" />
+            <FileText className="me-2 h-4 w-4" />
             <span>פוסט חדש</span>
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <Link href="/dashboard/profile" className="cursor-pointer">
-            <UserCog className="ltr:mr-2 rtl:ml-2 h-4 w-4" />
+            <UserCog className="me-2 h-4 w-4" />
             <span>הפרופיל שלי</span>
           </Link>
         </DropdownMenuItem>
@@ -95,7 +95,7 @@ export function UserMenu() {
           onClick={handleLogout}
           className="cursor-pointer text-red-600 dark:text-red-400"
         >
-          <LogOut className="ltr:mr-2 rtl:ml-2 h-4 w-4" />
+          <LogOut className="me-2 h-4 w-4" />
           <span>התנתק</span>
         </DropdownMenuItem>
       </DropdownMenuContent>

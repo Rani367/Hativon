@@ -89,6 +89,7 @@ export function ArchiveSidebar({ archives }: ArchiveSidebarProps) {
       <aside className="w-full lg:w-64 bg-card overflow-hidden">
         <button
           onClick={() => { triggerHaptic(); setIsOpen(!isOpen); }}
+          aria-expanded={isOpen}
           className="w-full flex items-center justify-between px-4 py-3 hover:bg-accent transition-colors"
         >
           <div className="flex items-center gap-2">
@@ -119,6 +120,7 @@ export function ArchiveSidebar({ archives }: ArchiveSidebarProps) {
     <aside className="w-full lg:w-64 bg-card border-s border-border overflow-hidden">
       <button
         onClick={() => { triggerHaptic(); setIsOpen(!isOpen); }}
+        aria-expanded={isOpen}
         className="w-full flex items-center justify-between px-4 py-3 hover:bg-accent transition-colors"
       >
         <div className="flex items-center gap-2">
@@ -160,6 +162,7 @@ export function ArchiveSidebar({ archives }: ArchiveSidebarProps) {
                 <div key={yearGroup.year}>
                   <button
                     onClick={() => { triggerHaptic(); toggleYear(yearGroup.year); }}
+                    aria-expanded={isExpanded}
                     className={cn(
                       "w-full flex items-center justify-between px-3 py-2 rounded-lg transition-colors",
                       "hover:bg-accent",
