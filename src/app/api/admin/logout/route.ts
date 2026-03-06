@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { clearAdminAuth } from '@/lib/auth/admin';
+import { clearAdminAuth, getAdminClearCookie } from '@/lib/auth/admin';
 import { logError } from '@/lib/logger';
 
 /**
@@ -9,10 +9,12 @@ export async function POST() {
   try {
     await clearAdminAuth();
 
-    return NextResponse.json(
+    const response = NextResponse.json(
       { success: true, message: 'התנתקת בהצלחה' },
       { status: 200 }
     );
+    response.headers.append('Set-Cookie', getAdminClearCookie());
+    return response;
   } catch (error) {
     logError('Admin logout error:', error);
     return NextResponse.json(

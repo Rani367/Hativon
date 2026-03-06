@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Upload, X, Loader2 } from "lucide-react";
+import Image from "next/image";
 import { toast } from "sonner";
 import { logError } from "@/lib/logger";
 
@@ -81,17 +82,19 @@ export function ImageUpload({
       <p className="text-xs text-muted-foreground">{description}</p>
       {value ? (
         <div className="space-y-2">
-          <div className="relative rounded-lg overflow-hidden border">
-            <img
+          <div className="relative rounded-lg overflow-hidden border h-40 sm:h-48">
+            <Image
               src={value}
               alt="תצוגה מקדימה"
-              className="w-full h-40 sm:h-48 object-cover"
+              fill
+              className="object-cover"
+              sizes="(max-width: 640px) 100vw, 50vw"
             />
             <Button
               type="button"
               variant="destructive"
               size="icon"
-              className="absolute top-2 left-2"
+              className="absolute top-2 start-2"
               onClick={handleRemoveImage}
             >
               <X className="h-4 w-4" />
