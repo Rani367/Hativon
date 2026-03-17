@@ -95,9 +95,11 @@ export async function updatePost(
     const content =
       input.content !== undefined ? input.content : existing.content;
     const description =
-      input.content !== undefined
-        ? generateDescription(input.content)
-        : existing.description;
+      input.description && input.description.trim()
+        ? input.description.trim()
+        : input.content !== undefined
+          ? generateDescription(input.content)
+          : existing.description;
     const coverImage =
       input.coverImage !== undefined
         ? input.coverImage
