@@ -51,7 +51,7 @@ export function UserMenu() {
   };
 
   return (
-    <DropdownMenu>
+    <DropdownMenu modal={false}>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="sm" className="gap-2" aria-label={`תפריט משתמש - ${user.displayName}`}>
           <User className="h-4 w-4" />

@@ -92,24 +92,18 @@ export function ArchiveDrawer({
     });
   };
 
-  // Close on escape key + lock body scroll without layout shift
+  // Close on escape key + lock viewport scroll
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
     if (isOpen) {
       document.addEventListener("keydown", handleEscape);
-      const scrollbarWidth =
-        window.innerWidth - document.documentElement.clientWidth;
-      document.body.style.overflow = "hidden";
-      if (scrollbarWidth > 0) {
-        document.body.style.paddingLeft = `${scrollbarWidth}px`;
-      }
+      document.documentElement.style.overflow = "hidden";
     }
     return () => {
       document.removeEventListener("keydown", handleEscape);
-      document.body.style.overflow = "unset";
-      document.body.style.paddingLeft = "";
+      document.documentElement.style.overflow = "";
     };
   }, [isOpen, onClose]);
 

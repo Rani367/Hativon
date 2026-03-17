@@ -87,7 +87,8 @@
 
     /* Custom scrollbar */
     html {
-        overflow-y: scroll;
+        overflow-y: auto;
+        scrollbar-gutter: stable;
         scrollbar-width: thin;
         scrollbar-color: oklch(0.556 0 0 / 0.35) oklch(0.922 0 0 / 0.5);
     }
