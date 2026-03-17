@@ -69,7 +69,7 @@ export function RecoveryDialog({
           </DialogTitle>
           <DialogDescription>
             נמצאה טיוטה שלא נשמרה מ-{formatDateTime(timestamp)}. האם ברצונך לשחזר
-            אותה?
+            אותה?{"\u200F"}
           </DialogDescription>
         </DialogHeader>
 
