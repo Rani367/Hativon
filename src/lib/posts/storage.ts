@@ -90,45 +90,53 @@ export async function updatePost(
       return null;
     }
 
-    // Build dynamic update fields
-    const updates: Record<string, string | number | string[] | null> = {};
+    // Merge input with existing values so we can use a static template literal query
+    const title = input.title !== undefined ? input.title : existing.title;
+    const content =
+      input.content !== undefined ? input.content : existing.content;
+    const description =
+      input.content !== undefined
+        ? generateDescription(input.content)
+        : existing.description;
+    const coverImage =
+      input.coverImage !== undefined
+        ? input.coverImage
+        : existing.coverImage;
+    const author =
+      input.author !== undefined ? input.author : existing.author;
+    const authorId =
+      input.authorId !== undefined ? input.authorId : existing.authorId;
+    const authorGrade =
+      input.authorGrade !== undefined
+        ? input.authorGrade
+        : existing.authorGrade;
+    const authorClass =
+      input.authorClass !== undefined
+        ? input.authorClass
+        : existing.authorClass;
+    const tags = input.tags !== undefined ? input.tags : existing.tags;
+    const category =
+      input.category !== undefined ? input.category : existing.category;
+    const status =
+      input.status !== undefined ? input.status : existing.status;
 
-    if (input.title !== undefined) {
-      updates.title = input.title;
-    }
-
-    if (input.content !== undefined) {
-      updates.content = input.content;
-      updates.description = generateDescription(input.content);
-    }
-
-    if (input.coverImage !== undefined) updates.cover_image = input.coverImage;
-    if (input.author !== undefined) updates.author = input.author;
-    if (input.authorId !== undefined) updates.author_id = input.authorId;
-    if (input.authorGrade !== undefined)
-      updates.author_grade = input.authorGrade;
-    if (input.authorClass !== undefined)
-      updates.author_class = input.authorClass;
-    if (input.tags !== undefined) updates.tags = input.tags;
-    if (input.category !== undefined) updates.category = input.category;
-    if (input.status !== undefined) updates.status = input.status;
-
-    // Build parameterized query
-    const setters = Object.keys(updates)
-      .map((key, index) => `${key} = $${index + 2}`)
-      .join(", ");
-    const values = Object.values(updates);
-
-    // Build query parameters array with query string as first element
-    const queryString = `UPDATE posts SET ${setters}, updated_at = CURRENT_TIMESTAMP WHERE id = $1 RETURNING *`;
-    const queryArray = [queryString, id, ...values] as (
-      | string
-      | number
-      | string[]
-      | null
-    )[];
-
-    const result = (await db.query(queryArray)) as PostQueryResult;
+    const result = (await db.query`
+      UPDATE posts SET
+        title = ${title},
+        content = ${content},
+        description = ${description},
+        cover_image = ${coverImage || null},
+        author = ${author || null},
+        author_id = ${authorId || null},
+        author_grade = ${authorGrade || null},
+        author_class = ${authorClass || null},
+        tags = ${tags || []},
+        category = ${category || null},
+        status = ${status},
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = ${id}
+      RETURNING *
+    `) as PostQueryResult;
 
     if (result.rows.length === 0) {
       return null;
