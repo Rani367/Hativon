@@ -281,7 +281,7 @@ export default function EditPostPage({
   const handleDelete = async () => {
     if (
       !confirm(
-        "האם אתה בטוח שברצונך למחוק את הכתבה הזו? פעולה זו לא ניתנת לביטול.",
+        "האם אתה בטוח שברצונך למחוק את הכתבה הזו?\u200F פעולה זו לא ניתנת לביטול.",
       )
     ) {
       return;

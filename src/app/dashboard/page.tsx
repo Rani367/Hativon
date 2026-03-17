@@ -443,7 +443,7 @@ export default function DashboardPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>מחיקת כתבה</AlertDialogTitle>
             <AlertDialogDescription>
-              האם אתה בטוח שברצונך למחוק את הכתבה הזו? פעולה זו לא ניתנת לביטול.
+              האם אתה בטוח שברצונך למחוק את הכתבה הזו?{"\u200F"} פעולה זו לא ניתנת לביטול.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
