@@ -68,7 +68,7 @@ export function ConflictDialog({
           </DialogTitle>
           <DialogDescription>
             הכתבה עודכנה ב-{formatDateTime(serverVersion)} ממכשיר או חלון אחר.
-            כיצד תרצה להמשיך?
+            כיצד תרצה להמשיך?{"\u200F"}
           </DialogDescription>
         </DialogHeader>
 

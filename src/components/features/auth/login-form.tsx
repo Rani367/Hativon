@@ -154,7 +154,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
             disabled={forgotState === "sending"}
             className="text-sm text-muted-foreground hover:text-foreground transition-colors underline-offset-4 hover:underline cursor-pointer disabled:opacity-50"
           >
-            {forgotState === "sending" ? "שולח בקשה..." : "שכחת סיסמה?"}
+            {forgotState === "sending" ? "שולח בקשה..." : "שכחת סיסמה?\u200F"}
           </button>
         </motion.div>
 

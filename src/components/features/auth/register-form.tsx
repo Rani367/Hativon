@@ -152,7 +152,7 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
           htmlFor="register-isTeacher"
           className="text-right cursor-pointer select-none"
         >
-          מורה?
+          מורה?{"\u200F"}
         </Label>
         <Controller
           name="isTeacher"

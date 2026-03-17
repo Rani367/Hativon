@@ -401,7 +401,7 @@ export default function UsersManagementPage() {
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>האם אתה בטוח?</AlertDialogTitle>
+            <AlertDialogTitle>האם אתה בטוח?{"\u200F"}</AlertDialogTitle>
             <AlertDialogDescription className="text-right">
               פעולה זו תמחק את המשתמש{" "}
               <strong className="text-foreground">
@@ -432,7 +432,7 @@ export default function UsersManagementPage() {
               <strong className="text-foreground">
                 {userToDismiss?.username}
               </strong>{" "}
-              ({userToDismiss?.displayName})? הבקשה תוסר מהרשימה.
+              ({userToDismiss?.displayName})?{"\u200F"} הבקשה תוסר מהרשימה.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="gap-2">
