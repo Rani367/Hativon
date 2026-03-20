@@ -12,7 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { User, LogOut, FileText, LayoutDashboard, UserCog } from "lucide-react";
+import { User, LogOut, FileText, LayoutDashboard, UserCog, Shield } from "lucide-react";
 import { AuthDialog } from "./auth-dialog";
 
 export function UserMenu() {
@@ -72,6 +72,14 @@ export function UserMenu() {
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
+        {user.isTeacher && (
+          <DropdownMenuItem asChild>
+            <Link href="/admin/dashboard" className="cursor-pointer">
+              <Shield className="me-2 h-4 w-4" />
+              <span>פאנל ניהול</span>
+            </Link>
+          </DropdownMenuItem>
+        )}
         <DropdownMenuItem asChild>
           <Link href="/dashboard" className="cursor-pointer">
             <LayoutDashboard className="me-2 h-4 w-4" />

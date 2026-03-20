@@ -1,57 +1,49 @@
 # CLAUDE.md
 
-Deployed site: https://hativon.vercel.app/
+## Project
 
-## Project Overview
+Hativon — Hebrew school newspaper. Deployed at https://hativon.vercel.app/
 
-Hativon - a Hebrew school newspaper built with Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS 4, PostgreSQL (Vercel Postgres), Vercel Blob, JWT auth. Uses Bun as package manager, script runner, and test runner.
+**Stack:** Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS 4, PostgreSQL (Vercel Postgres), Vercel Blob, JWT auth, Bun (package manager, script runner, test runner).
+
+## Structure
+
+```
+src/
+  app/          # Next.js App Router pages and API routes
+  components/   # UI split into features/, layout/, shared/, ui/
+  lib/          # Server-side: db/, auth/, posts/, validation/, api/, cache/
+  hooks/        # Client-side React hooks
+  types/        # Shared TypeScript types
+  test/         # Test setup and helpers
+```
+
+## Commands
+
+- `bun run verify` — tests + production build. **Run after every code change. Iterate until zero failures.**
+- `bun run pre-deploy` — verify + commit.
+- `bun test` — tests only.
 
 ## Rules
 
-### Always Verify
-Run `bun run verify` at the end of every task that modifies code. Keep iterating until it passes with zero failures. It runs tests (`bun test`) and production build (`next build`).
+**Git:** Never use `git commit` directly — use `bun run pre-deploy`. Never push (user does that manually). Commit messages: imperative mood, concise ("Add user auth middleware", "Fix responsive layout on mobile").
 
-### No Emojis
-Never use emojis in code, comments, console output, or documentation. Use text prefixes like `[OK]`, `[ERROR]`, `[WARNING]` instead.
+**No `any`:** Use `unknown` with type guards, proper interfaces, or `Record<string, T>`. Catch blocks: `catch (error) { const message = error instanceof Error ? error.message : String(error); }`. Exception: test files mocking complex external dependencies.
 
-### No Markdown Files
-Never create .md files except `CLAUDE.md` and `README.md`. Put documentation in code comments, JSDoc, or these two files.
+**No emojis:** Not in code, comments, console output, or documentation. Use `[OK]`, `[ERROR]`, `[WARNING]` prefixes.
 
-### TypeScript: No `any`
-Never use the `any` type. Use `unknown` with type guards, proper interfaces, or `Record<string, T>`.
+**No .md files:** Never create markdown files except `CLAUDE.md` and `README.md`.
 
-For error handling (the tricky one):
-- WRONG: `catch (error: any) { console.log(error.message); }`
-- CORRECT: `catch (error) { const message = error instanceof Error ? error.message : String(error); }`
+**Tests are read-only:** Never modify test files, ESLint config, or `tsconfig.json` unless explicitly asked. If tests fail, fix the source code.
 
-Only exception: test files mocking complex external dependencies.
-
-### Git Workflow
-- Never commit directly with `git commit`. Use `bun run pre-deploy` (runs tests + build + commit).
-- Never push to GitHub. The user does that manually.
-- For verification without committing, use `bun run verify`.
-
-### Never Edit Tests Without Permission
-Never modify test files, ESLint config, or `tsconfig.json` unless explicitly asked. If tests fail, fix the source code, not the tests.
-
-### Commit Messages
-Imperative mood, concise. Examples: "Add user auth middleware", "Fix responsive layout on mobile".
-
-### Keep CLAUDE.md Updated
-Proactively update this file when making significant changes (new features, structure changes, dependency updates, config changes).
+**Keep CLAUDE.md current:** Update this file when adding features, changing structure, or modifying config.
 
 ## Hebrew/RTL
 
-- The entire UI is Hebrew (RTL). Font: Heebo via Google Fonts.
-- `dir="rtl"` on `<html>`. All UI text in Hebrew.
-- Use logical CSS properties (`ms-`, `me-`, `start`, `end`) instead of directional (`ml-`, `mr-`, `left`, `right`).
+The entire UI is Hebrew (RTL). Font: Heebo. `dir="rtl"` on `<html>`.
 
-## Vercel Console Output Gotcha
+ALWAYS use logical CSS properties (`ms-`, `me-`, `ps-`, `pe-`, `start`, `end`). NEVER use directional equivalents (`ml-`, `mr-`, `pl-`, `pr-`, `left`, `right`).
 
-Vercel's build system treats words like "error" and "fail" in console output as build failures, even in informational messages. In build/validation scripts:
-- Use "issue", "problem", or "validation failure" instead of "error"
-- Use "did not pass" instead of "fail" for informational context
-- Reserve "error"/"fail" for actual error reporting only
+## Gotchas
 
-## Code Quality
-All code and docs should seem 100% human written.
+**Vercel console output:** Vercel treats "error" and "fail" in console output as build failures, even in informational messages. Use "issue", "problem", or "did not pass" instead. Reserve "error"/"fail" for actual errors only.
