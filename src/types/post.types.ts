@@ -22,7 +22,7 @@ export interface PostInput {
   title: string;
   content: string;
   description?: string; // Optional custom description - if not provided, auto-generated from content
-  coverImage?: string; // Optional cover image for post
+  coverImage: string; // Required cover image for post
   author?: string;
   authorId?: string; // User ID reference for post ownership
   authorGrade?: string; // Author's grade (ז, ח, ט, י)

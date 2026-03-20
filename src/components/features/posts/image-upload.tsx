@@ -16,15 +16,17 @@ interface ImageUploadProps {
   description?: string;
   id?: string;
   showUrlInput?: boolean;
+  error?: string;
 }
 
 export function ImageUpload({
   value,
   onChange,
-  label = "תמונת שער (אופציונלי)",
+  label = "תמונת שער *",
   description = "תמונת שער לכתבה.",
   id = "imageUpload",
   showUrlInput = false,
+  error,
 }: ImageUploadProps) {
   const [uploading, setUploading] = useState(false);
 
@@ -140,6 +142,11 @@ export function ImageUpload({
             />
           )}
         </div>
+      )}
+      {error && (
+        <p className="text-sm text-destructive" role="alert">
+          {error}
+        </p>
       )}
     </div>
   );
