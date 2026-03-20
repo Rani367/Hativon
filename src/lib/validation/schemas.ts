@@ -171,12 +171,10 @@ export const postDescriptionSchema = z
   .max(500, "תיאור לא יכול להיות יותר מ-500 תווים")
   .optional();
 
-// Cover image URL validation
+// Cover image URL validation (required for new posts)
 export const coverImageSchema = z
-  .string()
-  .url("כתובת תמונה לא תקינה")
-  .optional()
-  .or(z.literal(""));
+  .string({ message: "נא להעלות תמונת שער" })
+  .url("כתובת תמונה לא תקינה");
 
 // Tags validation
 export const tagsSchema = z
@@ -207,13 +205,20 @@ export const postInputSchema = z.object({
   status: postStatusSchema.optional(),
 });
 
+// Cover image URL validation (optional, for updates)
+export const coverImageOptionalSchema = z
+  .string()
+  .url("כתובת תמונה לא תקינה")
+  .optional()
+  .or(z.literal(""));
+
 // Post update schema (all fields optional except at least one must be present)
 export const postUpdateSchema = z
   .object({
     title: postTitleSchema.optional(),
     content: postContentSchema.optional(),
     description: postDescriptionSchema,
-    coverImage: coverImageSchema,
+    coverImage: coverImageOptionalSchema,
     author: z.string().max(100).optional(),
     tags: tagsSchema,
     category: categorySchema,

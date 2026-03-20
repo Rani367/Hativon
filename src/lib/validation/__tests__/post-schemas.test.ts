@@ -80,12 +80,12 @@ describe("Post Validation Schemas", () => {
       ).toBe(true);
     });
 
-    it("accepts empty string (optional)", () => {
-      expect(coverImageSchema.safeParse("").success).toBe(true);
+    it("rejects empty string (required)", () => {
+      expect(coverImageSchema.safeParse("").success).toBe(false);
     });
 
-    it("accepts undefined (optional)", () => {
-      expect(coverImageSchema.safeParse(undefined).success).toBe(true);
+    it("rejects undefined (required)", () => {
+      expect(coverImageSchema.safeParse(undefined).success).toBe(false);
     });
 
     it("rejects invalid URLs", () => {
@@ -138,6 +138,7 @@ describe("Post Validation Schemas", () => {
     const validPost = {
       title: "Test Post",
       content: "Test content here",
+      coverImage: "https://example.com/image.jpg",
     };
 
     it("accepts minimal valid post", () => {

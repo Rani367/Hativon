@@ -131,6 +131,7 @@ export function PostFormFields({
         onChange={onCoverImageChange}
         id={imageUploadId}
         showUrlInput={showImageUrlInput}
+        error={errors.coverImage}
       />
     </>
   );
