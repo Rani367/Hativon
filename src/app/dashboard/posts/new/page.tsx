@@ -178,6 +178,10 @@ export default function NewPostPage() {
       newErrors.content = "התוכן חייב להכיל לפחות 10 תווים";
     }
 
+    if (!form.coverImage) {
+      newErrors.coverImage = "נא להעלות תמונת שער";
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };

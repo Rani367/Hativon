@@ -233,6 +233,11 @@ export default function EditPostPage({
       return;
     }
 
+    if (!form.coverImage) {
+      toast.error("נא להעלות תמונת שער");
+      return;
+    }
+
     // Cancel any pending auto-save
     cancelPendingSave();
 
