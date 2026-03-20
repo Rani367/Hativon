@@ -27,6 +27,9 @@ export {
   setPasswordResetFlag,
   clearPasswordResetFlag,
   resetUserPassword,
+  createResetToken,
+  validateResetToken,
+  consumeResetToken,
 } from './storage';
 
 // Authentication

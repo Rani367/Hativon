@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getUserById, updateUser, deleteUser, resetUserPassword, clearPasswordResetFlag } from "@/lib/users";
+import { getUserById, updateUser, deleteUser, clearPasswordResetFlag, createResetToken } from "@/lib/users";
 import { requireAdminAuth } from "@/lib/auth/admin";
 import { isDatabaseAvailable } from "@/lib/db/client";
 import { logError } from "@/lib/logger";
 import { userUpdateSchema } from "@/lib/validation/schemas";
 import { createErrorResponse } from "@/lib/api/response";
-import { z } from "zod";
 
 /**
  * GET /api/admin/users/[id] - Get single user (admin only)
@@ -77,26 +76,18 @@ export async function PATCH(
       return NextResponse.json({ success: true });
     }
 
-    // Password reset request
-    if (body.password !== undefined) {
-      const passwordSchema = z.object({
-        password: z.string().min(8, "הסיסמה חייבת להכיל לפחות 8 תווים"),
-      });
-      const pwValidation = passwordSchema.safeParse(body);
-      if (!pwValidation.success) {
-        return NextResponse.json(
-          { error: pwValidation.error.issues[0].message },
-          { status: 400 },
-        );
-      }
-
+    // Generate password reset link
+    if (body.generateResetLink === true) {
       const user = await getUserById(id);
       if (!user) {
         return NextResponse.json({ error: "User not found" }, { status: 404 });
       }
 
-      await resetUserPassword(id, pwValidation.data.password);
-      return NextResponse.json({ success: true });
+      const rawToken = await createResetToken(id);
+      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://your-site.com";
+      const resetLink = `${siteUrl}/reset-password?token=${rawToken}`;
+
+      return NextResponse.json({ resetLink });
     }
 
     // Regular profile update

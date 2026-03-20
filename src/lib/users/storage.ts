@@ -1,7 +1,8 @@
+import { randomBytes, createHash } from "crypto";
 import type { User, UserRegistration, UserUpdate } from "@/types/user.types";
 import type { UserQueryResult, DbMutationResult } from "@/types/database.types";
 import { db } from "../db/client";
-import { BCRYPT_SALT_ROUNDS } from "../constants/auth";
+import { BCRYPT_SALT_ROUNDS, PASSWORD_RESET_TOKEN_EXPIRY_MS } from "../constants/auth";
 
 export async function createUser(data: UserRegistration): Promise<User> {
   const { username, password, displayName, grade, classNumber, isTeacher } =
@@ -126,4 +127,63 @@ export async function resetUserPassword(
       updated_at = CURRENT_TIMESTAMP
     WHERE id = ${userId}
   `) as unknown as DbMutationResult;
+}
+
+function hashToken(rawToken: string): string {
+  return createHash("sha256").update(rawToken).digest("hex");
+}
+
+export async function createResetToken(userId: string): Promise<string> {
+  // Invalidate any existing tokens for this user
+  (await db.query`
+    DELETE FROM password_reset_tokens WHERE user_id = ${userId}
+  `) as unknown as DbMutationResult;
+
+  const rawToken = randomBytes(32).toString("base64url");
+  const tokenHash = hashToken(rawToken);
+  const expiresAt = new Date(Date.now() + PASSWORD_RESET_TOKEN_EXPIRY_MS);
+
+  (await db.query`
+    INSERT INTO password_reset_tokens (user_id, token_hash, expires_at)
+    VALUES (${userId}, ${tokenHash}, ${expiresAt})
+  `) as unknown as DbMutationResult;
+
+  return rawToken;
+}
+
+export async function validateResetToken(rawToken: string): Promise<boolean> {
+  const tokenHash = hashToken(rawToken);
+
+  const result = (await db.query`
+    SELECT EXISTS(
+      SELECT 1 FROM password_reset_tokens
+      WHERE token_hash = ${tokenHash} AND expires_at > NOW()
+    ) as "exists"
+  `) as { rows: Array<{ exists: boolean }> };
+
+  return result.rows[0]?.exists === true;
+}
+
+export async function consumeResetToken(rawToken: string): Promise<string | null> {
+  const tokenHash = hashToken(rawToken);
+
+  // Atomically delete the token and return the user_id
+  const result = (await db.query`
+    DELETE FROM password_reset_tokens
+    WHERE token_hash = ${tokenHash} AND expires_at > NOW()
+    RETURNING user_id as "userId"
+  `) as { rows: Array<{ userId: string }> };
+
+  if (result.rows.length === 0) {
+    return null;
+  }
+
+  const userId = result.rows[0].userId;
+
+  // Clean up any remaining tokens for this user
+  (await db.query`
+    DELETE FROM password_reset_tokens WHERE user_id = ${userId}
+  `) as unknown as DbMutationResult;
+
+  return userId;
 }
