@@ -133,7 +133,33 @@ function hashToken(rawToken: string): string {
   return createHash("sha256").update(rawToken).digest("hex");
 }
 
+let tokensTableReady = false;
+
+async function ensureTokensTable(): Promise<void> {
+  if (tokensTableReady) return;
+  await db.query`
+    CREATE TABLE IF NOT EXISTS password_reset_tokens (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      token_hash VARCHAR(64) NOT NULL,
+      expires_at TIMESTAMP NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+  `;
+  await db.query`
+    CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_hash
+    ON password_reset_tokens(token_hash)
+  `;
+  await db.query`
+    CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_user
+    ON password_reset_tokens(user_id)
+  `;
+  tokensTableReady = true;
+}
+
 export async function createResetToken(userId: string): Promise<string> {
+  await ensureTokensTable();
+
   // Invalidate any existing tokens for this user
   (await db.query`
     DELETE FROM password_reset_tokens WHERE user_id = ${userId}
@@ -152,6 +178,7 @@ export async function createResetToken(userId: string): Promise<string> {
 }
 
 export async function validateResetToken(rawToken: string): Promise<boolean> {
+  await ensureTokensTable();
   const tokenHash = hashToken(rawToken);
 
   const result = (await db.query`
@@ -165,6 +192,7 @@ export async function validateResetToken(rawToken: string): Promise<boolean> {
 }
 
 export async function consumeResetToken(rawToken: string): Promise<string | null> {
+  await ensureTokensTable();
   const tokenHash = hashToken(rawToken);
 
   // Atomically delete the token and return the user_id
