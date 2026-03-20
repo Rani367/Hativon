@@ -165,15 +165,21 @@ export default function UsersManagementPage() {
     }
   }
 
-  function handleResetClick(userId: string) {
+  async function handleResetClick(userId: string) {
+    // Toggle off if already showing this user's link
     if (resetUserId === userId) {
       setResetUserId(null);
-    } else {
-      setResetUserId(userId);
+      return;
     }
-  }
 
-  async function handleGenerateLink(userId: string) {
+    // If a link was already generated, just show it
+    if (generatedLinks[userId]) {
+      setResetUserId(userId);
+      return;
+    }
+
+    // Generate a new link immediately
+    setResetUserId(userId);
     setGenerating(userId);
     try {
       const response = await fetch(`/api/admin/users/${userId}`, {
@@ -201,6 +207,7 @@ export default function UsersManagementPage() {
     } catch (error) {
       const msg = error instanceof Error ? error.message : String(error);
       toast.error(`שגיאה ביצירת קישור: ${msg}`);
+      setResetUserId(null);
     } finally {
       setGenerating(null);
     }
@@ -388,13 +395,9 @@ export default function UsersManagementPage() {
                                   </Button>
                                 </>
                               ) : (
-                                <Button
-                                  size="sm"
-                                  onClick={() => handleGenerateLink(user.id)}
-                                  disabled={generating === user.id}
-                                >
-                                  {generating === user.id ? "יוצר קישור..." : "צור קישור"}
-                                </Button>
+                                <span className="text-sm text-muted-foreground">
+                                  יוצר קישור...
+                                </span>
                               )}
                             </div>
                           )}
