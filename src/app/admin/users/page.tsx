@@ -31,7 +31,9 @@ import {
   Users,
   UserPlus,
   Terminal,
-  KeyRound,
+  Link,
+  Copy,
+  Check,
   X,
 } from "lucide-react";
 import { formatHebrewDate } from "@/lib/date/format";
@@ -46,8 +48,9 @@ export default function UsersManagementPage() {
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
   const [dbNotConfigured, setDbNotConfigured] = useState(false);
   const [resetUserId, setResetUserId] = useState<string | null>(null);
-  const [resetPassword, setResetPassword] = useState("");
-  const [resetting, setResetting] = useState(false);
+  const [generatedLinks, setGeneratedLinks] = useState<Record<string, string>>({});
+  const [generating, setGenerating] = useState<string | null>(null);
+  const [copiedUserId, setCopiedUserId] = useState<string | null>(null);
   const [dismissDialogOpen, setDismissDialogOpen] = useState(false);
   const [userToDismiss, setUserToDismiss] = useState<User | null>(null);
 
@@ -165,31 +168,27 @@ export default function UsersManagementPage() {
   function handleResetClick(userId: string) {
     if (resetUserId === userId) {
       setResetUserId(null);
-      setResetPassword("");
     } else {
       setResetUserId(userId);
-      setResetPassword("");
     }
   }
 
-  async function handleResetSubmit(userId: string) {
-    if (!resetPassword.trim() || resetPassword.length < 8) {
-      toast.error("הסיסמה חייבת להכיל לפחות 8 תווים");
-      return;
-    }
-
-    setResetting(true);
+  async function handleGenerateLink(userId: string) {
+    setGenerating(userId);
     try {
       const response = await fetch(`/api/admin/users/${userId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password: resetPassword }),
+        body: JSON.stringify({ generateResetLink: true }),
       });
 
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
-        throw new Error(data.error || "Failed to reset password");
+        throw new Error(data.error || "Failed to generate reset link");
       }
+
+      const data = await response.json();
+      setGeneratedLinks((prev) => ({ ...prev, [userId]: data.resetLink }));
 
       // Clear the reset request badge
       setUsers((prev) =>
@@ -198,14 +197,23 @@ export default function UsersManagementPage() {
         ),
       );
 
-      setResetUserId(null);
-      setResetPassword("");
-      toast.success("הסיסמה אופסה בהצלחה");
+      toast.success("קישור איפוס נוצר");
     } catch (error) {
       const msg = error instanceof Error ? error.message : String(error);
-      toast.error(`שגיאה באיפוס הסיסמה: ${msg}`);
+      toast.error(`שגיאה ביצירת קישור: ${msg}`);
     } finally {
-      setResetting(false);
+      setGenerating(null);
+    }
+  }
+
+  async function handleCopyLink(userId: string, link: string) {
+    try {
+      await navigator.clipboard.writeText(link);
+      setCopiedUserId(userId);
+      toast.success("הקישור הועתק");
+      setTimeout(() => setCopiedUserId(null), 2000);
+    } catch {
+      toast.error("לא ניתן להעתיק את הקישור");
     }
   }
 
@@ -344,7 +352,7 @@ export default function UsersManagementPage() {
                               size="sm"
                               onClick={() => handleResetClick(user.id)}
                             >
-                              <KeyRound className="h-4 w-4 me-2" />
+                              <Link className="h-4 w-4 me-2" />
                               איפוס סיסמה
                             </Button>
                             <Button
@@ -359,31 +367,35 @@ export default function UsersManagementPage() {
                           </div>
                           {resetUserId === user.id && (
                             <div className="flex items-center gap-2">
-                              <Input
-                                type="password"
-                                value={resetPassword}
-                                onChange={(e) =>
-                                  setResetPassword(e.target.value)
-                                }
-                                placeholder="סיסמה חדשה (לפחות 8 תווים)"
-                                className="text-right h-8 text-sm"
-                                disabled={resetting}
-                                onKeyDown={(e) => {
-                                  if (e.key === "Enter") {
-                                    e.preventDefault();
-                                    handleResetSubmit(user.id);
-                                  }
-                                }}
-                              />
-                              <Button
-                                size="sm"
-                                onClick={() => handleResetSubmit(user.id)}
-                                disabled={
-                                  resetting || resetPassword.length < 8
-                                }
-                              >
-                                {resetting ? "מאפס..." : "אישור"}
-                              </Button>
+                              {generatedLinks[user.id] ? (
+                                <>
+                                  <Input
+                                    readOnly
+                                    value={generatedLinks[user.id]}
+                                    className="h-8 text-sm font-mono"
+                                    dir="ltr"
+                                  />
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => handleCopyLink(user.id, generatedLinks[user.id])}
+                                  >
+                                    {copiedUserId === user.id ? (
+                                      <Check className="h-4 w-4" />
+                                    ) : (
+                                      <Copy className="h-4 w-4" />
+                                    )}
+                                  </Button>
+                                </>
+                              ) : (
+                                <Button
+                                  size="sm"
+                                  onClick={() => handleGenerateLink(user.id)}
+                                  disabled={generating === user.id}
+                                >
+                                  {generating === user.id ? "יוצר קישור..." : "צור קישור"}
+                                </Button>
+                              )}
                             </div>
                           )}
                         </div>

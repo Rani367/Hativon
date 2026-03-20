@@ -43,6 +43,20 @@ export const passwordSchema = z
   .min(8, "סיסמה חייבת להיות לפחות 8 תווים")
   .max(100, "סיסמה לא יכולה להיות יותר מ-100 תווים");
 
+// Password reset schema (for the public reset form)
+export const resetPasswordSchema = z
+  .object({
+    token: z.string().min(1, "טוקן נדרש"),
+    password: passwordSchema,
+    confirmPassword: z.string().min(1, "אימות סיסמה נדרש"),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "הסיסמאות אינן תואמות",
+    path: ["confirmPassword"],
+  });
+
+export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
+
 // Display name validation
 export const displayNameSchema = z
   .string({ message: "שם תצוגה נדרש" })

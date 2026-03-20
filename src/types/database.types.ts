@@ -98,6 +98,22 @@ export interface DbExistsResult {
 export type DbMutationResult = DbQueryResult<never>;
 
 /**
+ * Database row representation of a password reset token
+ */
+export interface DbResetTokenRow {
+  id: string;
+  user_id: string;
+  token_hash: string;
+  expires_at: Date;
+  created_at: Date;
+}
+
+/**
+ * Query result for reset token lookups
+ */
+export type ResetTokenQueryResult = DbQueryResult<DbResetTokenRow>;
+
+/**
  * Type helpers for common query patterns
  */
 export type UserQueryResult = DbQueryResult<DbUserRow>;
