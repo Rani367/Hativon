@@ -37,3 +37,9 @@ export const MIN_PASSWORD_LENGTH = 8;
  * Minimum recommended admin password length
  */
 export const MIN_ADMIN_PASSWORD_LENGTH = 8;
+
+/**
+ * Password reset token expiry time in milliseconds
+ * Default: 1 hour
+ */
+export const PASSWORD_RESET_TOKEN_EXPIRY_MS = 60 * 60 * 1000;
