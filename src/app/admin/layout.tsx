@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Home, FileText, Menu, Users, Settings } from "lucide-react";
+import { Home, FileText, Menu, Users } from "lucide-react";
 import { logError } from "@/lib/logger";
 import { triggerHaptic } from "@/lib/utils";
 
@@ -20,8 +20,6 @@ export default function AdminLayout({
   const [authState, setAuthState] = useState<AuthState>("checking");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [hasCheckedAuth, setHasCheckedAuth] = useState(false);
-  const [hasPendingMonth, setHasPendingMonth] = useState(false);
-
   // Memoized auth check function
   const checkAuth = useCallback(async () => {
     // Skip if already authorized (prevents re-checking on navigation)
@@ -75,25 +73,6 @@ export default function AdminLayout({
     }
   }, [authState, router]);
 
-  // Check for pending month when authorized
-  useEffect(() => {
-    if (authState !== "authorized") return;
-
-    async function checkPendingMonth() {
-      try {
-        const response = await fetch("/api/admin/settings/default-month");
-        if (response.ok) {
-          const data = await response.json();
-          setHasPendingMonth(!!data.pendingMonth);
-        }
-      } catch (error) {
-        // Silently fail - badge is not critical
-      }
-    }
-
-    checkPendingMonth();
-  }, [authState]);
-
   // Show login page without layout (handled by page.tsx)
   if (authState === "login-page") {
     return children;
@@ -146,7 +125,6 @@ export default function AdminLayout({
     { href: "/admin/dashboard", label: "לוח בקרה", icon: Home },
     { href: "/admin/posts", label: "כל הכתבות", icon: FileText },
     { href: "/admin/users", label: "משתמשים", icon: Users },
-    { href: "/admin/settings", label: "הגדרות", icon: Settings, badge: hasPendingMonth },
   ];
 
   return (
@@ -184,8 +162,6 @@ export default function AdminLayout({
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = pathname === item.href;
-              const showBadge = "badge" in item && item.badge;
-
               return (
                 <Link
                   key={item.href}
@@ -199,9 +175,6 @@ export default function AdminLayout({
                 >
                   <Icon className="h-4 w-4" />
                   {item.label}
-                  {showBadge && (
-                    <span className="ms-auto h-2 w-2 rounded-full bg-amber-500" />
-                  )}
                 </Link>
               );
             })}
