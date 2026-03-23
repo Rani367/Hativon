@@ -8,6 +8,22 @@
 
 import { db, isDatabaseAvailable } from "./db/client";
 import { getCurrentMonthYear, monthNumberToEnglish } from "./date/months";
+import { getArchiveMonths } from "./posts/queries";
+
+const MONTH_TO_NUMBER: Record<string, number> = {
+  january: 1,
+  february: 2,
+  march: 3,
+  april: 4,
+  may: 5,
+  june: 6,
+  july: 7,
+  august: 8,
+  september: 9,
+  october: 10,
+  november: 11,
+  december: 12,
+};
 
 let settingsTableInitialized = false;
 
@@ -226,22 +242,6 @@ export async function getPendingMonth(
     const currentDefault = await getDefaultMonth();
     const { year: currentYear, month: currentMonth } = getCurrentMonthYear();
 
-    // Convert current month name to number for comparison
-    const MONTH_TO_NUMBER: Record<string, number> = {
-      january: 1,
-      february: 2,
-      march: 3,
-      april: 4,
-      may: 5,
-      june: 6,
-      july: 7,
-      august: 8,
-      september: 9,
-      october: 10,
-      november: 11,
-      december: 12,
-    };
-
     const currentMonthNumber = MONTH_TO_NUMBER[currentMonth.toLowerCase()];
 
     // If no default set, there's no "pending" concept
@@ -280,8 +280,15 @@ export async function getPendingMonth(
 }
 
 /**
- * Get the default month for the homepage, with fallback to current month
- * This is the main function used by the homepage to determine which month to show
+ * Minimum number of published posts required for the current calendar month
+ * to automatically become the default month shown on the homepage.
+ */
+const AUTO_SWITCH_MIN_POSTS = 10;
+
+/**
+ * Get the default month for the homepage, with fallback to current month.
+ * Automatically switches the default to the current calendar month
+ * if it has at least AUTO_SWITCH_MIN_POSTS published posts.
  *
  * @returns Object with year and month (English name)
  */
@@ -290,13 +297,41 @@ export async function getDefaultMonthWithFallback(): Promise<{
   month: string;
 }> {
   const defaultMonth = await getDefaultMonth();
+  const current = getCurrentMonthYear();
 
-  if (defaultMonth) {
+  if (!defaultMonth) {
+    // No setting exists or database unavailable — use current month
+    return current;
+  }
+
+  // Check if stored default already matches the current calendar month
+  const defaultMonthNumber = MONTH_TO_NUMBER[defaultMonth.month.toLowerCase()];
+  const currentMonthNumber = MONTH_TO_NUMBER[current.month.toLowerCase()];
+
+  if (
+    defaultMonth.year === current.year &&
+    defaultMonthNumber === currentMonthNumber
+  ) {
     return defaultMonth;
   }
 
-  // Fallback to current month if no setting exists or database unavailable
-  return getCurrentMonthYear();
+  // Current month differs from stored default — check post count
+  try {
+    const archives = await getArchiveMonths();
+    const currentArchive = archives.find(
+      (a) => a.year === current.year && a.month === currentMonthNumber,
+    );
+
+    if (currentArchive && currentArchive.count >= AUTO_SWITCH_MIN_POSTS) {
+      // Auto-switch: persist and return the current month
+      await setDefaultMonth(current.year, current.month);
+      return current;
+    }
+  } catch {
+    // If archive query had a problem, keep the stored default
+  }
+
+  return defaultMonth;
 }
 
 export interface ArchiveMonthWithDefault {
