@@ -283,7 +283,7 @@ export async function getPendingMonth(
  * Minimum number of published posts required for the current calendar month
  * to automatically become the default month shown on the homepage.
  */
-const AUTO_SWITCH_MIN_POSTS = 10;
+const AUTO_SWITCH_MIN_POSTS = 15;
 
 /**
  * Get the default month for the homepage, with fallback to current month.
