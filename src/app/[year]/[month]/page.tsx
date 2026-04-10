@@ -87,31 +87,27 @@ export default async function ArchivePage({ params }: ArchivePageProps) {
 
   // Fetch posts once for both header count and content display
   const posts = await getCachedPostsByMonth(year, monthNumber);
-  const featuredCount = Math.min(posts.length, 3);
+  const postsSummary =
+    posts.length === 0
+      ? "עדיין לא פורסמו כתבות בגיליון הזה."
+      : posts.length === 1
+        ? "כתבה אחת מחכה לכם בגיליון הזה."
+        : `${posts.length} כתבות מחכות לכם בגיליון הזה.`;
 
   return (
     <div className="container mx-auto px-4 py-8 sm:py-12">
       <div className="mb-10 overflow-hidden rounded-[2rem] border bg-gradient-to-br from-amber-50 via-background to-sky-50 px-5 py-8 shadow-sm sm:px-8 sm:py-10">
-        <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-          <div className="max-w-3xl space-y-4">
-            <div className="inline-flex items-center rounded-full border bg-background/80 px-3 py-1 text-sm font-medium text-muted-foreground">
-              גיליון חודשי לתלמידים ולמורים
-            </div>
-            <div className="space-y-3">
-              <h1 className="text-3xl font-black tracking-tight sm:text-4xl lg:text-5xl">
-                גיליון {hebrewMonth} {year}
-              </h1>
-            </div>
+        <div className="max-w-3xl space-y-4">
+          <div className="inline-flex items-center rounded-full border bg-background/80 px-3 py-1 text-sm font-medium text-muted-foreground">
+            גיליון חודשי לתלמידים ולמורים
           </div>
-
-          <div className="grid gap-3 sm:grid-cols-2 lg:w-[22rem]">
-            <div className="rounded-2xl border bg-background/80 p-4">
-              <p className="text-sm text-muted-foreground">בגיליון הזה</p>
-              <p className="mt-1 text-3xl font-black">{posts.length}</p>
-              <p className="text-sm text-muted-foreground">
-                {posts.length === 1 ? "כתבה אחת" : "כתבות לקריאה"}
-              </p>
-            </div>
+          <div className="space-y-3">
+            <h1 className="text-3xl font-black tracking-tight sm:text-4xl lg:text-5xl">
+              גיליון {hebrewMonth} {year}
+            </h1>
+            <p className="max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">
+              {postsSummary}
+            </p>
           </div>
         </div>
       </div>
