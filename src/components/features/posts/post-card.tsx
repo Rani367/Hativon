@@ -43,7 +43,7 @@ export default function PostCard({
   return (
     <Card
       className={`group relative h-full overflow-hidden border-border/70 bg-card/80 pt-0 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-xl supports-[backdrop-filter]:bg-background/80 ${
-        compact ? "gap-4" : ""
+        compact ? "gap-2" : ""
       }`}
     >
       <Link
@@ -55,7 +55,7 @@ export default function PostCard({
       />
       <div
         className={`relative w-full overflow-hidden rounded-t-lg ${
-          compact ? "aspect-[16/9]" : "aspect-[4/3]"
+          compact ? "aspect-[2/1]" : "aspect-[4/3]"
         }`}
       >
         {post.coverImage ? (
@@ -101,10 +101,10 @@ export default function PostCard({
           </div>
         )}
       </div>
-      <CardHeader className={compact ? "space-y-2 pb-2" : "space-y-3 pb-3"}>
+      <CardHeader className={compact ? "space-y-1.5 pb-0" : "space-y-3 pb-3"}>
         <div
           className={`flex flex-wrap items-center gap-3 text-muted-foreground ${
-            compact ? "text-xs sm:text-sm" : "text-sm"
+            compact ? "text-xs" : "text-sm"
           }`}
         >
           <div className="flex items-center gap-2">
@@ -119,28 +119,30 @@ export default function PostCard({
         <div>
           <h2
             className={`font-bold leading-tight text-foreground ${
-              compact ? "text-xl" : "text-xl sm:text-2xl"
+              compact ? "line-clamp-2 text-lg" : "text-xl sm:text-2xl"
             }`}
           >
             {post.title}
           </h2>
         </div>
-        <p
-          className={`text-sm leading-6 text-muted-foreground ${
-            compact ? "line-clamp-2" : "line-clamp-3 sm:text-base"
-          }`}
-        >
-          {post.description}
-        </p>
+        {compact ? (
+          <p className="line-clamp-1 text-sm leading-5 text-muted-foreground">
+            {post.description}
+          </p>
+        ) : (
+          <p className="line-clamp-3 text-sm leading-6 text-muted-foreground sm:text-base">
+            {post.description}
+          </p>
+        )}
       </CardHeader>
-      <CardContent className={compact ? "space-y-2 pt-0" : "space-y-3 pt-0"}>
-        <p className="text-sm font-medium text-foreground/80">{authorLine}</p>
-        {!compact && (
+      {!compact && (
+        <CardContent className="space-y-3 pt-0">
+          <p className="text-sm font-medium text-foreground/80">{authorLine}</p>
           <p className="text-sm text-muted-foreground">
             הקליקו לקריאה מלאה במובייל או במחשב.
           </p>
-        )}
-      </CardContent>
+        </CardContent>
+      )}
       {!compact && post.tags && post.tags.length > 0 && (
         <CardFooter className="pt-0">
           <div className="flex gap-2 flex-wrap">
