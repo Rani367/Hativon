@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import type { Post } from "@/types/post.types";
@@ -12,9 +11,9 @@ import {
   isValidYearMonth,
   monthNumberToEnglish,
 } from "@/lib/date/months";
-import { formatHebrewDate } from "@/lib/date/format";
 import { EmptyPostsState } from "@/components/features/posts/empty-posts-state";
 import PaginatedPosts from "@/components/features/posts/paginated-posts";
+import PostCard from "@/components/features/posts/post-card";
 
 // Static generation with ISR - pages are pre-built at build time
 export const revalidate = 60;
@@ -57,36 +56,18 @@ function PostsSkeleton() {
 }
 
 // Component that renders posts - receives pre-fetched data
-function PostsContent({ posts }: { posts: Post[] }) {
+function PostsContent({
+  posts,
+  showEmptyState = true,
+}: {
+  posts: Post[];
+  showEmptyState?: boolean;
+}) {
   if (posts.length === 0) {
-    return <EmptyPostsState />;
+    return showEmptyState ? <EmptyPostsState /> : null;
   }
 
   return <PaginatedPosts initialPosts={posts} postsPerPage={12} />;
-}
-
-function ArchiveHighlightCard({ post }: { post: Post }) {
-  return (
-    <Link
-      href={`/posts/${post.id}`}
-      className="group flex h-full flex-col justify-between rounded-[1.5rem] border bg-background/85 p-4 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-lg supports-[backdrop-filter]:bg-background/80"
-    >
-      <div className="space-y-3">
-        <p className="text-xs font-medium text-muted-foreground">
-          {formatHebrewDate(post.date)}
-        </p>
-        <h2 className="line-clamp-2 text-lg font-bold leading-7 text-foreground transition-colors group-hover:text-amber-700">
-          {post.title}
-        </h2>
-        <p className="line-clamp-2 text-sm leading-6 text-muted-foreground">
-          {post.description}
-        </p>
-      </div>
-      <p className="mt-4 text-sm font-medium text-foreground/80">
-        {post.author ? `מאת ${post.author}` : "מערכת חטיבון"}
-      </p>
-    </Link>
-  );
 }
 
 export default async function ArchivePage({ params }: ArchivePageProps) {
@@ -113,7 +94,8 @@ export default async function ArchivePage({ params }: ArchivePageProps) {
 
   // Fetch posts once for both header count and content display
   const posts = await getCachedPostsByMonth(year, monthNumber);
-  const highlightedPosts = posts.slice(0, 2);
+  const featuredPosts = posts.slice(0, 2);
+  const remainingPosts = posts.slice(featuredPosts.length);
   const postsSummary =
     posts.length === 0
       ? "עדיין לא פורסמו כתבות בגיליון הזה."
@@ -123,9 +105,9 @@ export default async function ArchivePage({ params }: ArchivePageProps) {
 
   return (
     <div className="container mx-auto px-4 py-8 sm:py-12">
-      <div className="mx-auto mb-10 max-w-6xl overflow-hidden rounded-[2rem] border bg-gradient-to-br from-amber-50 via-background to-sky-50 px-5 py-8 shadow-sm sm:px-8 sm:py-10">
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,30rem)_minmax(0,1fr)] lg:items-start xl:grid-cols-[minmax(0,32rem)_minmax(0,1fr)] xl:gap-8">
-          <div className="space-y-4 lg:max-w-[32rem]">
+      <div className="mb-10 flex flex-col gap-6 lg:flex-row lg:items-start">
+        <div className="w-full overflow-hidden rounded-[2rem] border bg-gradient-to-br from-amber-50 via-background to-sky-50 px-5 py-8 shadow-sm sm:px-8 sm:py-10 lg:max-w-[28rem] lg:shrink-0 xl:max-w-[30rem]">
+          <div className="space-y-4">
             <div className="inline-flex items-center rounded-full border bg-background/80 px-3 py-1 text-sm font-medium text-muted-foreground">
               גיליון חודשי לתלמידים ולמורים
             </div>
@@ -138,24 +120,22 @@ export default async function ArchivePage({ params }: ArchivePageProps) {
               </p>
             </div>
           </div>
-
-          {highlightedPosts.length > 0 && (
-            <div className="hidden lg:block">
-              <p className="mb-3 text-sm font-medium text-muted-foreground">
-                לקריאה מהירה מהגיליון
-              </p>
-              <div className="grid gap-4 xl:grid-cols-2">
-                {highlightedPosts.map((post) => (
-                  <ArchiveHighlightCard key={post.id} post={post} />
-                ))}
-              </div>
-            </div>
-          )}
         </div>
+
+        {featuredPosts.length > 0 && (
+          <div className="grid flex-1 gap-6 md:grid-cols-2">
+            {featuredPosts.map((post, index) => (
+              <PostCard key={post.id} post={post} priority={index === 0} />
+            ))}
+          </div>
+        )}
       </div>
 
       <Suspense fallback={<PostsSkeleton />}>
-        <PostsContent posts={posts} />
+        <PostsContent
+          posts={remainingPosts}
+          showEmptyState={posts.length === 0}
+        />
       </Suspense>
     </div>
   );
