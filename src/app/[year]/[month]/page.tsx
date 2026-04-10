@@ -101,10 +101,6 @@ export default async function ArchivePage({ params }: ArchivePageProps) {
               <h1 className="text-3xl font-black tracking-tight sm:text-4xl lg:text-5xl">
                 גיליון {hebrewMonth} {year}
               </h1>
-              <p className="max-w-2xl text-base leading-7 text-muted-foreground sm:text-lg">
-                מקום אחד לכל הכתבות, הדעות והסיפורים של קהילת חטיבון. התחילו
-                מהכתבות החדשות או גללו כדי למצוא משהו שמעניין אתכם.
-              </p>
             </div>
           </div>
 
@@ -114,13 +110,6 @@ export default async function ArchivePage({ params }: ArchivePageProps) {
               <p className="mt-1 text-3xl font-black">{posts.length}</p>
               <p className="text-sm text-muted-foreground">
                 {posts.length === 1 ? "כתבה אחת" : "כתבות לקריאה"}
-              </p>
-            </div>
-            <div className="rounded-2xl border bg-background/80 p-4">
-              <p className="text-sm text-muted-foreground">מומלץ להתחיל עם</p>
-              <p className="mt-1 text-3xl font-black">{featuredCount}</p>
-              <p className="text-sm text-muted-foreground">
-                כתבות ראשונות בראש העמוד
               </p>
             </div>
           </div>
