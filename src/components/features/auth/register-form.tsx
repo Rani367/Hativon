@@ -152,7 +152,7 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
           htmlFor="register-isTeacher"
           className="text-right cursor-pointer select-none"
         >
-          מורה?{"\u200F"}
+          חשבון צוות / מורה{"\u200F"}
         </Label>
         <Controller
           name="isTeacher"
@@ -178,7 +178,7 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
       <AnimatePresence mode="wait">
         {isTeacher && (
           <motion.div
-            className="space-y-2 overflow-hidden"
+            className="space-y-3 overflow-hidden rounded-xl border border-amber-200 bg-amber-50/70 p-4"
             initial={{ opacity: 0, height: 0, y: -10 }}
             animate={{ opacity: 1, height: "auto", y: 0 }}
             exit={{ opacity: 0, height: 0, y: -10 }}
@@ -188,18 +188,22 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
               opacity: { duration: 0.2 },
             }}
           >
+            <p className="text-sm text-right text-amber-900">
+              האפשרות הזו מיועדת למורים ולאנשי צוות בלבד. התלמידים לא צריכים
+              לבחור בה.
+            </p>
             <Label
               htmlFor="register-adminPassword"
               className="text-right block"
             >
-              סיסמת מנהל
+              סיסמת צוות מאשרת
             </Label>
             <Input
               id="register-adminPassword"
               type="password"
               {...register("adminPassword")}
               disabled={isSubmitting}
-              placeholder="הזן סיסמת מנהל לאימות"
+              placeholder="הזן סיסמה שניתנה לצוות"
               className={`text-right transition-all duration-200 focus:scale-[1.01] ${errors.adminPassword ? "border-destructive" : ""}`}
             />
             {errors.adminPassword && (
@@ -224,6 +228,9 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
               opacity: { duration: 0.2 },
             }}
           >
+            <div className="sm:col-span-2 rounded-xl border bg-muted/40 p-3 text-right text-sm text-muted-foreground">
+              פרטי הכיתה עוזרים להציג קרדיט נכון לכותבים התלמידים.
+            </div>
             <div className="flex-1 space-y-2">
               <Label
                 htmlFor="register-classNumber"

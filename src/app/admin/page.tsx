@@ -66,7 +66,7 @@ export default function AdminLoginPage() {
           <CardDescription>
             {authState === "not-teacher"
               ? "רק מורים יכולים לגשת לפאנל הניהול"
-              : "התחבר עם חשבון מורה כדי לגשת לפאנל הניהול"}
+              : "התחברו עם חשבון מורה או איש צוות כדי לנהל את הגיליון"}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -86,7 +86,8 @@ export default function AdminLoginPage() {
           ) : (
             <>
               <p className="text-sm text-muted-foreground text-center">
-                יש להתחבר עם חשבון מורה כדי לנהל את האתר.
+                יש להתחבר עם חשבון צוות מאושר כדי לנהל כתבות, משתמשים ובקשות
+                לאיפוס סיסמה.
               </p>
               <div className="flex flex-col gap-2">
                 <Link href="/?login=true">

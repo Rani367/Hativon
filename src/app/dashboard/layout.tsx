@@ -4,7 +4,14 @@ import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { FileText, PlusCircle, LogOut, Menu, UserCog } from "lucide-react";
+import {
+  FileText,
+  PlusCircle,
+  LogOut,
+  Menu,
+  UserCog,
+  ShieldCheck,
+} from "lucide-react";
 import { logError } from "@/lib/logger";
 import { triggerHaptic } from "@/lib/utils";
 
@@ -18,6 +25,7 @@ export default function DashboardLayout({
   const [checking, setChecking] = useState(true);
   const [authenticated, setAuthenticated] = useState(false);
   const [userName, setUserName] = useState("");
+  const [isTeacher, setIsTeacher] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Check authentication for all dashboard routes
@@ -31,6 +39,7 @@ export default function DashboardLayout({
           setAuthenticated(true);
           if (data.user) {
             setUserName(data.user.displayName || data.user.email);
+            setIsTeacher(Boolean(data.user.isTeacher));
           }
         } else {
           router.push("/");
@@ -105,7 +114,11 @@ export default function DashboardLayout({
   }
 
   const navItems = [
-    { href: "/dashboard", label: "הכתבות שלי", icon: FileText },
+    {
+      href: "/dashboard",
+      label: isTeacher ? "התוכן שלי" : "הכתבות שלי",
+      icon: FileText,
+    },
     { href: "/dashboard/posts/new", label: "כתבה חדשה", icon: PlusCircle },
     { href: "/dashboard/profile", label: "הפרופיל שלי", icon: UserCog },
   ];
@@ -122,11 +135,28 @@ export default function DashboardLayout({
             <Menu className="h-6 w-6" />
           </button>
           <div className="flex flex-1 items-center justify-between">
-            <h1 className="text-xl font-semibold">לוח הבקרה שלי</h1>
+            <div>
+              <h1 className="text-xl font-semibold">
+                {isTeacher ? "מרחב העריכה וההוראה" : "מרחב הכתיבה שלי"}
+              </h1>
+              <p className="hidden text-xs text-muted-foreground sm:block">
+                {isTeacher
+                  ? "ניהול כתיבה, פרסום ומעבר מהיר לכלי צוות"
+                  : "כתיבה, שמירת טיוטות ופרסום לקהילת בית הספר"}
+              </p>
+            </div>
             <div className="flex items-center gap-4">
               <span className="text-sm text-muted-foreground hidden sm:inline">
                 {userName}
               </span>
+              {isTeacher && (
+                <Link href="/admin/dashboard">
+                  <Button variant="outline" size="sm">
+                    <ShieldCheck className="me-2 h-4 w-4" />
+                    כלי צוות
+                  </Button>
+                </Link>
+              )}
               <Link href="/">
                 <Button variant="outline" size="sm">
                   חזרה לאתר
