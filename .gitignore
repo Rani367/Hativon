@@ -53,3 +53,6 @@ next-env.d.ts
 
 # migration backups
 scripts/description-backup.json
+
+# IDE files
+.vscode
