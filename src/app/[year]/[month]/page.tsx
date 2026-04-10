@@ -94,8 +94,11 @@ export default async function ArchivePage({ params }: ArchivePageProps) {
 
   // Fetch posts once for both header count and content display
   const posts = await getCachedPostsByMonth(year, monthNumber);
-  const featuredPosts = posts.slice(0, 2);
-  const remainingPosts = posts.slice(featuredPosts.length);
+  const primaryFeaturedPosts = posts.slice(0, 2);
+  const stackedFeaturedPost = posts[2] ?? null;
+  const featuredPostsCount =
+    primaryFeaturedPosts.length + (stackedFeaturedPost ? 1 : 0);
+  const remainingPosts = posts.slice(featuredPostsCount);
   const postsSummary =
     posts.length === 0
       ? "עדיין לא פורסמו כתבות בגיליון הזה."
@@ -106,25 +109,31 @@ export default async function ArchivePage({ params }: ArchivePageProps) {
   return (
     <div className="container mx-auto px-4 py-8 sm:py-12">
       <div className="mb-10 flex flex-col gap-6 lg:flex-row lg:items-start">
-        <div className="w-full overflow-hidden rounded-[2rem] border bg-gradient-to-br from-amber-50 via-background to-sky-50 px-5 py-8 shadow-sm sm:px-8 sm:py-10 lg:max-w-[28rem] lg:shrink-0 xl:max-w-[30rem]">
-          <div className="space-y-4">
-            <div className="inline-flex items-center rounded-full border bg-background/80 px-3 py-1 text-sm font-medium text-muted-foreground">
-              גיליון חודשי לתלמידים ולמורים
-            </div>
-            <div className="space-y-3">
-              <h1 className="text-3xl font-black tracking-tight sm:text-4xl lg:text-5xl">
-                גיליון {hebrewMonth} {year}
-              </h1>
-              <p className="max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">
-                {postsSummary}
-              </p>
+        <div className="flex w-full flex-col gap-6 lg:max-w-[28rem] lg:shrink-0 xl:max-w-[30rem]">
+          <div className="overflow-hidden rounded-[2rem] border bg-gradient-to-br from-amber-50 via-background to-sky-50 px-5 py-8 shadow-sm sm:px-8 sm:py-10">
+            <div className="space-y-4">
+              <div className="inline-flex items-center rounded-full border bg-background/80 px-3 py-1 text-sm font-medium text-muted-foreground">
+                גיליון חודשי לתלמידים ולמורים
+              </div>
+              <div className="space-y-3">
+                <h1 className="text-3xl font-black tracking-tight sm:text-4xl lg:text-5xl">
+                  גיליון {hebrewMonth} {year}
+                </h1>
+                <p className="max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">
+                  {postsSummary}
+                </p>
+              </div>
             </div>
           </div>
+
+          {stackedFeaturedPost && (
+            <PostCard post={stackedFeaturedPost} />
+          )}
         </div>
 
-        {featuredPosts.length > 0 && (
+        {primaryFeaturedPosts.length > 0 && (
           <div className="grid flex-1 gap-6 md:grid-cols-2">
-            {featuredPosts.map((post, index) => (
+            {primaryFeaturedPosts.map((post, index) => (
               <PostCard key={post.id} post={post} priority={index === 0} />
             ))}
           </div>
