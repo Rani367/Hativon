@@ -18,13 +18,18 @@ import { Clock, Calendar } from "lucide-react";
 interface PostCardProps {
   post: Post;
   priority?: boolean;
+  compact?: boolean;
 }
 
 // Optimized blur placeholder - minimal size for instant display
 const BLUR_DATA_URL =
   "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iOCIgaGVpZ2h0PSI2IiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiNlNWU3ZWIiLz48L3N2Zz4=";
 
-export default function PostCard({ post, priority = false }: PostCardProps) {
+export default function PostCard({
+  post,
+  priority = false,
+  compact = false,
+}: PostCardProps) {
   const wordCount = post.content ? getWordCount(post.content) : 0;
   const readingTime = calculateReadingTime(wordCount);
   const authorLine = post.author
@@ -36,7 +41,11 @@ export default function PostCard({ post, priority = false }: PostCardProps) {
     : "מערכת חטיבון";
 
   return (
-    <Card className="group relative h-full overflow-hidden border-border/70 bg-card/80 pt-0 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-xl supports-[backdrop-filter]:bg-background/80">
+    <Card
+      className={`group relative h-full overflow-hidden border-border/70 bg-card/80 pt-0 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-xl supports-[backdrop-filter]:bg-background/80 ${
+        compact ? "gap-4" : ""
+      }`}
+    >
       <Link
         href={`/posts/${post.id}`}
         className="absolute inset-0 z-10"
@@ -44,7 +53,11 @@ export default function PostCard({ post, priority = false }: PostCardProps) {
         prefetch={true}
         onClick={() => triggerHaptic()}
       />
-      <div className="relative aspect-[4/3] w-full overflow-hidden rounded-t-lg">
+      <div
+        className={`relative w-full overflow-hidden rounded-t-lg ${
+          compact ? "aspect-[16/9]" : "aspect-[4/3]"
+        }`}
+      >
         {post.coverImage ? (
           <Image
             src={post.coverImage}
@@ -88,8 +101,12 @@ export default function PostCard({ post, priority = false }: PostCardProps) {
           </div>
         )}
       </div>
-      <CardHeader className="space-y-3 pb-3">
-        <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+      <CardHeader className={compact ? "space-y-2 pb-2" : "space-y-3 pb-3"}>
+        <div
+          className={`flex flex-wrap items-center gap-3 text-muted-foreground ${
+            compact ? "text-xs sm:text-sm" : "text-sm"
+          }`}
+        >
           <div className="flex items-center gap-2">
             <Calendar className="h-4 w-4" />
             <span>{formatHebrewDate(post.date)}</span>
@@ -100,21 +117,31 @@ export default function PostCard({ post, priority = false }: PostCardProps) {
           </div>
         </div>
         <div>
-          <h2 className="text-xl font-bold leading-tight text-foreground sm:text-2xl">
+          <h2
+            className={`font-bold leading-tight text-foreground ${
+              compact ? "text-xl" : "text-xl sm:text-2xl"
+            }`}
+          >
             {post.title}
           </h2>
         </div>
-        <p className="line-clamp-3 text-sm leading-6 text-muted-foreground sm:text-base">
+        <p
+          className={`text-sm leading-6 text-muted-foreground ${
+            compact ? "line-clamp-2" : "line-clamp-3 sm:text-base"
+          }`}
+        >
           {post.description}
         </p>
       </CardHeader>
-      <CardContent className="space-y-3 pt-0">
+      <CardContent className={compact ? "space-y-2 pt-0" : "space-y-3 pt-0"}>
         <p className="text-sm font-medium text-foreground/80">{authorLine}</p>
-        <p className="text-sm text-muted-foreground">
-          הקליקו לקריאה מלאה במובייל או במחשב.
-        </p>
+        {!compact && (
+          <p className="text-sm text-muted-foreground">
+            הקליקו לקריאה מלאה במובייל או במחשב.
+          </p>
+        )}
       </CardContent>
-      {post.tags && post.tags.length > 0 && (
+      {!compact && post.tags && post.tags.length > 0 && (
         <CardFooter className="pt-0">
           <div className="flex gap-2 flex-wrap">
             {post.tags.map((tag) => (
