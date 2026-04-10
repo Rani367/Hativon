@@ -127,7 +127,7 @@ export default async function ArchivePage({ params }: ArchivePageProps) {
           </div>
 
           {stackedFeaturedPost && (
-            <PostCard post={stackedFeaturedPost} />
+            <PostCard post={stackedFeaturedPost} compact />
           )}
         </div>
 
