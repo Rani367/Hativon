@@ -73,19 +73,22 @@ export function PostFormFields({
             {errors.title}
           </p>
         )}
+        <p className="text-xs text-muted-foreground">
+          כותרת טובה עוזרת לתלמידים ולמורים להבין מיד על מה הכתבה.
+        </p>
       </div>
 
       {showCustomAuthor && (
         <div className="space-y-2">
-          <Label htmlFor={customAuthorId}>שם מחבר מותאם (אופציונלי)</Label>
+          <Label htmlFor={customAuthorId}>שם מחבר להצגה (אופציונלי)</Label>
           <Input
             id={customAuthorId}
             value={customAuthor}
             onChange={(e) => onCustomAuthorChange?.(e.target.value)}
-            placeholder="השאר ריק לשימוש בשם התצוגה שלך"
+            placeholder="לדוגמה: מערכת חטיבון או ועדת תרבות"
           />
           <p className="text-xs text-muted-foreground">
-            אם תשאיר ריק, יוצג השם שלך מהפרופיל
+            אם תשאירו ריק, יוצג השם שמוגדר בפרופיל.
           </p>
         </div>
       )}
@@ -124,6 +127,9 @@ export function PostFormFields({
             {errors.content}
           </p>
         )}
+        <p className="text-xs text-muted-foreground">
+          הטיוטה נשמרת אוטומטית בזמן הכתיבה כדי שלא תאבדו עבודה.
+        </p>
       </div>
 
       <ImageUpload

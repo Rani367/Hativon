@@ -6,6 +6,7 @@ import { notFound } from "next/navigation";
 import { Metadata } from "next";
 import { Badge } from "@/components/ui/badge";
 import { calculateReadingTime } from "@/lib/utils";
+import Link from "next/link";
 
 // Request-level cache for getPost - dedupes calls in generateMetadata and page component
 const getPost = cache(getPostBase);
@@ -151,9 +152,17 @@ export default async function PostPage({ params }: PostPageProps) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: safeJsonLd }}
       />
-      <article className="max-w-4xl mx-auto prose prose-lg dark:prose-invert">
+      <article className="mx-auto max-w-4xl px-4 py-6 sm:px-6 sm:py-8">
+        <div className="mb-6">
+          <Link
+            href="/"
+            className="inline-flex items-center rounded-full border px-3 py-1 text-sm text-muted-foreground transition-colors hover:bg-muted"
+          >
+            חזרה לגיליון
+          </Link>
+        </div>
         {post.coverImage && (
-          <div className="relative w-full mb-10 rounded-lg overflow-hidden">
+          <div className="relative mb-8 w-full overflow-hidden rounded-[2rem] border shadow-sm">
             <Image
               src={post.coverImage}
               alt={post.title}
@@ -171,11 +180,13 @@ export default async function PostPage({ params }: PostPageProps) {
           </div>
         )}
 
-        <header className="mb-10">
-          <div className="flex items-center gap-4 text-base text-muted-foreground mb-6">
-            <time>{formatHebrewDate(post.date)}</time>
+        <header className="mb-10 rounded-[2rem] border bg-card/70 p-5 shadow-sm sm:p-8">
+          <div className="mb-5 flex flex-wrap items-center gap-3 text-sm text-muted-foreground sm:text-base">
+            <time className="rounded-full bg-muted px-3 py-1">
+              {formatHebrewDate(post.date)}
+            </time>
             {post.author && (
-              <span>
+              <span className="rounded-full bg-muted px-3 py-1">
                 מאת {post.author}
                 {post.authorDeleted && (
                   <span className="text-muted-foreground"> (נמחק)</span>
@@ -185,15 +196,19 @@ export default async function PostPage({ params }: PostPageProps) {
                   ` (כיתה ${post.authorGrade}${post.authorClass})`}
               </span>
             )}
-            <span>{calculateReadingTime(wordCount)}</span>
-            <span>{wordCount} מילים</span>
+            <span className="rounded-full bg-muted px-3 py-1">
+              {calculateReadingTime(wordCount)}
+            </span>
+            <span className="rounded-full bg-muted px-3 py-1">
+              {wordCount} מילים
+            </span>
           </div>
 
-          <h1 className="text-5xl font-bold mb-6 text-foreground leading-tight">
+          <h1 className="mb-5 text-3xl font-black leading-tight text-foreground sm:text-4xl lg:text-5xl">
             {post.title}
           </h1>
 
-          <div className="flex gap-3 mb-4 flex-wrap">
+          <div className="mb-4 flex flex-wrap gap-3">
             {post.isTeacherPost && (
               <Badge
                 variant="default"
@@ -218,6 +233,10 @@ export default async function PostPage({ params }: PostPageProps) {
                 </Badge>
               ))}
           </div>
+
+          <p className="max-w-3xl text-base leading-7 text-muted-foreground sm:text-lg">
+            {post.description}
+          </p>
         </header>
 
         <Suspense
@@ -231,7 +250,9 @@ export default async function PostPage({ params }: PostPageProps) {
             </div>
           }
         >
-          <PostContent content={post.content} />
+          <div className="prose prose-lg max-w-none rounded-[2rem] border bg-background p-5 shadow-sm dark:prose-invert sm:p-8">
+            <PostContent content={post.content} />
+          </div>
         </Suspense>
       </article>
     </>

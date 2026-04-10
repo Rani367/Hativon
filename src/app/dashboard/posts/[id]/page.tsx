@@ -365,12 +365,14 @@ export default function EditPostPage({
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <div className="flex-1">
           <h1 className="text-3xl font-bold">ערוך כתבה</h1>
-          <p className="text-muted-foreground mt-1">עדכן את הכתבה שלך</p>
+          <p className="mt-1 text-muted-foreground">
+            עדכנו את הכתבה, שמרו טיוטה או פרסמו מחדש כשתהיו מוכנים.
+          </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col items-start gap-3 md:items-end">
           <AutoSaveIndicator
             status={autoSaveStatus}
             lastSaved={lastSaved}
@@ -383,6 +385,13 @@ export default function EditPostPage({
           </Button>
         </div>
       </div>
+
+      <Card className="border-dashed bg-muted/30">
+        <CardContent className="flex flex-col gap-2 p-5 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+          <p>שינויים נשמרים אוטומטית בזמן העריכה.</p>
+          <p>לפני פרסום, כדאי לבדוק כותרת, תיאור ותמונת שער.</p>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>

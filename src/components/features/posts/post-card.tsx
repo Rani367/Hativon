@@ -25,9 +25,16 @@ const BLUR_DATA_URL =
 export default function PostCard({ post, priority = false }: PostCardProps) {
   const wordCount = post.content ? getWordCount(post.content) : 0;
   const readingTime = calculateReadingTime(wordCount);
+  const authorLine = post.author
+    ? `מאת ${post.author}${post.authorDeleted ? " (נמחק)" : ""}${
+        post.authorGrade && post.authorClass
+          ? ` · כיתה ${post.authorGrade}${post.authorClass}`
+          : ""
+      }`
+    : "מערכת חטיבון";
 
   return (
-    <Card className="group relative pt-0 overflow-hidden hover:shadow-xl transition-shadow duration-200 bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-background/60 h-fit">
+    <Card className="group relative h-full overflow-hidden border-border/70 bg-card/80 pt-0 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-xl supports-[backdrop-filter]:bg-background/80">
       <Link
         href={`/posts/${post.id}`}
         className="absolute inset-0 z-10"
@@ -35,7 +42,7 @@ export default function PostCard({ post, priority = false }: PostCardProps) {
         prefetch={true}
         onClick={() => triggerHaptic()}
       />
-      <div className="relative w-full aspect-square overflow-hidden rounded-t-lg">
+      <div className="relative aspect-[4/3] w-full overflow-hidden rounded-t-lg">
         {post.coverImage ? (
           <Image
             src={post.coverImage}
@@ -52,7 +59,11 @@ export default function PostCard({ post, priority = false }: PostCardProps) {
             blurDataURL={BLUR_DATA_URL}
           />
         ) : (
-          <div className="w-full h-full bg-muted/80" />
+          <div className="flex h-full w-full items-end bg-gradient-to-br from-muted via-muted/70 to-amber-100/60 p-5">
+            <p className="text-sm font-medium text-muted-foreground">
+              כתבה ללא תמונת שער
+            </p>
+          </div>
         )}
         {post.category && (
           <div className="absolute top-4 start-4 z-20">
@@ -75,41 +86,34 @@ export default function PostCard({ post, priority = false }: PostCardProps) {
           </div>
         )}
       </div>
-      <CardHeader className="space-y-3">
-        <div className="flex items-center gap-3 sm:gap-4 text-sm text-muted-foreground">
+      <CardHeader className="space-y-3 pb-3">
+        <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
           <div className="flex items-center gap-2">
             <Calendar className="h-4 w-4" />
             <span>{formatHebrewDate(post.date)}</span>
           </div>
-          <div className="hidden sm:flex items-center gap-2">
+          <div className="flex items-center gap-2">
             <Clock className="h-4 w-4" />
             <span>{readingTime}</span>
           </div>
         </div>
         <div>
-          <h2 className="text-2xl font-semibold text-foreground leading-tight">
+          <h2 className="text-xl font-bold leading-tight text-foreground sm:text-2xl">
             {post.title}
           </h2>
         </div>
-        <p className="text-muted-foreground text-base line-clamp-2">
+        <p className="line-clamp-3 text-sm leading-6 text-muted-foreground sm:text-base">
           {post.description}
         </p>
       </CardHeader>
-      <CardContent>
-        {post.author && (
-          <p className="text-base text-muted-foreground">
-            מאת {post.author}
-            {post.authorDeleted && (
-              <span className="text-muted-foreground/60"> (נמחק)</span>
-            )}
-            {post.authorGrade &&
-              post.authorClass &&
-              ` (כיתה ${post.authorGrade}${post.authorClass})`}
-          </p>
-        )}
+      <CardContent className="space-y-3 pt-0">
+        <p className="text-sm font-medium text-foreground/80">{authorLine}</p>
+        <p className="text-sm text-muted-foreground">
+          הקליקו לקריאה מלאה במובייל או במחשב.
+        </p>
       </CardContent>
       {post.tags && post.tags.length > 0 && (
-        <CardFooter>
+        <CardFooter className="pt-0">
           <div className="flex gap-2 flex-wrap">
             {post.tags.map((tag) => (
               <Badge key={tag} variant="outline" className="bg-background/80">

@@ -39,7 +39,8 @@ export function AuthDialog({ open, onOpenChange, defaultTab = 'login' }: AuthDia
         <DialogHeader>
           <DialogTitle className="text-center">ברוך הבא לחטיבון</DialogTitle>
           <DialogDescription className="text-center">
-            התחבר או הרשם כדי לפרסם פוסטים
+            התחברו או הירשמו כדי לכתוב, לשמור טיוטות ולפרסם כתבות לקהילת בית
+            הספר
           </DialogDescription>
         </DialogHeader>
 

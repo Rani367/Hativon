@@ -165,8 +165,8 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
             animate={{ opacity: 1 }}
             transition={{ duration: 0.2 }}
           >
-            בקשת איפוס סיסמה נשלחה. המורה או המנהל ישלחו לך קישור לאיפוס
-            הסיסמה.
+            בקשת איפוס הסיסמה נשלחה. מורה או איש צוות עם גישת ניהול יוכלו
+            לטפל בה ולשלוח אליך קישור בטוח לאיפוס.
           </motion.div>
         )}
 

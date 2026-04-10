@@ -237,7 +237,9 @@ export default function DashboardPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">הכתבות שלי</h1>
-          <p className="text-muted-foreground mt-1">נהל את הכתבות שלך</p>
+          <p className="mt-1 text-muted-foreground">
+            כאן אפשר לנהל טיוטות, לפרסם כתבות ולעקוב אחרי כל מה שכתבת.
+          </p>
         </div>
         <Link href="/dashboard/posts/new">
           <Button>
@@ -308,6 +310,9 @@ export default function DashboardPage() {
                 </Button>
               </div>
             </div>
+            <p className="mt-3 text-sm text-muted-foreground">
+              טיפ: התחילו מטיוטה אם הכתבה עדיין לא מוכנה לפרסום.
+            </p>
           </Card>
 
           {/* Posts Table */}
