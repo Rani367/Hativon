@@ -92,7 +92,7 @@ export default async function ArchivePage({ params }: ArchivePageProps) {
       ? "עדיין לא פורסמו כתבות בגיליון הזה."
       : posts.length === 1
         ? "כתבה אחת מחכה לכם בגיליון הזה."
-        : `${posts.length} כתבות מחכות לכם בגיליון הזה.`;
+        : `${posts.length} כתבות בגיליון הזה.`;
 
   return (
     <div className="container mx-auto px-4 py-8 sm:py-12">
