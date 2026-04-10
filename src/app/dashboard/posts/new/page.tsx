@@ -285,10 +285,13 @@ export default function NewPostPage() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      <div className="flex items-start justify-between">
-        <div>
+      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+        <div className="space-y-2">
           <h1 className="text-3xl font-bold">צור כתבה חדשה</h1>
-          <p className="text-muted-foreground mt-1">כתוב כתבה חדשה לבלוג</p>
+          <p className="text-muted-foreground">
+            שתפו סיפור, ראיון, דעה או עדכון מהחיים בבית הספר. אפשר להתחיל
+            מטיוטה ולחזור אליה אחר כך.
+          </p>
         </div>
         <AutoSaveIndicator
           status={autoSaveStatus}
@@ -297,6 +300,13 @@ export default function NewPostPage() {
           onRetry={handleRetryAutoSave}
         />
       </div>
+
+      <Card className="border-dashed bg-muted/30">
+        <CardContent className="flex flex-col gap-2 p-5 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+          <p>מומלץ להכין כותרת ברורה, תמונת שער ותיאור קצר שיעודד קריאה.</p>
+          <p>שמירת טיוטה אוטומטית פעילה בזמן העבודה.</p>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>

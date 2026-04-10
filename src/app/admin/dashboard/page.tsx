@@ -93,7 +93,7 @@ export default function AdminDashboard() {
       <div>
         <h1 className="text-3xl font-bold">לוח בקרה</h1>
         <p className="text-muted-foreground mt-1">
-          שלום! הנה סקירה כללית של העיתון שלך.
+          סקירה מהירה של פעילות הגיליון, הטיוטות והפרסומים האחרונים.
         </p>
       </div>
 
@@ -193,6 +193,10 @@ export default function AdminDashboard() {
           </div>
         </CardHeader>
         <CardContent>
+          <p className="mb-4 text-sm text-muted-foreground">
+            השתמשו ברשימה הזו כדי לזהות במהירות כתבות שדורשות פרסום, עריכה או
+            מעקב מול תלמידים.
+          </p>
           {recentPosts.length === 0 ? (
             <p className="text-center text-muted-foreground py-8">
               אין עדיין כתבות. צור את הכתבה הראשונה כדי להתחיל!

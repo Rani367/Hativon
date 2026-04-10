@@ -68,8 +68,8 @@ export function RecoveryDialog({
             נמצאו שינויים שלא נשמרו
           </DialogTitle>
           <DialogDescription>
-            נמצאה טיוטה שלא נשמרה מ-{formatDateTime(timestamp)}. האם ברצונך לשחזר
-            אותה?{"\u200F"}
+            מצאנו טיוטה מהתאריך {formatDateTime(timestamp)}. אפשר לשחזר אותה
+            ולהמשיך בדיוק מאיפה שהפסקת, או להתחיל מחדש.
           </DialogDescription>
         </DialogHeader>
 
@@ -95,11 +95,11 @@ export function RecoveryDialog({
         <DialogFooter className="gap-2 sm:gap-0">
           <Button variant="outline" onClick={onDiscard}>
             <Trash2 className="h-4 w-4 me-2" />
-            בטל
+            התחל מחדש
           </Button>
           <Button onClick={onRecover}>
             <FileText className="h-4 w-4 me-2" />
-            שחזר
+            שחזר טיוטה
           </Button>
         </DialogFooter>
       </DialogContent>

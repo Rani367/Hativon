@@ -87,16 +87,44 @@ export default async function ArchivePage({ params }: ArchivePageProps) {
 
   // Fetch posts once for both header count and content display
   const posts = await getCachedPostsByMonth(year, monthNumber);
+  const featuredCount = Math.min(posts.length, 3);
 
   return (
-    <div className="container mx-auto px-4 py-12">
-      <div className="mb-8">
-        <h1 className="text-3xl md:text-4xl font-bold text-center">
-          גיליון {hebrewMonth} {year}
-        </h1>
-        <p className="text-center text-muted-foreground mt-2">
-          {posts.length} {posts.length === 1 ? "כתבה" : "כתבות"}
-        </p>
+    <div className="container mx-auto px-4 py-8 sm:py-12">
+      <div className="mb-10 overflow-hidden rounded-[2rem] border bg-gradient-to-br from-amber-50 via-background to-sky-50 px-5 py-8 shadow-sm sm:px-8 sm:py-10">
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+          <div className="max-w-3xl space-y-4">
+            <div className="inline-flex items-center rounded-full border bg-background/80 px-3 py-1 text-sm font-medium text-muted-foreground">
+              גיליון חודשי לתלמידים ולמורים
+            </div>
+            <div className="space-y-3">
+              <h1 className="text-3xl font-black tracking-tight sm:text-4xl lg:text-5xl">
+                גיליון {hebrewMonth} {year}
+              </h1>
+              <p className="max-w-2xl text-base leading-7 text-muted-foreground sm:text-lg">
+                מקום אחד לכל הכתבות, הדעות והסיפורים של קהילת חטיבון. התחילו
+                מהכתבות החדשות או גללו כדי למצוא משהו שמעניין אתכם.
+              </p>
+            </div>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2 lg:w-[22rem]">
+            <div className="rounded-2xl border bg-background/80 p-4">
+              <p className="text-sm text-muted-foreground">בגיליון הזה</p>
+              <p className="mt-1 text-3xl font-black">{posts.length}</p>
+              <p className="text-sm text-muted-foreground">
+                {posts.length === 1 ? "כתבה אחת" : "כתבות לקריאה"}
+              </p>
+            </div>
+            <div className="rounded-2xl border bg-background/80 p-4">
+              <p className="text-sm text-muted-foreground">מומלץ להתחיל עם</p>
+              <p className="mt-1 text-3xl font-black">{featuredCount}</p>
+              <p className="text-sm text-muted-foreground">
+                כתבות ראשונות בראש העמוד
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
 
       <Suspense fallback={<PostsSkeleton />}>

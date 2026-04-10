@@ -59,7 +59,7 @@ export function AutoSaveIndicator({
       {status === "saving" && (
         <>
           <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-          <span className="text-muted-foreground">שומר...</span>
+          <span className="text-muted-foreground">שומר טיוטה אוטומטית...</span>
         </>
       )}
 
@@ -67,7 +67,7 @@ export function AutoSaveIndicator({
         <>
           <Check className="h-4 w-4 text-green-600" />
           <span className="text-muted-foreground">
-            נשמר ב-{formatTime(lastSaved)}
+            הטיוטה נשמרה ב-{formatTime(lastSaved)}
           </span>
         </>
       )}
@@ -76,7 +76,7 @@ export function AutoSaveIndicator({
         <>
           <Check className="h-4 w-4 text-green-600" />
           <span className="text-muted-foreground">
-            נשמר ב-{formatTime(lastSaved)}
+            הטיוטה נשמרה ב-{formatTime(lastSaved)}
           </span>
         </>
       )}
@@ -84,7 +84,9 @@ export function AutoSaveIndicator({
       {status === "error" && (
         <>
           <AlertCircle className="h-4 w-4 text-destructive" />
-          <span className="text-destructive">השמירה נכשלה</span>
+          <span className="text-destructive">
+            השמירה האוטומטית נכשלה{errorMessage ? `: ${errorMessage}` : ""}
+          </span>
           {onRetry && (
             <button
               type="button"
