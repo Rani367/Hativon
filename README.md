@@ -8,7 +8,7 @@ A school newspaper application with Hebrew/RTL support.
 
 ```bash
 bun install    # Installs dependencies and auto-configures everything
-bun run dev    # Start development server at http://localhost:3000
+bun dev    # Start development server at http://localhost:3000
 ```
 
 Default credentials after setup:
