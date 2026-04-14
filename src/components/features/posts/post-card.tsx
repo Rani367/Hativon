@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { useId, useRef, type MouseEvent } from "react";
+import { useRouter } from "next/navigation";
 import { formatHebrewDate } from "@/lib/date/format";
 import { Post } from "@/types/post.types";
 import { getWordCount, triggerHaptic } from "@/lib/utils";
@@ -14,6 +16,10 @@ import {
   CardHeader,
 } from "@/components/ui/card";
 import { Clock, Calendar } from "lucide-react";
+import {
+  measureTransitionRect,
+  usePostOpenTransition,
+} from "@/components/features/posts/post-open-transition-provider";
 
 interface PostCardProps {
   post: Post;
@@ -30,8 +36,19 @@ export default function PostCard({
   priority = false,
   compact = false,
 }: PostCardProps) {
+  const router = useRouter();
+  const sourceId = useId();
+  const cardRef = useRef<HTMLDivElement>(null);
+  const imageRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const titleRef = useRef<HTMLHeadingElement>(null);
+  const metaRef = useRef<HTMLDivElement>(null);
+  const descriptionRef = useRef<HTMLParagraphElement>(null);
+  const { beginPostTransition, isSourceActive, prefersReducedMotion } =
+    usePostOpenTransition();
   const wordCount = post.content ? getWordCount(post.content) : 0;
   const readingTime = calculateReadingTime(wordCount);
+  const isActiveSource = isSourceActive(sourceId);
   const preloadCoverImage = () => {
     if (!post.coverImage || typeof window === "undefined") {
       return;
@@ -48,122 +65,197 @@ export default function PostCard({
           : ""
       }`
     : "מערכת חטיבון";
+  const href = `/posts/${post.id}`;
+
+  const handleClick = (event: MouseEvent<HTMLAnchorElement>) => {
+    triggerHaptic();
+
+    if (
+      event.defaultPrevented ||
+      event.button !== 0 ||
+      event.metaKey ||
+      event.ctrlKey ||
+      event.shiftKey ||
+      event.altKey ||
+      prefersReducedMotion ||
+      !post.coverImage ||
+      !cardRef.current ||
+      !imageRef.current ||
+      !contentRef.current ||
+      !titleRef.current ||
+      !metaRef.current ||
+      !descriptionRef.current
+    ) {
+      return;
+    }
+
+    const didBeginTransition = beginPostTransition({
+      sourceId,
+      postId: post.id,
+      href,
+      title: post.title,
+      description: post.description,
+      metaItems: [formatHebrewDate(post.date), readingTime],
+      coverImage: post.coverImage,
+      imageAlt: post.title,
+      shellRect: measureTransitionRect(cardRef.current),
+      imageRect: measureTransitionRect(imageRef.current),
+      contentRect: measureTransitionRect(contentRef.current),
+      titleRect: measureTransitionRect(titleRef.current),
+      metaRect: measureTransitionRect(metaRef.current),
+      descriptionRect: measureTransitionRect(descriptionRef.current),
+    });
+
+    if (!didBeginTransition) {
+      return;
+    }
+
+    event.preventDefault();
+    router.push(href, { scroll: false });
+  };
 
   return (
-    <Card
-      className={`group relative h-full overflow-hidden border-border/70 bg-card/80 pt-0 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-xl supports-[backdrop-filter]:bg-background/80 ${
-        compact ? "gap-2" : ""
+    <div
+      ref={cardRef}
+      className={`h-full transition-opacity duration-150 ${
+        isActiveSource ? "pointer-events-none opacity-0" : "opacity-100"
       }`}
     >
-      <Link
-        href={`/posts/${post.id}`}
-        className="absolute inset-0 z-10"
-        aria-label={post.title}
-        prefetch={true}
-        onClick={() => triggerHaptic()}
-        onMouseEnter={preloadCoverImage}
-        onTouchStart={preloadCoverImage}
-        onFocus={preloadCoverImage}
-      />
-      <div
-        className={`relative w-full overflow-hidden rounded-t-lg ${
-          compact ? "aspect-[2/1]" : "aspect-[4/3]"
+      <Card
+        className={`group relative h-full overflow-hidden border-border/70 bg-card/80 pt-0 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-xl supports-[backdrop-filter]:bg-background/80 ${
+          compact ? "gap-2" : ""
         }`}
       >
-        {post.coverImage ? (
-          <Image
-            src={post.coverImage}
-            alt={post.title}
-            width={800}
-            height={800}
-            priority={priority}
-            loading={priority ? "eager" : "lazy"}
-            fetchPriority={priority ? "high" : "auto"}
-            sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 25vw"
-            className="absolute inset-0 w-full h-full object-cover"
-            quality={75}
-            placeholder="blur"
-            blurDataURL={BLUR_DATA_URL}
-            unoptimized
-          />
-        ) : (
-          <div className="flex h-full w-full items-end bg-gradient-to-br from-muted via-muted/70 to-amber-100/60 p-5">
-            <p className="text-sm font-medium text-muted-foreground">
-              כתבה ללא תמונת שער
-            </p>
-          </div>
-        )}
-        {post.category && (
-          <div className="absolute top-4 start-4 z-20">
-            <Badge
-              variant="secondary"
-              className="backdrop-blur-sm bg-background/80 shadow-sm"
-            >
-              {post.category}
-            </Badge>
-          </div>
-        )}
-        {post.isTeacherPost && (
-          <div className="absolute top-4 end-4 z-20">
-            <Badge
-              variant="default"
-              className="bg-amber-500/90 text-white backdrop-blur-sm shadow-sm"
-            >
-              פוסט של מורה
-            </Badge>
-          </div>
-        )}
-      </div>
-      <CardHeader className={compact ? "space-y-1.5 pb-0" : "space-y-3 pb-3"}>
+        <Link
+          href={href}
+          className="absolute inset-0 z-10"
+          aria-label={post.title}
+          prefetch={true}
+          onClick={handleClick}
+          onMouseEnter={preloadCoverImage}
+          onTouchStart={preloadCoverImage}
+          onFocus={preloadCoverImage}
+        />
         <div
-          className={`flex flex-wrap items-center gap-3 text-muted-foreground ${
-            compact ? "text-xs" : "text-sm"
+          ref={imageRef}
+          className={`relative w-full overflow-hidden rounded-t-lg ${
+            compact ? "aspect-[2/1]" : "aspect-[4/3]"
           }`}
         >
-          <div className="flex items-center gap-2">
-            <Calendar className="h-4 w-4" />
-            <span>{formatHebrewDate(post.date)}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Clock className="h-4 w-4" />
-            <span>{readingTime}</span>
-          </div>
-        </div>
-        <div>
-          <h2
-            className={`font-bold leading-tight text-foreground ${
-              compact ? "line-clamp-2 text-lg" : "text-xl sm:text-2xl"
-            }`}
-          >
-            {post.title}
-          </h2>
-        </div>
-        {compact ? (
-          <p className="line-clamp-1 text-sm leading-5 text-muted-foreground">
-            {post.description}
-          </p>
-        ) : (
-          <p className="line-clamp-3 text-sm leading-6 text-muted-foreground sm:text-base">
-            {post.description}
-          </p>
-        )}
-      </CardHeader>
-      {!compact && (
-        <CardContent className="space-y-3 pt-0">
-          <p className="text-sm font-medium text-foreground/80">{authorLine}</p>
-        </CardContent>
-      )}
-      {!compact && post.tags && post.tags.length > 0 && (
-        <CardFooter className="pt-0">
-          <div className="flex gap-2 flex-wrap">
-            {post.tags.map((tag) => (
-              <Badge key={tag} variant="outline" className="bg-background/80">
-                {tag}
+          {post.coverImage ? (
+            <Image
+              src={post.coverImage}
+              alt={post.title}
+              width={800}
+              height={800}
+              priority={priority}
+              loading={priority ? "eager" : "lazy"}
+              fetchPriority={priority ? "high" : "auto"}
+              sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 25vw"
+              className="absolute inset-0 h-full w-full object-cover"
+              quality={75}
+              placeholder="blur"
+              blurDataURL={BLUR_DATA_URL}
+              unoptimized
+            />
+          ) : (
+            <div className="flex h-full w-full items-end bg-gradient-to-br from-muted via-muted/70 to-amber-100/60 p-5">
+              <p className="text-sm font-medium text-muted-foreground">
+                כתבה ללא תמונת שער
+              </p>
+            </div>
+          )}
+          {post.category && (
+            <div className="absolute top-4 start-4 z-20">
+              <Badge
+                variant="secondary"
+                className="bg-background/80 shadow-sm backdrop-blur-sm"
+              >
+                {post.category}
               </Badge>
-            ))}
-          </div>
-        </CardFooter>
-      )}
-    </Card>
+            </div>
+          )}
+          {post.isTeacherPost && (
+            <div className="absolute top-4 end-4 z-20">
+              <Badge
+                variant="default"
+                className="bg-amber-500/90 text-white shadow-sm backdrop-blur-sm"
+              >
+                פוסט של מורה
+              </Badge>
+            </div>
+          )}
+        </div>
+
+        <div ref={contentRef} className="flex flex-1 flex-col">
+          <CardHeader
+            className={compact ? "space-y-1.5 pb-0" : "space-y-3 pb-3"}
+          >
+            <div
+              ref={metaRef}
+              className={`flex flex-wrap items-center gap-3 text-muted-foreground ${
+                compact ? "text-xs" : "text-sm"
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <Calendar className="h-4 w-4" />
+                <span>{formatHebrewDate(post.date)}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Clock className="h-4 w-4" />
+                <span>{readingTime}</span>
+              </div>
+            </div>
+            <div>
+              <h2
+                ref={titleRef}
+                className={`font-bold leading-tight text-foreground ${
+                  compact ? "line-clamp-2 text-lg" : "text-xl sm:text-2xl"
+                }`}
+              >
+                {post.title}
+              </h2>
+            </div>
+            {compact ? (
+              <p
+                ref={descriptionRef}
+                className="line-clamp-1 text-sm leading-5 text-muted-foreground"
+              >
+                {post.description}
+              </p>
+            ) : (
+              <p
+                ref={descriptionRef}
+                className="line-clamp-3 text-sm leading-6 text-muted-foreground sm:text-base"
+              >
+                {post.description}
+              </p>
+            )}
+          </CardHeader>
+          {!compact && (
+            <CardContent className="space-y-3 pt-0">
+              <p className="text-sm font-medium text-foreground/80">
+                {authorLine}
+              </p>
+            </CardContent>
+          )}
+          {!compact && post.tags && post.tags.length > 0 && (
+            <CardFooter className="pt-0">
+              <div className="flex flex-wrap gap-2">
+                {post.tags.map((tag) => (
+                  <Badge
+                    key={tag}
+                    variant="outline"
+                    className="bg-background/80"
+                  >
+                    {tag}
+                  </Badge>
+                ))}
+              </div>
+            </CardFooter>
+          )}
+        </div>
+      </Card>
+    </div>
   );
 }

@@ -1,12 +1,8 @@
 import { Suspense, cache } from "react";
 import { getPosts, getPost as getPostBase, getWordCount } from "@/lib/posts";
-import { formatHebrewDate } from "@/lib/date/format";
-import Image from "next/image";
 import { notFound } from "next/navigation";
 import { Metadata } from "next";
-import { Badge } from "@/components/ui/badge";
-import { calculateReadingTime } from "@/lib/utils";
-import Link from "next/link";
+import { PostPageTransitionShell } from "@/components/features/posts/post-page-transition-shell";
 
 // Request-level cache for getPost - dedupes calls in generateMetadata and page component
 const getPost = cache(getPostBase);
@@ -152,102 +148,15 @@ export default async function PostPage({ params }: PostPageProps) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: safeJsonLd }}
       />
-      <article className="mx-auto max-w-4xl px-4 py-6 sm:px-6 sm:py-8">
-        <div className="mb-6">
-          <Link
-            href="/"
-            className="inline-flex items-center rounded-full border px-3 py-1 text-sm text-muted-foreground transition-colors hover:bg-muted"
-          >
-            חזרה לגיליון
-          </Link>
-        </div>
-        {post.coverImage && (
-          <div className="relative mb-8 w-full overflow-hidden rounded-[2rem] border shadow-sm">
-            <Image
-              src={post.coverImage}
-              alt={post.title}
-              width={1200}
-              height={800}
-              className="w-full h-auto"
-              priority
-              loading="eager"
-              fetchPriority="high"
-              quality={75}
-              sizes="(max-width: 768px) 100vw, 896px"
-              placeholder="blur"
-              blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iOCIgaGVpZ2h0PSI2IiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiNlNWU3ZWIiLz48L3N2Zz4="
-              unoptimized
-            />
-          </div>
-        )}
-
-        <header className="mb-10 rounded-[2rem] border bg-card/70 p-5 shadow-sm sm:p-8">
-          <div className="mb-5 flex flex-wrap items-center gap-3 text-sm text-muted-foreground sm:text-base">
-            <time className="rounded-full bg-muted px-3 py-1">
-              {formatHebrewDate(post.date)}
-            </time>
-            {post.author && (
-              <span className="rounded-full bg-muted px-3 py-1">
-                מאת {post.author}
-                {post.authorDeleted && (
-                  <span className="text-muted-foreground"> (נמחק)</span>
-                )}
-                {post.authorGrade &&
-                  post.authorClass &&
-                  ` (כיתה ${post.authorGrade}${post.authorClass})`}
-              </span>
-            )}
-            <span className="rounded-full bg-muted px-3 py-1">
-              {calculateReadingTime(wordCount)}
-            </span>
-            <span className="rounded-full bg-muted px-3 py-1">
-              {wordCount} מילים
-            </span>
-          </div>
-
-          <h1 className="mb-5 text-3xl font-black leading-tight text-foreground sm:text-4xl lg:text-5xl">
-            {post.title}
-          </h1>
-
-          <div className="mb-4 flex flex-wrap gap-3">
-            {post.isTeacherPost && (
-              <Badge
-                variant="default"
-                className="bg-amber-500 text-white text-base px-4 py-1.5"
-              >
-                פוסט של מורה
-              </Badge>
-            )}
-            {post.category && (
-              <Badge variant="secondary" className="text-base px-4 py-1.5">
-                {post.category}
-              </Badge>
-            )}
-            {post.tags &&
-              post.tags.map((tag) => (
-                <Badge
-                  key={tag}
-                  variant="outline"
-                  className="text-base px-4 py-1.5"
-                >
-                  {tag}
-                </Badge>
-              ))}
-          </div>
-
-          <p className="max-w-3xl text-base leading-7 text-muted-foreground sm:text-lg">
-            {post.description}
-          </p>
-        </header>
-
+      <PostPageTransitionShell post={post} wordCount={wordCount}>
         <Suspense
           fallback={
             <div className="animate-pulse space-y-4">
-              <div className="h-4 bg-muted rounded w-full" />
-              <div className="h-4 bg-muted rounded w-5/6" />
-              <div className="h-4 bg-muted rounded w-4/6" />
-              <div className="h-4 bg-muted rounded w-full" />
-              <div className="h-4 bg-muted rounded w-3/4" />
+              <div className="h-4 w-full rounded bg-muted" />
+              <div className="h-4 w-5/6 rounded bg-muted" />
+              <div className="h-4 w-4/6 rounded bg-muted" />
+              <div className="h-4 w-full rounded bg-muted" />
+              <div className="h-4 w-3/4 rounded bg-muted" />
             </div>
           }
         >
@@ -255,7 +164,7 @@ export default async function PostPage({ params }: PostPageProps) {
             <PostContent content={post.content} />
           </div>
         </Suspense>
-      </article>
+      </PostPageTransitionShell>
     </>
   );
 }
