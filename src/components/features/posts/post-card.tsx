@@ -32,6 +32,15 @@ export default function PostCard({
 }: PostCardProps) {
   const wordCount = post.content ? getWordCount(post.content) : 0;
   const readingTime = calculateReadingTime(wordCount);
+  const preloadCoverImage = () => {
+    if (!post.coverImage || typeof window === "undefined") {
+      return;
+    }
+
+    const image = new window.Image();
+    image.src = post.coverImage;
+  };
+
   const authorLine = post.author
     ? `מאת ${post.author}${post.authorDeleted ? " (נמחק)" : ""}${
         post.authorGrade && post.authorClass
@@ -52,6 +61,9 @@ export default function PostCard({
         aria-label={post.title}
         prefetch={true}
         onClick={() => triggerHaptic()}
+        onMouseEnter={preloadCoverImage}
+        onTouchStart={preloadCoverImage}
+        onFocus={preloadCoverImage}
       />
       <div
         className={`relative w-full overflow-hidden rounded-t-lg ${
@@ -72,6 +84,7 @@ export default function PostCard({
             quality={75}
             placeholder="blur"
             blurDataURL={BLUR_DATA_URL}
+            unoptimized
           />
         ) : (
           <div className="flex h-full w-full items-end bg-gradient-to-br from-muted via-muted/70 to-amber-100/60 p-5">
@@ -138,9 +151,6 @@ export default function PostCard({
       {!compact && (
         <CardContent className="space-y-3 pt-0">
           <p className="text-sm font-medium text-foreground/80">{authorLine}</p>
-          <p className="text-sm text-muted-foreground">
-            הקליקו לקריאה מלאה במובייל או במחשב.
-          </p>
         </CardContent>
       )}
       {!compact && post.tags && post.tags.length > 0 && (
