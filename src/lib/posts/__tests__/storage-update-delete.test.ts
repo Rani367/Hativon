@@ -9,7 +9,9 @@ mock.module("uuid", () => ({
   v4: mock(() => "test-uuid-1234"),
 }));
 
-// @/lib/posts/queries is mocked via global delegates in test/setup.ts
+mock.module("../queries", () => ({
+  getPostById: (...args: unknown[]) => mockGetPostById(...args),
+}));
 
 // Path to storage module for cache clearing between tests
 const storageModulePath = require.resolve("../storage");
@@ -22,7 +24,6 @@ describe("Post Storage - Update and Delete Operations", () => {
     mockDbQuery = mock(() => undefined);
     mockGetPostById = mock(() => undefined);
     _g.__dbQueryMock = mockDbQuery;
-    _g.__postsQueriesGetPostByIdMock = mockGetPostById;
   });
 
   describe("updatePost", () => {
@@ -209,7 +210,7 @@ describe("Post Storage - Update and Delete Operations", () => {
       mockGetPostById.mockResolvedValue({ id: "post-123" });
 
       const dbError = new Error("Update failed");
-      mockDbQuery.mockRejectedValue(dbError);
+      mockDbQuery.mockImplementation(() => Promise.reject(dbError));
 
       const consoleErrorSpy = spyOn(console, "error").mockImplementation(() => {});
 
@@ -282,7 +283,7 @@ describe("Post Storage - Update and Delete Operations", () => {
 
     it("returns false when database deletion fails", async () => {
       const dbError = new Error("Delete failed");
-      mockDbQuery.mockRejectedValue(dbError);
+      mockDbQuery.mockImplementation(() => Promise.reject(dbError));
 
       const consoleErrorSpy = spyOn(console, "error").mockImplementation(() => {});
 

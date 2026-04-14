@@ -142,7 +142,7 @@ describe("User Storage - Create Operations", () => {
       );
 
       Bun.password.hash = mock(() => Promise.resolve("hashed-password")) as typeof Bun.password.hash;
-      mockDbQuery.mockRejectedValue(dbError);
+      mockDbQuery.mockImplementation(() => Promise.reject(dbError));
 
       const { createUser } = await import("../storage");
 
@@ -165,7 +165,7 @@ describe("User Storage - Create Operations", () => {
       );
 
       Bun.password.hash = mock(() => Promise.resolve("hashed-password")) as typeof Bun.password.hash;
-      mockDbQuery.mockRejectedValue(dbError);
+      mockDbQuery.mockImplementation(() => Promise.reject(dbError));
 
       const { createUser } = await import("../storage");
 
@@ -186,7 +186,7 @@ describe("User Storage - Create Operations", () => {
       const dbError = new Error("Connection timeout");
 
       Bun.password.hash = mock(() => Promise.resolve("hashed-password")) as typeof Bun.password.hash;
-      mockDbQuery.mockRejectedValue(dbError);
+      mockDbQuery.mockImplementation(() => Promise.reject(dbError));
 
       const { createUser } = await import("../storage");
 
@@ -203,7 +203,7 @@ describe("User Storage - Create Operations", () => {
 
     it("handles non-Error thrown objects", async () => {
       Bun.password.hash = mock(() => Promise.resolve("hashed-password")) as typeof Bun.password.hash;
-      mockDbQuery.mockRejectedValue("String error message");
+      mockDbQuery.mockImplementation(() => Promise.reject("String error message"));
 
       const { createUser } = await import("../storage");
 

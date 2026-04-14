@@ -344,7 +344,7 @@ describe("POST /api/upload", () => {
     });
 
     const uploadError = new Error("Blob storage unavailable");
-    mockPut.mockRejectedValue(uploadError);
+    mockPut.mockImplementation(() => Promise.reject(uploadError));
 
     const { POST } = await import("../route");
 
@@ -428,7 +428,7 @@ describe("POST /api/upload", () => {
   });
 
   it("handles authentication error gracefully", async () => {
-    mockGetCurrentUser.mockRejectedValue(new Error("Auth check failed"));
+    mockGetCurrentUser.mockImplementation(() => Promise.reject(new Error("Auth check failed")));
 
     const { POST } = await import("../route");
 

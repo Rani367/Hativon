@@ -134,7 +134,7 @@ describe("User Posts API Routes", () => {
 
     it("returns 500 on database errors", async () => {
       mockGetCurrentUser.mockResolvedValue(mockUser);
-      mockGetPostById.mockRejectedValue(new Error("Database error"));
+      mockGetPostById.mockImplementation(() => Promise.reject(new Error("Database error")));
 
       const request = createMockRequest();
       const response = await GET(request, {
@@ -232,7 +232,7 @@ describe("User Posts API Routes", () => {
     it("returns 500 on database errors", async () => {
       mockGetCurrentUser.mockResolvedValue(mockUser);
       mockGetPostById.mockResolvedValue(mockPost);
-      mockUpdatePost.mockRejectedValue(new Error("Database error"));
+      mockUpdatePost.mockImplementation(() => Promise.reject(new Error("Database error")));
 
       const request = createMockRequest({ title: "Updated" });
       const response = await PATCH(request, {
@@ -327,7 +327,7 @@ describe("User Posts API Routes", () => {
     it("returns 500 on database errors", async () => {
       mockGetCurrentUser.mockResolvedValue(mockUser);
       mockGetPostById.mockResolvedValue(mockPost);
-      mockDeletePost.mockRejectedValue(new Error("Database error"));
+      mockDeletePost.mockImplementation(() => Promise.reject(new Error("Database error")));
 
       const request = createMockRequest();
       const response = await DELETE(request, {

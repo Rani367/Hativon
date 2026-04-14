@@ -164,7 +164,7 @@ describe("Authentication Middleware", () => {
 
     it("returns null on unexpected error", async () => {
       const consoleErrorSpy = spyOn(console, "error").mockImplementation(() => {});
-      (cookies as ReturnType<typeof mock>).mockRejectedValue(new Error("Cookie access failed"));
+      (cookies as ReturnType<typeof mock>).mockImplementation(() => Promise.reject(new Error("Cookie access failed")));
 
       const user = await getCurrentUser();
 

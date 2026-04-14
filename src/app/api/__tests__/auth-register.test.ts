@@ -315,7 +315,7 @@ describe("POST /api/auth/register", () => {
 
   describe("Error Handling", () => {
     it("returns 500 on unexpected error", async () => {
-      (createUser as ReturnType<typeof mock>).mockRejectedValue(new Error("Database error"));
+      (createUser as ReturnType<typeof mock>).mockImplementation(() => Promise.reject(new Error("Database error")));
 
       const request = createRequest(validRegistrationData);
       const response = await POST(request);
@@ -335,7 +335,7 @@ describe("POST /api/auth/register", () => {
     });
 
     it("handles non-Error thrown objects", async () => {
-      (createUser as ReturnType<typeof mock>).mockRejectedValue("String error");
+      (createUser as ReturnType<typeof mock>).mockImplementation(() => Promise.reject("String error"));
 
       const request = createRequest(validRegistrationData);
       const response = await POST(request);

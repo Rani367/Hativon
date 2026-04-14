@@ -114,7 +114,7 @@ describe("POST /api/admin/verify-password", () => {
   describe("Error Handling", () => {
     it("returns 500 on setAdminAuth error", async () => {
       (verifyAdminPassword as ReturnType<typeof mock>).mockResolvedValue(true);
-      (setAdminAuth as ReturnType<typeof mock>).mockRejectedValue(new Error("Cookie error"));
+      (setAdminAuth as ReturnType<typeof mock>).mockImplementation(() => Promise.reject(new Error("Cookie error")));
 
       const request = createRequest({ password: "correct-password" });
       const response = await POST(request);

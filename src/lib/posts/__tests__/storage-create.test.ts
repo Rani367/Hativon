@@ -283,7 +283,7 @@ describe("Post Storage - Create Operations", () => {
 
     it("throws error when database insertion fails", async () => {
       const dbError = new Error("Database connection failed");
-      mockDbQuery.mockRejectedValue(dbError);
+      mockDbQuery.mockImplementation(() => Promise.reject(dbError));
 
       const consoleErrorSpy = spyOn(console, "error").mockImplementation(() => {});
 

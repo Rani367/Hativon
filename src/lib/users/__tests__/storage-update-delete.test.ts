@@ -248,7 +248,7 @@ describe("User Storage - Update and Delete Operations", () => {
     });
 
     it("handles database errors silently", async () => {
-      mockDbQuery.mockRejectedValue(new Error("Database error"));
+      mockDbQuery.mockImplementation(() => Promise.reject(new Error("Database error")));
 
       const { updateLastLogin } = await import("../storage");
 
@@ -288,7 +288,7 @@ describe("User Storage - Update and Delete Operations", () => {
     });
 
     it("handles database errors", async () => {
-      mockDbQuery.mockRejectedValue(new Error("Deletion failed"));
+      mockDbQuery.mockImplementation(() => Promise.reject(new Error("Deletion failed")));
 
       const { deleteUser } = await import("../storage");
 

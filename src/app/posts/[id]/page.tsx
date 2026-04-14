@@ -1,10 +1,10 @@
 import { Suspense, cache } from "react";
 import { getPosts, getPost as getPostBase, getWordCount } from "@/lib/posts";
 import { formatHebrewDate } from "@/lib/date/format";
-import Image from "next/image";
 import { notFound } from "next/navigation";
 import { Metadata } from "next";
 import { Badge } from "@/components/ui/badge";
+import { AnimatedPostCover } from "@/components/features/posts/post-cover-transition";
 import { calculateReadingTime } from "@/lib/utils";
 import Link from "next/link";
 
@@ -162,23 +162,11 @@ export default async function PostPage({ params }: PostPageProps) {
           </Link>
         </div>
         {post.coverImage && (
-          <div className="relative mb-8 w-full overflow-hidden rounded-[2rem] border shadow-sm">
-            <Image
-              src={post.coverImage}
-              alt={post.title}
-              width={1200}
-              height={800}
-              className="w-full h-auto"
-              priority
-              loading="eager"
-              fetchPriority="high"
-              quality={75}
-              sizes="(max-width: 768px) 100vw, 896px"
-              placeholder="blur"
-              blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iOCIgaGVpZ2h0PSI2IiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiNlNWU3ZWIiLz48L3N2Zz4="
-              unoptimized
-            />
-          </div>
+          <AnimatedPostCover
+            postId={post.id}
+            src={post.coverImage}
+            alt={post.title}
+          />
         )}
 
         <header className="mb-10 rounded-[2rem] border bg-card/70 p-5 shadow-sm sm:p-8">

@@ -99,7 +99,7 @@ describe("Post Handlers", () => {
     });
 
     it("returns 500 on database error", async () => {
-      mockGetPostById.mockRejectedValue(new Error("Database error"));
+      mockGetPostById.mockImplementation(() => Promise.reject(new Error("Database error")));
 
       const response = await handleGetPost("post-123", "user-456", false);
       const body = await response.json();
@@ -238,7 +238,7 @@ describe("Post Handlers", () => {
 
     it("returns 500 on database error", async () => {
       mockCanUserEditPost.mockResolvedValue(true);
-      mockUpdatePost.mockRejectedValue(new Error("Database error"));
+      mockUpdatePost.mockImplementation(() => Promise.reject(new Error("Database error")));
 
       const response = await handleUpdatePost(
         "post-123",
@@ -357,7 +357,7 @@ describe("Post Handlers", () => {
     it("returns 500 on database error", async () => {
       mockGetPostById.mockResolvedValue(mockPost);
       mockCanUserDeletePost.mockResolvedValue(true);
-      mockDeletePost.mockRejectedValue(new Error("Database error"));
+      mockDeletePost.mockImplementation(() => Promise.reject(new Error("Database error")));
 
       const response = await handleDeletePost("post-123", "user-456", false);
       const body = await response.json();

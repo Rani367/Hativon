@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { useRef } from "react";
 import { formatHebrewDate } from "@/lib/date/format";
 import { Post } from "@/types/post.types";
 import { getWordCount, triggerHaptic } from "@/lib/utils";
@@ -14,6 +15,7 @@ import {
   CardHeader,
 } from "@/components/ui/card";
 import { Clock, Calendar } from "lucide-react";
+import { savePostCoverTransitionData } from "@/components/features/posts/post-cover-transition";
 
 interface PostCardProps {
   post: Post;
@@ -30,6 +32,7 @@ export default function PostCard({
   priority = false,
   compact = false,
 }: PostCardProps) {
+  const coverImageRef = useRef<HTMLImageElement | null>(null);
   const wordCount = post.content ? getWordCount(post.content) : 0;
   const readingTime = calculateReadingTime(wordCount);
   const preloadCoverImage = () => {
@@ -49,6 +52,30 @@ export default function PostCard({
       }`
     : "מערכת חטיבון";
 
+  const handlePostClick = () => {
+    triggerHaptic();
+
+    if (!post.coverImage || !coverImageRef.current) {
+      return;
+    }
+
+    const rect = coverImageRef.current.getBoundingClientRect();
+    if (rect.width <= 0 || rect.height <= 0) {
+      return;
+    }
+
+    savePostCoverTransitionData({
+      postId: post.id,
+      src: post.coverImage,
+      alt: post.title,
+      top: rect.top,
+      left: rect.left,
+      width: rect.width,
+      height: rect.height,
+      timestamp: Date.now(),
+    });
+  };
+
   return (
     <Card
       className={`group relative h-full overflow-hidden border-border/70 bg-card/80 pt-0 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-xl supports-[backdrop-filter]:bg-background/80 ${
@@ -60,7 +87,7 @@ export default function PostCard({
         className="absolute inset-0 z-10"
         aria-label={post.title}
         prefetch={true}
-        onClick={() => triggerHaptic()}
+        onClick={handlePostClick}
         onMouseEnter={preloadCoverImage}
         onTouchStart={preloadCoverImage}
         onFocus={preloadCoverImage}
@@ -80,7 +107,8 @@ export default function PostCard({
             loading={priority ? "eager" : "lazy"}
             fetchPriority={priority ? "high" : "auto"}
             sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 25vw"
-            className="absolute inset-0 w-full h-full object-cover"
+            className="absolute inset-0 h-full w-full object-cover"
+            ref={coverImageRef}
             quality={75}
             placeholder="blur"
             blurDataURL={BLUR_DATA_URL}

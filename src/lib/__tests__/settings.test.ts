@@ -81,7 +81,7 @@ describe("Settings Library", () => {
 
     it("returns null on database error", async () => {
       mockIsDatabaseAvailable.mockResolvedValue(true);
-      mockDbQuery.mockRejectedValue(new Error("DB error"));
+      mockDbQuery.mockImplementation(() => Promise.reject(new Error("DB error")));
 
       const consoleSpy = spyOn(console, "error").mockImplementation(() => {});
       const logSpy = spyOn(console, "log").mockImplementation(() => {});
@@ -124,7 +124,7 @@ describe("Settings Library", () => {
         .mockResolvedValueOnce({ rows: [] }) // CREATE TRIGGER
         .mockResolvedValueOnce({ rows: [] }) // INSERT default_month
         .mockResolvedValueOnce({ rows: [] }) // INSERT default_year
-        .mockRejectedValueOnce(new Error("DB error")); // setSetting fails
+        .mockImplementationOnce(() => Promise.reject(new Error("DB error"))); // setSetting fails
 
       const consoleSpy = spyOn(console, "error").mockImplementation(() => {});
       const logSpy = spyOn(console, "log").mockImplementation(() => {});
