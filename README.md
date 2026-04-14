@@ -49,10 +49,10 @@ bun run create-test-user # Create test user
 
 ### Deployment
 ```bash
-bun run pre-deploy       # Tests + build + commit
+bun run verify           # Tests + build
 git push                 # Triggers Vercel deployment
 ```
 
 ## Documentation
 
-See [CLAUDE.md](CLAUDE.md) for full developer documentation.
+This README is the current project documentation.
