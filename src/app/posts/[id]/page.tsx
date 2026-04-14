@@ -176,6 +176,7 @@ export default async function PostPage({ params }: PostPageProps) {
               sizes="(max-width: 768px) 100vw, 896px"
               placeholder="blur"
               blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iOCIgaGVpZ2h0PSI2IiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiNlNWU3ZWIiLz48L3N2Zz4="
+              unoptimized
             />
           </div>
         )}
