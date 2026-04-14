@@ -415,4 +415,4 @@ if (dbConfigured) {
   console.log("   Password: admin123\n");
 }
 
-console.log("[INFO] For more info, see CLAUDE.md or README.md\n");
+console.log("[INFO] For more info, see README.md\n");
