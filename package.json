@@ -17,7 +17,6 @@
     "create-test-user": "bun scripts/create-test-user-simple.ts",
     "check-db": "bun scripts/check-db.ts",
     "hash-admin-password": "bun scripts/hash-admin-password.ts",
-    "pre-deploy": "bun test && bun run build",
     "verify": "bun test && bun run build",
     "test": "bun test",
     "test:run": "bun test",

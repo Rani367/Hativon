@@ -78,7 +78,7 @@ const nextConfig: NextConfig = {
   // Enable React strict mode for better performance patterns
   reactStrictMode: true,
 
-  // Skip type checking during build (done locally via pre-deploy)
+  // Skip type checking during build (done locally via verify)
   // Note: ESLint is not run during Next.js 16 builds (removed in v16)
   typescript: {
     ignoreBuildErrors: true,
