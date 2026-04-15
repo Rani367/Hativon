@@ -94,10 +94,10 @@ export default async function ArchivePage({ params }: ArchivePageProps) {
 
   // Fetch posts once for both header count and content display
   const posts = await getCachedPostsByMonth(year, monthNumber);
-  const primaryFeaturedPosts = posts.slice(0, 2);
-  const stackedFeaturedPost = posts[2] ?? null;
+  const featuredPost = posts[0] ?? null;
+  const stackedFeaturedPost = posts[1] ?? null;
   const featuredPostsCount =
-    primaryFeaturedPosts.length + (stackedFeaturedPost ? 1 : 0);
+    (featuredPost ? 1 : 0) + (stackedFeaturedPost ? 1 : 0);
   const remainingPosts = posts.slice(featuredPostsCount);
   const postsSummary =
     posts.length === 0
@@ -131,11 +131,9 @@ export default async function ArchivePage({ params }: ArchivePageProps) {
           )}
         </div>
 
-        {primaryFeaturedPosts.length > 0 && (
-          <div className="grid flex-1 gap-6 md:grid-cols-2">
-            {primaryFeaturedPosts.map((post, index) => (
-              <PostCard key={post.id} post={post} priority={index === 0} />
-            ))}
+        {featuredPost && (
+          <div className="flex-1 lg:min-w-0">
+            <PostCard post={featuredPost} priority />
           </div>
         )}
       </div>
