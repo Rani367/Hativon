@@ -110,7 +110,7 @@ export default async function ArchivePage({ params }: ArchivePageProps) {
     <div className="container mx-auto px-4 py-8 sm:py-12">
       <div className="mb-10 flex flex-col gap-6 lg:flex-row lg:items-stretch">
         <div className="flex w-full flex-col gap-6 lg:max-w-[28rem] lg:shrink-0 xl:max-w-[30rem]">
-          <div className="overflow-hidden rounded-[2rem] border bg-gradient-to-br from-amber-50 via-background to-sky-50 px-5 py-8 shadow-sm sm:px-8 sm:py-10">
+          <div className="overflow-hidden rounded-[2rem] border bg-gradient-to-br from-amber-50 via-background to-sky-50 px-5 pt-6 pb-10 shadow-sm sm:px-8 sm:pt-8 sm:pb-12">
             <div className="space-y-4">
               <div className="inline-flex items-center rounded-full border bg-background/80 px-3 py-1 text-sm font-medium text-muted-foreground">
                 גיליון חודשי לתלמידים ולמורים
