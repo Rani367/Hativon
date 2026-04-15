@@ -108,7 +108,7 @@ export default async function ArchivePage({ params }: ArchivePageProps) {
 
   return (
     <div className="container mx-auto px-4 py-8 sm:py-12">
-      <div className="mb-10 flex flex-col gap-6 lg:flex-row lg:items-start">
+      <div className="mb-10 flex flex-col gap-6 lg:flex-row lg:items-stretch">
         <div className="flex w-full flex-col gap-6 lg:max-w-[28rem] lg:shrink-0 xl:max-w-[30rem]">
           <div className="overflow-hidden rounded-[2rem] border bg-gradient-to-br from-amber-50 via-background to-sky-50 px-5 py-8 shadow-sm sm:px-8 sm:py-10">
             <div className="space-y-4">
@@ -132,7 +132,7 @@ export default async function ArchivePage({ params }: ArchivePageProps) {
         </div>
 
         {featuredPost && (
-          <div className="flex-1 lg:min-w-0">
+          <div className="flex-1 lg:min-w-0 lg:self-stretch">
             <PostCard post={featuredPost} priority />
           </div>
         )}
