@@ -44,6 +44,7 @@ function PaginatedPosts({
             key={post.id}
             post={post}
             priority={index < PRIORITY_COUNT}
+            uniformHeightBelowMd
           />
         ))}
       </div>
