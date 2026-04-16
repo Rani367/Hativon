@@ -127,7 +127,14 @@ export default async function ArchivePage({ params }: ArchivePageProps) {
           </div>
 
           {stackedFeaturedPost && (
-            <PostCard post={stackedFeaturedPost} compact />
+            <>
+              <div className="lg:hidden">
+                <PostCard post={stackedFeaturedPost} />
+              </div>
+              <div className="hidden lg:block">
+                <PostCard post={stackedFeaturedPost} compact />
+              </div>
+            </>
           )}
         </div>
 
