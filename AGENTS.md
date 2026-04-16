@@ -7,7 +7,7 @@
 Use Bun for all local work:
 
 - `bun install` installs dependencies and runs automated local setup.
-- `bun run dev` starts the app on `http://localhost:3000` after freeing port `3000`.
+- `bun dev` starts the app on `http://localhost:3000` after freeing port `3000`.
 - `bun run build` creates the production build; `bun run start` serves it.
 - `bun run lint` runs the Next.js ESLint rules.
 - `bun test` runs the Bun test suite; `bun test --coverage` adds coverage output.
