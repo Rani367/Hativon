@@ -2,8 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useId, useRef, type MouseEvent } from "react";
-import { useRouter } from "next/navigation";
+import { useRef } from "react";
 import { formatHebrewDate } from "@/lib/date/format";
 import { Post } from "@/types/post.types";
 import {
@@ -12,6 +11,7 @@ import {
   getWordCount,
   triggerHaptic,
 } from "@/lib/utils";
+import { attachHoverLift, useAnimeScope } from "@/lib/anime/motion";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -20,10 +20,6 @@ import {
   CardHeader,
 } from "@/components/ui/card";
 import { Clock, Calendar } from "lucide-react";
-import {
-  measureTransitionRect,
-  usePostOpenTransition,
-} from "@/components/features/posts/post-open-transition-provider";
 
 interface PostCardProps {
   post: Post;
@@ -42,19 +38,9 @@ export default function PostCard({
   compact = false,
   uniformHeightBelowMd = false,
 }: PostCardProps) {
-  const router = useRouter();
-  const sourceId = useId();
   const cardRef = useRef<HTMLDivElement>(null);
-  const imageRef = useRef<HTMLDivElement>(null);
-  const contentRef = useRef<HTMLDivElement>(null);
-  const titleRef = useRef<HTMLHeadingElement>(null);
-  const metaRef = useRef<HTMLDivElement>(null);
-  const descriptionRef = useRef<HTMLParagraphElement>(null);
-  const { beginPostTransition, isSourceActive, prefersReducedMotion } =
-    usePostOpenTransition();
   const wordCount = post.content ? getWordCount(post.content) : 0;
   const readingTime = calculateReadingTime(wordCount);
-  const isActiveSource = isSourceActive(sourceId);
   const shouldUseUniformMobileHeight = uniformHeightBelowMd && !compact;
   const hasTags = Boolean(post.tags?.length);
   const preloadCoverImage = () => {
@@ -75,81 +61,48 @@ export default function PostCard({
     : "מערכת חטיבון";
   const href = `/posts/${post.id}`;
 
-  const handleClick = (event: MouseEvent<HTMLAnchorElement>) => {
-    triggerHaptic();
-
-    if (
-      event.defaultPrevented ||
-      event.button !== 0 ||
-      event.metaKey ||
-      event.ctrlKey ||
-      event.shiftKey ||
-      event.altKey ||
-      prefersReducedMotion ||
-      !post.coverImage ||
-      !cardRef.current ||
-      !imageRef.current ||
-      !contentRef.current ||
-      !titleRef.current ||
-      !metaRef.current ||
-      !descriptionRef.current
-    ) {
-      return;
-    }
-
-    const didBeginTransition = beginPostTransition({
-      sourceId,
-      postId: post.id,
-      href,
-      title: post.title,
-      description: post.description,
-      metaItems: [formatHebrewDate(post.date), readingTime],
-      coverImage: post.coverImage,
-      imageAlt: post.title,
-      shellRect: measureTransitionRect(cardRef.current),
-      imageRect: measureTransitionRect(imageRef.current),
-      contentRect: measureTransitionRect(contentRef.current),
-      titleRect: measureTransitionRect(titleRef.current),
-      metaRect: measureTransitionRect(metaRef.current),
-      descriptionRect: measureTransitionRect(descriptionRef.current),
-    });
-
-    if (!didBeginTransition) {
-      return;
-    }
-
-    event.preventDefault();
-    router.push(href, { scroll: false });
-  };
+  useAnimeScope(
+    cardRef,
+    ({ root }) =>
+      attachHoverLift(root, "[data-post-card-shell]", {
+        lift: compact ? -6 : -10,
+        scale: compact ? 1.008 : 1.014,
+        imageSelector: "[data-post-card-image]",
+        glowSelector: "[data-post-card-glow]",
+      }),
+    [compact, post.id],
+  );
 
   return (
-    <div
-      ref={cardRef}
-      className={`h-full transition-opacity duration-150 ${
-        isActiveSource ? "pointer-events-none opacity-0" : "opacity-100"
-      }`}
-    >
+    <div ref={cardRef} className="h-full">
       <Card
-        className={`group relative h-full overflow-hidden border-border/70 bg-card/80 pt-0 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-xl supports-[backdrop-filter]:bg-background/80 ${
+        data-post-card-shell
+        className={`group relative h-full overflow-hidden border border-border/70 bg-card/88 pt-0 shadow-[0_20px_50px_rgba(15,23,42,0.08)] supports-[backdrop-filter]:bg-background/80 ${
           compact ? "gap-2" : ""
         }`}
+        style={{ transformOrigin: "center bottom" }}
       >
         <Link
           href={href}
           className="absolute inset-0 z-10"
           aria-label={post.title}
           prefetch={true}
-          onClick={handleClick}
+          onClick={() => triggerHaptic()}
           onMouseEnter={preloadCoverImage}
           onTouchStart={preloadCoverImage}
           onFocus={preloadCoverImage}
         />
         <div
-          ref={imageRef}
+          data-post-card-image
           className={`relative w-full overflow-hidden rounded-t-lg ${
             compact ? "aspect-[2/1]" : "aspect-[4/3]"
           }`}
         >
+          <div
+            data-post-card-glow
+            className="absolute inset-0 z-[1] bg-[linear-gradient(115deg,rgba(255,255,255,0.04),rgba(251,191,36,0.24),rgba(14,165,233,0.18),rgba(255,255,255,0.04))] opacity-10 mix-blend-screen"
+            style={{ transform: "translateX(-20%)" }}
+          />
           {post.coverImage ? (
             <Image
               src={post.coverImage}
@@ -195,7 +148,7 @@ export default function PostCard({
           )}
         </div>
 
-        <div ref={contentRef} className="flex flex-1 flex-col">
+        <div className="flex flex-1 flex-col">
           <CardHeader
             className={cn(
               compact ? "space-y-1.5 pb-0" : "space-y-3 pb-3",
@@ -203,7 +156,6 @@ export default function PostCard({
             )}
           >
             <div
-              ref={metaRef}
               className={cn(
                 "flex flex-wrap items-center gap-3 text-muted-foreground",
                 compact ? "text-xs" : "text-sm",
@@ -221,9 +173,9 @@ export default function PostCard({
             </div>
             <div>
               <h2
-                ref={titleRef}
+                data-post-card-title
                 className={cn(
-                  "font-bold leading-tight text-foreground",
+                  "font-bold leading-tight text-foreground transition-colors duration-300 group-hover:text-foreground/95",
                   compact ? "line-clamp-2 text-lg" : "text-xl sm:text-2xl",
                   shouldUseUniformMobileHeight &&
                     "line-clamp-2 h-16 overflow-hidden md:h-auto md:overflow-visible md:line-clamp-none",
@@ -234,14 +186,12 @@ export default function PostCard({
             </div>
             {compact ? (
               <p
-                ref={descriptionRef}
                 className="line-clamp-1 text-sm leading-5 text-muted-foreground"
               >
                 {post.description}
               </p>
             ) : (
               <p
-                ref={descriptionRef}
                 className={cn(
                   "line-clamp-3 text-sm leading-6 text-muted-foreground sm:text-base",
                   shouldUseUniformMobileHeight &&

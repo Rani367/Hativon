@@ -1,12 +1,19 @@
 "use client";
 
 import Link from "next/link";
+import { flushSync } from "react-dom";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { animate, createLayout, stagger } from "animejs";
 import { useParams } from "next/navigation";
 import { X, ChevronDown, ChevronUp, Calendar } from "lucide-react";
-import { useState, useEffect, useMemo } from "react";
-import { motion, AnimatePresence } from "framer-motion";
 import { cn, triggerHaptic } from "@/lib/utils";
 import type { ArchiveMonth } from "@/lib/posts/queries";
+import {
+  canUseDomAnimation,
+  motionTokens,
+  useAnimeScope,
+  useReducedMotionPreference,
+} from "@/lib/anime/motion";
 import {
   monthNumberToEnglish,
   monthNumberToHebrew,
@@ -35,15 +42,18 @@ export function ArchiveDrawer({
   onClose,
 }: ArchiveDrawerProps) {
   const params = useParams();
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const navRef = useRef<HTMLElement>(null);
+  const layoutRef = useRef<ReturnType<typeof createLayout> | null>(null);
+  const [shouldRender, setShouldRender] = useState(isOpen);
   const currentYear = params?.year ? parseInt(params.year as string, 10) : null;
   const currentMonth = params?.month ? (params.month as string) : null;
+  const prefersReducedMotion = useReducedMotionPreference();
 
-  // Get current month/year for "Latest" link
   const { year: latestYear, month: latestMonth } = getCurrentMonthYear();
   const isLatestPage =
     currentYear === latestYear && currentMonth === latestMonth;
 
-  // Group archives by year - memoized to avoid recalculating on every render
   const yearGroups = useMemo(() => {
     const groups: YearGroup[] = [];
     const yearsMap = new Map<number, YearGroup>();
@@ -75,183 +85,297 @@ export function ArchiveDrawer({
     return groups;
   }, [archives]);
 
-  // State to track which years are expanded (default: current year)
   const [expandedYears, setExpandedYears] = useState<Set<number>>(
     new Set(currentYear ? [currentYear] : []),
   );
 
-  const toggleYear = (year: number) => {
-    setExpandedYears((prev) => {
-      const next = new Set(prev);
-      if (next.has(year)) {
-        next.delete(year);
-      } else {
-        next.add(year);
-      }
-      return next;
-    });
-  };
-
-  // Close on escape key + lock viewport scroll
   useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+    if (isOpen) {
+      setShouldRender(true);
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    setExpandedYears(new Set(currentYear ? [currentYear] : []));
+  }, [currentYear]);
+
+  useEffect(() => {
+    if (!canUseDomAnimation() || !navRef.current) {
+      return;
+    }
+
+    layoutRef.current = createLayout(navRef.current, {
+      children: "[data-archive-layout-item]",
+      duration: 720,
+      ease: motionTokens.ease.entrance,
+      enterFrom: {
+        opacity: 0,
+        y: 16,
+        scale: 0.96,
+      },
+      leaveTo: {
+        opacity: 0,
+        y: -10,
+        scale: 0.96,
+      },
+    });
+
+    return () => {
+      layoutRef.current?.revert();
+      layoutRef.current = null;
     };
+  }, [shouldRender]);
+
+  useEffect(() => {
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        onClose();
+      }
+    };
+
     if (isOpen) {
       document.addEventListener("keydown", handleEscape);
       document.documentElement.style.overflow = "hidden";
     }
+
     return () => {
       document.removeEventListener("keydown", handleEscape);
       document.documentElement.style.overflow = "";
     };
   }, [isOpen, onClose]);
 
+  useAnimeScope(
+    wrapperRef,
+    ({ root }) => {
+      if (!shouldRender) {
+        return;
+      }
+
+      const overlay = root.querySelector<HTMLElement>("[data-archive-overlay]");
+      const drawer = root.querySelector<HTMLElement>("[data-archive-panel]");
+      const items = root.querySelectorAll("[data-archive-drawer-item]");
+
+      if (isOpen) {
+        if (overlay) {
+          animate(overlay, {
+            opacity: [0, 1],
+            duration: 360,
+            ease: motionTokens.ease.entrance,
+          });
+        }
+
+        if (drawer) {
+          animate(drawer, {
+            translateX: ["104%", "0%"],
+            rotate: ["-1.5deg", "0deg"],
+            duration: 760,
+            ease: motionTokens.ease.entrance,
+          });
+        }
+
+        if (items.length) {
+          animate(items, {
+            opacity: [0, 1],
+            translateX: [22, 0],
+            delay: stagger(55, { start: 160 }),
+            duration: 540,
+            ease: motionTokens.ease.entrance,
+          });
+        }
+
+        return;
+      }
+
+      if (overlay) {
+        animate(overlay, {
+          opacity: 0,
+          duration: 220,
+          ease: motionTokens.ease.settle,
+        });
+      }
+
+      if (drawer) {
+        animate(drawer, {
+          translateX: "104%",
+          rotate: "-1.5deg",
+          duration: 460,
+          ease: motionTokens.ease.settle,
+          onComplete: () => setShouldRender(false),
+        });
+      } else {
+        setShouldRender(false);
+      }
+    },
+    [isOpen, shouldRender, expandedYears.size],
+  );
+
+  if (!shouldRender) {
+    return null;
+  }
+
+  const toggleYear = (year: number) => {
+    const updateExpandedYears = () => {
+      flushSync(() => {
+        setExpandedYears((previousYears) => {
+          const nextYears = new Set(previousYears);
+          if (nextYears.has(year)) {
+            nextYears.delete(year);
+          } else {
+            nextYears.add(year);
+          }
+          return nextYears;
+        });
+      });
+    };
+
+    if (prefersReducedMotion || !layoutRef.current) {
+      updateExpandedYears();
+      return;
+    }
+
+    layoutRef.current.update(updateExpandedYears, {
+      duration: 720,
+      ease: motionTokens.ease.entrance,
+    });
+  };
+
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <>
-          {/* Overlay */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="fixed inset-0 bg-black/50 z-50"
-            onClick={() => { triggerHaptic(); onClose(); }}
-          />
+    <div ref={wrapperRef} className="fixed inset-0 z-50">
+      <div
+        data-archive-overlay
+        className="absolute inset-0 bg-black/50"
+        onClick={() => {
+          triggerHaptic();
+          onClose();
+        }}
+      />
 
-          {/* Drawer */}
-          <motion.div
-            initial={{ x: "100%" }}
-            animate={{ x: 0 }}
-            exit={{ x: "100%" }}
-            transition={{ duration: 0.3, ease: "easeInOut" }}
-            className="fixed top-0 right-0 h-full w-80 bg-card shadow-xl z-50 overflow-y-auto"
+      <div
+        data-archive-panel
+        className="absolute top-0 right-0 flex h-full w-80 max-w-[calc(100vw-1rem)] flex-col overflow-y-auto border-l border-border/70 bg-card/92 shadow-[0_26px_90px_rgba(15,23,42,0.22)] backdrop-blur-xl"
+      >
+        <div className="sticky top-0 flex items-center justify-between border-b border-border/70 bg-card/92 px-4 py-3 backdrop-blur-xl">
+          <div className="flex items-center gap-2">
+            <Calendar className="w-5 h-5" />
+            <h2 className="text-lg font-semibold">ארכיון</h2>
+          </div>
+          <button
+            onClick={() => {
+              triggerHaptic();
+              onClose();
+            }}
+            className="rounded-lg p-2 transition-colors hover:bg-accent"
+            aria-label="סגור תפריט"
           >
-            {/* Header */}
-            <div className="sticky top-0 bg-card border-b border-border px-4 py-3 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Calendar className="w-5 h-5" />
-                <h2 className="text-lg font-semibold">ארכיון</h2>
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="p-4">
+          {archives.length === 0 ? (
+            <p className="text-sm text-muted-foreground">טוען...</p>
+          ) : yearGroups.length === 0 ? (
+            <p className="text-sm text-muted-foreground">אין כתבות בארכיון</p>
+          ) : (
+            <nav ref={navRef} className="space-y-2">
+              <div data-archive-layout-item data-archive-drawer-item>
+                <Link
+                  href={`/${latestYear}/${latestMonth}`}
+                  onClick={() => {
+                    triggerHaptic();
+                    onClose();
+                  }}
+                  className={cn(
+                    "block rounded-lg px-3 py-2 text-sm font-semibold transition-colors hover:bg-accent",
+                    isLatestPage &&
+                      "bg-primary text-primary-foreground hover:bg-primary/90",
+                  )}
+                >
+                  הגיליון האחרון
+                </Link>
               </div>
-              <button
-                onClick={() => { triggerHaptic(); onClose(); }}
-                className="p-2 hover:bg-accent rounded-lg transition-colors"
-                aria-label="סגור תפריט"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
 
-            {/* Content */}
-            <div className="p-4">
-              {archives.length === 0 ? (
-                <p className="text-sm text-muted-foreground">טוען...</p>
-              ) : yearGroups.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  אין כתבות בארכיון
-                </p>
-              ) : (
-                <nav className="space-y-2">
-                  {/* Latest Issue Link */}
-                  <Link
-                    href={`/${latestYear}/${latestMonth}`}
-                    onClick={() => { triggerHaptic(); onClose(); }}
-                    className={cn(
-                      "block px-3 py-2 rounded-lg text-sm font-semibold transition-colors",
-                      "hover:bg-accent",
-                      isLatestPage &&
-                        "bg-primary text-primary-foreground hover:bg-primary/90",
-                    )}
+              {yearGroups.map((yearGroup) => {
+                const isExpanded = expandedYears.has(yearGroup.year);
+                const isCurrentYear = currentYear === yearGroup.year;
+
+                return (
+                  <div
+                    key={yearGroup.year}
+                    data-archive-layout-item
+                    data-archive-drawer-item
+                    className="space-y-1"
                   >
-                    הגיליון האחרון
-                  </Link>
+                    <button
+                      onClick={() => {
+                        triggerHaptic();
+                        toggleYear(yearGroup.year);
+                      }}
+                      className={cn(
+                        "flex w-full items-center justify-between rounded-lg px-3 py-2 transition-colors hover:bg-accent",
+                        isCurrentYear && "bg-accent/50",
+                      )}
+                    >
+                      <span className="font-semibold">{yearGroup.year}</span>
+                      {isExpanded ? (
+                        <ChevronUp className="w-4 h-4" />
+                      ) : (
+                        <ChevronDown className="w-4 h-4" />
+                      )}
+                    </button>
 
-                  {/* Year/Month Archive */}
-                  {yearGroups.map((yearGroup) => {
-                    const isExpanded = expandedYears.has(yearGroup.year);
-                    const isCurrentYear = currentYear === yearGroup.year;
+                    {isExpanded && (
+                      <div className="me-4 space-y-1 overflow-hidden">
+                        {yearGroup.months.map((month) => {
+                          const isActive =
+                            isCurrentYear && currentMonth === month.monthNameEn;
 
-                    return (
-                      <div key={yearGroup.year}>
-                        <button
-                          onClick={() => { triggerHaptic(); toggleYear(yearGroup.year); }}
-                          className={cn(
-                            "w-full flex items-center justify-between px-3 py-2 rounded-lg transition-colors",
-                            "hover:bg-accent",
-                            isCurrentYear && "bg-accent/50",
-                          )}
-                        >
-                          <span className="font-semibold">
-                            {yearGroup.year}
-                          </span>
-                          {isExpanded ? (
-                            <ChevronUp className="w-4 h-4" />
-                          ) : (
-                            <ChevronDown className="w-4 h-4" />
-                          )}
-                        </button>
-
-                        <AnimatePresence>
-                          {isExpanded && (
-                            <motion.div
-                              initial={{ height: 0, opacity: 0 }}
-                              animate={{ height: "auto", opacity: 1 }}
-                              exit={{ height: 0, opacity: 0 }}
-                              transition={{ duration: 0.2, ease: "easeInOut" }}
-                              className="overflow-hidden"
+                          return (
+                            <div
+                              key={month.month}
+                              data-archive-layout-item
+                              data-archive-drawer-item
                             >
-                              <div className="mt-1 me-4 space-y-1">
-                                {yearGroup.months.map((month) => {
-                                  const isActive =
-                                    isCurrentYear &&
-                                    currentMonth === month.monthNameEn;
-
-                                  return (
-                                    <Link
-                                      key={month.month}
-                                      href={`/${yearGroup.year}/${month.monthNameEn}`}
-                                      onClick={() => { triggerHaptic(); onClose(); }}
-                                      className={cn(
-                                        "block px-3 py-2 rounded-lg text-sm transition-colors",
-                                        "hover:bg-accent",
-                                        isActive &&
-                                          "bg-primary text-primary-foreground hover:bg-primary/90",
-                                      )}
-                                    >
-                                      <div className="flex items-center justify-between">
-                                        <span>
-                                          גיליון {month.monthNameHe}{" "}
-                                          {yearGroup.year}
-                                        </span>
-                                        <span
-                                          className={cn(
-                                            "text-xs",
-                                            isActive
-                                              ? "text-primary-foreground/70"
-                                              : "text-muted-foreground",
-                                          )}
-                                        >
-                                          ({month.count})
-                                        </span>
-                                      </div>
-                                    </Link>
-                                  );
-                                })}
-                              </div>
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
+                              <Link
+                                href={`/${yearGroup.year}/${month.monthNameEn}`}
+                                onClick={() => {
+                                  triggerHaptic();
+                                  onClose();
+                                }}
+                                className={cn(
+                                  "block rounded-lg px-3 py-2 text-sm transition-colors hover:bg-accent",
+                                  isActive &&
+                                    "bg-primary text-primary-foreground hover:bg-primary/90",
+                                )}
+                              >
+                                <div className="flex items-center justify-between">
+                                  <span>
+                                    גיליון {month.monthNameHe} {yearGroup.year}
+                                  </span>
+                                  <span
+                                    className={cn(
+                                      "text-xs",
+                                      isActive
+                                        ? "text-primary-foreground/70"
+                                        : "text-muted-foreground",
+                                    )}
+                                  >
+                                    ({month.count})
+                                  </span>
+                                </div>
+                              </Link>
+                            </div>
+                          );
+                        })}
                       </div>
-                    );
-                  })}
-                </nav>
-              )}
-            </div>
-          </motion.div>
-        </>
-      )}
-    </AnimatePresence>
+                    )}
+                  </div>
+                );
+              })}
+            </nav>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }

@@ -1,21 +1,24 @@
 "use client";
 
-import { useEffect, useRef, type ReactNode } from "react";
+import { useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { animate, stagger } from "animejs";
 import { Badge } from "@/components/ui/badge";
 import { formatHebrewDate } from "@/lib/date/format";
 import { calculateReadingTime } from "@/lib/utils";
 import { type Post } from "@/types/post.types";
 import {
-  measureTransitionRect,
-  usePostOpenTransition,
-} from "@/components/features/posts/post-open-transition-provider";
+  animateInViewOnce,
+  createMountTimeline,
+  motionTokens,
+  useAnimeScope,
+} from "@/lib/anime/motion";
 
 interface PostPageTransitionShellProps {
   post: Post;
   wordCount: number;
-  children: ReactNode;
+  children: React.ReactNode;
 }
 
 const BLUR_DATA_URL =
@@ -26,57 +29,68 @@ export function PostPageTransitionShell({
   wordCount,
   children,
 }: PostPageTransitionShellProps) {
-  const imageContainerRef = useRef<HTMLDivElement>(null);
-  const headerRef = useRef<HTMLElement>(null);
-  const titleRef = useRef<HTMLHeadingElement>(null);
-  const metaRef = useRef<HTMLDivElement>(null);
-  const descriptionRef = useRef<HTMLParagraphElement>(null);
-  const {
-    isPostTransitionActive,
-    registerPostTransitionTarget,
-    shouldDelayPostBody,
-  } = usePostOpenTransition();
+  const rootRef = useRef<HTMLElement>(null);
 
-  const hasCoverImage = Boolean(post.coverImage);
-  const concealOpeningRegion = hasCoverImage && isPostTransitionActive(post.id);
-  const delayPostBody = shouldDelayPostBody(post.id);
+  useAnimeScope(
+    rootRef,
+    ({ root }) => {
+      createMountTimeline(root, "[data-post-intro]", {
+        staggerDelay: motionTokens.stagger.base,
+        y: 34,
+      });
 
-  useEffect(() => {
-    if (!concealOpeningRegion) {
-      return;
-    }
-
-    const animationFrameId = window.requestAnimationFrame(() => {
-      if (
-        !imageContainerRef.current ||
-        !headerRef.current ||
-        !titleRef.current ||
-        !metaRef.current ||
-        !descriptionRef.current
-      ) {
-        return;
+      const cover = root.querySelector("[data-post-cover]");
+      if (cover) {
+        animate(cover, {
+          opacity: [0, 1],
+          scale: [1.04, 1],
+          filter: ["blur(18px)", "blur(0px)"],
+          duration: 1200,
+          ease: motionTokens.ease.entrance,
+        });
       }
 
-      registerPostTransitionTarget(post.id, {
-        imageRect: measureTransitionRect(imageContainerRef.current),
-        headerRect: measureTransitionRect(headerRef.current),
-        titleRect: measureTransitionRect(titleRef.current),
-        metaRect: measureTransitionRect(metaRef.current),
-        descriptionRect: measureTransitionRect(descriptionRef.current),
-      });
-    });
+      const chips = root.querySelectorAll("[data-post-chip]");
+      if (chips.length) {
+        animate(chips, {
+          opacity: [0, 1],
+          translateY: [16, 0],
+          scale: [0.94, 1],
+          delay: stagger(70, { start: 180 }),
+          duration: 680,
+          ease: motionTokens.ease.entrance,
+        });
+      }
 
-    return () => {
-      window.cancelAnimationFrame(animationFrameId);
-    };
-  }, [concealOpeningRegion, post.id, registerPostTransitionTarget]);
+      const cinematicAccent = root.querySelector("[data-post-accent]");
+      if (cinematicAccent) {
+        animate(cinematicAccent, {
+          opacity: [0.16, 0.34],
+          translateX: ["-10%", "6%"],
+          duration: motionTokens.duration.loop + 1400,
+          ease: motionTokens.ease.settle,
+          alternate: true,
+          loop: true,
+        });
+      }
+
+      const storyBlocks = Array.from(
+        root.querySelectorAll(
+          "[data-post-body] .prose > :is(h2,h3,blockquote,pre,figure,img,ul,ol,table,hr)",
+        ),
+      );
+
+      return animateInViewOnce(storyBlocks);
+    },
+    [post.id],
+  );
 
   return (
-    <article className="mx-auto max-w-4xl px-4 py-6 sm:px-6 sm:py-8">
-      <div className="mb-6">
+    <article ref={rootRef} className="mx-auto max-w-4xl px-4 py-6 sm:px-6 sm:py-8">
+      <div data-post-intro className="mb-6">
         <Link
           href="/"
-          className="inline-flex items-center rounded-full border px-3 py-1 text-sm text-muted-foreground transition-colors hover:bg-muted"
+          className="inline-flex items-center rounded-full border border-foreground/10 bg-background/70 px-3 py-1 text-sm text-muted-foreground shadow-sm transition-colors hover:bg-muted"
         >
           חזרה לגיליון
         </Link>
@@ -84,44 +98,49 @@ export function PostPageTransitionShell({
 
       {post.coverImage && (
         <div
-          ref={imageContainerRef}
-          className={`relative mb-8 w-full overflow-hidden rounded-[2rem] border shadow-sm transition-opacity duration-200 ${
-            concealOpeningRegion ? "opacity-0" : "opacity-100"
-          }`}
+          data-post-intro
+          className="relative mb-8 overflow-hidden rounded-[2rem] border shadow-[0_22px_70px_rgba(15,23,42,0.14)]"
         >
-          <Image
-            src={post.coverImage}
-            alt={post.title}
-            width={1200}
-            height={800}
-            className="h-auto w-full"
-            priority
-            loading="eager"
-            fetchPriority="high"
-            quality={75}
-            sizes="(max-width: 768px) 100vw, 896px"
-            placeholder="blur"
-            blurDataURL={BLUR_DATA_URL}
-            unoptimized
+          <div
+            data-post-accent
+            className="pointer-events-none absolute inset-y-0 left-[-10%] z-[1] w-1/2 bg-[linear-gradient(115deg,rgba(255,255,255,0.04),rgba(251,191,36,0.22),rgba(14,165,233,0.12),rgba(255,255,255,0.04))] mix-blend-screen"
           />
+          <div data-post-cover className="relative">
+            <Image
+              src={post.coverImage}
+              alt={post.title}
+              width={1200}
+              height={800}
+              className="h-auto w-full"
+              priority
+              loading="eager"
+              fetchPriority="high"
+              quality={75}
+              sizes="(max-width: 768px) 100vw, 896px"
+              placeholder="blur"
+              blurDataURL={BLUR_DATA_URL}
+              unoptimized
+            />
+          </div>
         </div>
       )}
 
       <header
-        ref={headerRef}
-        className={`mb-10 rounded-[2rem] border bg-card/70 p-5 shadow-sm transition-opacity duration-200 sm:p-8 ${
-          concealOpeningRegion ? "opacity-0" : "opacity-100"
-        }`}
+        data-post-intro
+        className="mb-10 rounded-[2rem] border bg-card/78 p-5 shadow-[0_18px_60px_rgba(15,23,42,0.08)] backdrop-blur-sm sm:p-8"
       >
-        <div
-          ref={metaRef}
-          className="mb-5 flex flex-wrap items-center gap-3 text-sm text-muted-foreground sm:text-base"
-        >
-          <time className="rounded-full bg-muted px-3 py-1">
+        <div className="mb-5 flex flex-wrap items-center gap-3 text-sm text-muted-foreground sm:text-base">
+          <time
+            data-post-chip
+            className="rounded-full bg-muted px-3 py-1 shadow-sm"
+          >
             {formatHebrewDate(post.date)}
           </time>
           {post.author && (
-            <span className="rounded-full bg-muted px-3 py-1">
+            <span
+              data-post-chip
+              className="rounded-full bg-muted px-3 py-1 shadow-sm"
+            >
               מאת {post.author}
               {post.authorDeleted && (
                 <span className="text-muted-foreground"> (נמחק)</span>
@@ -131,22 +150,28 @@ export function PostPageTransitionShell({
                 ` (כיתה ${post.authorGrade}${post.authorClass})`}
             </span>
           )}
-          <span className="rounded-full bg-muted px-3 py-1">
+          <span
+            data-post-chip
+            className="rounded-full bg-muted px-3 py-1 shadow-sm"
+          >
             {calculateReadingTime(wordCount)}
           </span>
-          <span className="rounded-full bg-muted px-3 py-1">
+          <span
+            data-post-chip
+            className="rounded-full bg-muted px-3 py-1 shadow-sm"
+          >
             {wordCount} מילים
           </span>
         </div>
 
         <h1
-          ref={titleRef}
+          data-post-intro
           className="mb-5 text-3xl font-black leading-tight text-foreground sm:text-4xl lg:text-5xl"
         >
           {post.title}
         </h1>
 
-        <div className="mb-4 flex flex-wrap gap-3">
+        <div data-post-intro className="mb-4 flex flex-wrap gap-3">
           {post.isTeacherPost && (
             <Badge
               variant="default"
@@ -173,18 +198,14 @@ export function PostPageTransitionShell({
         </div>
 
         <p
-          ref={descriptionRef}
+          data-post-intro
           className="max-w-3xl text-base leading-7 text-muted-foreground sm:text-lg"
         >
           {post.description}
         </p>
       </header>
 
-      <div
-        className={`transition-all duration-300 ${
-          delayPostBody ? "translate-y-4 opacity-0" : "translate-y-0 opacity-100"
-        }`}
-      >
+      <div data-post-intro data-post-body>
         {children}
       </div>
     </article>

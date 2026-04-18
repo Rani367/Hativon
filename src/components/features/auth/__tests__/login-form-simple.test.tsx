@@ -2,18 +2,6 @@ import { describe, it, expect, mock } from "bun:test";
 import { render, screen } from "@testing-library/react";
 import { LoginForm } from "../login-form";
 
-// Mock framer-motion
-mock.module("framer-motion", () => ({
-  motion: {
-    div: ({ children, ...props }: React.PropsWithChildren) => (
-      <div {...props}>{children}</div>
-    ),
-    button: ({ children, ...props }: React.PropsWithChildren) => (
-      <button {...props}>{children}</button>
-    ),
-  },
-}));
-
 // Mock auth provider
 mock.module("../auth-provider", () => ({
   useAuth: () => ({
@@ -30,34 +18,34 @@ describe("LoginForm - Basic Rendering", () => {
   it("renders without crashing", () => {
     const { container } = render(<LoginForm />);
     const form = container.querySelector("form");
-    expect(form).toBeInTheDocument();
+    expect(form).not.toBeNull();
   });
 
   it("renders username input", () => {
     render(<LoginForm />);
     const usernameInput = screen.getByLabelText(/שם משתמש/i);
-    expect(usernameInput).toBeInTheDocument();
-    expect(usernameInput).toHaveAttribute("type", "text");
+    expect(usernameInput).not.toBeNull();
+    expect(usernameInput.getAttribute("type")).toBe("text");
   });
 
   it("renders password input", () => {
     render(<LoginForm />);
     const passwordInput = screen.getByLabelText(/סיסמה/i);
-    expect(passwordInput).toBeInTheDocument();
-    expect(passwordInput).toHaveAttribute("type", "password");
+    expect(passwordInput).not.toBeNull();
+    expect(passwordInput.getAttribute("type")).toBe("password");
   });
 
   it("renders submit button", () => {
     render(<LoginForm />);
     const button = screen.getByRole("button", { name: /התחבר/i });
-    expect(button).toBeInTheDocument();
-    expect(button).toHaveAttribute("type", "submit");
+    expect(button).not.toBeNull();
+    expect(button.getAttribute("type")).toBe("submit");
   });
 
   it("has Hebrew placeholders", () => {
     render(<LoginForm />);
-    expect(screen.getByPlaceholderText("הזן שם משתמש")).toBeInTheDocument();
-    expect(screen.getByPlaceholderText("הזן סיסמה")).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("הזן שם משתמש")).not.toBeNull();
+    expect(screen.getByPlaceholderText("הזן סיסמה")).not.toBeNull();
   });
 
   it("has proper accessibility labels", () => {
@@ -65,7 +53,7 @@ describe("LoginForm - Basic Rendering", () => {
     const usernameInput = screen.getByLabelText(/שם משתמש/i);
     const passwordInput = screen.getByLabelText(/סיסמה/i);
 
-    expect(usernameInput).toHaveAttribute("id", "login-username");
-    expect(passwordInput).toHaveAttribute("id", "login-password");
+    expect(usernameInput.getAttribute("id")).toBe("login-username");
+    expect(passwordInput.getAttribute("id")).toBe("login-password");
   });
 });

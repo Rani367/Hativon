@@ -14,6 +14,7 @@ import {
 import { EmptyPostsState } from "@/components/features/posts/empty-posts-state";
 import PaginatedPosts from "@/components/features/posts/paginated-posts";
 import PostCard from "@/components/features/posts/post-card";
+import { ArchivePageShell } from "@/components/features/posts/archive-page-shell";
 
 // Static generation with ISR - pages are pre-built at build time
 export const revalidate = 60;
@@ -107,50 +108,67 @@ export default async function ArchivePage({ params }: ArchivePageProps) {
         : `${posts.length} כתבות בגיליון הזה.`;
 
   return (
-    <div className="container mx-auto px-4 py-8 sm:py-12">
-      <div className="mb-10 flex flex-col gap-6 lg:flex-row lg:items-stretch">
-        <div className="flex w-full flex-col gap-6 lg:max-w-[28rem] lg:shrink-0 xl:max-w-[30rem]">
-          <div className="overflow-hidden rounded-[2rem] border bg-gradient-to-br from-amber-50 via-background to-sky-50 px-5 pt-6 pb-10 shadow-sm sm:px-8 sm:pt-8 sm:pb-12">
-            <div className="space-y-4">
-              <div className="inline-flex items-center rounded-full border bg-background/80 px-3 py-1 text-sm font-medium text-muted-foreground">
-                גיליון חודשי לתלמידים ולמורים
-              </div>
-              <div className="space-y-3">
-                <h1 className="text-3xl font-black tracking-tight sm:text-4xl lg:text-5xl">
-                  גיליון {hebrewMonth} {year}
-                </h1>
-                <p className="max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">
-                  {postsSummary}
-                </p>
+    <ArchivePageShell>
+      <div className="container mx-auto px-4 py-8 sm:py-12">
+        <div className="mb-10 flex flex-col gap-6 lg:flex-row lg:items-stretch">
+          <div className="flex w-full flex-col gap-6 lg:max-w-[28rem] lg:shrink-0 xl:max-w-[30rem]">
+            <div
+              data-archive-intro
+              className="overflow-hidden rounded-[2rem] border bg-gradient-to-br from-amber-50 via-background to-sky-50 px-5 pt-6 pb-10 shadow-sm sm:px-8 sm:pt-8 sm:pb-12"
+            >
+              <div className="space-y-4">
+                <div
+                  data-archive-intro
+                  className="inline-flex items-center rounded-full border bg-background/80 px-3 py-1 text-sm font-medium text-muted-foreground"
+                >
+                  גיליון חודשי לתלמידים ולמורים
+                </div>
+                <div className="space-y-3">
+                  <h1
+                    data-archive-intro
+                    className="text-3xl font-black tracking-tight sm:text-4xl lg:text-5xl"
+                  >
+                    גיליון {hebrewMonth} {year}
+                  </h1>
+                  <p
+                    data-archive-intro
+                    className="max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base"
+                  >
+                    {postsSummary}
+                  </p>
+                </div>
               </div>
             </div>
+
+            {stackedFeaturedPost && (
+              <>
+                <div data-featured-card className="lg:hidden">
+                  <PostCard post={stackedFeaturedPost} />
+                </div>
+                <div data-featured-card className="hidden lg:block">
+                  <PostCard post={stackedFeaturedPost} compact />
+                </div>
+              </>
+            )}
           </div>
 
-          {stackedFeaturedPost && (
-            <>
-              <div className="lg:hidden">
-                <PostCard post={stackedFeaturedPost} />
-              </div>
-              <div className="hidden lg:block">
-                <PostCard post={stackedFeaturedPost} compact />
-              </div>
-            </>
+          {featuredPost && (
+            <div
+              data-featured-card
+              className="flex-1 lg:min-w-0 lg:self-stretch"
+            >
+              <PostCard post={featuredPost} priority />
+            </div>
           )}
         </div>
 
-        {featuredPost && (
-          <div className="flex-1 lg:min-w-0 lg:self-stretch">
-            <PostCard post={featuredPost} priority />
-          </div>
-        )}
+        <Suspense fallback={<PostsSkeleton />}>
+          <PostsContent
+            posts={remainingPosts}
+            showEmptyState={posts.length === 0}
+          />
+        </Suspense>
       </div>
-
-      <Suspense fallback={<PostsSkeleton />}>
-        <PostsContent
-          posts={remainingPosts}
-          showEmptyState={posts.length === 0}
-        />
-      </Suspense>
-    </div>
+    </ArchivePageShell>
   );
 }

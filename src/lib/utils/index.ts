@@ -10,8 +10,5 @@ export * from './text-utils';
 // Re-export UI utilities
 export * from './utils';
 
-// Re-export animation utilities
-export * from './animations';
-
 // Re-export haptic utilities
 export * from './haptic';
