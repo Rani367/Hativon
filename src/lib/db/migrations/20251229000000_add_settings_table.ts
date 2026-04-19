@@ -8,6 +8,7 @@
  */
 
 import { db } from "../client";
+import { writeStdoutLine } from "@/lib/server-log";
 import type { Migration } from "./index";
 
 const migration: Migration = {
@@ -65,7 +66,7 @@ const migration: Migration = {
       ON CONFLICT (key) DO NOTHING
     `;
 
-    console.log("[MIGRATION] Created settings table with default month/year");
+    writeStdoutLine("[MIGRATION] Created settings table with default month/year");
   },
 
   async down() {
@@ -79,7 +80,7 @@ const migration: Migration = {
       DROP TABLE IF EXISTS settings
     `;
 
-    console.log("[MIGRATION] Removed settings table");
+    writeStdoutLine("[MIGRATION] Removed settings table");
   },
 };
 

@@ -37,17 +37,16 @@ interface ArchivePageProps {
   }>;
 }
 
-// Loading skeleton for posts - instant display while streaming
 function PostsSkeleton() {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-6 md:gap-8 items-start">
+    <div className="grid grid-cols-1 gap-8 items-start md:grid-cols-2 xl:grid-cols-3">
       {Array.from({ length: 6 }).map((_, i) => (
         <div key={i} className="rounded-lg bg-card/50 animate-pulse">
-          <div className="aspect-[4/3] bg-muted rounded-t-lg" />
-          <div className="p-4 space-y-3">
-            <div className="h-4 bg-muted rounded w-1/3" />
-            <div className="h-6 bg-muted rounded w-full" />
-            <div className="h-4 bg-muted rounded w-2/3" />
+          <div className="aspect-[5/4] rounded-t-lg bg-muted sm:aspect-[4/3]" />
+          <div className="space-y-3 p-6 sm:p-7">
+            <div className="h-4 w-1/3 rounded bg-muted" />
+            <div className="h-6 w-full rounded bg-muted" />
+            <div className="h-4 w-2/3 rounded bg-muted" />
           </div>
         </div>
       ))}
@@ -55,7 +54,6 @@ function PostsSkeleton() {
   );
 }
 
-// Component that renders posts - receives pre-fetched data
 function PostsContent({
   posts,
   showEmptyState = true,
@@ -73,13 +71,11 @@ function PostsContent({
 export default async function ArchivePage({ params }: ArchivePageProps) {
   const { year: yearStr, month: monthStr } = await params;
 
-  // Validate year
   const year = parseInt(yearStr, 10);
   if (isNaN(year) || year < 1900 || year > 2100) {
     notFound();
   }
 
-  // Validate and convert month
   if (!isValidYearMonth(year, monthStr)) {
     notFound();
   }
@@ -89,10 +85,7 @@ export default async function ArchivePage({ params }: ArchivePageProps) {
     notFound();
   }
 
-  // Get Hebrew month name for display - instant, no async
   const hebrewMonth = englishToHebrewMonth(monthStr);
-
-  // Fetch posts once for both header count and content display
   const posts = await getCachedPostsByMonth(year, monthNumber);
   const featuredPost = posts[0] ?? null;
   const stackedFeaturedPost = posts[1] ?? null;
@@ -108,9 +101,9 @@ export default async function ArchivePage({ params }: ArchivePageProps) {
 
   return (
     <div className="container mx-auto px-4 py-8 sm:py-12">
-      <div className="mb-10 flex flex-col gap-6 lg:flex-row lg:items-stretch">
-        <div className="flex w-full flex-col gap-6 lg:max-w-[28rem] lg:shrink-0 xl:max-w-[30rem]">
-          <div className="overflow-hidden rounded-[2rem] border bg-gradient-to-br from-amber-50 via-background to-sky-50 px-5 pt-6 pb-10 shadow-sm sm:px-8 sm:pt-8 sm:pb-12">
+      <div className="mb-10 flex flex-col gap-8 lg:flex-row lg:items-stretch">
+        <div className="flex w-full flex-col gap-8 lg:max-w-[30rem] lg:shrink-0 xl:max-w-[34rem]">
+          <div className="overflow-hidden rounded-[2rem] border bg-gradient-to-br from-amber-50 via-background to-sky-50 px-5 pb-10 pt-6 shadow-sm sm:px-8 sm:pb-12 sm:pt-8">
             <div className="space-y-4">
               <div className="inline-flex items-center rounded-full border bg-background/80 px-3 py-1 text-sm font-medium text-muted-foreground">
                 גיליון חודשי לתלמידים ולמורים

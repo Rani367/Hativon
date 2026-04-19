@@ -9,6 +9,7 @@
  */
 
 import { db } from "../client";
+import { writeStdoutLine } from "@/lib/server-log";
 import type { Migration } from "./index";
 
 const migration: Migration = {
@@ -40,7 +41,7 @@ const migration: Migration = {
       ADD COLUMN IF NOT EXISTS is_teacher_post BOOLEAN DEFAULT FALSE
     `;
 
-    console.log("[MIGRATION] Added teacher support columns");
+    writeStdoutLine("[MIGRATION] Added teacher support columns");
   },
 
   async down() {
@@ -59,7 +60,7 @@ const migration: Migration = {
     // Note: Cannot easily restore NOT NULL constraints without potential data loss
     // Would need to set default values first for any NULL records
 
-    console.log("[MIGRATION] Removed teacher support columns");
+    writeStdoutLine("[MIGRATION] Removed teacher support columns");
   },
 };
 

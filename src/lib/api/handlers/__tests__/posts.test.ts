@@ -154,7 +154,6 @@ describe("Post Handlers", () => {
         undefined,
         true,
       );
-      const body = await response.json();
 
       expect(response.status).toBe(200);
       expect(mockCanUserEditPost).toHaveBeenCalledWith(
@@ -374,7 +373,6 @@ describe("Post Handlers", () => {
       mockGetPostById.mockResolvedValue(postWithoutAuthor);
 
       const response = await handleGetPost("post-123", "user-456", false);
-      const body = await response.json();
 
       // User is not owner (undefined !== "user-456")
       expect(response.status).toBe(403);

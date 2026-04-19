@@ -38,12 +38,10 @@ export function ArchiveDrawer({
   const currentYear = params?.year ? parseInt(params.year as string, 10) : null;
   const currentMonth = params?.month ? (params.month as string) : null;
 
-  // Get current month/year for "Latest" link
   const { year: latestYear, month: latestMonth } = getCurrentMonthYear();
   const isLatestPage =
     currentYear === latestYear && currentMonth === latestMonth;
 
-  // Group archives by year - memoized to avoid recalculating on every render
   const yearGroups = useMemo(() => {
     const groups: YearGroup[] = [];
     const yearsMap = new Map<number, YearGroup>();
@@ -75,7 +73,6 @@ export function ArchiveDrawer({
     return groups;
   }, [archives]);
 
-  // State to track which years are expanded (default: current year)
   const [expandedYears, setExpandedYears] = useState<Set<number>>(
     new Set(currentYear ? [currentYear] : []),
   );
@@ -92,15 +89,18 @@ export function ArchiveDrawer({
     });
   };
 
-  // Close on escape key + lock viewport scroll
   useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        onClose();
+      }
     };
+
     if (isOpen) {
       document.addEventListener("keydown", handleEscape);
       document.documentElement.style.overflow = "hidden";
     }
+
     return () => {
       document.removeEventListener("keydown", handleEscape);
       document.documentElement.style.overflow = "";
@@ -111,55 +111,57 @@ export function ArchiveDrawer({
     <AnimatePresence>
       {isOpen && (
         <>
-          {/* Overlay */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 bg-black/50 z-50"
-            onClick={() => { triggerHaptic(); onClose(); }}
+            className="fixed inset-0 z-50 bg-black/50"
+            onClick={() => {
+              triggerHaptic();
+              onClose();
+            }}
           />
 
-          {/* Drawer */}
           <motion.div
             initial={{ x: "100%" }}
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ duration: 0.3, ease: "easeInOut" }}
-            className="fixed top-0 right-0 h-full w-80 bg-card shadow-xl z-50 overflow-y-auto"
+            className="fixed right-0 top-0 z-50 h-full w-80 overflow-y-auto bg-card shadow-xl"
           >
-            {/* Header */}
-            <div className="sticky top-0 bg-card border-b border-border px-4 py-3 flex items-center justify-between">
+            <div className="sticky top-0 flex items-center justify-between border-b border-border bg-card px-4 py-3">
               <div className="flex items-center gap-2">
-                <Calendar className="w-5 h-5" />
+                <Calendar className="h-5 w-5" />
                 <h2 className="text-lg font-semibold">ארכיון</h2>
               </div>
               <button
-                onClick={() => { triggerHaptic(); onClose(); }}
-                className="p-2 hover:bg-accent rounded-lg transition-colors"
+                onClick={() => {
+                  triggerHaptic();
+                  onClose();
+                }}
+                className="rounded-lg p-2 transition-colors hover:bg-accent"
                 aria-label="סגור תפריט"
               >
-                <X className="w-5 h-5" />
+                <X className="h-5 w-5" />
               </button>
             </div>
 
-            {/* Content */}
             <div className="p-4">
               {archives.length === 0 ? (
                 <p className="text-sm text-muted-foreground">טוען...</p>
               ) : yearGroups.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  אין כתבות בארכיון
-                </p>
+                <p className="text-sm text-muted-foreground">אין כתבות בארכיון</p>
               ) : (
                 <nav className="space-y-2">
-                  {/* Latest Issue Link */}
                   <Link
                     href={`/${latestYear}/${latestMonth}`}
-                    onClick={() => { triggerHaptic(); onClose(); }}
+                    onClick={() => {
+                      triggerHaptic();
+                      onClose();
+                    }}
                     className={cn(
-                      "block px-3 py-2 rounded-lg text-sm font-semibold transition-colors",
+                      "block rounded-lg px-3 py-2 text-sm font-semibold transition-colors",
                       "hover:bg-accent",
                       isLatestPage &&
                         "bg-primary text-primary-foreground hover:bg-primary/90",
@@ -168,7 +170,6 @@ export function ArchiveDrawer({
                     הגיליון האחרון
                   </Link>
 
-                  {/* Year/Month Archive */}
                   {yearGroups.map((yearGroup) => {
                     const isExpanded = expandedYears.has(yearGroup.year);
                     const isCurrentYear = currentYear === yearGroup.year;
@@ -176,20 +177,21 @@ export function ArchiveDrawer({
                     return (
                       <div key={yearGroup.year}>
                         <button
-                          onClick={() => { triggerHaptic(); toggleYear(yearGroup.year); }}
+                          onClick={() => {
+                            triggerHaptic();
+                            toggleYear(yearGroup.year);
+                          }}
                           className={cn(
-                            "w-full flex items-center justify-between px-3 py-2 rounded-lg transition-colors",
+                            "flex w-full items-center justify-between rounded-lg px-3 py-2 transition-colors",
                             "hover:bg-accent",
                             isCurrentYear && "bg-accent/50",
                           )}
                         >
-                          <span className="font-semibold">
-                            {yearGroup.year}
-                          </span>
+                          <span className="font-semibold">{yearGroup.year}</span>
                           {isExpanded ? (
-                            <ChevronUp className="w-4 h-4" />
+                            <ChevronUp className="h-4 w-4" />
                           ) : (
-                            <ChevronDown className="w-4 h-4" />
+                            <ChevronDown className="h-4 w-4" />
                           )}
                         </button>
 
@@ -202,7 +204,7 @@ export function ArchiveDrawer({
                               transition={{ duration: 0.2, ease: "easeInOut" }}
                               className="overflow-hidden"
                             >
-                              <div className="mt-1 me-4 space-y-1">
+                              <div className="me-4 mt-1 space-y-1">
                                 {yearGroup.months.map((month) => {
                                   const isActive =
                                     isCurrentYear &&
@@ -212,9 +214,12 @@ export function ArchiveDrawer({
                                     <Link
                                       key={month.month}
                                       href={`/${yearGroup.year}/${month.monthNameEn}`}
-                                      onClick={() => { triggerHaptic(); onClose(); }}
+                                      onClick={() => {
+                                        triggerHaptic();
+                                        onClose();
+                                      }}
                                       className={cn(
-                                        "block px-3 py-2 rounded-lg text-sm transition-colors",
+                                        "block rounded-lg px-3 py-2 text-sm transition-colors",
                                         "hover:bg-accent",
                                         isActive &&
                                           "bg-primary text-primary-foreground hover:bg-primary/90",
@@ -222,8 +227,7 @@ export function ArchiveDrawer({
                                     >
                                       <div className="flex items-center justify-between">
                                         <span>
-                                          גיליון {month.monthNameHe}{" "}
-                                          {yearGroup.year}
+                                          גיליון {month.monthNameHe} {yearGroup.year}
                                         </span>
                                         <span
                                           className={cn(

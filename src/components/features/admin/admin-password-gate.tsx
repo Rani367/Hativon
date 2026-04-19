@@ -42,7 +42,7 @@ export function AdminPasswordGate({ onSuccess }: AdminPasswordGateProps) {
       } else {
         setError(data.error || "סיסמה שגויה");
       }
-    } catch (error) {
+    } catch {
       setError("שגיאה בבדיקת הסיסמה");
     } finally {
       setLoading(false);

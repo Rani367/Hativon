@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useEffect, useCallback } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -60,56 +60,55 @@ export default function DashboardPage() {
     getItemId: (post) => post.id,
   });
 
-  // Fetch posts with server-side pagination
-  const fetchPosts = useCallback(async () => {
+  // Fetch posts when pagination or filters change
+  useEffect(() => {
     let isMounted = true;
 
-    try {
-      setIsLoading(true);
+    async function loadPosts() {
+      try {
+        setIsLoading(true);
 
-      // Build URL with pagination and filters
-      const params = new URLSearchParams();
-      params.set("limit", String(POSTS_PER_PAGE));
-      params.set("offset", String(currentOffset));
+        // Build URL with pagination and filters
+        const params = new URLSearchParams();
+        params.set("limit", String(POSTS_PER_PAGE));
+        params.set("offset", String(currentOffset));
 
-      if (statusFilter !== "all") {
-        params.set("status", statusFilter);
-      }
+        if (statusFilter !== "all") {
+          params.set("status", statusFilter);
+        }
 
-      if (search) {
-        params.set("search", search);
-      }
+        if (search) {
+          params.set("search", search);
+        }
 
-      const response = await fetch(`/api/admin/posts?${params.toString()}`, {
-        cache: "no-store",
-      });
+        const response = await fetch(`/api/admin/posts?${params.toString()}`, {
+          cache: "no-store",
+        });
 
-      if (!isMounted) return;
+        if (!isMounted) return;
 
-      const data = await response.json();
-      setPosts(data.posts || []);
-      setTotalPosts(data.total ?? data.posts?.length ?? 0);
-      setHasMore(data.hasMore ?? false);
-    } catch (error) {
-      if (isMounted) {
-        logError("Failed to fetch posts:", error);
-        toast.error("שגיאה בטעינת כתבות");
-      }
-    } finally {
-      if (isMounted) {
-        setIsLoading(false);
+        const data = await response.json();
+        setPosts(data.posts || []);
+        setTotalPosts(data.total ?? data.posts?.length ?? 0);
+        setHasMore(data.hasMore ?? false);
+      } catch (error) {
+        if (isMounted) {
+          logError("Failed to fetch posts:", error);
+          toast.error("שגיאה בטעינת כתבות");
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     }
+
+    void loadPosts();
 
     return () => {
       isMounted = false;
     };
-  }, [currentOffset, statusFilter, search]);
-
-  // Fetch posts when pagination or filters change
-  useEffect(() => {
-    fetchPosts();
-  }, [fetchPosts]);
+  }, [currentOffset, search, statusFilter]);
 
   // Navigate to page
   const goToPage = (page: number) => {
@@ -122,7 +121,7 @@ export default function DashboardPage() {
   const totalPages = Math.ceil(totalPosts / POSTS_PER_PAGE);
 
   // Client-side filtering is now done server-side, so just return posts
-  const filteredPosts = useMemo(() => posts, [posts]);
+  const filteredPosts = posts;
 
   function openDeleteDialog(id: string) {
     // Prevent opening dialog if operation is already pending

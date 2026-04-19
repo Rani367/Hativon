@@ -2,6 +2,7 @@ import { db } from "./client";
 import { readFileSync } from "fs";
 import { join } from "path";
 import { Pool } from "pg";
+import { writeStdoutLine } from "@/lib/server-log";
 
 /**
  * Initialize database schema
@@ -14,7 +15,7 @@ import { Pool } from "pg";
 export async function initializeDatabase(silent = false) {
   try {
     if (!silent) {
-      console.log("Initializing database...");
+      writeStdoutLine("Initializing database...");
     }
 
     // Read schema file
@@ -37,7 +38,7 @@ export async function initializeDatabase(silent = false) {
     }
 
     if (!silent) {
-      console.log(" Database initialized successfully");
+      writeStdoutLine(" Database initialized successfully");
     }
     return { success: true };
   } catch (error) {

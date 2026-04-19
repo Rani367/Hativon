@@ -4,6 +4,7 @@ import {
   useEffect,
   forwardRef,
   useRef,
+  useMemo,
   CSSProperties,
   ReactNode,
 } from "react";
@@ -55,7 +56,7 @@ const RevealFx = forwardRef<HTMLDivElement, RevealFxProps>(
     const [maskRemoved, setMaskRemoved] = useState(skipAnimation);
     const transitionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-    const getSpeedDurationMs = () => {
+    const durationMs = useMemo(() => {
       if (typeof speed === "number") {
         return speed;
       }
@@ -69,12 +70,9 @@ const RevealFx = forwardRef<HTMLDivElement, RevealFxProps>(
         default:
           return 2000;
       }
-    };
+    }, [speed]);
 
-    const getSpeedDuration = () => {
-      const ms = getSpeedDurationMs();
-      return `${ms / 1000}s`;
-    };
+    const duration = `${durationMs / 1000}s`;
 
     useEffect(() => {
       // Skip if animation already played this session
@@ -88,7 +86,7 @@ const RevealFx = forwardRef<HTMLDivElement, RevealFxProps>(
           transitionTimeoutRef.current = setTimeout(() => {
             setMaskRemoved(true);
             markAnimationPlayed();
-          }, getSpeedDurationMs());
+          }, durationMs);
         });
 
         return () => {
@@ -105,7 +103,7 @@ const RevealFx = forwardRef<HTMLDivElement, RevealFxProps>(
         transitionTimeoutRef.current = setTimeout(() => {
           setMaskRemoved(true);
           markAnimationPlayed();
-        }, getSpeedDurationMs());
+        }, durationMs);
       }, delay * 1000);
 
       return () => {
@@ -114,7 +112,7 @@ const RevealFx = forwardRef<HTMLDivElement, RevealFxProps>(
           clearTimeout(transitionTimeoutRef.current);
         }
       };
-    }, [delay, skipAnimation]);
+    }, [delay, durationMs, skipAnimation]);
 
     useEffect(() => {
       if (trigger !== undefined) {
@@ -126,10 +124,10 @@ const RevealFx = forwardRef<HTMLDivElement, RevealFxProps>(
           }
           transitionTimeoutRef.current = setTimeout(() => {
             setMaskRemoved(true);
-          }, getSpeedDurationMs());
+          }, durationMs);
         }
       }
-    }, [trigger]);
+    }, [durationMs, trigger]);
 
     const getTranslateYValue = () => {
       if (typeof translateY === "number") {
@@ -140,7 +138,7 @@ const RevealFx = forwardRef<HTMLDivElement, RevealFxProps>(
 
     const translateValue = getTranslateYValue();
     const revealStyle: CSSProperties = {
-      transitionDuration: getSpeedDuration(),
+      transitionDuration: duration,
       transform: isRevealed ? "translateY(0)" : `translateY(${translateValue})`,
       ...style,
     };

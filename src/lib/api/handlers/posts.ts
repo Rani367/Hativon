@@ -9,7 +9,6 @@ import {
 } from "@/lib/posts";
 import { logError } from "@/lib/logger";
 import { postUpdateSchema } from "@/lib/validation/schemas";
-import type { PostInput } from "@/types/post.types";
 
 /**
  * Shared handler for GET /api/.../posts/[id]

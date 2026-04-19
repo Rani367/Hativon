@@ -8,6 +8,7 @@
  */
 
 import { db } from "../client";
+import { writeStdoutLine } from "@/lib/server-log";
 import type { Migration } from "./index";
 
 const migration: Migration = {
@@ -20,7 +21,7 @@ const migration: Migration = {
       ADD COLUMN IF NOT EXISTS password_reset_requested BOOLEAN DEFAULT FALSE
     `;
 
-    console.log("[MIGRATION] Added password_reset_requested column to users");
+    writeStdoutLine("[MIGRATION] Added password_reset_requested column to users");
   },
 
   async down() {
@@ -29,7 +30,7 @@ const migration: Migration = {
       DROP COLUMN IF EXISTS password_reset_requested
     `;
 
-    console.log("[MIGRATION] Removed password_reset_requested column from users");
+    writeStdoutLine("[MIGRATION] Removed password_reset_requested column from users");
   },
 };
 

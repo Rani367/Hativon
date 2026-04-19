@@ -103,6 +103,7 @@ export function useAutoSave({
   useEffect(() => {
     if (typeof window === "undefined") return;
 
+    let frame: number | null = null;
     const storageKey = getAutoSaveStorageKey(postId);
     const stored = localStorage.getItem(storageKey);
 
@@ -119,7 +120,9 @@ export function useAutoSave({
             : 0;
 
           if (localTime > serverTime) {
-            setRecoveryData(validated.data);
+            frame = window.requestAnimationFrame(() => {
+              setRecoveryData(validated.data);
+            });
           } else {
             // Server has newer data, clear local backup
             localStorage.removeItem(storageKey);
@@ -130,6 +133,12 @@ export function useAutoSave({
         localStorage.removeItem(storageKey);
       }
     }
+
+    return () => {
+      if (frame !== null) {
+        window.cancelAnimationFrame(frame);
+      }
+    };
   }, [postId, initialVersion]);
 
   // Cleanup on unmount

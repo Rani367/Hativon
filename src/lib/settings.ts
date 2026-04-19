@@ -75,7 +75,6 @@ async function ensureSettingsTable(): Promise<boolean> {
     `;
 
     settingsTableInitialized = true;
-    console.log("[SETTINGS] Settings table initialized");
     return true;
   } catch (error) {
     console.error("[SETTINGS] Failed to initialize settings table:", error);

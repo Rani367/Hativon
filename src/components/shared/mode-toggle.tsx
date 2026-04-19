@@ -15,7 +15,13 @@ export function ModeToggle({ className }: ThemeToggleProps) {
 
   // Prevent hydration mismatch by only rendering after mount
   useEffect(() => {
-    setMounted(true);
+    const frame = window.requestAnimationFrame(() => {
+      setMounted(true);
+    });
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+    };
   }, []);
 
   if (!mounted) {

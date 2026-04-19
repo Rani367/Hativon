@@ -10,7 +10,6 @@ import remarkGfm from "remark-gfm";
 import rehypeSanitize from "rehype-sanitize";
 import { formatHebrewDate } from "@/lib/date/format";
 import Image from "next/image";
-import { Badge } from "@/components/ui/badge";
 import { components } from "./mdx-component";
 import { getWordCount } from "@/lib/utils/text-utils";
 import { calculateReadingTime } from "@/lib/utils";

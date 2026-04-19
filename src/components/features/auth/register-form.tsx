@@ -12,9 +12,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useForm, Controller, useWatch } from "react-hook-form";
 import { motion, AnimatePresence } from "framer-motion";
 import { buttonVariants } from "@/lib/utils";
-import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   userRegistrationFormSchema,
@@ -32,7 +32,6 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
     register,
     control,
     handleSubmit,
-    watch,
     formState: { errors, isSubmitting },
     setError: setFormError,
   } = useForm<UserRegistrationFormInput>({
@@ -49,7 +48,10 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
     },
   });
 
-  const isTeacher = watch("isTeacher");
+  const isTeacher = useWatch({
+    control,
+    name: "isTeacher",
+  });
 
   const onSubmit = async (data: UserRegistrationFormInput) => {
     try {

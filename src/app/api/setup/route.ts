@@ -119,7 +119,7 @@ export async function POST(request: NextRequest) {
           logs,
         });
       }
-    } catch (error) {
+    } catch {
       logs.push("[INFO] Tables do not exist yet, will create them...");
     }
 
@@ -260,7 +260,7 @@ export async function POST(request: NextRequest) {
       } else {
         logs.push("[INFO]  No posts found in Blob storage");
       }
-    } catch (error) {
+    } catch {
       logs.push("[INFO]  No Blob storage configured or no posts to migrate");
     }
 

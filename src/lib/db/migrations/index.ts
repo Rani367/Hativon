@@ -6,6 +6,7 @@
  */
 
 import { db } from '../client';
+import { writeStdoutLine } from '@/lib/server-log';
 import type { QueryResult } from 'pg';
 
 export interface Migration {
@@ -44,7 +45,7 @@ async function getExecutedMigrations(): Promise<Set<string>> {
     `) as QueryResult<{ id: string }>;
 
     return new Set(result.rows.map(row => row.id));
-  } catch (error) {
+  } catch {
     // If migrations table doesn't exist, return empty set
     return new Set();
   }
@@ -72,7 +73,7 @@ async function removeMigrationRecord(migrationId: string): Promise<void> {
  * Run pending migrations
  */
 export async function runMigrations(migrations: Migration[]): Promise<void> {
-  console.log('[MIGRATIONS] Starting migration process...');
+  writeStdoutLine('[MIGRATIONS] Starting migration process...');
 
   // Ensure migrations table exists
   await ensureMigrationsTable();
@@ -84,27 +85,27 @@ export async function runMigrations(migrations: Migration[]): Promise<void> {
   const pending = migrations.filter(m => !executed.has(m.id));
 
   if (pending.length === 0) {
-    console.log('[MIGRATIONS] No pending migrations');
+    writeStdoutLine('[MIGRATIONS] No pending migrations');
     return;
   }
 
-  console.log(`[MIGRATIONS] Found ${pending.length} pending migrations`);
+  writeStdoutLine(`[MIGRATIONS] Found ${pending.length} pending migrations`);
 
   // Run each pending migration
   for (const migration of pending) {
-    console.log(`[MIGRATIONS] Running: ${migration.name} (${migration.id})`);
+    writeStdoutLine(`[MIGRATIONS] Running: ${migration.name} (${migration.id})`);
 
     try {
       await migration.up();
       await recordMigration(migration);
-      console.log(`[MIGRATIONS] Completed: ${migration.name}`);
+      writeStdoutLine(`[MIGRATIONS] Completed: ${migration.name}`);
     } catch (error) {
       console.error(`[MIGRATIONS] Failed: ${migration.name}`, error);
       throw new Error(`Migration failed: ${migration.name}`);
     }
   }
 
-  console.log('[MIGRATIONS] All migrations completed successfully');
+  writeStdoutLine('[MIGRATIONS] All migrations completed successfully');
 }
 
 /**
@@ -114,7 +115,7 @@ export async function rollbackMigrations(
   migrations: Migration[],
   count = 1
 ): Promise<void> {
-  console.log(`[MIGRATIONS] Rolling back last ${count} migration(s)...`);
+  writeStdoutLine(`[MIGRATIONS] Rolling back last ${count} migration(s)...`);
 
   // Get executed migrations in reverse order
   const result = (await db.query`
@@ -124,7 +125,7 @@ export async function rollbackMigrations(
   const toRollback = result.rows.map(row => row.id);
 
   if (toRollback.length === 0) {
-    console.log('[MIGRATIONS] No migrations to rollback');
+    writeStdoutLine('[MIGRATIONS] No migrations to rollback');
     return;
   }
 
@@ -137,19 +138,19 @@ export async function rollbackMigrations(
       continue;
     }
 
-    console.log(`[MIGRATIONS] Rolling back: ${migration.name} (${migration.id})`);
+    writeStdoutLine(`[MIGRATIONS] Rolling back: ${migration.name} (${migration.id})`);
 
     try {
       await migration.down();
       await removeMigrationRecord(migration.id);
-      console.log(`[MIGRATIONS] Rolled back: ${migration.name}`);
+      writeStdoutLine(`[MIGRATIONS] Rolled back: ${migration.name}`);
     } catch (error) {
       console.error(`[MIGRATIONS] Rollback failed: ${migration.name}`, error);
       throw new Error(`Rollback failed: ${migration.name}`);
     }
   }
 
-  console.log('[MIGRATIONS] Rollback completed successfully');
+  writeStdoutLine('[MIGRATIONS] Rollback completed successfully');
 }
 
 /**

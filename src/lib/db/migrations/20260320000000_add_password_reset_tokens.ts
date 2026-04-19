@@ -7,6 +7,7 @@
  */
 
 import { db } from "../client";
+import { writeStdoutLine } from "@/lib/server-log";
 import type { Migration } from "./index";
 
 const migration: Migration = {
@@ -34,7 +35,7 @@ const migration: Migration = {
       ON password_reset_tokens(user_id)
     `;
 
-    console.log("[MIGRATION] Created password_reset_tokens table");
+    writeStdoutLine("[MIGRATION] Created password_reset_tokens table");
   },
 
   async down() {
@@ -42,7 +43,7 @@ const migration: Migration = {
       DROP TABLE IF EXISTS password_reset_tokens
     `;
 
-    console.log("[MIGRATION] Dropped password_reset_tokens table");
+    writeStdoutLine("[MIGRATION] Dropped password_reset_tokens table");
   },
 };
 
