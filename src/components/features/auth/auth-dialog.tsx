@@ -1,34 +1,30 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from "react";
 import {
   AnimatedDialog as Dialog,
   AnimatedDialogContent as DialogContent,
   AnimatedDialogDescription as DialogDescription,
   AnimatedDialogHeader as DialogHeader,
   AnimatedDialogTitle as DialogTitle,
-} from '@/components/ui/animated-dialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { LoginForm } from './login-form';
-import { RegisterForm } from './register-form';
-import { motion, AnimatePresence } from 'framer-motion';
-import { triggerLoginHaptic } from '@/lib/utils';
+} from "@/components/ui/animated-dialog";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { LoginForm } from "./login-form";
+import { RegisterForm } from "./register-form";
+import { AnimatePresence, motion } from "framer-motion";
+import { triggerLoginHaptic } from "@/lib/utils";
 
 interface AuthDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  defaultTab?: 'login' | 'register';
+  defaultTab?: "login" | "register";
 }
 
-export function AuthDialog({ open, onOpenChange, defaultTab = 'login' }: AuthDialogProps) {
-  const [activeTab, setActiveTab] = useState(defaultTab);
-
-  useEffect(() => {
-    if (open) {
-      triggerLoginHaptic();
-    }
-  }, [open]);
-
+export function AuthDialog({
+  open,
+  onOpenChange,
+  defaultTab = "login",
+}: AuthDialogProps) {
   const handleSuccess = () => {
     onOpenChange(false);
   };
@@ -36,6 +32,29 @@ export function AuthDialog({ open, onOpenChange, defaultTab = 'login' }: AuthDia
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]" dir="rtl">
+        <AuthDialogPanel defaultTab={defaultTab} onSuccess={handleSuccess} />
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+interface AuthDialogPanelProps {
+  defaultTab: "login" | "register";
+  onSuccess: () => void;
+}
+
+function AuthDialogPanel({
+  defaultTab,
+  onSuccess,
+}: AuthDialogPanelProps) {
+  const [activeTab, setActiveTab] = useState(defaultTab);
+
+  useEffect(() => {
+    triggerLoginHaptic();
+  }, []);
+
+  return (
+    <>
         <DialogHeader>
           <DialogTitle className="text-center">ברוך הבא לחטיבון</DialogTitle>
           <DialogDescription className="text-center">
@@ -44,7 +63,10 @@ export function AuthDialog({ open, onOpenChange, defaultTab = 'login' }: AuthDia
           </DialogDescription>
         </DialogHeader>
 
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'login' | 'register')}>
+        <Tabs
+          value={activeTab}
+          onValueChange={(value) => setActiveTab(value as "login" | "register")}
+        >
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -58,7 +80,7 @@ export function AuthDialog({ open, onOpenChange, defaultTab = 'login' }: AuthDia
 
           <div className="mt-4">
             <AnimatePresence mode="wait">
-              {activeTab === 'login' ? (
+              {activeTab === "login" ? (
                 <motion.div
                   key="login"
                   initial={{ opacity: 0, x: -20 }}
@@ -66,7 +88,7 @@ export function AuthDialog({ open, onOpenChange, defaultTab = 'login' }: AuthDia
                   exit={{ opacity: 0, x: 20 }}
                   transition={{ duration: 0.3 }}
                 >
-                  <LoginForm onSuccess={handleSuccess} />
+                  <LoginForm onSuccess={onSuccess} />
                 </motion.div>
               ) : (
                 <motion.div
@@ -76,13 +98,12 @@ export function AuthDialog({ open, onOpenChange, defaultTab = 'login' }: AuthDia
                   exit={{ opacity: 0, x: 20 }}
                   transition={{ duration: 0.3 }}
                 >
-                  <RegisterForm onSuccess={handleSuccess} />
+                  <RegisterForm onSuccess={onSuccess} />
                 </motion.div>
               )}
             </AnimatePresence>
           </div>
         </Tabs>
-      </DialogContent>
-    </Dialog>
+    </>
   );
 }

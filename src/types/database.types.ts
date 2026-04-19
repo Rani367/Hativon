@@ -5,9 +5,6 @@
  * These types ensure proper typing throughout the database layer without using 'any'.
  */
 
-import type { User } from "./user.types";
-import type { Post } from "./post.types";
-
 /**
  * Generic database query result structure
  * Matches the structure returned by @vercel/postgres and pg library

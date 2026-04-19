@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,7 @@ import { Home, FileText, Menu, Users } from "lucide-react";
 import { logError } from "@/lib/logger";
 import { triggerHaptic } from "@/lib/utils";
 
-type AuthState = "checking" | "authorized" | "unauthorized" | "login-page";
+type AuthState = "checking" | "authorized" | "unauthorized";
 
 export default function AdminLayout({
   children,
@@ -17,54 +17,67 @@ export default function AdminLayout({
 }) {
   const pathname = usePathname();
   const router = useRouter();
+  const isLoginPage = pathname === "/admin";
   const [authState, setAuthState] = useState<AuthState>("checking");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [hasCheckedAuth, setHasCheckedAuth] = useState(false);
-  // Memoized auth check function
-  const checkAuth = useCallback(async () => {
-    // Skip if already authorized (prevents re-checking on navigation)
-    if (authState === "authorized") {
-      return;
-    }
-
-    try {
-      // Check if user is a teacher (via user auth)
-      const userResponse = await fetch("/api/check-auth");
-      const userData = await userResponse.json();
-
-      if (userData.authenticated && userData.isTeacher) {
-        // Teachers get automatic admin access
-        if (!userData.isAdmin) {
-          await fetch("/api/admin/teacher-auth", { method: "POST" });
-        }
-        setAuthState("authorized");
-        setHasCheckedAuth(true);
-        return;
-      }
-
-      // Not a teacher - redirect to admin login page
-      setAuthState("unauthorized");
-      setHasCheckedAuth(true);
-    } catch (error) {
-      logError("Auth check failed:", error);
-      setAuthState("unauthorized");
-      setHasCheckedAuth(true);
-    }
-  }, [authState]);
 
   // Check auth only once on mount (not on every navigation)
   useEffect(() => {
-    // Login page is handled by page.tsx directly
-    if (pathname === "/admin") {
-      setAuthState("login-page");
+    if (isLoginPage || hasCheckedAuth || authState === "authorized") {
       return;
     }
 
-    // Only check auth once, not on every navigation
-    if (!hasCheckedAuth && authState !== "authorized") {
-      checkAuth();
-    }
-  }, [pathname, hasCheckedAuth, authState, checkAuth]);
+    let isCancelled = false;
+
+    const runCheck = async () => {
+      try {
+        // Check if user is a teacher (via user auth)
+        const userResponse = await fetch("/api/check-auth");
+        const userData = await userResponse.json();
+
+        if (isCancelled) {
+          return;
+        }
+
+        if (userData.authenticated && userData.isTeacher) {
+          // Teachers get automatic admin access
+          if (!userData.isAdmin) {
+            await fetch("/api/admin/teacher-auth", { method: "POST" });
+          }
+
+          if (isCancelled) {
+            return;
+          }
+
+          setAuthState("authorized");
+          setHasCheckedAuth(true);
+          return;
+        }
+
+        // Not a teacher - redirect to admin login page
+        setAuthState("unauthorized");
+        setHasCheckedAuth(true);
+      } catch (error) {
+        if (isCancelled) {
+          return;
+        }
+
+        logError("Auth check failed:", error);
+        setAuthState("unauthorized");
+        setHasCheckedAuth(true);
+      }
+    };
+
+    const frame = window.requestAnimationFrame(() => {
+      void runCheck();
+    });
+
+    return () => {
+      isCancelled = true;
+      window.cancelAnimationFrame(frame);
+    };
+  }, [isLoginPage, hasCheckedAuth, authState]);
 
   // Redirect unauthorized users to admin login page
   useEffect(() => {
@@ -74,7 +87,7 @@ export default function AdminLayout({
   }, [authState, router]);
 
   // Show login page without layout (handled by page.tsx)
-  if (authState === "login-page") {
+  if (isLoginPage) {
     return children;
   }
 

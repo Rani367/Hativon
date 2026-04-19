@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -23,7 +23,6 @@ import { useOptimisticList } from "@/hooks/use-optimistic-list";
 
 export default function PostsListPage() {
   const [posts, setPosts] = useState<Post[]>([]);
-  const [filteredPosts, setFilteredPosts] = useState<Post[]>([]);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "published" | "draft">("all");
   const [loading, setLoading] = useState(true);
@@ -37,11 +36,7 @@ export default function PostsListPage() {
     getItemId: (post) => post.id,
   });
 
-  useEffect(() => {
-    fetchPosts();
-  }, []);
-
-  useEffect(() => {
+  const filteredPosts = useMemo(() => {
     let filtered = posts;
 
     if (statusFilter !== "all") {
@@ -55,21 +50,37 @@ export default function PostsListPage() {
       );
     }
 
-    setFilteredPosts(filtered);
+    return filtered;
   }, [posts, search, statusFilter]);
 
-  async function fetchPosts() {
-    try {
-      const response = await fetch("/api/admin/posts");
-      const data = await response.json();
-      setPosts(data.posts || []);
-      setFilteredPosts(data.posts || []);
-    } catch (error) {
-      logError("Failed to fetch posts:", error);
-    } finally {
-      setLoading(false);
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadPosts() {
+      try {
+        const response = await fetch("/api/admin/posts");
+        const data = await response.json();
+
+        if (isMounted) {
+          setPosts(data.posts || []);
+        }
+      } catch (error) {
+        if (isMounted) {
+          logError("Failed to fetch posts:", error);
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
     }
-  }
+
+    void loadPosts();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   function openDeleteDialog(id: string) {
     if (isPending(id)) return;

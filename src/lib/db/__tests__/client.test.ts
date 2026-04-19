@@ -1,4 +1,4 @@
-import { describe, it, expect, mock, spyOn, beforeEach, afterEach } from "bun:test";
+import { describe, it, expect } from "bun:test";
 
 describe("Database Client", () => {
   describe("isDatabaseAvailable", () => {

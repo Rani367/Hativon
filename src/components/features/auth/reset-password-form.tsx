@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -19,7 +20,9 @@ type FormState = "validating" | "invalid" | "form" | "submitting" | "success";
 export function ResetPasswordForm() {
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
-  const [state, setState] = useState<FormState>("validating");
+  const [state, setState] = useState<FormState>(() =>
+    token ? "validating" : "invalid",
+  );
 
   const {
     register,
@@ -33,7 +36,6 @@ export function ResetPasswordForm() {
 
   useEffect(() => {
     if (!token) {
-      setState("invalid");
       return;
     }
 
@@ -79,10 +81,10 @@ export function ResetPasswordForm() {
     return (
       <div className="w-full max-w-sm rounded-lg border bg-card p-6">
         <div className="space-y-4">
-          <div className="h-7 w-32 rounded bg-muted animate-pulse mx-auto" />
-          <div className="h-4 w-48 rounded bg-muted animate-pulse mx-auto" />
-          <div className="h-10 rounded bg-muted animate-pulse" />
-          <div className="h-10 rounded bg-muted animate-pulse" />
+          <div className="mx-auto h-7 w-32 animate-pulse rounded bg-muted" />
+          <div className="mx-auto h-4 w-48 animate-pulse rounded bg-muted" />
+          <div className="h-10 animate-pulse rounded bg-muted" />
+          <div className="h-10 animate-pulse rounded bg-muted" />
         </div>
       </div>
     );
@@ -91,7 +93,7 @@ export function ResetPasswordForm() {
   if (state === "invalid") {
     return (
       <motion.div
-        className="w-full max-w-sm rounded-lg border bg-card p-6 text-center space-y-4"
+        className="w-full max-w-sm space-y-4 rounded-lg border bg-card p-6 text-center"
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.3 }}
@@ -100,12 +102,12 @@ export function ResetPasswordForm() {
         <p className="text-sm text-muted-foreground">
           הקישור אינו תקין או שפג תוקפו. נסה לבקש קישור חדש.
         </p>
-        <a
+        <Link
           href="/dashboard"
-          className="inline-block text-sm text-primary hover:underline underline-offset-4"
+          className="inline-block text-sm text-primary underline-offset-4 hover:underline"
         >
           חזרה להתחברות
-        </a>
+        </Link>
       </motion.div>
     );
   }
@@ -113,7 +115,7 @@ export function ResetPasswordForm() {
   if (state === "success") {
     return (
       <motion.div
-        className="w-full max-w-sm rounded-lg border bg-card p-6 text-center space-y-4"
+        className="w-full max-w-sm space-y-4 rounded-lg border bg-card p-6 text-center"
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.3 }}
@@ -122,24 +124,24 @@ export function ResetPasswordForm() {
         <p className="text-sm text-muted-foreground">
           כעת ניתן להתחבר עם הסיסמה החדשה.
         </p>
-        <a
+        <Link
           href="/dashboard"
-          className="inline-block text-sm text-primary hover:underline underline-offset-4"
+          className="inline-block text-sm text-primary underline-offset-4 hover:underline"
         >
           התחבר
-        </a>
+        </Link>
       </motion.div>
     );
   }
 
   return (
     <motion.div
-      className="w-full max-w-sm rounded-lg border bg-card p-6 space-y-6"
+      className="w-full max-w-sm space-y-6 rounded-lg border bg-card p-6"
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.3 }}
     >
-      <div className="text-center space-y-1">
+      <div className="space-y-1 text-center">
         <h1 className="text-xl font-bold">איפוס סיסמה</h1>
         <p className="text-sm text-muted-foreground">בחר סיסמה חדשה</p>
       </div>
@@ -153,7 +155,7 @@ export function ResetPasswordForm() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.05, duration: 0.3 }}
         >
-          <Label htmlFor="reset-password" className="text-right block">
+          <Label htmlFor="reset-password" className="block text-right">
             סיסמה חדשה
           </Label>
           <Input
@@ -165,7 +167,7 @@ export function ResetPasswordForm() {
             className="text-right transition-all duration-200 focus:scale-[1.01]"
           />
           {errors.password && (
-            <p className="text-sm text-destructive text-right">
+            <p className="text-right text-sm text-destructive">
               {errors.password.message}
             </p>
           )}
@@ -177,7 +179,7 @@ export function ResetPasswordForm() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1, duration: 0.3 }}
         >
-          <Label htmlFor="reset-confirm-password" className="text-right block">
+          <Label htmlFor="reset-confirm-password" className="block text-right">
             אימות סיסמה
           </Label>
           <Input
@@ -189,7 +191,7 @@ export function ResetPasswordForm() {
             className="text-right transition-all duration-200 focus:scale-[1.01]"
           />
           {errors.confirmPassword && (
-            <p className="text-sm text-destructive text-right">
+            <p className="text-right text-sm text-destructive">
               {errors.confirmPassword.message}
             </p>
           )}
@@ -197,7 +199,7 @@ export function ResetPasswordForm() {
 
         {errors.root && (
           <motion.div
-            className="text-sm text-destructive text-center"
+            className="text-center text-sm text-destructive"
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.2 }}

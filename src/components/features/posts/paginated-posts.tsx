@@ -11,10 +11,7 @@ interface PaginatedPostsProps {
   postsPerPage?: number;
 }
 
-// Memoize post card to prevent unnecessary re-renders
 const MemoizedPostCard = memo(PostCard);
-
-// Number of posts to prioritize (above-the-fold) - increased for faster LCP
 const PRIORITY_COUNT = 6;
 
 function PaginatedPosts({
@@ -37,8 +34,7 @@ function PaginatedPosts({
 
   return (
     <>
-      {/* Uniform CSS grid layout */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 gap-8 md:grid-cols-2 xl:grid-cols-3">
         {visiblePosts.map((post, index) => (
           <MemoizedPostCard
             key={post.id}
@@ -50,13 +46,8 @@ function PaginatedPosts({
       </div>
 
       {hasMore && (
-        <div className="flex justify-center mt-12">
-          <Button
-            onClick={loadMore}
-            disabled={isPending}
-            size="lg"
-            variant="outline"
-          >
+        <div className="mt-12 flex justify-center">
+          <Button onClick={loadMore} disabled={isPending} size="lg" variant="outline">
             {isPending ? (
               <>
                 <Loader2 className="me-2 animate-spin" />

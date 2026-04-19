@@ -15,7 +15,13 @@ export function EmptyPostsState() {
 
   // Track mount state for consistent hydration
   useEffect(() => {
-    setMounted(true);
+    const frame = window.requestAnimationFrame(() => {
+      setMounted(true);
+    });
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+    };
   }, []);
 
   const handleClick = () => {

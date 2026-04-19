@@ -42,13 +42,21 @@ export default function ProfilePage() {
 
   // Initialize form data only when user data is available
   useEffect(() => {
-    if (user) {
+    if (!user) {
+      return;
+    }
+
+    const frame = window.requestAnimationFrame(() => {
       setFormData({
         displayName: user.displayName || "",
         grade: user.grade || null,
         classNumber: user.classNumber || null,
       });
-    }
+    });
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+    };
   }, [user]);
 
   // Check if any changes were made

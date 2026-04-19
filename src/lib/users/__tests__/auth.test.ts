@@ -21,6 +21,7 @@ mock.module("../auth", () => ({
     const isValid = await Bun.password.verify(password, resolvedUser.passwordHash);
     if (!isValid) return null;
     const { passwordHash, ...userWithoutPassword } = resolvedUser;
+    void passwordHash;
     return userWithoutPassword;
   },
 }));

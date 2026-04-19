@@ -10,7 +10,6 @@ import { PostFormActions } from "@/components/features/posts/post-form-actions";
 import { AutoSaveIndicator } from "@/components/features/posts/auto-save-indicator";
 import { RecoveryDialog } from "@/components/features/posts/recovery-dialog";
 import { useAutoSave } from "@/hooks/use-auto-save";
-import type { User } from "@/types/user.types";
 import type { PostFormData } from "@/lib/validation/autosave-schemas";
 import {
   getAutoSaveStorageKey,
@@ -22,7 +21,6 @@ export default function NewPostPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [checkingDraft, setCheckingDraft] = useState(true);
-  const [user, setUser] = useState<User | null>(null);
   const [showRecoveryDialog, setShowRecoveryDialog] = useState(false);
   const [form, setForm] = useState({
     title: "",
@@ -65,50 +63,36 @@ export default function NewPostPage() {
 
   // Check for existing draft ID on mount and redirect
   useEffect(() => {
-    if (typeof window === "undefined") {
-      setCheckingDraft(false);
-      return;
-    }
-
     const savedDraftId = localStorage.getItem(AUTOSAVE_DRAFT_ID_KEY);
     if (savedDraftId) {
       // Redirect to edit the existing draft
       router.replace(`/dashboard/posts/${savedDraftId}`);
-    } else {
-      setCheckingDraft(false);
+      return;
     }
+
+    const frame = window.requestAnimationFrame(() => {
+      setCheckingDraft(false);
+    });
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+    };
   }, [router]);
 
   // Show recovery dialog when recovery data is available
   useEffect(() => {
-    if (recoveryData && !checkingDraft) {
+    if (!recoveryData || checkingDraft) {
+      return;
+    }
+
+    const frame = window.requestAnimationFrame(() => {
       setShowRecoveryDialog(true);
-    }
-  }, [recoveryData, checkingDraft]);
-
-  // Fetch current user for metadata
-  useEffect(() => {
-    let isMounted = true;
-
-    async function fetchUser() {
-      try {
-        const response = await fetch("/api/auth/session");
-        if (response.ok && isMounted) {
-          const data = await response.json();
-          setUser(data.user);
-        }
-      } catch (error) {
-        if (isMounted) {
-          logError("Failed to fetch user:", error);
-        }
-      }
-    }
-    fetchUser();
+    });
 
     return () => {
-      isMounted = false;
+      window.cancelAnimationFrame(frame);
     };
-  }, []);
+  }, [recoveryData, checkingDraft]);
 
   // Trigger auto-save when form changes
   const triggerAutoSave = useCallback(

@@ -49,7 +49,6 @@ export default function UsersManagementPage() {
   const [dbNotConfigured, setDbNotConfigured] = useState(false);
   const [resetUserId, setResetUserId] = useState<string | null>(null);
   const [generatedLinks, setGeneratedLinks] = useState<Record<string, string>>({});
-  const [generating, setGenerating] = useState<string | null>(null);
   const [copiedUserId, setCopiedUserId] = useState<string | null>(null);
   const [dismissDialogOpen, setDismissDialogOpen] = useState(false);
   const [userToDismiss, setUserToDismiss] = useState<User | null>(null);
@@ -62,39 +61,53 @@ export default function UsersManagementPage() {
   });
 
   useEffect(() => {
-    fetchUsers();
-  }, []);
+    let isMounted = true;
 
-  async function fetchUsers() {
-    try {
-      setLoading(true);
-      setDbNotConfigured(false);
-      const response = await fetch("/api/admin/users");
+    async function loadUsers() {
+      try {
+        setLoading(true);
+        setDbNotConfigured(false);
+        const response = await fetch("/api/admin/users");
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
 
-        // Special handling for database not configured (503)
-        if (response.status === 503) {
-          setDbNotConfigured(true);
-          return;
+          // Special handling for database not configured (503)
+          if (response.status === 503) {
+            if (isMounted) {
+              setDbNotConfigured(true);
+            }
+            return;
+          }
+
+          logError("API Error:", response.status, errorData);
+          throw new Error(errorData.error || "Failed to fetch users");
         }
 
-        logError("API Error:", response.status, errorData);
-        throw new Error(errorData.error || "Failed to fetch users");
+        const data = await response.json();
+        if (isMounted) {
+          setUsers(data.users || []);
+        }
+      } catch (error) {
+        if (isMounted) {
+          const errorMessage =
+            error instanceof Error ? error.message : String(error);
+          logError("Failed to fetch users:", error);
+          toast.error(`שגיאה בטעינת משתמשים: ${errorMessage}`);
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
       }
-
-      const data = await response.json();
-      setUsers(data.users || []);
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : String(error);
-      logError("Failed to fetch users:", error);
-      toast.error(`שגיאה בטעינת משתמשים: ${errorMessage}`);
-    } finally {
-      setLoading(false);
     }
-  }
+
+    void loadUsers();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   function handleDeleteClick(user: User) {
     if (isPending(user.id)) return;
@@ -180,7 +193,6 @@ export default function UsersManagementPage() {
 
     // Generate a new link immediately
     setResetUserId(userId);
-    setGenerating(userId);
     try {
       const response = await fetch(`/api/admin/users/${userId}`, {
         method: "PATCH",
@@ -208,8 +220,6 @@ export default function UsersManagementPage() {
       const msg = error instanceof Error ? error.message : String(error);
       toast.error(`שגיאה ביצירת קישור: ${msg}`);
       setResetUserId(null);
-    } finally {
-      setGenerating(null);
     }
   }
 

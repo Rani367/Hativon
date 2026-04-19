@@ -8,6 +8,7 @@
  */
 
 import { db } from "../client";
+import { writeStdoutLine } from "@/lib/server-log";
 import type { Migration } from "./index";
 
 const migration: Migration = {
@@ -60,7 +61,7 @@ const migration: Migration = {
     await db.query`CREATE INDEX IF NOT EXISTS idx_posts_date ON posts(date DESC)`;
     await db.query`CREATE INDEX IF NOT EXISTS idx_users_username ON users(username)`;
 
-    console.log("[MIGRATION] Created users and posts tables");
+    writeStdoutLine("[MIGRATION] Created users and posts tables");
   },
 
   async down() {
@@ -68,7 +69,7 @@ const migration: Migration = {
     await db.query`DROP TABLE IF EXISTS posts CASCADE`;
     await db.query`DROP TABLE IF EXISTS users CASCADE`;
 
-    console.log("[MIGRATION] Dropped users and posts tables");
+    writeStdoutLine("[MIGRATION] Dropped users and posts tables");
   },
 };
 

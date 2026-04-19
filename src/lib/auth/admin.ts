@@ -109,7 +109,7 @@ function verifyAdminToken(token: string): boolean {
   try {
     const decoded = jwt.verify(token, JWT_SECRET) as AdminAuthPayload;
     return decoded.authenticated === true;
-  } catch (error) {
+  } catch {
     return false;
   }
 }

@@ -66,9 +66,17 @@ export default function EditPostPage({
 
   // Show recovery dialog when recovery data is available
   useEffect(() => {
-    if (recoveryData && !loading) {
-      setShowRecoveryDialog(true);
+    if (!recoveryData || loading) {
+      return;
     }
+
+    const frame = window.requestAnimationFrame(() => {
+      setShowRecoveryDialog(true);
+    });
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+    };
   }, [recoveryData, loading]);
 
   useEffect(() => {

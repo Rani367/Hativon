@@ -27,5 +27,6 @@ export async function validatePassword(
 
   // Remove password hash before returning user object
   const { passwordHash, ...userWithoutPassword } = user;
+  void passwordHash;
   return userWithoutPassword;
 }

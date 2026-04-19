@@ -7,12 +7,7 @@ import { formatHebrewDate } from "@/lib/date/format";
 import { Post } from "@/types/post.types";
 import { calculateReadingTime, cn, getWordCount, triggerHaptic } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-} from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Clock, Calendar } from "lucide-react";
 
 interface PostCardProps {
@@ -22,7 +17,6 @@ interface PostCardProps {
   uniformHeightBelowMd?: boolean;
 }
 
-// Optimized blur placeholder - minimal size for instant display
 const BLUR_DATA_URL =
   "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iOCIgaGVpZ2h0PSI2IiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiNlNWU3ZWIiLz48L3N2Zz4=";
 
@@ -80,7 +74,7 @@ export default function PostCard({
         />
         <div
           className={`relative w-full overflow-hidden rounded-t-lg ${
-            compact ? "aspect-[2/1]" : "aspect-[4/3]"
+            compact ? "aspect-[16/9]" : "aspect-[5/4] sm:aspect-[4/3]"
           }`}
         >
           {post.coverImage ? (
@@ -92,7 +86,11 @@ export default function PostCard({
               priority={priority}
               loading={priority ? "eager" : "lazy"}
               fetchPriority={priority ? "high" : "auto"}
-              sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 25vw"
+              sizes={
+                compact
+                  ? "(max-width: 1024px) 100vw, 30rem"
+                  : "(max-width: 768px) 100vw, (max-width: 1279px) 50vw, 40vw"
+              }
               className="absolute inset-0 h-full w-full object-cover"
               quality={75}
               placeholder="blur"
@@ -129,10 +127,13 @@ export default function PostCard({
         </div>
 
         <div className="flex flex-1 flex-col">
-          <CardHeader
+          <div
             className={cn(
-              compact ? "space-y-1.5 pb-0" : "space-y-3 pb-3",
-              shouldUseUniformMobileHeight && "gap-3",
+              "flex flex-1 flex-col",
+              compact
+                ? "gap-2 px-5 py-4 sm:px-6"
+                : "gap-4 px-6 py-5 sm:px-7 sm:py-6",
+              shouldUseUniformMobileHeight && "gap-4",
             )}
           >
             <div
@@ -154,74 +155,71 @@ export default function PostCard({
             <div>
               <h2
                 className={cn(
-                  "font-bold leading-tight text-foreground",
-                  compact ? "line-clamp-2 text-lg" : "text-xl sm:text-2xl",
+                  "font-bold leading-tight text-foreground transition-colors duration-300 group-hover:text-foreground/95",
+                  compact ? "line-clamp-2 text-xl" : "text-2xl sm:text-[2rem]",
                   shouldUseUniformMobileHeight &&
-                    "line-clamp-2 h-16 overflow-hidden md:h-auto md:overflow-visible md:line-clamp-none",
+                    "line-clamp-2 min-h-16 overflow-hidden md:min-h-0 md:overflow-visible md:line-clamp-none",
                 )}
               >
                 {post.title}
               </h2>
             </div>
             {compact ? (
-              <p
-                className="line-clamp-1 text-sm leading-5 text-muted-foreground"
-              >
+              <p className="line-clamp-1 text-sm leading-5 text-muted-foreground">
                 {post.description}
               </p>
             ) : (
               <p
                 className={cn(
-                  "line-clamp-3 text-sm leading-6 text-muted-foreground sm:text-base",
+                  "line-clamp-3 text-base leading-7 text-muted-foreground",
                   shouldUseUniformMobileHeight &&
-                    "h-[4.5rem] overflow-hidden md:h-auto md:overflow-visible",
+                    "min-h-[5.25rem] overflow-hidden md:min-h-0 md:overflow-visible",
                 )}
               >
                 {post.description}
               </p>
             )}
-          </CardHeader>
-          {!compact && (
-            <CardContent className="space-y-3 pt-0">
-              <p
-                className={cn(
-                  "text-sm font-medium text-foreground/80",
-                  shouldUseUniformMobileHeight &&
-                    "line-clamp-1 h-5 overflow-hidden md:h-auto md:overflow-visible md:line-clamp-none",
-                )}
-              >
-                {authorLine}
-              </p>
-            </CardContent>
-          )}
-          {!compact && (hasTags || shouldUseUniformMobileHeight) && (
-            <CardFooter
-              className={cn(
-                "pt-0",
-                shouldUseUniformMobileHeight && "min-h-6 md:min-h-0",
-              )}
-            >
-              {hasTags ? (
-                <div
+            {!compact && (
+              <div className="mt-auto flex flex-col gap-3 pt-2">
+                <p
                   className={cn(
-                    "flex flex-wrap gap-2",
+                    "text-sm font-medium leading-6 text-foreground/80",
                     shouldUseUniformMobileHeight &&
-                      "h-6 overflow-hidden md:h-auto md:overflow-visible",
+                      "line-clamp-1 min-h-6 overflow-hidden md:min-h-0 md:overflow-visible md:line-clamp-none",
                   )}
                 >
-                  {post.tags?.map((tag) => (
-                    <Badge
-                      key={tag}
-                      variant="outline"
-                      className="bg-background/80"
-                    >
-                      {tag}
-                    </Badge>
-                  ))}
-                </div>
-              ) : null}
-            </CardFooter>
-          )}
+                  {authorLine}
+                </p>
+                {(hasTags || shouldUseUniformMobileHeight) && (
+                  <div
+                    className={cn(
+                      shouldUseUniformMobileHeight && "min-h-6 md:min-h-0",
+                    )}
+                  >
+                    {hasTags ? (
+                      <div
+                        className={cn(
+                          "flex flex-wrap gap-2",
+                          shouldUseUniformMobileHeight &&
+                            "max-h-6 overflow-hidden md:max-h-none md:overflow-visible",
+                        )}
+                      >
+                        {post.tags?.map((tag) => (
+                          <Badge
+                            key={tag}
+                            variant="outline"
+                            className="bg-background/80"
+                          >
+                            {tag}
+                          </Badge>
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </Card>
     </div>

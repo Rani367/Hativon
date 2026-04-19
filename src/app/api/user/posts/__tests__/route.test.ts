@@ -351,7 +351,6 @@ describe("User Posts API Routes", () => {
       const response = await GET(request, {
         params: Promise.resolve({ id: "post-456" }),
       });
-      const body = await response.json();
 
       // undefined !== mockUser.id, so should be forbidden
       expect(response.status).toBe(403);

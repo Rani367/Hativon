@@ -8,9 +8,11 @@ import {
   useMemo,
   useRef,
   useState,
+  useSyncExternalStore,
   type ReactNode,
 } from "react";
 import { createPortal } from "react-dom";
+import Image from "next/image";
 import { motion, useReducedMotion } from "framer-motion";
 import { usePathname } from "next/navigation";
 
@@ -91,6 +93,7 @@ const PostOpenTransitionContext =
 const TARGET_WAIT_TIMEOUT_MS = 2500;
 const CLEANUP_DELAY_MS = 80;
 const TRANSITION_DURATION_SECONDS = 0.44;
+const subscribeToClient = () => () => {};
 
 function getPathnameFromHref(href: string): string {
   if (typeof window === "undefined") {
@@ -201,13 +204,16 @@ function PostOpenTransitionOverlay({
 
       <MotionBlock
         animateTo={imageTarget}
-        className="overflow-hidden border border-border/70 bg-card shadow-[0_30px_90px_rgba(15,23,42,0.18)]"
+        className="relative overflow-hidden border border-border/70 bg-card shadow-[0_30px_90px_rgba(15,23,42,0.18)]"
         duration={TRANSITION_DURATION_SECONDS}
       >
-        <img
+        <Image
           src={snapshot.coverImage}
           alt={snapshot.imageAlt}
-          className="h-full w-full object-cover"
+          fill
+          sizes="100vw"
+          unoptimized
+          className="object-cover"
         />
       </MotionBlock>
 
@@ -280,7 +286,11 @@ export function PostOpenTransitionProvider({
   const pathname = usePathname();
   const prefersReducedMotion = Boolean(useReducedMotion());
   const cleanupTimeoutRef = useRef<number | null>(null);
-  const [isMounted, setIsMounted] = useState(false);
+  const isMounted = useSyncExternalStore(
+    subscribeToClient,
+    () => true,
+    () => false,
+  );
   const [activeTransition, setActiveTransition] =
     useState<ActivePostTransition | null>(null);
 
@@ -300,70 +310,8 @@ export function PostOpenTransitionProvider({
   }, [clearCleanupTimeout]);
 
   useEffect(() => {
-    setIsMounted(true);
-
-    return () => {
-      clearCleanupTimeout();
-    };
+    return clearCleanupTimeout;
   }, [clearCleanupTimeout]);
-
-  useEffect(() => {
-    if (!activeTransition || activeTransition.status !== "navigating") {
-      return;
-    }
-
-    const targetPath = getPathnameFromHref(activeTransition.snapshot.href);
-    if (pathname !== targetPath) {
-      return;
-    }
-
-    window.scrollTo(0, 0);
-
-    setActiveTransition((currentTransition) => {
-      if (
-        !currentTransition ||
-        currentTransition.snapshot.sourceId !== activeTransition.snapshot.sourceId
-      ) {
-        return currentTransition;
-      }
-
-      return {
-        ...currentTransition,
-        status: "waiting-for-target",
-      };
-    });
-  }, [activeTransition, pathname]);
-
-  useEffect(() => {
-    if (!activeTransition || activeTransition.status !== "waiting-for-target") {
-      return;
-    }
-
-    if (!activeTransition.targets) {
-      return;
-    }
-
-    const animationFrameId = window.requestAnimationFrame(() => {
-      setActiveTransition((currentTransition) => {
-        if (
-          !currentTransition ||
-          currentTransition.snapshot.sourceId !== activeTransition.snapshot.sourceId ||
-          !currentTransition.targets
-        ) {
-          return currentTransition;
-        }
-
-        return {
-          ...currentTransition,
-          status: "animating",
-        };
-      });
-    });
-
-    return () => {
-      window.cancelAnimationFrame(animationFrameId);
-    };
-  }, [activeTransition]);
 
   useEffect(() => {
     if (!activeTransition) {
@@ -423,6 +371,17 @@ export function PostOpenTransitionProvider({
 
   const registerPostTransitionTarget = useCallback(
     (postId: string, targets: PostTransitionTargets) => {
+      if (!activeTransition || activeTransition.snapshot.postId !== postId) {
+        return;
+      }
+
+      const targetPath = getPathnameFromHref(activeTransition.snapshot.href);
+      const shouldStartAnimation = pathname === targetPath;
+
+      if (shouldStartAnimation) {
+        window.scrollTo(0, 0);
+      }
+
       setActiveTransition((currentTransition) => {
         if (!currentTransition || currentTransition.snapshot.postId !== postId) {
           return currentTransition;
@@ -430,11 +389,12 @@ export function PostOpenTransitionProvider({
 
         return {
           ...currentTransition,
+          status: shouldStartAnimation ? "animating" : currentTransition.status,
           targets,
         };
       });
     },
-    [],
+    [activeTransition, pathname],
   );
 
   const completePostTransition = useCallback((postId: string) => {

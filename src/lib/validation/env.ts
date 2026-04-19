@@ -114,17 +114,15 @@ export function validateEnv(): ValidatedEnv {
 
   // Log successful validation (only in development)
   if (result.data.NODE_ENV === "development") {
-    console.log("[OK] Environment variables validated successfully");
-
     // Log warnings for optional but recommended variables
     if (!result.data.POSTGRES_URL) {
-      console.log(
+      console.warn(
         "[WARNING] POSTGRES_URL not set - running in admin-only mode (no user authentication)",
       );
     }
 
     if (!result.data.BLOB_READ_WRITE_TOKEN) {
-      console.log(
+      console.warn(
         "[INFO] BLOB_READ_WRITE_TOKEN not set - image uploads will use base64 encoding",
       );
     }
