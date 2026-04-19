@@ -1,5 +1,10 @@
 import { describe, it, expect } from "bun:test";
-import { generateDescription, rowToPost } from "../utils";
+import {
+  generateDescription,
+  MAX_DESCRIPTION_LENGTH,
+  rowToPost,
+  truncateDescription,
+} from "../utils";
 import type { DbPostRow } from "@/types/database.types";
 
 describe("generateDescription", () => {
@@ -9,10 +14,10 @@ describe("generateDescription", () => {
       expect(generateDescription(content)).toBe(content);
     });
 
-    it("truncates long Hebrew text to 300 characters", () => {
+    it("truncates long Hebrew text to the shared description limit", () => {
       const longContent = "א".repeat(400);
       const result = generateDescription(longContent);
-      expect(result).toHaveLength(303); // 300 + '...'
+      expect(result).toHaveLength(MAX_DESCRIPTION_LENGTH + 3);
       expect(result.endsWith("...")).toBe(true);
     });
 
@@ -94,6 +99,17 @@ describe("generateDescription", () => {
     it("preserves Hebrew punctuation", () => {
       const content = "שאלה? תשובה! הערה.";
       expect(generateDescription(content)).toBe("שאלה? תשובה! הערה.");
+    });
+  });
+
+  describe("truncateDescription", () => {
+    it("trims surrounding whitespace", () => {
+      expect(truncateDescription("  short text  ")).toBe("short text");
+    });
+
+    it("truncates long descriptions to the shared limit", () => {
+      const result = truncateDescription("a".repeat(MAX_DESCRIPTION_LENGTH + 10));
+      expect(result).toBe("a".repeat(MAX_DESCRIPTION_LENGTH) + "...");
     });
   });
 });

@@ -11,6 +11,7 @@ import rehypeSanitize from "rehype-sanitize";
 import { formatHebrewDate } from "@/lib/date/format";
 import Image from "next/image";
 import { components } from "./mdx-component";
+import { generateDescription, truncateDescription } from "@/lib/posts/utils";
 import { getWordCount } from "@/lib/utils/text-utils";
 import { calculateReadingTime } from "@/lib/utils";
 
@@ -46,15 +47,10 @@ export function PostPreview({
   // Generate auto description if not provided (matching post-storage logic)
   const displayDescription = useMemo(() => {
     if (description && description.trim()) {
-      return description;
+      return truncateDescription(description);
     }
     if (content) {
-      // Strip markdown and get first 160 chars
-      const stripped = content
-        .replace(/[#*`~\[\]()]/g, "")
-        .replace(/\n+/g, " ")
-        .trim();
-      return stripped.substring(0, 160) + (stripped.length > 160 ? "..." : "");
+      return generateDescription(content);
     }
     return "";
   }, [description, content]);

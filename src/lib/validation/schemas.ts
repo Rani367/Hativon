@@ -4,6 +4,7 @@
  */
 
 import { z } from "zod";
+import { MAX_POST_DESCRIPTION_LENGTH } from "@/lib/constants";
 
 /**
  * User validation schemas
@@ -168,7 +169,10 @@ export const postContentSchema = z
 // Post description validation
 export const postDescriptionSchema = z
   .string()
-  .max(500, "תיאור לא יכול להיות יותר מ-500 תווים")
+  .max(
+    MAX_POST_DESCRIPTION_LENGTH,
+    `תיאור לא יכול להיות יותר מ-${MAX_POST_DESCRIPTION_LENGTH} תווים`,
+  )
   .optional();
 
 // Cover image URL validation (required for new posts)

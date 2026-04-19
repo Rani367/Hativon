@@ -1,5 +1,6 @@
 "use client";
 
+import { MAX_POST_DESCRIPTION_LENGTH } from "@/lib/constants";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -101,9 +102,10 @@ export function PostFormFields({
           onChange={(e) => onDescriptionChange(e.target.value)}
           placeholder="תיאור קצר של הכתבה. אם לא יוזן, התיאור ייווצר אוטומטית מהתוכן."
           className="min-h-[100px]"
+          maxLength={MAX_POST_DESCRIPTION_LENGTH}
         />
         <p className="text-xs text-muted-foreground">
-          התיאור יוצג בכרטיסי הכתבות. מומלץ עד 200 תווים.
+          התיאור יוצג בכרטיסי הכתבות. עד {MAX_POST_DESCRIPTION_LENGTH} תווים.
         </p>
       </div>
 

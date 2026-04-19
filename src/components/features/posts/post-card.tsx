@@ -6,6 +6,7 @@ import { type MouseEvent } from "react";
 import { formatHebrewDate } from "@/lib/date/format";
 import { Post } from "@/types/post.types";
 import { calculateReadingTime, cn, getWordCount, triggerHaptic } from "@/lib/utils";
+import { truncateDescription } from "@/lib/posts/utils";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Clock, Calendar } from "lucide-react";
@@ -30,6 +31,7 @@ export default function PostCard({
   const readingTime = calculateReadingTime(wordCount);
   const shouldUseUniformMobileHeight = uniformHeightBelowMd && !compact;
   const hasTags = Boolean(post.tags?.length);
+  const displayDescription = truncateDescription(post.description);
   const preloadCoverImage = () => {
     if (!post.coverImage || typeof window === "undefined") {
       return;
@@ -166,26 +168,26 @@ export default function PostCard({
             </div>
             {compact ? (
               <p className="line-clamp-1 text-sm leading-5 text-muted-foreground">
-                {post.description}
+                {displayDescription}
               </p>
             ) : (
               <p
                 className={cn(
-                  "line-clamp-3 text-base leading-7 text-muted-foreground",
+                  "line-clamp-2 text-base leading-7 text-muted-foreground md:line-clamp-3",
                   shouldUseUniformMobileHeight &&
-                    "min-h-[5.25rem] overflow-hidden md:min-h-0 md:overflow-visible",
+                    "min-h-[3.5rem] md:min-h-0",
                 )}
               >
-                {post.description}
+                {displayDescription}
               </p>
             )}
             {!compact && (
               <div className="mt-auto flex flex-col gap-3 pt-2">
                 <p
                   className={cn(
-                    "text-sm font-medium leading-6 text-foreground/80",
+                    "line-clamp-1 overflow-hidden text-sm font-medium leading-6 text-foreground/80",
                     shouldUseUniformMobileHeight &&
-                      "line-clamp-1 min-h-6 overflow-hidden md:min-h-0 md:overflow-visible md:line-clamp-none",
+                      "min-h-6 md:min-h-0",
                   )}
                 >
                   {authorLine}
