@@ -1,7 +1,17 @@
 import type { DbPostRow } from "@/types/database.types";
 import type { Post } from "@/types/post.types";
+import { MAX_POST_DESCRIPTION_LENGTH } from "@/lib/constants";
 
-export const MAX_DESCRIPTION_LENGTH = 300;
+export const MAX_DESCRIPTION_LENGTH = MAX_POST_DESCRIPTION_LENGTH;
+
+export function truncateDescription(description: string): string {
+  const normalizedDescription = description.trim();
+
+  return normalizedDescription.length > MAX_DESCRIPTION_LENGTH
+    ? normalizedDescription.substring(0, MAX_DESCRIPTION_LENGTH).trimEnd() +
+        "..."
+    : normalizedDescription;
+}
 
 // strips markdown and truncates for preview
 export function generateDescription(content: string): string {
@@ -12,9 +22,7 @@ export function generateDescription(content: string): string {
     .replace(/\s+/g, " ")
     .trim();
 
-  return plainText.length > MAX_DESCRIPTION_LENGTH
-    ? plainText.substring(0, MAX_DESCRIPTION_LENGTH) + "..."
-    : plainText;
+  return truncateDescription(plainText);
 }
 
 // db row -> Post object (snake_case to camelCase)

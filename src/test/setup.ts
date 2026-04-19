@@ -199,7 +199,7 @@ mock.module("@/lib/posts", () => ({
     (_g.__postsBarrelGenerateDescriptionMock as (...a: unknown[]) => unknown)(...args),
   rowToPost: (...args: unknown[]) =>
     (_g.__postsBarrelRowToPostMock as (...a: unknown[]) => unknown)(...args),
-  MAX_DESCRIPTION_LENGTH: 300,
+  MAX_DESCRIPTION_LENGTH: 160,
 }));
 
 // ---------- Mock: next/navigation ----------

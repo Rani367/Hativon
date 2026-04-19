@@ -10,6 +10,7 @@ import {
   postInputSchema,
   postUpdateSchema,
 } from "../schemas";
+import { MAX_POST_DESCRIPTION_LENGTH } from "@/lib/constants";
 
 describe("Post Validation Schemas", () => {
   describe("postStatusSchema", () => {
@@ -66,10 +67,12 @@ describe("Post Validation Schemas", () => {
       expect(postDescriptionSchema.safeParse(undefined).success).toBe(true);
     });
 
-    it("rejects descriptions over 500 characters", () => {
-      expect(postDescriptionSchema.safeParse("a".repeat(501)).success).toBe(
-        false,
-      );
+    it("rejects descriptions over the shared description limit", () => {
+      expect(
+        postDescriptionSchema.safeParse(
+          "a".repeat(MAX_POST_DESCRIPTION_LENGTH + 1),
+        ).success,
+      ).toBe(false);
     });
   });
 

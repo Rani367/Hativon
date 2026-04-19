@@ -2,7 +2,7 @@
  * Tests for the description regeneration migration
  *
  * These tests verify:
- * 1. Description generation works correctly with new 300 char limit
+ * 1. Description generation works correctly with the shared description limit
  * 2. No data loss occurs during migration
  * 3. Edge cases are handled properly
  */
@@ -12,23 +12,23 @@ import { generateDescription, MAX_DESCRIPTION_LENGTH } from '../utils';
 
 describe('Description Regeneration Migration', () => {
   describe('MAX_DESCRIPTION_LENGTH', () => {
-    it('should be 300 characters', () => {
-      expect(MAX_DESCRIPTION_LENGTH).toBe(300);
+    it('should be 160 characters', () => {
+      expect(MAX_DESCRIPTION_LENGTH).toBe(160);
     });
   });
 
   describe('generateDescription', () => {
-    it('should return full text if under 300 characters', () => {
+    it('should return full text if under the shared limit', () => {
       const shortContent = 'This is a short post about something interesting.';
       const result = generateDescription(shortContent);
       expect(result).toBe(shortContent);
       expect(result.length).toBeLessThanOrEqual(MAX_DESCRIPTION_LENGTH);
     });
 
-    it('should truncate and add ellipsis if over 300 characters', () => {
+    it('should truncate and add ellipsis if over the shared limit', () => {
       const longContent = 'A'.repeat(400);
       const result = generateDescription(longContent);
-      expect(result.length).toBe(MAX_DESCRIPTION_LENGTH + 3); // 300 + "..."
+      expect(result.length).toBe(MAX_DESCRIPTION_LENGTH + 3);
       expect(result.endsWith('...')).toBe(true);
     });
 
@@ -84,18 +84,18 @@ describe('Description Regeneration Migration', () => {
       expect(result).toBe('');
     });
 
-    it('should handle exactly 300 characters without truncation', () => {
-      const exact300 = 'A'.repeat(300);
-      const result = generateDescription(exact300);
-      expect(result).toBe(exact300);
-      expect(result.length).toBe(300);
+    it('should handle exactly the max length without truncation', () => {
+      const exactLimit = 'A'.repeat(MAX_DESCRIPTION_LENGTH);
+      const result = generateDescription(exactLimit);
+      expect(result).toBe(exactLimit);
+      expect(result.length).toBe(MAX_DESCRIPTION_LENGTH);
     });
 
-    it('should handle 301 characters with truncation', () => {
-      const content301 = 'A'.repeat(301);
-      const result = generateDescription(content301);
-      expect(result.length).toBe(303); // 300 + "..."
-      expect(result).toBe('A'.repeat(300) + '...');
+    it('should truncate content that is one character over the limit', () => {
+      const contentOverLimit = 'A'.repeat(MAX_DESCRIPTION_LENGTH + 1);
+      const result = generateDescription(contentOverLimit);
+      expect(result.length).toBe(MAX_DESCRIPTION_LENGTH + 3);
+      expect(result).toBe('A'.repeat(MAX_DESCRIPTION_LENGTH) + '...');
     });
   });
 
@@ -133,7 +133,7 @@ describe('Description Regeneration Migration', () => {
       const result = generateDescription(veryLongContent);
       const endTime = Date.now();
 
-      expect(result.length).toBeLessThanOrEqual(303); // 300 + "..."
+      expect(result.length).toBeLessThanOrEqual(MAX_DESCRIPTION_LENGTH + 3);
       expect(endTime - startTime).toBeLessThan(100); // Should complete in under 100ms
     });
   });
@@ -157,12 +157,12 @@ describe('Description Regeneration Migration', () => {
 
     it('should be able to store descriptions of any length', () => {
       const shortDesc = 'Short';
-      const mediumDesc = 'A'.repeat(160);
-      const longDesc = 'B'.repeat(300);
+      const mediumDesc = 'A'.repeat(MAX_DESCRIPTION_LENGTH);
+      const longDesc = 'B'.repeat(MAX_DESCRIPTION_LENGTH + 40);
 
       expect(shortDesc.length).toBe(5);
-      expect(mediumDesc.length).toBe(160);
-      expect(longDesc.length).toBe(300);
+      expect(mediumDesc.length).toBe(MAX_DESCRIPTION_LENGTH);
+      expect(longDesc.length).toBe(MAX_DESCRIPTION_LENGTH + 40);
     });
   });
 });
