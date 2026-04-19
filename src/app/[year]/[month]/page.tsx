@@ -13,7 +13,6 @@ import {
 } from "@/lib/date/months";
 import { EmptyPostsState } from "@/components/features/posts/empty-posts-state";
 import PaginatedPosts from "@/components/features/posts/paginated-posts";
-import PostCard from "@/components/features/posts/post-card";
 
 // Static generation with ISR - pages are pre-built at build time
 export const revalidate = 60;
@@ -56,13 +55,11 @@ function PostsSkeleton() {
 
 function PostsContent({
   posts,
-  showEmptyState = true,
 }: {
   posts: Post[];
-  showEmptyState?: boolean;
 }) {
   if (posts.length === 0) {
-    return showEmptyState ? <EmptyPostsState /> : null;
+    return <EmptyPostsState />;
   }
 
   return <PaginatedPosts initialPosts={posts} postsPerPage={12} />;
@@ -87,62 +84,20 @@ export default async function ArchivePage({ params }: ArchivePageProps) {
 
   const hebrewMonth = englishToHebrewMonth(monthStr);
   const posts = await getCachedPostsByMonth(year, monthNumber);
-  const featuredPost = posts[0] ?? null;
-  const stackedFeaturedPost = posts[1] ?? null;
-  const featuredPostsCount =
-    (featuredPost ? 1 : 0) + (stackedFeaturedPost ? 1 : 0);
-  const remainingPosts = posts.slice(featuredPostsCount);
-  const postsSummary =
-    posts.length === 0
-      ? "עדיין לא פורסמו כתבות בגיליון הזה."
-      : posts.length === 1
-        ? "כתבה אחת מחכה לכם בגיליון הזה."
-        : `${posts.length} כתבות בגיליון הזה.`;
 
   return (
     <div className="container mx-auto px-4 py-8 sm:py-12">
-      <div className="mb-10 flex flex-col gap-8 lg:flex-row lg:items-stretch">
-        <div className="flex w-full flex-col gap-8 lg:max-w-[30rem] lg:shrink-0 xl:max-w-[34rem]">
-          <div className="overflow-hidden rounded-[2rem] border bg-gradient-to-br from-amber-50 via-background to-sky-50 px-5 pb-10 pt-6 shadow-sm sm:px-8 sm:pb-12 sm:pt-8">
-            <div className="space-y-4">
-              <div className="inline-flex items-center rounded-full border bg-background/80 px-3 py-1 text-sm font-medium text-muted-foreground">
-                גיליון חודשי לתלמידים ולמורים
-              </div>
-              <div className="space-y-3">
-                <h1 className="text-3xl font-black tracking-tight sm:text-4xl lg:text-5xl">
-                  גיליון {hebrewMonth} {year}
-                </h1>
-                <p className="max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">
-                  {postsSummary}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {stackedFeaturedPost && (
-            <>
-              <div className="lg:hidden">
-                <PostCard post={stackedFeaturedPost} />
-              </div>
-              <div className="hidden lg:block">
-                <PostCard post={stackedFeaturedPost} compact />
-              </div>
-            </>
-          )}
-        </div>
-
-        {featuredPost && (
-          <div className="flex-1 lg:min-w-0 lg:self-stretch">
-            <PostCard post={featuredPost} priority />
-          </div>
-        )}
+      <div className="mb-8 text-center">
+        <h1 className="text-3xl font-bold md:text-4xl">
+          גיליון {hebrewMonth} {year}
+        </h1>
+        <p className="mt-2 text-muted-foreground">
+          {posts.length} {posts.length === 1 ? "כתבה" : "כתבות"}
+        </p>
       </div>
 
       <Suspense fallback={<PostsSkeleton />}>
-        <PostsContent
-          posts={remainingPosts}
-          showEmptyState={posts.length === 0}
-        />
+        <PostsContent posts={posts} />
       </Suspense>
     </div>
   );
