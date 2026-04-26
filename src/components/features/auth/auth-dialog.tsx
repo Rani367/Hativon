@@ -31,7 +31,10 @@ export function AuthDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]" dir="rtl">
+      <DialogContent
+        className="flex max-w-[calc(100%-2rem)] flex-col gap-4 rounded-lg p-4 sm:max-w-[425px] sm:p-6"
+        dir="rtl"
+      >
         <AuthDialogPanel defaultTab={defaultTab} onSuccess={handleSuccess} />
       </DialogContent>
     </Dialog>
@@ -54,56 +57,58 @@ function AuthDialogPanel({
   }, []);
 
   return (
-    <>
-        <DialogHeader>
-          <DialogTitle className="text-center">ברוך הבא לחטיבון</DialogTitle>
-          <DialogDescription className="text-center">
-            התחברו או הירשמו כדי לכתוב, לשמור טיוטות ולפרסם כתבות לקהילת בית
-            הספר
-          </DialogDescription>
-        </DialogHeader>
+    <div className="flex min-h-0 flex-col">
+      <DialogHeader className="shrink-0">
+        <DialogTitle className="text-center">ברוך הבא לחטיבון</DialogTitle>
+        <DialogDescription className="text-center">
+          התחברו או הירשמו כדי לכתוב, לשמור טיוטות ולפרסם כתבות לקהילת בית
+          הספר
+        </DialogDescription>
+      </DialogHeader>
 
-        <Tabs
-          value={activeTab}
-          onValueChange={(value) => setActiveTab(value as "login" | "register")}
+      <Tabs
+        value={activeTab}
+        onValueChange={(value) => setActiveTab(value as "login" | "register")}
+        className="min-h-0 flex-1 gap-0"
+      >
+        <motion.div
+          className="shrink-0"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2, duration: 0.3 }}
         >
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2, duration: 0.3 }}
-          >
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="login">התחברות</TabsTrigger>
-              <TabsTrigger value="register">הרשמה</TabsTrigger>
-            </TabsList>
-          </motion.div>
+          <TabsList className="grid h-11 w-full grid-cols-2 sm:h-9">
+            <TabsTrigger value="login">התחברות</TabsTrigger>
+            <TabsTrigger value="register">הרשמה</TabsTrigger>
+          </TabsList>
+        </motion.div>
 
-          <div className="mt-4">
-            <AnimatePresence mode="wait">
-              {activeTab === "login" ? (
-                <motion.div
-                  key="login"
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: 20 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <LoginForm onSuccess={onSuccess} />
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="register"
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: 20 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <RegisterForm onSuccess={onSuccess} />
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        </Tabs>
-    </>
+        <div className="mt-3 min-h-0 sm:mt-4">
+          <AnimatePresence mode="wait">
+            {activeTab === "login" ? (
+              <motion.div
+                key="login"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                transition={{ duration: 0.3 }}
+              >
+                <LoginForm onSuccess={onSuccess} />
+              </motion.div>
+            ) : (
+              <motion.div
+                key="register"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                transition={{ duration: 0.3 }}
+              >
+                <RegisterForm onSuccess={onSuccess} />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </Tabs>
+    </div>
   );
 }

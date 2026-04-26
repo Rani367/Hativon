@@ -1,5 +1,6 @@
 "use client";
 
+import { type FormEvent, useState } from "react";
 import { useAuth } from "./auth-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,9 +15,11 @@ import {
 } from "@/components/ui/select";
 import { useForm, Controller, useWatch } from "react-hook-form";
 import { motion, AnimatePresence } from "framer-motion";
-import { buttonVariants } from "@/lib/utils";
+import { buttonVariants, cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
+  displayNameSchema,
+  usernameSchema,
   userRegistrationFormSchema,
   type UserRegistrationFormInput,
 } from "@/lib/validation/schemas";
@@ -25,15 +28,20 @@ interface RegisterFormProps {
   onSuccess?: () => void;
 }
 
+type RegisterStep = "identity" | "details";
+
 export function RegisterForm({ onSuccess }: RegisterFormProps) {
   const { register: registerUser } = useAuth();
+  const [step, setStep] = useState<RegisterStep>("identity");
 
   const {
     register,
     control,
     handleSubmit,
+    getValues,
     formState: { errors, isSubmitting },
     setError: setFormError,
+    clearErrors,
   } = useForm<UserRegistrationFormInput>({
     resolver: zodResolver(userRegistrationFormSchema),
     defaultValues: {
@@ -52,6 +60,46 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
     control,
     name: "isTeacher",
   });
+
+  const stepNumber = step === "identity" ? 1 : 2;
+
+  function setFirstStepError(
+    field: "username" | "displayName",
+    message: string,
+  ) {
+    setFormError(field, { message });
+  }
+
+  function handleContinue() {
+    const values = getValues();
+    const usernameResult = usernameSchema.safeParse(values.username);
+    const displayNameResult = displayNameSchema.safeParse(values.displayName);
+
+    clearErrors(["username", "displayName", "root"]);
+
+    if (!usernameResult.success) {
+      setFirstStepError(
+        "username",
+        usernameResult.error.issues[0]?.message || "שם משתמש לא תקין",
+      );
+    }
+
+    if (!displayNameResult.success) {
+      setFirstStepError(
+        "displayName",
+        displayNameResult.error.issues[0]?.message || "שם מלא לא תקין",
+      );
+    }
+
+    if (usernameResult.success && displayNameResult.success) {
+      setStep("details");
+    }
+  }
+
+  function handleIdentitySubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    handleContinue();
+  }
 
   const onSubmit = async (data: UserRegistrationFormInput) => {
     try {
@@ -80,308 +128,339 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      <motion.div
-        className="space-y-2"
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.05, duration: 0.3 }}
-      >
-        <Label htmlFor="register-username" className="text-right block">
-          שם משתמש
-        </Label>
-        <Input
-          id="register-username"
-          type="text"
-          {...register("username")}
-          disabled={isSubmitting}
-          placeholder="אותיות אנגליות ומספרים בלבד"
-          className={`text-right transition-all duration-200 focus:scale-[1.01] ${errors.username ? "border-destructive" : ""}`}
-          aria-invalid={!!errors.username}
-          aria-describedby={
-            errors.username ? "username-error" : "username-help"
-          }
-        />
-        {errors.username ? (
-          <p
-            id="username-error"
-            className="text-xs text-destructive text-right"
-            role="alert"
-          >
-            {errors.username.message}
-          </p>
-        ) : (
-          <p
-            id="username-help"
-            className="text-xs text-muted-foreground text-right"
-          >
-            3-50 תווים (אותיות אנגליות, מספרים וקו תחתון)
-          </p>
-        )}
-      </motion.div>
-
-      <motion.div
-        className="space-y-2"
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1, duration: 0.3 }}
-      >
-        <Label htmlFor="register-displayName" className="text-right block">
-          שם מלא
-        </Label>
-        <Input
-          id="register-displayName"
-          type="text"
-          {...register("displayName")}
-          disabled={isSubmitting}
-          placeholder="השם שיוצג בפוסטים שלך"
-          className="text-right transition-all duration-200 focus:scale-[1.01]"
-        />
-        {errors.displayName && (
-          <p className="text-xs text-destructive text-right">
-            {errors.displayName.message}
-          </p>
-        )}
-      </motion.div>
-
-      <motion.div
-        className="flex items-center justify-end gap-3"
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.12, duration: 0.3 }}
-      >
-        <Label
-          htmlFor="register-isTeacher"
-          className="text-right cursor-pointer select-none"
-        >
-          חשבון צוות / מורה{"\u200F"}
-        </Label>
-        <Controller
-          name="isTeacher"
-          control={control}
-          render={({ field }) => (
-            <motion.div
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-              transition={{ type: "spring", stiffness: 400, damping: 17 }}
-            >
-              <Checkbox
-                id="register-isTeacher"
-                checked={field.value}
-                onCheckedChange={field.onChange}
-                disabled={isSubmitting}
-                className="transition-all duration-200 data-[state=checked]:bg-amber-500 data-[state=checked]:border-amber-500"
-              />
-            </motion.div>
-          )}
-        />
-      </motion.div>
-
-      <AnimatePresence mode="wait">
-        {isTeacher && (
-          <motion.div
-            className="space-y-3 overflow-hidden rounded-xl border border-amber-200 bg-amber-50/70 p-4"
-            initial={{ opacity: 0, height: 0, y: -10 }}
-            animate={{ opacity: 1, height: "auto", y: 0 }}
-            exit={{ opacity: 0, height: 0, y: -10 }}
-            transition={{
-              duration: 0.3,
-              ease: [0.4, 0, 0.2, 1],
-              opacity: { duration: 0.2 },
-            }}
-          >
-            <p className="text-sm text-right text-amber-900">
-              האפשרות הזו מיועדת למורים ולאנשי צוות בלבד. התלמידים לא צריכים
-              לבחור בה.
-            </p>
-            <Label
-              htmlFor="register-adminPassword"
-              className="text-right block"
-            >
-              סיסמת צוות מאשרת
-            </Label>
-            <Input
-              id="register-adminPassword"
-              type="password"
-              {...register("adminPassword")}
-              disabled={isSubmitting}
-              placeholder="הזן סיסמה שניתנה לצוות"
-              className={`text-right transition-all duration-200 focus:scale-[1.01] ${errors.adminPassword ? "border-destructive" : ""}`}
-            />
-            {errors.adminPassword && (
-              <p className="text-xs text-destructive text-right">
-                {errors.adminPassword.message}
-              </p>
+    <form
+      onSubmit={
+        step === "details"
+          ? handleSubmit(onSubmit)
+          : handleIdentitySubmit
+      }
+      className="flex flex-col gap-3 sm:gap-4"
+    >
+      <div className="flex items-center justify-between text-xs text-muted-foreground">
+        <span>שלב {stepNumber} מתוך 2</span>
+        <div className="flex gap-1" aria-hidden="true">
+          <span
+            className={cn(
+              "h-1.5 w-8 rounded-full",
+              step === "identity" ? "bg-primary" : "bg-primary/30",
             )}
-          </motion.div>
-        )}
-      </AnimatePresence>
+          />
+          <span
+            className={cn(
+              "h-1.5 w-8 rounded-full",
+              step === "details" ? "bg-primary" : "bg-primary/30",
+            )}
+          />
+        </div>
+      </div>
 
       <AnimatePresence mode="wait">
-        {!isTeacher && (
+        {step === "identity" ? (
           <motion.div
-            className="flex flex-col sm:flex-row gap-4 overflow-hidden"
-            initial={{ opacity: 0, height: 0, y: -10 }}
-            animate={{ opacity: 1, height: "auto", y: 0 }}
-            exit={{ opacity: 0, height: 0, y: -10 }}
-            transition={{
-              duration: 0.3,
-              ease: [0.4, 0, 0.2, 1],
-              opacity: { duration: 0.2 },
-            }}
+            key="identity"
+            className="flex flex-col gap-3"
+            initial={{ opacity: 0, x: -16 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 16 }}
+            transition={{ duration: 0.2 }}
           >
-            <div className="sm:col-span-2 rounded-xl border bg-muted/40 p-3 text-right text-sm text-muted-foreground">
-              פרטי הכיתה עוזרים להציג קרדיט נכון לכותבים התלמידים.
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="register-username" className="text-right block">
+                שם משתמש
+              </Label>
+              <Input
+                id="register-username"
+                type="text"
+                autoComplete="username"
+                {...register("username")}
+                disabled={isSubmitting}
+                placeholder="אותיות באנגלית, מספרים וקו תחתון"
+                className={cn(
+                  "min-h-11 text-right transition-all duration-200 sm:min-h-9 sm:focus:scale-[1.01]",
+                  errors.username && "border-destructive",
+                )}
+                aria-invalid={!!errors.username}
+                aria-describedby={errors.username ? "username-error" : undefined}
+              />
+              {errors.username && (
+                <p
+                  id="username-error"
+                  className="text-xs text-destructive text-right"
+                  role="alert"
+                >
+                  {errors.username.message}
+                </p>
+              )}
             </div>
-            <div className="flex-1 space-y-2">
+
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="register-displayName" className="text-right block">
+                שם מלא
+              </Label>
+              <Input
+                id="register-displayName"
+                type="text"
+                autoComplete="name"
+                {...register("displayName")}
+                disabled={isSubmitting}
+                placeholder="השם שיוצג בפוסטים שלך"
+                className={cn(
+                  "min-h-11 text-right transition-all duration-200 sm:min-h-9 sm:focus:scale-[1.01]",
+                  errors.displayName && "border-destructive",
+                )}
+                aria-invalid={!!errors.displayName}
+              />
+              {errors.displayName && (
+                <p className="text-xs text-destructive text-right">
+                  {errors.displayName.message}
+                </p>
+              )}
+            </div>
+
+            <div
+              dir="rtl"
+              className="flex min-h-11 items-center justify-start gap-3 rounded-md border bg-muted/40 px-3 text-right sm:min-h-0 sm:border-0 sm:bg-transparent sm:px-0"
+            >
+              <Controller
+                name="isTeacher"
+                control={control}
+                render={({ field }) => (
+                  <motion.div
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.95 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                  >
+                    <Checkbox
+                      id="register-isTeacher"
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                      disabled={isSubmitting}
+                      className="size-5 transition-all duration-200 data-[state=checked]:border-amber-500 data-[state=checked]:bg-amber-500 sm:size-4"
+                    />
+                  </motion.div>
+                )}
+              />
               <Label
-                htmlFor="register-classNumber"
+                htmlFor="register-isTeacher"
+                className="flex min-h-11 cursor-pointer items-center text-right select-none sm:min-h-0"
+              >
+                חשבון מורה או צוות
+              </Label>
+            </div>
+
+            <motion.div
+              whileHover="hover"
+              whileTap="tap"
+              variants={buttonVariants}
+            >
+              <Button type="button" className="w-full" onClick={handleContinue}>
+                המשך
+              </Button>
+            </motion.div>
+          </motion.div>
+        ) : (
+          <motion.div
+            key="details"
+            className="flex flex-col gap-3"
+            initial={{ opacity: 0, x: -16 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 16 }}
+            transition={{ duration: 0.2 }}
+          >
+            {!isTeacher ? (
+              <div className="grid grid-cols-2 gap-3">
+                <div className="flex min-w-0 flex-col gap-1.5">
+                  <Label
+                    htmlFor="register-classNumber"
+                    className="text-right block"
+                  >
+                    מספר כיתה
+                  </Label>
+                  <Controller
+                    name="classNumber"
+                    control={control}
+                    render={({ field }) => (
+                      <Select
+                        value={field.value?.toString()}
+                        onValueChange={(value) => field.onChange(Number(value))}
+                        disabled={isSubmitting}
+                      >
+                        <SelectTrigger
+                          id="register-classNumber"
+                          className={cn(
+                            "min-h-11 w-full sm:min-h-9",
+                            errors.classNumber && "border-destructive",
+                          )}
+                          dir="rtl"
+                          aria-invalid={!!errors.classNumber}
+                        >
+                          <SelectValue placeholder="בחר מספר" />
+                        </SelectTrigger>
+                        <SelectContent className="text-right" dir="rtl">
+                          <SelectItem value="1">1</SelectItem>
+                          <SelectItem value="2">2</SelectItem>
+                          <SelectItem value="3">3</SelectItem>
+                          <SelectItem value="4">4</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                  {errors.classNumber && (
+                    <p className="text-xs text-destructive text-right">
+                      {errors.classNumber.message}
+                    </p>
+                  )}
+                </div>
+
+                <div className="flex min-w-0 flex-col gap-1.5">
+                  <Label htmlFor="register-grade" className="text-right block">
+                    כיתה
+                  </Label>
+                  <Controller
+                    name="grade"
+                    control={control}
+                    render={({ field }) => (
+                      <Select
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        disabled={isSubmitting}
+                      >
+                        <SelectTrigger
+                          id="register-grade"
+                          className={cn(
+                            "min-h-11 w-full sm:min-h-9",
+                            errors.grade && "border-destructive",
+                          )}
+                          dir="rtl"
+                          aria-invalid={!!errors.grade}
+                        >
+                          <SelectValue placeholder="בחר כיתה" />
+                        </SelectTrigger>
+                        <SelectContent className="text-right" dir="rtl">
+                          <SelectItem value="ז">כיתה ז</SelectItem>
+                          <SelectItem value="ח">כיתה ח</SelectItem>
+                          <SelectItem value="ט">כיתה ט</SelectItem>
+                          <SelectItem value="י">כיתה י</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                  {errors.grade && (
+                    <p className="text-xs text-destructive text-right">
+                      {errors.grade.message}
+                    </p>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="register-adminPassword" className="text-right block">
+                  סיסמת צוות מאשרת
+                </Label>
+                <Input
+                  id="register-adminPassword"
+                  type="password"
+                  {...register("adminPassword")}
+                  disabled={isSubmitting}
+                  placeholder="הזן סיסמה שניתנה לצוות"
+                  className={cn(
+                    "min-h-11 text-right transition-all duration-200 sm:min-h-9 sm:focus:scale-[1.01]",
+                    errors.adminPassword && "border-destructive",
+                  )}
+                  aria-invalid={!!errors.adminPassword}
+                />
+                {errors.adminPassword && (
+                  <p className="text-xs text-destructive text-right">
+                    {errors.adminPassword.message}
+                  </p>
+                )}
+              </div>
+            )}
+
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="register-password" className="text-right block">
+                סיסמה
+              </Label>
+              <Input
+                id="register-password"
+                type="password"
+                autoComplete="new-password"
+                {...register("password")}
+                disabled={isSubmitting}
+                placeholder="לפחות 8 תווים"
+                className={cn(
+                  "min-h-11 text-right transition-all duration-200 sm:min-h-9 sm:focus:scale-[1.01]",
+                  errors.password && "border-destructive",
+                )}
+                aria-invalid={!!errors.password}
+              />
+              {errors.password && (
+                <p className="text-xs text-destructive text-right">
+                  {errors.password.message}
+                </p>
+              )}
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <Label
+                htmlFor="register-confirmPassword"
                 className="text-right block"
               >
-                מספר כיתה
+                אימות סיסמה
               </Label>
-              <Controller
-                name="classNumber"
-                control={control}
-                render={({ field }) => (
-                  <Select
-                    value={field.value?.toString()}
-                    onValueChange={(value) => field.onChange(Number(value))}
-                    disabled={isSubmitting}
-                  >
-                    <SelectTrigger
-                      id="register-classNumber"
-                      className="w-full"
-                      dir="rtl"
-                    >
-                      <SelectValue placeholder="בחר מספר" />
-                    </SelectTrigger>
-                    <SelectContent className="text-right" dir="rtl">
-                      <SelectItem value="1">1</SelectItem>
-                      <SelectItem value="2">2</SelectItem>
-                      <SelectItem value="3">3</SelectItem>
-                      <SelectItem value="4">4</SelectItem>
-                    </SelectContent>
-                  </Select>
+              <Input
+                id="register-confirmPassword"
+                type="password"
+                autoComplete="new-password"
+                {...register("confirmPassword")}
+                disabled={isSubmitting}
+                placeholder="הזן סיסמה שוב"
+                className={cn(
+                  "min-h-11 text-right transition-all duration-200 sm:min-h-9 sm:focus:scale-[1.01]",
+                  errors.confirmPassword && "border-destructive",
                 )}
+                aria-invalid={!!errors.confirmPassword}
               />
-              {errors.classNumber && (
+              {errors.confirmPassword && (
                 <p className="text-xs text-destructive text-right">
-                  {errors.classNumber.message}
+                  {errors.confirmPassword.message}
                 </p>
               )}
             </div>
 
-            <div className="flex-1 space-y-2">
-              <Label htmlFor="register-grade" className="text-right block">
-                כיתה
-              </Label>
-              <Controller
-                name="grade"
-                control={control}
-                render={({ field }) => (
-                  <Select
-                    value={field.value}
-                    onValueChange={field.onChange}
-                    disabled={isSubmitting}
-                  >
-                    <SelectTrigger
-                      id="register-grade"
-                      className="w-full"
-                      dir="rtl"
-                    >
-                      <SelectValue placeholder="בחר כיתה" />
-                    </SelectTrigger>
-                    <SelectContent className="text-right" dir="rtl">
-                      <SelectItem value="ז">כיתה ז</SelectItem>
-                      <SelectItem value="ח">כיתה ח</SelectItem>
-                      <SelectItem value="ט">כיתה ט</SelectItem>
-                      <SelectItem value="י">כיתה י</SelectItem>
-                    </SelectContent>
-                  </Select>
-                )}
-              />
-              {errors.grade && (
-                <p className="text-xs text-destructive text-right">
-                  {errors.grade.message}
-                </p>
-              )}
+            {errors.root && (
+              <motion.div
+                className="text-center text-sm text-destructive"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.2 }}
+              >
+                {errors.root.message}
+              </motion.div>
+            )}
+
+            <div className="grid grid-cols-[auto_1fr] gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                disabled={isSubmitting}
+                onClick={() => setStep("identity")}
+              >
+                חזרה
+              </Button>
+              <motion.div
+                whileHover="hover"
+                whileTap="tap"
+                variants={buttonVariants}
+              >
+                <Button type="submit" className="w-full" disabled={isSubmitting}>
+                  {isSubmitting ? "נרשם..." : "הרשם"}
+                </Button>
+              </motion.div>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
-
-      <motion.div
-        className="space-y-2"
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2, duration: 0.3 }}
-      >
-        <Label htmlFor="register-password" className="text-right block">
-          סיסמה
-        </Label>
-        <Input
-          id="register-password"
-          type="password"
-          {...register("password")}
-          disabled={isSubmitting}
-          placeholder="לפחות 8 תווים"
-          className="text-right transition-all duration-200 focus:scale-[1.01]"
-        />
-        {errors.password && (
-          <p className="text-xs text-destructive text-right">
-            {errors.password.message}
-          </p>
-        )}
-      </motion.div>
-
-      <motion.div
-        className="space-y-2"
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.25, duration: 0.3 }}
-      >
-        <Label htmlFor="register-confirmPassword" className="text-right block">
-          אימות סיסמה
-        </Label>
-        <Input
-          id="register-confirmPassword"
-          type="password"
-          {...register("confirmPassword")}
-          disabled={isSubmitting}
-          placeholder="הזן סיסמה שוב"
-          className="text-right transition-all duration-200 focus:scale-[1.01]"
-        />
-        {errors.confirmPassword && (
-          <p className="text-xs text-destructive text-right">
-            {errors.confirmPassword.message}
-          </p>
-        )}
-      </motion.div>
-
-      {errors.root && (
-        <motion.div
-          className="text-sm text-red-600 dark:text-red-400 text-center"
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.2 }}
-        >
-          {errors.root.message}
-        </motion.div>
-      )}
-
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3, duration: 0.3 }}
-        whileHover="hover"
-        whileTap="tap"
-        variants={buttonVariants}
-      >
-        <Button type="submit" className="w-full" disabled={isSubmitting}>
-          {isSubmitting ? "נרשם..." : "הרשם"}
-        </Button>
-      </motion.div>
     </form>
   );
 }

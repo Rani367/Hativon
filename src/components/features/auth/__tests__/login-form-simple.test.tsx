@@ -1,16 +1,31 @@
 import { describe, it, expect, mock } from "bun:test";
 import { render, screen } from "@testing-library/react";
+import * as React from "react";
 import { LoginForm } from "../login-form";
+
+type MotionProps = React.PropsWithChildren<Record<string, unknown>>;
+
+function createMotionComponent(tag: string) {
+  return function MotionComponent({
+    animate: _animate,
+    exit: _exit,
+    initial: _initial,
+    transition: _transition,
+    variants: _variants,
+    whileHover: _whileHover,
+    whileTap: _whileTap,
+    children,
+    ...props
+  }: MotionProps) {
+    return React.createElement(tag, props, children);
+  };
+}
 
 // Mock framer-motion
 mock.module("framer-motion", () => ({
   motion: {
-    div: ({ children, ...props }: React.PropsWithChildren) => (
-      <div {...props}>{children}</div>
-    ),
-    button: ({ children, ...props }: React.PropsWithChildren) => (
-      <button {...props}>{children}</button>
-    ),
+    button: createMotionComponent("button"),
+    div: createMotionComponent("div"),
   },
 }));
 
