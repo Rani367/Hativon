@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { motion } from "framer-motion";
-import { buttonVariants, triggerHaptic } from "@/lib/utils";
+import { buttonVariants, cn, triggerHaptic } from "@/lib/utils";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { userLoginSchema, type UserLoginInput } from "@/lib/validation/schemas";
@@ -93,9 +93,9 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
 
   return (
     <>
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-3 sm:gap-4">
         <motion.div
-          className="space-y-2"
+          className="flex flex-col gap-1.5 sm:gap-2"
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.05, duration: 0.3 }}
@@ -109,7 +109,11 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
             {...register("username")}
             disabled={isSubmitting}
             placeholder="הזן שם משתמש"
-            className="text-right transition-all duration-200 focus:scale-[1.01]"
+            className={cn(
+              "min-h-11 text-right transition-all duration-200 sm:min-h-9 sm:focus:scale-[1.01]",
+              errors.username && "border-destructive",
+            )}
+            aria-invalid={!!errors.username}
           />
           {errors.username && (
             <p className="text-sm text-destructive text-right">
@@ -119,7 +123,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
         </motion.div>
 
         <motion.div
-          className="space-y-2"
+          className="flex flex-col gap-1.5 sm:gap-2"
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1, duration: 0.3 }}
@@ -133,7 +137,11 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
             {...register("password")}
             disabled={isSubmitting}
             placeholder="הזן סיסמה"
-            className="text-right transition-all duration-200 focus:scale-[1.01]"
+            className={cn(
+              "min-h-11 text-right transition-all duration-200 sm:min-h-9 sm:focus:scale-[1.01]",
+              errors.password && "border-destructive",
+            )}
+            aria-invalid={!!errors.password}
           />
           {errors.password && (
             <p className="text-sm text-destructive text-right">
@@ -150,9 +158,12 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
         >
           <button
             type="button"
-            onClick={() => { triggerHaptic(); handleForgotClick(); }}
+            onClick={() => {
+              triggerHaptic();
+              handleForgotClick();
+            }}
             disabled={forgotState === "sending"}
-            className="text-sm text-muted-foreground hover:text-foreground transition-colors underline-offset-4 hover:underline cursor-pointer disabled:opacity-50"
+            className="-my-2 inline-flex min-h-10 items-center text-sm text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline disabled:opacity-50"
           >
             {forgotState === "sending" ? "שולח בקשה..." : "שכחת סיסמה?\u200F"}
           </button>
@@ -160,7 +171,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
 
         {forgotState === "sent" && (
           <motion.div
-            className="text-sm text-center rounded-md bg-muted p-3"
+            className="rounded-md bg-muted p-3 text-center text-sm"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.2 }}
@@ -203,12 +214,12 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
               הזן את שם המשתמש שלך כדי לשלוח בקשת איפוס סיסמה
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
+          <div className="flex flex-col gap-4">
             <Input
               value={forgotUsername}
               onChange={(e) => setForgotUsername(e.target.value)}
               placeholder="שם משתמש"
-              className="text-right"
+              className="min-h-11 text-right sm:min-h-9"
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   e.preventDefault();
