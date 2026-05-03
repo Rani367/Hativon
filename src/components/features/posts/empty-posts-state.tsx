@@ -36,12 +36,12 @@ export function EmptyPostsState() {
 
   return (
     <>
-      <div className="flex flex-col items-center justify-center rounded-[2rem] border border-dashed bg-gradient-to-br from-amber-50 via-background to-sky-50 px-4 py-14 text-center">
-        <div className="mb-8 max-w-xl">
+      <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed bg-gradient-to-br from-amber-50 via-background to-sky-50 px-4 py-10 text-center sm:rounded-[2rem] sm:py-14">
+        <div className="mb-6 max-w-xl sm:mb-8">
           <p className="mb-3 text-sm font-medium text-muted-foreground">
             גיליון חדש מתחיל כאן
           </p>
-          <h2 className="mb-3 text-2xl font-black text-foreground sm:text-3xl">
+          <h2 className="mb-3 text-xl font-black leading-tight text-foreground sm:text-3xl">
             עדיין אין כתבות שפורסמו בחודש הזה
           </h2>
           <p className="text-base leading-7 text-muted-foreground">
@@ -55,7 +55,7 @@ export function EmptyPostsState() {
           <Button
             size="lg"
             onClick={handleClick}
-            className="gap-2 cursor-pointer"
+            className="w-full cursor-pointer gap-2 sm:w-auto"
           >
             <PenSquare className="h-5 w-5" />
             <span>{user ? "כתבו את הכתבה הראשונה" : "התחברו כדי להתחיל לכתוב"}</span>

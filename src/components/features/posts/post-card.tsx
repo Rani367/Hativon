@@ -60,7 +60,7 @@ export default function PostCard({
   return (
     <div className="h-full">
       <Card
-        className={`group relative h-full overflow-hidden border-border/70 bg-card/80 pt-0 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-xl supports-[backdrop-filter]:bg-background/80 ${
+        className={`group relative h-full overflow-hidden rounded-lg border-border/70 bg-card/80 pt-0 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-xl supports-[backdrop-filter]:bg-background/80 ${
           compact ? "gap-2" : ""
         }`}
       >
@@ -76,7 +76,7 @@ export default function PostCard({
         />
         <div
           className={`relative w-full overflow-hidden rounded-t-lg ${
-            compact ? "aspect-[16/9]" : "aspect-[5/4] sm:aspect-[4/3]"
+            compact ? "aspect-[16/9]" : "aspect-[16/11] sm:aspect-[4/3]"
           }`}
         >
           {post.coverImage ? (
@@ -107,7 +107,7 @@ export default function PostCard({
             </div>
           )}
           {post.category && (
-            <div className="absolute top-4 start-4 z-20">
+            <div className="absolute top-3 start-3 z-20 sm:top-4 sm:start-4">
               <Badge
                 variant="secondary"
                 className="bg-background/80 shadow-sm backdrop-blur-sm"
@@ -117,7 +117,7 @@ export default function PostCard({
             </div>
           )}
           {post.isTeacherPost && (
-            <div className="absolute top-4 end-4 z-20">
+            <div className="absolute top-3 end-3 z-20 sm:top-4 sm:end-4">
               <Badge
                 variant="default"
                 className="bg-amber-500/90 text-white shadow-sm backdrop-blur-sm"
@@ -133,15 +133,15 @@ export default function PostCard({
             className={cn(
               "flex flex-1 flex-col",
               compact
-                ? "gap-2 px-5 py-4 sm:px-6"
-                : "gap-4 px-6 py-5 sm:px-7 sm:py-6",
+                ? "gap-2 px-4 py-4 sm:px-6"
+                : "gap-3 px-4 py-4 sm:gap-4 sm:px-7 sm:py-6",
               shouldUseUniformMobileHeight && "gap-4",
             )}
           >
             <div
               className={cn(
                 "flex flex-wrap items-center gap-3 text-muted-foreground",
-                compact ? "text-xs" : "text-sm",
+                compact ? "text-xs" : "text-xs sm:text-sm",
                 shouldUseUniformMobileHeight && "min-h-5",
               )}
             >
@@ -158,9 +158,9 @@ export default function PostCard({
               <h2
                 className={cn(
                   "font-bold leading-tight text-foreground transition-colors duration-300 group-hover:text-foreground/95",
-                  compact ? "line-clamp-2 text-xl" : "text-2xl sm:text-[2rem]",
+                  compact ? "line-clamp-2 text-xl" : "text-xl sm:text-2xl lg:text-[2rem]",
                   shouldUseUniformMobileHeight &&
-                    "line-clamp-2 min-h-16 overflow-hidden md:min-h-0 md:overflow-visible md:line-clamp-none",
+                    "line-clamp-2 min-h-12 overflow-hidden md:min-h-0 md:overflow-visible md:line-clamp-none",
                 )}
               >
                 {post.title}
@@ -173,7 +173,7 @@ export default function PostCard({
             ) : (
               <p
                 className={cn(
-                  "line-clamp-2 text-base leading-7 text-muted-foreground md:line-clamp-3",
+                  "line-clamp-2 text-sm leading-6 text-muted-foreground sm:text-base sm:leading-7 md:line-clamp-3",
                   shouldUseUniformMobileHeight &&
                     "min-h-[3.5rem] md:min-h-0",
                 )}

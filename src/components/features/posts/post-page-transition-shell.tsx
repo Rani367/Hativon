@@ -72,11 +72,11 @@ export function PostPageTransitionShell({
   }, [concealOpeningRegion, post.id, registerPostTransitionTarget]);
 
   return (
-    <article className="mx-auto max-w-4xl px-4 py-6 sm:px-6 sm:py-8">
-      <div className="mb-6">
+    <article className="mx-auto max-w-4xl py-2 sm:px-6 sm:py-8">
+      <div className="mb-4 sm:mb-6">
         <Link
           href="/"
-          className="inline-flex items-center rounded-full border px-3 py-1 text-sm text-muted-foreground transition-colors hover:bg-muted"
+          className="inline-flex min-h-10 items-center rounded-full border px-3 py-1 text-sm text-muted-foreground transition-colors hover:bg-muted"
         >
           חזרה לגיליון
         </Link>
@@ -85,7 +85,7 @@ export function PostPageTransitionShell({
       {post.coverImage && (
         <div
           ref={imageContainerRef}
-          className={`relative mb-8 w-full overflow-hidden rounded-[2rem] border shadow-sm transition-opacity duration-200 ${
+          className={`relative mb-6 w-full overflow-hidden rounded-2xl border shadow-sm transition-opacity duration-200 sm:mb-8 sm:rounded-[2rem] ${
             concealOpeningRegion ? "opacity-0" : "opacity-100"
           }`}
         >
@@ -109,19 +109,19 @@ export function PostPageTransitionShell({
 
       <header
         ref={headerRef}
-        className={`mb-10 rounded-[2rem] border bg-card/70 p-5 shadow-sm transition-opacity duration-200 sm:p-8 ${
+        className={`mb-6 rounded-2xl border bg-card/70 p-4 shadow-sm transition-opacity duration-200 sm:mb-10 sm:rounded-[2rem] sm:p-8 ${
           concealOpeningRegion ? "opacity-0" : "opacity-100"
         }`}
       >
         <div
           ref={metaRef}
-          className="mb-5 flex flex-wrap items-center gap-3 text-sm text-muted-foreground sm:text-base"
+          className="mb-4 flex flex-wrap items-center gap-2 text-xs text-muted-foreground sm:mb-5 sm:gap-3 sm:text-base"
         >
-          <time className="rounded-full bg-muted px-3 py-1">
+          <time className="rounded-full bg-muted px-2.5 py-1 sm:px-3">
             {formatHebrewDate(post.date)}
           </time>
           {post.author && (
-            <span className="rounded-full bg-muted px-3 py-1">
+            <span className="rounded-full bg-muted px-2.5 py-1 sm:px-3">
               מאת {post.author}
               {post.authorDeleted && (
                 <span className="text-muted-foreground"> (נמחק)</span>
@@ -131,32 +131,32 @@ export function PostPageTransitionShell({
                 ` (כיתה ${post.authorGrade}${post.authorClass})`}
             </span>
           )}
-          <span className="rounded-full bg-muted px-3 py-1">
+          <span className="rounded-full bg-muted px-2.5 py-1 sm:px-3">
             {calculateReadingTime(wordCount)}
           </span>
-          <span className="rounded-full bg-muted px-3 py-1">
+          <span className="rounded-full bg-muted px-2.5 py-1 sm:px-3">
             {wordCount} מילים
           </span>
         </div>
 
         <h1
           ref={titleRef}
-          className="mb-5 text-3xl font-black leading-tight text-foreground sm:text-4xl lg:text-5xl"
+          className="mb-4 break-words text-2xl font-black leading-tight text-foreground sm:mb-5 sm:text-4xl lg:text-5xl"
         >
           {post.title}
         </h1>
 
-        <div className="mb-4 flex flex-wrap gap-3">
+        <div className="mb-4 flex flex-wrap gap-2 sm:gap-3">
           {post.isTeacherPost && (
             <Badge
               variant="default"
-              className="bg-amber-500 px-4 py-1.5 text-base text-white"
+              className="bg-amber-500 px-3 py-1 text-sm text-white sm:px-4 sm:py-1.5 sm:text-base"
             >
               פוסט של מורה
             </Badge>
           )}
           {post.category && (
-            <Badge variant="secondary" className="px-4 py-1.5 text-base">
+            <Badge variant="secondary" className="px-3 py-1 text-sm sm:px-4 sm:py-1.5 sm:text-base">
               {post.category}
             </Badge>
           )}
@@ -165,7 +165,7 @@ export function PostPageTransitionShell({
               <Badge
                 key={tag}
                 variant="outline"
-                className="px-4 py-1.5 text-base"
+                className="px-3 py-1 text-sm sm:px-4 sm:py-1.5 sm:text-base"
               >
                 {tag}
               </Badge>
@@ -174,7 +174,7 @@ export function PostPageTransitionShell({
 
         <p
           ref={descriptionRef}
-          className="max-w-3xl text-base leading-7 text-muted-foreground sm:text-lg"
+          className="max-w-3xl break-words text-base leading-7 text-muted-foreground sm:text-lg"
         >
           {post.description}
         </p>

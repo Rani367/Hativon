@@ -3,8 +3,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 export function PostCardSkeleton() {
   return (
     <div className="group relative overflow-hidden rounded-lg border border-border bg-card transition-all">
-      <Skeleton className="aspect-[5/4] w-full sm:aspect-[4/3]" />
-      <div className="space-y-4 p-6 sm:p-7">
+      <Skeleton className="aspect-[16/11] w-full sm:aspect-[4/3]" />
+      <div className="space-y-3 p-4 sm:space-y-4 sm:p-7">
         <div className="flex gap-2">
           <Skeleton className="h-5 w-16" />
           <Skeleton className="h-5 w-16" />
@@ -23,7 +23,7 @@ export function PostCardSkeleton() {
 
 export function PostGridSkeleton({ count = 12 }: { count?: number }) {
   return (
-    <div className="grid grid-cols-1 gap-8 items-start md:grid-cols-2 xl:grid-cols-3">
+    <div className="grid grid-cols-1 items-start gap-4 sm:gap-6 md:grid-cols-2 xl:grid-cols-3 xl:gap-8">
       {Array.from({ length: count }).map((_, i) => (
         <div key={i}>
           <PostCardSkeleton />
@@ -50,18 +50,18 @@ export function HeroSkeleton() {
 
 export function PostPageSkeleton() {
   return (
-    <article className="max-w-4xl mx-auto prose prose-lg dark:prose-invert">
-      <Skeleton className="aspect-video w-full mb-10 rounded-lg" />
+    <article className="mx-auto max-w-4xl dark:prose-invert sm:prose-lg">
+      <Skeleton className="mb-6 aspect-video w-full rounded-lg sm:mb-10" />
 
-      <header className="mb-10">
-        <div className="flex items-center gap-4 mb-6">
+      <header className="mb-6 sm:mb-10">
+        <div className="mb-4 flex flex-wrap items-center gap-2 sm:mb-6 sm:gap-4">
           <Skeleton className="h-5 w-32" />
           <Skeleton className="h-5 w-40" />
           <Skeleton className="h-5 w-24" />
         </div>
 
-        <Skeleton className="h-14 w-full mb-6" />
-        <Skeleton className="h-14 w-3/4 mb-6" />
+        <Skeleton className="mb-4 h-10 w-full sm:mb-6 sm:h-14" />
+        <Skeleton className="mb-6 h-10 w-3/4 sm:h-14" />
 
         <div className="flex gap-3 mb-4">
           <Skeleton className="h-7 w-20" />

@@ -19,10 +19,10 @@ import { Badge } from "@/components/ui/badge";
 
 const components = {
   h1: ({ children }: { children?: React.ReactNode }) => (
-    <h1 className="mb-4 font-bold text-4xl">{children}</h1>
+    <h1 className="mb-4 break-words text-3xl font-bold sm:text-4xl">{children}</h1>
   ),
   p: ({ children }: { children?: React.ReactNode }) => (
-    <p className="mb-4">{children}</p>
+    <p className="mb-4 break-words leading-7">{children}</p>
   ),
   a: ({ children, href }: { children?: React.ReactNode; href?: string }) => (
     <a href={href} className="text-blue-500">
@@ -58,12 +58,12 @@ const components = {
         language={match[1]}
         PreTag="div"
         {...props}
-        className="rounded-md [&>code]:bg-transparent [&>code]:p-2 [&>code]:rounded-md"
+        className="max-w-full overflow-x-auto rounded-md text-sm [&>code]:rounded-md [&>code]:bg-transparent [&>code]:p-2"
       >
         {String(children).replace(/\n$/, "")}
       </SyntaxHighlighter>
     ) : (
-      <Badge variant="pre" className="font-mono rounded-md text-sm">
+      <Badge variant="pre" className="max-w-full whitespace-normal break-words rounded-md font-mono text-sm">
         {children}
       </Badge>
     );
@@ -78,7 +78,7 @@ const components = {
         : URL.createObjectURL(src)
       : "";
     return (
-      <div className="relative mb-4 w-full aspect-video rounded-md overflow-hidden">
+      <div className="relative mb-4 aspect-video w-full overflow-hidden rounded-md">
         <Image
           src={imageUrl}
           alt={alt || "תמונה בכתבה"}
@@ -92,10 +92,10 @@ const components = {
     );
   },
   h2: ({ children }: { children?: React.ReactNode }) => (
-    <h2 className="mb-2 font-bold text-2xl">{children}</h2>
+    <h2 className="mb-2 break-words text-xl font-bold sm:text-2xl">{children}</h2>
   ),
   h3: ({ children }: { children?: React.ReactNode }) => (
-    <h3 className="mb-1 font-bold text-xl">{children}</h3>
+    <h3 className="mb-1 break-words text-lg font-bold sm:text-xl">{children}</h3>
   ),
   h4: ({ children }: { children?: React.ReactNode }) => (
     <h4 className="mb-1 font-bold text-lg">{children}</h4>

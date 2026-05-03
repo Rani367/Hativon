@@ -91,7 +91,7 @@ export default function AdminDashboard() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold">לוח בקרה</h1>
+        <h1 className="text-2xl font-bold sm:text-3xl">לוח בקרה</h1>
         <p className="text-muted-foreground mt-1">
           סקירה מהירה של פעילות הגיליון, הטיוטות והפרסומים האחרונים.
         </p>
@@ -183,7 +183,7 @@ export default function AdminDashboard() {
       {/* Recent Posts */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-3">
             <CardTitle>כתבות אחרונות</CardTitle>
             <Link href="/admin/posts">
               <Button variant="outline" size="sm">
@@ -206,13 +206,13 @@ export default function AdminDashboard() {
               {recentPosts.map((post) => (
                 <div
                   key={post.id}
-                  className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0"
+                  className="flex flex-col gap-2 border-b pb-4 last:border-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between"
                 >
-                  <div className="flex-1">
-                    <div className="font-medium">
+                  <div className="min-w-0 flex-1">
+                    <div className="break-words font-medium">
                       {post.title}
                     </div>
-                    <div className="flex items-center gap-3 mt-1 text-sm text-muted-foreground">
+                    <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted-foreground sm:gap-3">
                       <span>{formatHebrewDate(post.createdAt)}</span>
                       <span className={`px-2 py-0.5 rounded-full text-xs ${
                         post.status === 'published'

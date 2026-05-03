@@ -61,7 +61,11 @@ export function PostFormFields({
           onChange={(e) => onTitleChange(e.target.value)}
           placeholder="הזן כותרת כתבה"
           required
-          className={errors.title ? "border-destructive" : ""}
+          className={
+            errors.title
+              ? "min-h-11 border-destructive sm:min-h-9"
+              : "min-h-11 sm:min-h-9"
+          }
           aria-invalid={!!errors.title}
           aria-describedby={errors.title ? `${titleId}-error` : undefined}
         />
@@ -87,6 +91,7 @@ export function PostFormFields({
             value={customAuthor}
             onChange={(e) => onCustomAuthorChange?.(e.target.value)}
             placeholder="לדוגמה: מערכת חטיבון או ועדת תרבות"
+            className="min-h-11 sm:min-h-9"
           />
           <p className="text-xs text-muted-foreground">
             אם תשאירו ריק, יוצג השם שמוגדר בפרופיל.

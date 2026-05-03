@@ -21,6 +21,68 @@ import { formatHebrewDate } from "@/lib/date/format";
 import { logError } from "@/lib/logger";
 import { useOptimisticList } from "@/hooks/use-optimistic-list";
 
+function PostStatusBadge({ status }: { status: Post["status"] }) {
+  return (
+    <Badge variant={status === "published" ? "default" : "secondary"}>
+      {status === "published" ? "פורסם" : "טיוטה"}
+    </Badge>
+  );
+}
+
+function AdminPostMobileCard({
+  post,
+  isPending,
+  onDelete,
+}: {
+  post: Post;
+  isPending: (id: string) => boolean;
+  onDelete: (id: string) => void;
+}) {
+  return (
+    <div className="rounded-lg border bg-card p-4 shadow-sm">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <div className="break-words text-base font-semibold leading-6">
+            {post.title}
+          </div>
+          <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+            {post.author ? (
+              <span>
+                {post.author}
+                {post.authorDeleted && " (נמחק)"}
+                {post.authorGrade && post.authorClass && (
+                  <> ({post.authorGrade}{post.authorClass})</>
+                )}
+              </span>
+            ) : (
+              <span>-</span>
+            )}
+            {post.isTeacherPost && (
+              <Badge variant="outline" className="text-xs">
+                מורה
+              </Badge>
+            )}
+            <span>{formatHebrewDate(post.createdAt)}</span>
+          </div>
+        </div>
+        <PostStatusBadge status={post.status} />
+      </div>
+      <div className="mt-4">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onDelete(post.id)}
+          disabled={isPending(post.id)}
+          className="h-11 w-full"
+        >
+          <Trash2 className="h-4 w-4 text-destructive" />
+          מחיקה
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 export default function PostsListPage() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [search, setSearch] = useState("");
@@ -116,11 +178,11 @@ export default function PostsListPage() {
 
         {/* Filters Skeleton */}
         <Card className="p-4">
-          <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex flex-col gap-4 sm:flex-row">
             <div className="flex-1">
               <div className="h-10 w-full rounded-md bg-muted animate-pulse" />
             </div>
-            <div className="flex gap-2">
+            <div className="grid grid-cols-3 gap-2 sm:flex">
               <div className="h-9 w-16 rounded-md bg-muted animate-pulse" />
               <div className="h-9 w-20 rounded-md bg-muted animate-pulse" />
               <div className="h-9 w-20 rounded-md bg-muted animate-pulse" />
@@ -129,7 +191,21 @@ export default function PostsListPage() {
         </Card>
 
         {/* Table Skeleton */}
-        <Card>
+        <Card className="md:hidden">
+          <div className="space-y-3 px-4 pb-4">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="rounded-lg border p-4">
+                <div className="space-y-3">
+                  <div className="h-5 w-3/4 rounded bg-muted animate-pulse" />
+                  <div className="h-4 w-1/2 rounded bg-muted animate-pulse" />
+                  <div className="h-9 rounded-md bg-muted animate-pulse" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+
+        <Card className="hidden md:block">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="border-b">
@@ -178,7 +254,7 @@ export default function PostsListPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">כל הכתבות</h1>
+        <h1 className="text-2xl font-bold sm:text-3xl">כל הכתבות</h1>
         <p className="text-muted-foreground mt-1">
           נהל את כתבות העיתון
         </p>
@@ -186,21 +262,22 @@ export default function PostsListPage() {
 
       {/* Filters */}
       <Card className="p-4">
-        <div className="flex flex-col sm:flex-row gap-4">
+        <div className="flex flex-col gap-4 sm:flex-row">
           <div className="flex-1 relative">
             <Search className="absolute start-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="חפש כתבות..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="ps-10"
+              className="h-11 ps-10 sm:h-9"
             />
           </div>
-          <div className="flex gap-2">
+          <div className="grid grid-cols-3 gap-2 sm:flex">
             <Button
               variant={statusFilter === "all" ? "default" : "outline"}
               size="sm"
               onClick={() => setStatusFilter("all")}
+              className="h-11 w-full sm:h-9"
             >
               הכל
             </Button>
@@ -208,6 +285,7 @@ export default function PostsListPage() {
               variant={statusFilter === "published" ? "default" : "outline"}
               size="sm"
               onClick={() => setStatusFilter("published")}
+              className="h-11 w-full sm:h-9"
             >
               פורסמו
             </Button>
@@ -215,6 +293,7 @@ export default function PostsListPage() {
               variant={statusFilter === "draft" ? "default" : "outline"}
               size="sm"
               onClick={() => setStatusFilter("draft")}
+              className="h-11 w-full sm:h-9"
             >
               טיוטות
             </Button>
@@ -223,7 +302,24 @@ export default function PostsListPage() {
       </Card>
 
       {/* Posts Table */}
-      <Card>
+      <div className="space-y-3 md:hidden">
+        {filteredPosts.length === 0 ? (
+          <div className="rounded-lg border bg-card p-6 text-center text-muted-foreground">
+            לא נמצאו כתבות.
+          </div>
+        ) : (
+          filteredPosts.map((post) => (
+            <AdminPostMobileCard
+              key={post.id}
+              post={post}
+              isPending={isPending}
+              onDelete={openDeleteDialog}
+            />
+          ))
+        )}
+      </div>
+
+      <Card className="hidden md:block">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="border-b">
@@ -276,11 +372,7 @@ export default function PostsListPage() {
                       {formatHebrewDate(post.createdAt)}
                     </td>
                     <td className="p-3 sm:p-4">
-                      <Badge
-                        variant={post.status === "published" ? "default" : "secondary"}
-                      >
-                        {post.status === "published" ? "פורסם" : "טיוטה"}
-                      </Badge>
+                      <PostStatusBadge status={post.status} />
                     </td>
                     <td className="p-2 sm:p-4">
                       <div className="flex justify-end gap-2">

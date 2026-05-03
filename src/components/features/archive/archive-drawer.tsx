@@ -128,7 +128,7 @@ export function ArchiveDrawer({
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ duration: 0.3, ease: "easeInOut" }}
-            className="fixed right-0 top-0 z-50 h-full w-80 overflow-y-auto bg-card shadow-xl"
+            className="fixed right-0 top-0 z-50 h-dvh w-[min(20rem,calc(100vw-1rem))] overflow-y-auto overscroll-contain bg-card shadow-xl"
           >
             <div className="sticky top-0 flex items-center justify-between border-b border-border bg-card px-4 py-3">
               <div className="flex items-center gap-2">
@@ -140,7 +140,7 @@ export function ArchiveDrawer({
                   triggerHaptic();
                   onClose();
                 }}
-                className="rounded-lg p-2 transition-colors hover:bg-accent"
+                className="inline-flex size-11 items-center justify-center rounded-lg transition-colors hover:bg-accent"
                 aria-label="סגור תפריט"
               >
                 <X className="h-5 w-5" />
