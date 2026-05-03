@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "predev": "bun scripts/kill-port.ts 3000",
-    "dev": "next dev",
+    "dev": "next dev --webpack",
     "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint src",

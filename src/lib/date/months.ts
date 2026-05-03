@@ -108,6 +108,20 @@ export function getCurrentMonthYear(): { year: number; month: string } {
 }
 
 /**
+ * Get the archive route for a date.
+ * @param date - Date value used to resolve the archive month
+ * @returns Archive path in the /year/month format
+ */
+export function getArchivePathForDate(date: Date | string): string {
+  const dateObj = typeof date === "string" ? new Date(date) : date;
+  const safeDate = Number.isNaN(dateObj.getTime()) ? new Date() : dateObj;
+  const year = safeDate.getFullYear();
+  const month = monthNumberToEnglish(safeDate.getMonth() + 1) || "january";
+
+  return `/${year}/${month}`;
+}
+
+/**
  * Validate if a year/month combination is valid
  * @param year - Year number
  * @param monthName - English month name

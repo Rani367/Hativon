@@ -49,6 +49,8 @@ interface PostTransitionTargets {
   descriptionRect: TransitionRect;
 }
 
+type PostTransitionDirection = "opening" | "closing";
+
 type PostTransitionStatus =
   | "idle"
   | "navigating"
@@ -59,12 +61,14 @@ type PostTransitionStatus =
 
 interface ActivePostTransition {
   snapshot: PostTransitionSnapshot;
+  direction: PostTransitionDirection;
   status: PostTransitionStatus;
   targets: PostTransitionTargets | null;
 }
 
 interface PostOpenTransitionContextValue {
   beginPostTransition: (snapshot: PostTransitionSnapshot) => boolean;
+  beginPostReturnTransition: (snapshot: PostTransitionSnapshot) => boolean;
   registerPostTransitionTarget: (
     postId: string,
     targets: PostTransitionTargets,
@@ -73,6 +77,7 @@ interface PostOpenTransitionContextValue {
   cancelPostTransition: (reason?: string) => void;
   isSourceActive: (sourceId: string) => boolean;
   isPostTransitionActive: (postId: string) => boolean;
+  isPostReturnTransitionActive: (postId: string) => boolean;
   shouldDelayPostBody: (postId: string) => boolean;
   prefersReducedMotion: boolean;
 }
@@ -352,14 +357,18 @@ export function PostOpenTransitionProvider({
     return clearCleanupTimeout;
   }, [activeTransition, clearCleanupTimeout, finishTransition]);
 
-  const beginPostTransition = useCallback(
-    (snapshot: PostTransitionSnapshot) => {
+  const beginTransition = useCallback(
+    (
+      snapshot: PostTransitionSnapshot,
+      direction: PostTransitionDirection,
+    ) => {
       if (prefersReducedMotion || activeTransition !== null) {
         return false;
       }
 
       setActiveTransition({
         snapshot,
+        direction,
         status: "navigating",
         targets: null,
       });
@@ -367,6 +376,16 @@ export function PostOpenTransitionProvider({
       return true;
     },
     [activeTransition, prefersReducedMotion],
+  );
+
+  const beginPostTransition = useCallback(
+    (snapshot: PostTransitionSnapshot) => beginTransition(snapshot, "opening"),
+    [beginTransition],
+  );
+
+  const beginPostReturnTransition = useCallback(
+    (snapshot: PostTransitionSnapshot) => beginTransition(snapshot, "closing"),
+    [beginTransition],
   );
 
   const registerPostTransitionTarget = useCallback(
@@ -378,7 +397,7 @@ export function PostOpenTransitionProvider({
       const targetPath = getPathnameFromHref(activeTransition.snapshot.href);
       const shouldStartAnimation = pathname === targetPath;
 
-      if (shouldStartAnimation) {
+      if (shouldStartAnimation && activeTransition.direction === "opening") {
         window.scrollTo(0, 0);
       }
 
@@ -426,6 +445,7 @@ export function PostOpenTransitionProvider({
   const contextValue = useMemo<PostOpenTransitionContextValue>(
     () => ({
       beginPostTransition,
+      beginPostReturnTransition,
       registerPostTransitionTarget,
       completePostTransition,
       cancelPostTransition,
@@ -437,6 +457,11 @@ export function PostOpenTransitionProvider({
         activeTransition?.snapshot.postId === postId &&
         activeTransition.status !== "completed" &&
         activeTransition.status !== "cancelled",
+      isPostReturnTransitionActive: (postId: string) =>
+        activeTransition?.snapshot.postId === postId &&
+        activeTransition.direction === "closing" &&
+        activeTransition.status !== "completed" &&
+        activeTransition.status !== "cancelled",
       shouldDelayPostBody: (postId: string) =>
         activeTransition?.snapshot.postId === postId &&
         activeTransition.status !== "completed" &&
@@ -446,6 +471,7 @@ export function PostOpenTransitionProvider({
     [
       activeTransition,
       beginPostTransition,
+      beginPostReturnTransition,
       cancelPostTransition,
       completePostTransition,
       prefersReducedMotion,
