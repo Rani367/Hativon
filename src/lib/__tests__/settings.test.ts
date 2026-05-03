@@ -26,6 +26,27 @@ mock.module("../date/months", () => ({
     };
     return months[month] || null;
   },
+  getArchivePathForDate: (date: Date | string) => {
+    const dateObj = typeof date === "string" ? new Date(date) : date;
+    const months: Record<number, string> = {
+      1: "january",
+      2: "february",
+      3: "march",
+      4: "april",
+      5: "may",
+      6: "june",
+      7: "july",
+      8: "august",
+      9: "september",
+      10: "october",
+      11: "november",
+      12: "december",
+    };
+
+    return `/${dateObj.getFullYear()}/${
+      months[dateObj.getMonth() + 1] || "january"
+    }`;
+  },
 }));
 
 // Path to settings module for cache clearing between tests

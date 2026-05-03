@@ -1,10 +1,17 @@
 "use client";
 
-import { useEffect, useRef, type ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  type MouseEvent,
+  type ReactNode,
+} from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { formatHebrewDate } from "@/lib/date/format";
+import { getArchivePathForDate } from "@/lib/date/months";
 import { calculateReadingTime } from "@/lib/utils";
 import { type Post } from "@/types/post.types";
 import {
@@ -21,17 +28,31 @@ interface PostPageTransitionShellProps {
 const BLUR_DATA_URL =
   "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iOCIgaGVpZ2h0PSI2IiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiNlNWU3ZWIiLz48L3N2Zz4=";
 
+function shouldSkipTransitionClick(event: MouseEvent<HTMLAnchorElement>) {
+  return (
+    event.defaultPrevented ||
+    event.button !== 0 ||
+    event.metaKey ||
+    event.ctrlKey ||
+    event.shiftKey ||
+    event.altKey ||
+    event.currentTarget.target === "_blank"
+  );
+}
+
 export function PostPageTransitionShell({
   post,
   wordCount,
   children,
 }: PostPageTransitionShellProps) {
+  const articleRef = useRef<HTMLElement>(null);
   const imageContainerRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLElement>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
   const metaRef = useRef<HTMLDivElement>(null);
   const descriptionRef = useRef<HTMLParagraphElement>(null);
   const {
+    beginPostReturnTransition,
     isPostTransitionActive,
     registerPostTransitionTarget,
     shouldDelayPostBody,
@@ -40,6 +61,42 @@ export function PostPageTransitionShell({
   const hasCoverImage = Boolean(post.coverImage);
   const concealOpeningRegion = hasCoverImage && isPostTransitionActive(post.id);
   const delayPostBody = shouldDelayPostBody(post.id);
+  const formattedDate = formatHebrewDate(post.date);
+  const readingTime = calculateReadingTime(wordCount);
+  const returnHref = getArchivePathForDate(post.date);
+  const authorMeta = post.author
+    ? `מאת ${post.author}${post.authorDeleted ? " (נמחק)" : ""}${
+        post.authorGrade && post.authorClass
+          ? ` (כיתה ${post.authorGrade}${post.authorClass})`
+          : ""
+      }`
+    : null;
+  const metaItems = [
+    formattedDate,
+    authorMeta,
+    readingTime,
+    `${wordCount} מילים`,
+  ].filter((item): item is string => Boolean(item));
+
+  const getTransitionTargets = useCallback(() => {
+    if (
+      !imageContainerRef.current ||
+      !headerRef.current ||
+      !titleRef.current ||
+      !metaRef.current ||
+      !descriptionRef.current
+    ) {
+      return null;
+    }
+
+    return {
+      imageRect: measureTransitionRect(imageContainerRef.current),
+      headerRect: measureTransitionRect(headerRef.current),
+      titleRect: measureTransitionRect(titleRef.current),
+      metaRect: measureTransitionRect(metaRef.current),
+      descriptionRect: measureTransitionRect(descriptionRef.current),
+    };
+  }, []);
 
   useEffect(() => {
     if (!concealOpeningRegion) {
@@ -47,36 +104,66 @@ export function PostPageTransitionShell({
     }
 
     const animationFrameId = window.requestAnimationFrame(() => {
-      if (
-        !imageContainerRef.current ||
-        !headerRef.current ||
-        !titleRef.current ||
-        !metaRef.current ||
-        !descriptionRef.current
-      ) {
+      const targets = getTransitionTargets();
+
+      if (!targets) {
         return;
       }
 
-      registerPostTransitionTarget(post.id, {
-        imageRect: measureTransitionRect(imageContainerRef.current),
-        headerRect: measureTransitionRect(headerRef.current),
-        titleRect: measureTransitionRect(titleRef.current),
-        metaRect: measureTransitionRect(metaRef.current),
-        descriptionRect: measureTransitionRect(descriptionRef.current),
-      });
+      registerPostTransitionTarget(post.id, targets);
     });
 
     return () => {
       window.cancelAnimationFrame(animationFrameId);
     };
-  }, [concealOpeningRegion, post.id, registerPostTransitionTarget]);
+  }, [
+    concealOpeningRegion,
+    getTransitionTargets,
+    post.id,
+    registerPostTransitionTarget,
+  ]);
+
+  const handleReturnClick = (event: MouseEvent<HTMLAnchorElement>) => {
+    if (shouldSkipTransitionClick(event)) {
+      return;
+    }
+
+    const coverImage = post.coverImage;
+    const targets = getTransitionTargets();
+
+    if (!coverImage || !articleRef.current || !targets) {
+      return;
+    }
+
+    beginPostReturnTransition({
+      sourceId: `post-page-${post.id}`,
+      postId: post.id,
+      href: returnHref,
+      title: post.title,
+      description: post.description,
+      metaItems,
+      coverImage,
+      imageAlt: post.title,
+      shellRect: measureTransitionRect(articleRef.current),
+      imageRect: targets.imageRect,
+      contentRect: targets.headerRect,
+      titleRect: targets.titleRect,
+      metaRect: targets.metaRect,
+      descriptionRect: targets.descriptionRect,
+    });
+  };
 
   return (
-    <article className="mx-auto max-w-4xl py-2 sm:px-6 sm:py-8">
+    <article
+      ref={articleRef}
+      className="mx-auto max-w-4xl py-2 sm:px-6 sm:py-8"
+    >
       <div className="mb-4 sm:mb-6">
         <Link
-          href="/"
+          href={returnHref}
           className="inline-flex min-h-10 items-center rounded-full border px-3 py-1 text-sm text-muted-foreground transition-colors hover:bg-muted"
+          prefetch={true}
+          onClick={handleReturnClick}
         >
           חזרה לגיליון
         </Link>
@@ -118,7 +205,7 @@ export function PostPageTransitionShell({
           className="mb-4 flex flex-wrap items-center gap-2 text-xs text-muted-foreground sm:mb-5 sm:gap-3 sm:text-base"
         >
           <time className="rounded-full bg-muted px-2.5 py-1 sm:px-3">
-            {formatHebrewDate(post.date)}
+            {formattedDate}
           </time>
           {post.author && (
             <span className="rounded-full bg-muted px-2.5 py-1 sm:px-3">
@@ -132,7 +219,7 @@ export function PostPageTransitionShell({
             </span>
           )}
           <span className="rounded-full bg-muted px-2.5 py-1 sm:px-3">
-            {calculateReadingTime(wordCount)}
+            {readingTime}
           </span>
           <span className="rounded-full bg-muted px-2.5 py-1 sm:px-3">
             {wordCount} מילים
@@ -156,7 +243,10 @@ export function PostPageTransitionShell({
             </Badge>
           )}
           {post.category && (
-            <Badge variant="secondary" className="px-3 py-1 text-sm sm:px-4 sm:py-1.5 sm:text-base">
+            <Badge
+              variant="secondary"
+              className="px-3 py-1 text-sm sm:px-4 sm:py-1.5 sm:text-base"
+            >
               {post.category}
             </Badge>
           )}

@@ -2,14 +2,23 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { type MouseEvent } from "react";
+import { useCallback, useEffect, useId, useRef, type MouseEvent } from "react";
 import { formatHebrewDate } from "@/lib/date/format";
 import { Post } from "@/types/post.types";
-import { calculateReadingTime, cn, getWordCount, triggerHaptic } from "@/lib/utils";
+import {
+  calculateReadingTime,
+  cn,
+  getWordCount,
+  triggerHaptic,
+} from "@/lib/utils";
 import { truncateDescription } from "@/lib/posts/utils";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Clock, Calendar } from "lucide-react";
+import {
+  measureTransitionRect,
+  usePostOpenTransition,
+} from "@/components/features/posts/post-open-transition-provider";
 
 interface PostCardProps {
   post: Post;
@@ -21,17 +30,47 @@ interface PostCardProps {
 const BLUR_DATA_URL =
   "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iOCIgaGVpZ2h0PSI2IiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiNlNWU3ZWIiLz48L3N2Zz4=";
 
+function shouldSkipTransitionClick(event: MouseEvent<HTMLAnchorElement>) {
+  return (
+    event.defaultPrevented ||
+    event.button !== 0 ||
+    event.metaKey ||
+    event.ctrlKey ||
+    event.shiftKey ||
+    event.altKey ||
+    event.currentTarget.target === "_blank"
+  );
+}
+
 export default function PostCard({
   post,
   priority = false,
   compact = false,
   uniformHeightBelowMd = false,
 }: PostCardProps) {
+  const cardRef = useRef<HTMLDivElement>(null);
+  const imageContainerRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const titleRef = useRef<HTMLHeadingElement>(null);
+  const metaRef = useRef<HTMLDivElement>(null);
+  const descriptionRef = useRef<HTMLParagraphElement>(null);
+  const sourceId = `post-card-${post.id}-${useId()}`;
+  const {
+    beginPostTransition,
+    isPostReturnTransitionActive,
+    isSourceActive,
+    registerPostTransitionTarget,
+  } = usePostOpenTransition();
   const wordCount = post.content ? getWordCount(post.content) : 0;
   const readingTime = calculateReadingTime(wordCount);
   const shouldUseUniformMobileHeight = uniformHeightBelowMd && !compact;
   const hasTags = Boolean(post.tags?.length);
+  const hasCoverImage = Boolean(post.coverImage);
   const displayDescription = truncateDescription(post.description);
+  const isReturnTargetActive =
+    hasCoverImage && isPostReturnTransitionActive(post.id);
+  const concealCard =
+    hasCoverImage && (isSourceActive(sourceId) || isReturnTargetActive);
   const preloadCoverImage = () => {
     if (!post.coverImage || typeof window === "undefined") {
       return;
@@ -50,19 +89,92 @@ export default function PostCard({
     : "מערכת חטיבון";
   const href = `/posts/${post.id}`;
 
-  const handleClick = (event: MouseEvent<HTMLAnchorElement>) => {
-    triggerHaptic();
-    if (event.defaultPrevented) {
+  const getTransitionTargets = useCallback(() => {
+    if (
+      !imageContainerRef.current ||
+      !contentRef.current ||
+      !titleRef.current ||
+      !metaRef.current ||
+      !descriptionRef.current
+    ) {
+      return null;
+    }
+
+    return {
+      imageRect: measureTransitionRect(imageContainerRef.current),
+      headerRect: measureTransitionRect(contentRef.current),
+      titleRect: measureTransitionRect(titleRef.current),
+      metaRect: measureTransitionRect(metaRef.current),
+      descriptionRect: measureTransitionRect(descriptionRef.current),
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isReturnTargetActive) {
       return;
     }
+
+    const animationFrameId = window.requestAnimationFrame(() => {
+      const targets = getTransitionTargets();
+
+      if (!targets) {
+        return;
+      }
+
+      registerPostTransitionTarget(post.id, targets);
+    });
+
+    return () => {
+      window.cancelAnimationFrame(animationFrameId);
+    };
+  }, [
+    getTransitionTargets,
+    isReturnTargetActive,
+    post.id,
+    registerPostTransitionTarget,
+  ]);
+
+  const handleClick = (event: MouseEvent<HTMLAnchorElement>) => {
+    triggerHaptic();
+
+    if (shouldSkipTransitionClick(event)) {
+      return;
+    }
+
+    const coverImage = post.coverImage;
+    const targets = getTransitionTargets();
+
+    if (!coverImage || !cardRef.current || !targets) {
+      return;
+    }
+
+    beginPostTransition({
+      sourceId,
+      postId: post.id,
+      href,
+      title: post.title,
+      description: displayDescription,
+      metaItems: [formatHebrewDate(post.date), readingTime],
+      coverImage,
+      imageAlt: post.title,
+      shellRect: measureTransitionRect(cardRef.current),
+      imageRect: targets.imageRect,
+      contentRect: targets.headerRect,
+      titleRect: targets.titleRect,
+      metaRect: targets.metaRect,
+      descriptionRect: targets.descriptionRect,
+    });
   };
 
   return (
     <div className="h-full">
       <Card
-        className={`group relative h-full overflow-hidden rounded-lg border-border/70 bg-card/80 pt-0 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-xl supports-[backdrop-filter]:bg-background/80 ${
-          compact ? "gap-2" : ""
-        }`}
+        ref={cardRef}
+        className={cn(
+          "group relative h-full overflow-hidden rounded-lg border-border/70 bg-card/80 pt-0 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-xl supports-[backdrop-filter]:bg-background/80",
+          compact && "gap-2",
+          concealCard && "opacity-0",
+        )}
       >
         <Link
           href={href}
@@ -75,6 +187,7 @@ export default function PostCard({
           onFocus={preloadCoverImage}
         />
         <div
+          ref={imageContainerRef}
           className={`relative w-full overflow-hidden rounded-t-lg ${
             compact ? "aspect-[16/9]" : "aspect-[16/11] sm:aspect-[4/3]"
           }`}
@@ -128,7 +241,7 @@ export default function PostCard({
           )}
         </div>
 
-        <div className="flex flex-1 flex-col">
+        <div ref={contentRef} className="flex flex-1 flex-col">
           <div
             className={cn(
               "flex flex-1 flex-col",
@@ -139,6 +252,7 @@ export default function PostCard({
             )}
           >
             <div
+              ref={metaRef}
               className={cn(
                 "flex flex-wrap items-center gap-3 text-muted-foreground",
                 compact ? "text-xs" : "text-xs sm:text-sm",
@@ -156,9 +270,12 @@ export default function PostCard({
             </div>
             <div>
               <h2
+                ref={titleRef}
                 className={cn(
                   "font-bold leading-tight text-foreground transition-colors duration-300 group-hover:text-foreground/95",
-                  compact ? "line-clamp-2 text-xl" : "text-xl sm:text-2xl lg:text-[2rem]",
+                  compact
+                    ? "line-clamp-2 text-xl"
+                    : "text-xl sm:text-2xl lg:text-[2rem]",
                   shouldUseUniformMobileHeight &&
                     "line-clamp-2 min-h-12 overflow-hidden md:min-h-0 md:overflow-visible md:line-clamp-none",
                 )}
@@ -167,11 +284,15 @@ export default function PostCard({
               </h2>
             </div>
             {compact ? (
-              <p className="line-clamp-1 text-sm leading-5 text-muted-foreground">
+              <p
+                ref={descriptionRef}
+                className="line-clamp-1 text-sm leading-5 text-muted-foreground"
+              >
                 {displayDescription}
               </p>
             ) : (
               <p
+                ref={descriptionRef}
                 className={cn(
                   "line-clamp-2 text-sm leading-6 text-muted-foreground sm:text-base sm:leading-7 md:line-clamp-3",
                   shouldUseUniformMobileHeight &&
