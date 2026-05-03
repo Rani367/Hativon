@@ -159,15 +159,15 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="container max-w-2xl py-8">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold">הפרופיל שלי</h1>
+    <div className="mx-auto max-w-2xl py-4 sm:py-8">
+      <div className="mb-5 sm:mb-6">
+        <h1 className="text-2xl font-bold sm:text-3xl">הפרופיל שלי</h1>
         <p className="text-muted-foreground mt-1">עדכן את פרטי הפרופיל שלך</p>
       </div>
 
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+        <CardHeader className="px-4 sm:px-6">
+          <CardTitle className="flex flex-wrap items-center gap-2 leading-6">
             <UserIcon className="h-5 w-5" />
             פרטי משתמש
             {isTeacher && (
@@ -178,7 +178,7 @@ export default function ProfilePage() {
             שם המשתמש: <strong>@{user.username}</strong>
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-4 sm:px-6">
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Display Name */}
             <div className="space-y-2">
@@ -193,7 +193,7 @@ export default function ProfilePage() {
                   setFormData({ ...formData, displayName: e.target.value })
                 }
                 placeholder="השם שיוצג בכתבות שלך"
-                className="text-right"
+                className="min-h-11 text-right sm:min-h-9"
                 required
               />
               <p className="text-xs text-muted-foreground text-right">
@@ -204,8 +204,8 @@ export default function ProfilePage() {
             {/* Grade and Class Number - Side by Side (Students only) */}
             {!isTeacher && (
               <>
-                <div className="flex gap-4">
-                  <div className="flex-1 space-y-2">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
                     <Label htmlFor="classNumber" className="text-right block">
                       מספר כיתה <span className="text-destructive">*</span>
                     </Label>
@@ -217,7 +217,7 @@ export default function ProfilePage() {
                     >
                       <SelectTrigger
                         id="classNumber"
-                        className="w-full"
+                        className="min-h-11 w-full sm:min-h-9"
                         dir="rtl"
                       >
                         <SelectValue placeholder="בחר מספר" />
@@ -231,7 +231,7 @@ export default function ProfilePage() {
                     </Select>
                   </div>
 
-                  <div className="flex-1 space-y-2">
+                  <div className="space-y-2">
                     <Label htmlFor="grade" className="text-right block">
                       כיתה <span className="text-destructive">*</span>
                     </Label>
@@ -241,7 +241,11 @@ export default function ProfilePage() {
                         setFormData({ ...formData, grade: value as Grade })
                       }
                     >
-                      <SelectTrigger id="grade" className="w-full" dir="rtl">
+                      <SelectTrigger
+                        id="grade"
+                        className="min-h-11 w-full sm:min-h-9"
+                        dir="rtl"
+                      >
                         <SelectValue placeholder="בחר כיתה">
                           {formData.grade
                             ? getGradeDisplay(formData.grade)
@@ -315,12 +319,13 @@ export default function ProfilePage() {
             </div>
 
             {/* Buttons */}
-            <div className="flex gap-2 justify-end pt-4">
+            <div className="grid grid-cols-1 gap-2 pt-4 sm:flex sm:justify-end">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => router.push("/dashboard")}
                 disabled={saving}
+                className="w-full sm:w-auto"
               >
                 ביטול
               </Button>
@@ -329,6 +334,7 @@ export default function ProfilePage() {
                 disabled={
                   saving || !hasChanges || (!isTeacher && !formData.grade)
                 }
+                className="w-full sm:w-auto"
               >
                 {saving ? (
                   <>

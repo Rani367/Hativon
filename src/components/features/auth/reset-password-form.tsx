@@ -79,7 +79,7 @@ export function ResetPasswordForm() {
 
   if (state === "validating") {
     return (
-      <div className="w-full max-w-sm rounded-lg border bg-card p-6">
+      <div className="w-full max-w-sm rounded-lg border bg-card p-4 sm:p-6">
         <div className="space-y-4">
           <div className="mx-auto h-7 w-32 animate-pulse rounded bg-muted" />
           <div className="mx-auto h-4 w-48 animate-pulse rounded bg-muted" />
@@ -93,7 +93,7 @@ export function ResetPasswordForm() {
   if (state === "invalid") {
     return (
       <motion.div
-        className="w-full max-w-sm space-y-4 rounded-lg border bg-card p-6 text-center"
+        className="w-full max-w-sm space-y-4 rounded-lg border bg-card p-4 text-center sm:p-6"
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.3 }}
@@ -115,7 +115,7 @@ export function ResetPasswordForm() {
   if (state === "success") {
     return (
       <motion.div
-        className="w-full max-w-sm space-y-4 rounded-lg border bg-card p-6 text-center"
+        className="w-full max-w-sm space-y-4 rounded-lg border bg-card p-4 text-center sm:p-6"
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.3 }}
@@ -136,7 +136,7 @@ export function ResetPasswordForm() {
 
   return (
     <motion.div
-      className="w-full max-w-sm space-y-6 rounded-lg border bg-card p-6"
+      className="w-full max-w-sm space-y-6 rounded-lg border bg-card p-4 sm:p-6"
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.3 }}
@@ -164,7 +164,7 @@ export function ResetPasswordForm() {
             {...register("password")}
             disabled={state === "submitting"}
             placeholder="לפחות 8 תווים"
-            className="text-right transition-all duration-200 focus:scale-[1.01]"
+            className="min-h-11 text-right transition-all duration-200 sm:min-h-9 sm:focus:scale-[1.01]"
           />
           {errors.password && (
             <p className="text-right text-sm text-destructive">
@@ -188,7 +188,7 @@ export function ResetPasswordForm() {
             {...register("confirmPassword")}
             disabled={state === "submitting"}
             placeholder="הזן שוב את הסיסמה"
-            className="text-right transition-all duration-200 focus:scale-[1.01]"
+            className="min-h-11 text-right transition-all duration-200 sm:min-h-9 sm:focus:scale-[1.01]"
           />
           {errors.confirmPassword && (
             <p className="text-right text-sm text-destructive">

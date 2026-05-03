@@ -268,10 +268,10 @@ export default function NewPostPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="mx-auto max-w-4xl space-y-5 sm:space-y-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <div className="space-y-2">
-          <h1 className="text-3xl font-bold">צור כתבה חדשה</h1>
+          <h1 className="text-2xl font-bold sm:text-3xl">צור כתבה חדשה</h1>
           <p className="text-muted-foreground">
             שתפו סיפור, ראיון, דעה או עדכון מהחיים בבית הספר. אפשר להתחיל
             מטיוטה ולחזור אליה אחר כך.
@@ -286,17 +286,17 @@ export default function NewPostPage() {
       </div>
 
       <Card className="border-dashed bg-muted/30">
-        <CardContent className="flex flex-col gap-2 p-5 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+        <CardContent className="flex flex-col gap-2 p-4 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between sm:p-5">
           <p>מומלץ להכין כותרת ברורה, תמונת שער ותיאור קצר שיעודד קריאה.</p>
           <p>שמירת טיוטה אוטומטית פעילה בזמן העבודה.</p>
         </CardContent>
       </Card>
 
       <Card>
-        <CardHeader>
+        <CardHeader className="px-4 sm:px-6">
           <CardTitle>פרטי הכתבה</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 px-4 sm:px-6">
           <PostFormFields
             title={form.title}
             description={form.description}

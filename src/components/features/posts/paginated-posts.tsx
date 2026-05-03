@@ -34,7 +34,7 @@ function PaginatedPosts({
 
   return (
     <>
-      <div className="grid grid-cols-1 gap-8 md:grid-cols-2 xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2 xl:grid-cols-3 xl:gap-8">
         {visiblePosts.map((post, index) => (
           <MemoizedPostCard
             key={post.id}
@@ -46,8 +46,14 @@ function PaginatedPosts({
       </div>
 
       {hasMore && (
-        <div className="mt-12 flex justify-center">
-          <Button onClick={loadMore} disabled={isPending} size="lg" variant="outline">
+        <div className="mt-8 flex justify-center sm:mt-12">
+          <Button
+            onClick={loadMore}
+            disabled={isPending}
+            size="lg"
+            variant="outline"
+            className="w-full sm:w-auto"
+          >
             {isPending ? (
               <>
                 <Loader2 className="me-2 animate-spin" />

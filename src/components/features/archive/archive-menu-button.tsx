@@ -45,7 +45,7 @@ export function ArchiveMenuButton({ archives }: ArchiveMenuButtonProps) {
     <>
       <button
         onClick={() => { triggerHaptic(); setIsOpen(true); }}
-        className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-accent transition-colors"
+        className="flex h-11 min-w-11 items-center justify-center gap-2 rounded-lg px-3 transition-colors hover:bg-accent"
         aria-label="פתח תפריט ארכיון"
       >
         <Menu className="w-5 h-5" />

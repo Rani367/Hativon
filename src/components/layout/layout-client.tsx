@@ -29,7 +29,7 @@ export function LayoutClient({
     <PostOpenTransitionProvider>
       <div className="min-h-screen bg-background flex flex-col">
         <Header archives={archives} defaultMonth={defaultMonth} />
-        <main className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 py-12 flex-1">
+        <main className="mx-auto w-full max-w-[1600px] flex-1 px-4 py-6 sm:px-6 sm:py-10 lg:px-8 xl:px-12">
           {children}
         </main>
         <footer className="py-4 text-center text-xs text-muted-foreground/50">

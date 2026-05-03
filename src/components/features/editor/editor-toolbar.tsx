@@ -51,7 +51,7 @@ function ToolbarButton({ onClick, isActive, disabled, title, children }: Toolbar
       disabled={disabled}
       title={title}
       className={cn(
-        'h-8 w-8 p-0',
+        'h-11 w-11 p-0 sm:h-8 sm:w-8',
         isActive && 'bg-muted text-foreground'
       )}
     >
@@ -61,7 +61,7 @@ function ToolbarButton({ onClick, isActive, disabled, title, children }: Toolbar
 }
 
 function ToolbarDivider() {
-  return <div className="w-px h-6 bg-border mx-1" />;
+  return <div className="mx-1 h-9 w-px bg-border sm:h-6" />;
 }
 
 export function EditorToolbar({ editor, className }: EditorToolbarProps) {
@@ -109,15 +109,15 @@ export function EditorToolbar({ editor, className }: EditorToolbarProps) {
   }
 
   return (
-    <div className={cn('border-b bg-muted/30 p-2', className)}>
+    <div className={cn('overflow-x-auto border-b bg-muted/30 p-1.5 sm:p-2', className)}>
       {showLinkInput ? (
-        <div className="flex items-center gap-2">
+        <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center">
           <Input
             type="url"
             value={linkUrl}
             onChange={(e) => setLinkUrl(e.target.value)}
             placeholder="https://example.com"
-            className="h-8 text-sm flex-1"
+            className="h-10 min-w-0 flex-1 text-sm sm:h-8"
             autoFocus
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
@@ -128,15 +128,15 @@ export function EditorToolbar({ editor, className }: EditorToolbarProps) {
               }
             }}
           />
-          <Button type="button" size="sm" onClick={submitLink} className="h-8">
+          <Button type="button" size="sm" onClick={submitLink} className="h-10 sm:h-8">
             הוסף
           </Button>
-          <Button type="button" variant="ghost" size="sm" onClick={cancelLink} className="h-8">
+          <Button type="button" variant="ghost" size="sm" onClick={cancelLink} className="h-10 sm:h-8">
             ביטול
           </Button>
         </div>
       ) : (
-        <div className="flex flex-wrap items-center gap-0.5">
+        <div className="flex w-max items-center gap-0.5 sm:w-auto sm:flex-wrap">
           {/* Undo/Redo */}
           <ToolbarButton
             onClick={() => editor.chain().focus().undo().run()}

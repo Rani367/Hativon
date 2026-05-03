@@ -42,22 +42,22 @@ export function Header({ archives, defaultMonth }: HeaderProps) {
 
   return (
     <header className="border-b">
-      <nav className="mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-8 xl:px-12">
-        <div className="grid h-16 grid-cols-3 items-center gap-2 sm:h-20 sm:gap-4">
-          <div className="flex items-center justify-start gap-2 sm:gap-4">
+      <nav className="mx-auto w-full max-w-[1600px] px-4 sm:px-6 lg:px-8 xl:px-12">
+        <div className="grid h-14 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 sm:h-20 sm:gap-4">
+          <div className="flex min-w-0 items-center justify-start gap-1.5 sm:gap-4">
             <ArchiveMenuButton archives={archives} />
             <UserMenu />
           </div>
           <div className="flex items-center justify-center">
             <Link
               href={`/${year}/${month}`}
-              className="flex items-center text-lg font-bold text-foreground sm:text-xl md:text-2xl"
+              className="flex items-center whitespace-nowrap text-lg font-bold text-foreground sm:text-xl md:text-2xl"
               prefetch={true}
             >
               חטיבון
             </Link>
           </div>
-          <div className="flex items-center justify-end gap-2 sm:gap-4">
+          <div className="flex min-w-0 items-center justify-end gap-1.5 sm:gap-4">
             <NewPostButton />
           </div>
         </div>

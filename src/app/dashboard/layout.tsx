@@ -9,9 +9,16 @@ import {
   PlusCircle,
   LogOut,
   Menu,
+  MoreVertical,
   UserCog,
   ShieldCheck,
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { logError } from "@/lib/logger";
 import { triggerHaptic } from "@/lib/utils";
 
@@ -70,7 +77,7 @@ export default function DashboardLayout({
       <div className="min-h-screen bg-background">
         {/* Header Skeleton */}
         <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur">
-          <div className="container flex h-14 items-center">
+          <div className="mx-auto flex h-14 w-full max-w-7xl items-center px-4">
             <div className="flex flex-1 items-center justify-between">
               <div className="h-6 w-32 rounded bg-muted animate-pulse" />
               <div className="flex items-center gap-4">
@@ -84,7 +91,7 @@ export default function DashboardLayout({
 
         <div className="flex">
           {/* Sidebar Skeleton */}
-          <aside className="hidden lg:block w-64 border-l bg-background">
+          <aside className="hidden w-64 border-l bg-background lg:block">
             <nav className="space-y-1 p-4">
               {[1, 2].map((i) => (
                 <div
@@ -96,7 +103,7 @@ export default function DashboardLayout({
           </aside>
 
           {/* Main Content Skeleton */}
-          <main className="flex-1 p-6 lg:p-8">
+          <main className="flex-1 p-4 sm:p-6 lg:p-8">
             <div className="max-w-7xl mx-auto space-y-4">
               <div className="h-8 w-48 rounded bg-muted animate-pulse" />
               <div className="h-4 w-full rounded bg-muted animate-pulse" />
@@ -127,16 +134,17 @@ export default function DashboardLayout({
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-14 items-center">
+        <div className="mx-auto flex h-14 w-full max-w-7xl items-center px-4">
           <button
             onClick={() => { triggerHaptic(); setSidebarOpen(!sidebarOpen); }}
-            className="ms-4 lg:hidden"
+            className="me-2 inline-flex size-11 items-center justify-center rounded-md transition-colors hover:bg-muted lg:hidden"
+            aria-label="פתח ניווט"
           >
             <Menu className="h-6 w-6" />
           </button>
-          <div className="flex flex-1 items-center justify-between">
-            <div>
-              <h1 className="text-xl font-semibold">
+          <div className="flex min-w-0 flex-1 items-center justify-between gap-2">
+            <div className="min-w-0">
+              <h1 className="truncate text-base font-semibold sm:text-xl">
                 {isTeacher ? "מרחב העריכה וההוראה" : "מרחב הכתיבה שלי"}
               </h1>
               <p className="hidden text-xs text-muted-foreground sm:block">
@@ -145,8 +153,8 @@ export default function DashboardLayout({
                   : "כתיבה, שמירת טיוטות ופרסום לקהילת בית הספר"}
               </p>
             </div>
-            <div className="flex items-center gap-4">
-              <span className="text-sm text-muted-foreground hidden sm:inline">
+            <div className="hidden items-center gap-3 md:flex">
+              <span className="hidden max-w-32 truncate text-sm text-muted-foreground lg:inline">
                 {userName}
               </span>
               {isTeacher && (
@@ -167,6 +175,35 @@ export default function DashboardLayout({
                 התנתק
               </Button>
             </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="md:hidden"
+                  aria-label="פתח פעולות"
+                >
+                  <MoreVertical className="h-5 w-5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-48" dir="rtl">
+                {isTeacher && (
+                  <DropdownMenuItem asChild>
+                    <Link href="/admin/dashboard">
+                      <ShieldCheck className="h-4 w-4" />
+                      כלי צוות
+                    </Link>
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuItem asChild>
+                  <Link href="/">חזרה לאתר</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleLogout}>
+                  <LogOut className="h-4 w-4" />
+                  התנתק
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </header>
@@ -176,7 +213,7 @@ export default function DashboardLayout({
         <aside
           className={`${
             sidebarOpen ? "translate-x-0" : "translate-x-full"
-          } fixed inset-y-0 right-0 z-[60] w-64 border-l bg-background transition-transform lg:translate-x-0 lg:static`}
+          } fixed inset-y-0 right-0 z-[60] h-dvh w-[min(18rem,85vw)] overflow-y-auto border-l bg-background transition-transform lg:static lg:w-64 lg:translate-x-0`}
         >
           <nav className="space-y-1 p-4 pt-20 lg:pt-4">
             {navItems.map((item) => {
@@ -203,7 +240,7 @@ export default function DashboardLayout({
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 p-6 lg:p-8">
+        <main className="min-w-0 flex-1 p-4 sm:p-6 lg:p-8">
           <div className="max-w-7xl mx-auto">{children}</div>
         </main>
       </div>

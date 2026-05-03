@@ -38,11 +38,11 @@ interface ArchivePageProps {
 
 function PostsSkeleton() {
   return (
-    <div className="grid grid-cols-1 gap-8 items-start md:grid-cols-2 xl:grid-cols-3">
+    <div className="grid grid-cols-1 items-start gap-4 sm:gap-6 md:grid-cols-2 xl:grid-cols-3">
       {Array.from({ length: 6 }).map((_, i) => (
         <div key={i} className="rounded-lg bg-card/50 animate-pulse">
-          <div className="aspect-[5/4] rounded-t-lg bg-muted sm:aspect-[4/3]" />
-          <div className="space-y-3 p-6 sm:p-7">
+          <div className="aspect-[16/11] rounded-t-lg bg-muted sm:aspect-[4/3]" />
+          <div className="space-y-3 p-4 sm:p-7">
             <div className="h-4 w-1/3 rounded bg-muted" />
             <div className="h-6 w-full rounded bg-muted" />
             <div className="h-4 w-2/3 rounded bg-muted" />
@@ -86,9 +86,9 @@ export default async function ArchivePage({ params }: ArchivePageProps) {
   const posts = await getCachedPostsByMonth(year, monthNumber);
 
   return (
-    <div className="container mx-auto px-4 py-8 sm:py-12">
-      <div className="mb-8 text-center">
-        <h1 className="text-3xl font-bold md:text-4xl">
+    <div className="mx-auto w-full py-2 sm:py-6">
+      <div className="mb-6 text-center sm:mb-8">
+        <h1 className="text-2xl font-bold leading-tight sm:text-3xl md:text-4xl">
           גיליון {hebrewMonth} {year}
         </h1>
         <p className="mt-2 text-muted-foreground">

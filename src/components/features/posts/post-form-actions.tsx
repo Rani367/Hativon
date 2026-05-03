@@ -17,12 +17,12 @@ export function PostFormActions({
   onPublish,
 }: PostFormActionsProps) {
   return (
-    <div className="flex flex-wrap justify-end gap-2 sm:gap-3">
+    <div className="grid grid-cols-1 gap-2 sm:flex sm:flex-wrap sm:justify-end sm:gap-3">
       <Button
         variant="outline"
         onClick={onCancel}
         disabled={loading}
-        className="flex-1 sm:flex-initial"
+        className="w-full sm:w-auto sm:flex-initial"
       >
         ביטול
       </Button>
@@ -30,7 +30,7 @@ export function PostFormActions({
         variant="outline"
         onClick={onSaveDraft}
         disabled={loading}
-        className="flex-1 sm:flex-initial"
+        className="w-full sm:w-auto sm:flex-initial"
       >
         {loading ? (
           <Loader2 className="h-4 w-4 me-2 animate-spin" />
@@ -42,7 +42,7 @@ export function PostFormActions({
       <Button
         onClick={onPublish}
         disabled={loading}
-        className="flex-1 sm:flex-initial"
+        className="w-full sm:w-auto sm:flex-initial"
       >
         {loading ? (
           <Loader2 className="h-4 w-4 me-2 animate-spin" />

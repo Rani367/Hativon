@@ -56,9 +56,9 @@ export function PostPreview({
   }, [description, content]);
 
   return (
-    <article className="max-w-4xl mx-auto prose prose-lg dark:prose-invert">
+    <article className="prose mx-auto max-w-4xl dark:prose-invert sm:prose-lg">
       {coverImage && (
-        <div className="relative w-full mb-10 rounded-lg overflow-hidden">
+        <div className="relative mb-6 w-full overflow-hidden rounded-lg sm:mb-10">
           <Image
             src={coverImage}
             alt={title || "תצוגה מקדימה"}
@@ -74,7 +74,7 @@ export function PostPreview({
       )}
 
       <header className="mb-10">
-        <div className="flex items-center gap-4 text-base text-muted-foreground mb-6">
+        <div className="mb-4 flex flex-wrap items-center gap-2 text-sm text-muted-foreground sm:mb-6 sm:gap-4 sm:text-base">
           <time>{formatHebrewDate(date)}</time>
           {author && (
             <span>
@@ -88,12 +88,12 @@ export function PostPreview({
           <span>{wordCount} מילים</span>
         </div>
 
-        <h1 className="text-5xl font-bold mb-6 text-foreground leading-tight">
+        <h1 className="mb-4 break-words text-2xl font-bold leading-tight text-foreground sm:mb-6 sm:text-5xl">
           {title || "אין כותרת"}
         </h1>
 
         {displayDescription && (
-          <p className="text-xl text-muted-foreground mb-4">
+          <p className="mb-4 break-words text-base text-muted-foreground sm:text-xl">
             {displayDescription}
           </p>
         )}

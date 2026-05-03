@@ -23,7 +23,7 @@ export function NewPostButton() {
   };
 
   if (loading) {
-    return <div className="h-9 w-28 rounded-md bg-muted animate-pulse" />;
+    return <div className="h-11 w-11 rounded-md bg-muted animate-pulse sm:h-9 sm:w-28" />;
   }
 
   return (
@@ -32,7 +32,8 @@ export function NewPostButton() {
         variant="default"
         size="sm"
         onClick={handleClick}
-        className="gap-2 cursor-pointer"
+        className="h-11 min-w-11 cursor-pointer gap-2 px-3 sm:h-9"
+        aria-label="פוסט חדש"
       >
         <PenSquare className="h-4 w-4" />
         <span className="hidden sm:inline">פוסט חדש</span>

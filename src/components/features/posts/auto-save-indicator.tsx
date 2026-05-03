@@ -52,7 +52,7 @@ export function AutoSaveIndicator({
   return (
     <div
       className={cn(
-        "flex items-center gap-2 text-sm transition-opacity duration-200",
+        "flex max-w-full flex-wrap items-center gap-2 text-sm transition-opacity duration-200",
         className,
       )}
     >

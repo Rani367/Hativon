@@ -41,6 +41,132 @@ import { toast } from "sonner";
 import { useOptimisticList } from "@/hooks/use-optimistic-list";
 import { DbNotConfiguredView } from "./db-not-configured";
 
+function UserMobileCard({
+  user,
+  isPending,
+  resetUserId,
+  generatedLink,
+  copied,
+  onResetClick,
+  onCopyLink,
+  onDeleteClick,
+  onDismissClick,
+}: {
+  user: User;
+  isPending: (id: string) => boolean;
+  resetUserId: string | null;
+  generatedLink?: string;
+  copied: boolean;
+  onResetClick: (userId: string) => void;
+  onCopyLink: (userId: string, link: string) => void;
+  onDeleteClick: (user: User) => void;
+  onDismissClick: (user: User) => void;
+}) {
+  return (
+    <div className="rounded-lg border bg-card p-4 shadow-sm">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <div className="break-words text-base font-semibold">
+            {user.displayName}
+          </div>
+          <div className="mt-1 break-words text-sm text-muted-foreground">
+            @{user.username}
+          </div>
+        </div>
+        {user.passwordResetRequested && (
+          <div className="flex shrink-0 items-center gap-1">
+            <Badge variant="destructive" className="text-xs">
+              איפוס
+            </Badge>
+            <button
+              type="button"
+              onClick={() => {
+                triggerHaptic();
+                onDismissClick(user);
+              }}
+              className="inline-flex size-7 items-center justify-center rounded-full bg-destructive/20 text-destructive transition-colors hover:bg-destructive/40"
+              title="דחה בקשת איפוס"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          </div>
+        )}
+      </div>
+
+      <dl className="mt-4 grid grid-cols-2 gap-3 text-sm">
+        <div>
+          <dt className="text-muted-foreground">כיתה</dt>
+          <dd className="font-medium">
+            {user.grade}&apos;{user.classNumber}
+          </dd>
+        </div>
+        <div>
+          <dt className="text-muted-foreground">הצטרפות</dt>
+          <dd className="font-medium">{formatHebrewDate(user.createdAt)}</dd>
+        </div>
+        <div className="col-span-2">
+          <dt className="text-muted-foreground">כניסה אחרונה</dt>
+          <dd className="font-medium">
+            {user.lastLogin ? formatHebrewDate(user.lastLogin) : "אף פעם"}
+          </dd>
+        </div>
+      </dl>
+
+      <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onResetClick(user.id)}
+          className="h-11 w-full"
+        >
+          <Link className="h-4 w-4" />
+          איפוס סיסמה
+        </Button>
+        <Button
+          variant="destructive"
+          size="sm"
+          onClick={() => onDeleteClick(user)}
+          disabled={isPending(user.id)}
+          className="h-11 w-full"
+        >
+          <Trash2 className="h-4 w-4" />
+          מחק
+        </Button>
+      </div>
+
+      {resetUserId === user.id && (
+        <div className="mt-3">
+          {generatedLink ? (
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <Input
+                readOnly
+                value={generatedLink}
+                className="h-11 min-w-0 text-sm font-mono"
+                dir="ltr"
+              />
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => onCopyLink(user.id, generatedLink)}
+                className="h-11 shrink-0"
+              >
+                {copied ? (
+                  <Check className="h-4 w-4" />
+                ) : (
+                  <Copy className="h-4 w-4" />
+                )}
+                <span className="sm:sr-only">העתק</span>
+              </Button>
+            </div>
+          ) : (
+            <span className="text-sm text-muted-foreground">יוצר קישור...</span>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function UsersManagementPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -267,7 +393,7 @@ export default function UsersManagementPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">ניהול משתמשים</h1>
+        <h1 className="text-2xl font-bold sm:text-3xl">ניהול משתמשים</h1>
         <p className="text-muted-foreground mt-1">
           צפייה ומחיקה של משתמשים במערכת
         </p>
@@ -275,7 +401,7 @@ export default function UsersManagementPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+          <CardTitle className="flex flex-wrap items-center gap-2 leading-6">
             <Users className="h-5 w-5" />
             רשימת משתמשים ({users.length})
             {pendingResets > 0 && (
@@ -310,7 +436,25 @@ export default function UsersManagementPage() {
               </p>
             </div>
           ) : (
-            <div className="rounded-md border">
+            <>
+              <div className="space-y-3 lg:hidden">
+                {users.map((user) => (
+                  <UserMobileCard
+                    key={user.id}
+                    user={user}
+                    isPending={isPending}
+                    resetUserId={resetUserId}
+                    generatedLink={generatedLinks[user.id]}
+                    copied={copiedUserId === user.id}
+                    onResetClick={handleResetClick}
+                    onCopyLink={handleCopyLink}
+                    onDeleteClick={handleDeleteClick}
+                    onDismissClick={handleDismissClick}
+                  />
+                ))}
+              </div>
+
+              <div className="hidden rounded-md border lg:block">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -417,7 +561,8 @@ export default function UsersManagementPage() {
                   ))}
                 </TableBody>
               </Table>
-            </div>
+              </div>
+            </>
           )}
         </CardContent>
       </Card>

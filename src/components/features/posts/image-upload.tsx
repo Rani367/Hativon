@@ -107,7 +107,7 @@ export function ImageUpload({
               value={value}
               onChange={(e) => onChange(e.target.value)}
               placeholder="או הזן כתובת URL"
-              className="text-sm"
+              className="min-h-11 text-sm sm:min-h-9"
             />
           )}
         </div>
@@ -139,6 +139,7 @@ export function ImageUpload({
               placeholder="או הזן כתובת URL של תמונה"
               value={value}
               onChange={(e) => onChange(e.target.value)}
+              className="min-h-11 sm:min-h-9"
             />
           )}
         </div>

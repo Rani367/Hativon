@@ -8,7 +8,7 @@ export function DbNotConfiguredView() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">ניהול משתמשים</h1>
+        <h1 className="text-2xl font-bold sm:text-3xl">ניהול משתמשים</h1>
         <p className="text-muted-foreground mt-1">
           צפייה ומחיקה של משתמשים במערכת
         </p>
@@ -24,7 +24,7 @@ export function DbNotConfiguredView() {
           </p>
           <div className="mt-4 space-y-2">
             <p className="font-medium">אפשרויות:</p>
-            <ul className="list-disc list-inside space-y-1 mr-4">
+            <ul className="mr-4 list-inside list-disc space-y-1 break-words">
               <li>
                 <strong>פיתוח מקומי:</strong> הגדר{" "}
                 <code className="bg-muted px-1 py-0.5 rounded">
@@ -49,7 +49,7 @@ export function DbNotConfiguredView() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+          <CardTitle className="flex flex-wrap items-center gap-2">
             <AlertCircle className="h-5 w-5" />
             הוראות התקנה
           </CardTitle>
@@ -57,7 +57,7 @@ export function DbNotConfiguredView() {
         <CardContent className="space-y-4">
           <div>
             <h3 className="font-medium mb-2">להגדרה מקומית:</h3>
-            <ol className="list-decimal list-inside space-y-1 text-sm mr-4">
+            <ol className="mr-4 list-inside list-decimal space-y-1 break-words text-sm">
               <li>התקן PostgreSQL במחשב שלך</li>
               <li>
                 הוסף{" "}
@@ -88,7 +88,7 @@ export function DbNotConfiguredView() {
           </div>
           <div>
             <h3 className="font-medium mb-2">לפריסה בVercel (מומלץ):</h3>
-            <ol className="list-decimal list-inside space-y-1 text-sm mr-4">
+            <ol className="mr-4 list-inside list-decimal space-y-1 break-words text-sm">
               <li>פרוס את הפרויקט לVercel</li>
               <li>הוסף Vercel Postgres דרך לוח הבקרה</li>
               <li>התכונה תעבוד אוטומטית ללא הגדרות נוספות</li>

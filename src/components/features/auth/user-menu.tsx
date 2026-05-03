@@ -20,7 +20,7 @@ export function UserMenu() {
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
 
   if (loading) {
-    return <div className="h-9 w-24 rounded-md bg-muted animate-pulse" />;
+    return <div className="h-11 w-11 rounded-md bg-muted animate-pulse sm:h-9 sm:w-24" />;
   }
 
   if (!user) {
@@ -30,7 +30,7 @@ export function UserMenu() {
           variant="default"
           size="sm"
           onClick={() => setAuthDialogOpen(true)}
-          className="cursor-pointer"
+          className="h-11 cursor-pointer sm:h-9"
         >
           התחבר
         </Button>
@@ -53,7 +53,12 @@ export function UserMenu() {
   return (
     <DropdownMenu modal={false}>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" className="gap-2" aria-label={`תפריט משתמש - ${user.displayName}`}>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-11 min-w-11 gap-2 px-3 sm:h-9"
+          aria-label={`תפריט משתמש - ${user.displayName}`}
+        >
           <User className="h-4 w-4" />
           <span className="hidden sm:inline max-w-[120px] truncate">
             {user.displayName}

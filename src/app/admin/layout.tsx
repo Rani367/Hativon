@@ -4,7 +4,13 @@ import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Home, FileText, Menu, Users } from "lucide-react";
+import { Home, FileText, Menu, MoreVertical, Users } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { logError } from "@/lib/logger";
 import { triggerHaptic } from "@/lib/utils";
 
@@ -97,7 +103,7 @@ export default function AdminLayout({
       <div className="min-h-screen bg-background">
         {/* Header Skeleton */}
         <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur">
-          <div className="container flex h-14 items-center">
+          <div className="mx-auto flex h-14 w-full max-w-7xl items-center px-4">
             <div className="flex flex-1 items-center justify-between">
               <div className="h-6 w-24 rounded bg-muted animate-pulse" />
               <div className="flex items-center gap-4">
@@ -110,7 +116,7 @@ export default function AdminLayout({
 
         <div className="flex">
           {/* Sidebar Skeleton */}
-          <aside className="hidden lg:block w-64 border-l bg-background">
+          <aside className="hidden w-64 border-l bg-background lg:block">
             <nav className="space-y-1 p-4">
               {[1, 2, 3].map((i) => (
                 <div
@@ -122,7 +128,7 @@ export default function AdminLayout({
           </aside>
 
           {/* Main Content Skeleton */}
-          <main className="flex-1 p-6 lg:p-8">
+          <main className="flex-1 p-4 sm:p-6 lg:p-8">
             <div className="max-w-7xl mx-auto space-y-4">
               <div className="h-8 w-48 rounded bg-muted animate-pulse" />
               <div className="h-4 w-full rounded bg-muted animate-pulse" />
@@ -144,22 +150,40 @@ export default function AdminLayout({
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-14 items-center">
+        <div className="mx-auto flex h-14 w-full max-w-7xl items-center px-4">
           <button
             onClick={() => { triggerHaptic(); setSidebarOpen(!sidebarOpen); }}
-            className="ms-4 lg:hidden"
+            className="me-2 inline-flex size-11 items-center justify-center rounded-md transition-colors hover:bg-muted lg:hidden"
+            aria-label="פתח ניווט"
           >
             <Menu className="h-6 w-6" />
           </button>
-          <div className="flex flex-1 items-center justify-between">
-            <h1 className="text-xl font-semibold">פאנל ניהול</h1>
-            <div className="flex items-center gap-4">
+          <div className="flex min-w-0 flex-1 items-center justify-between gap-2">
+            <h1 className="truncate text-base font-semibold sm:text-xl">פאנל ניהול</h1>
+            <div className="hidden items-center gap-4 md:flex">
               <Link href="/">
                 <Button variant="outline" size="sm">
                   חזור לאתר
                 </Button>
               </Link>
             </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="md:hidden"
+                  aria-label="פתח פעולות"
+                >
+                  <MoreVertical className="h-5 w-5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-44" dir="rtl">
+                <DropdownMenuItem asChild>
+                  <Link href="/">חזור לאתר</Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </header>
@@ -169,7 +193,7 @@ export default function AdminLayout({
         <aside
           className={`${
             sidebarOpen ? "translate-x-0" : "translate-x-full"
-          } fixed inset-y-0 right-0 z-[60] w-64 border-l bg-background transition-transform lg:translate-x-0 lg:static`}
+          } fixed inset-y-0 right-0 z-[60] h-dvh w-[min(18rem,85vw)] overflow-y-auto border-l bg-background transition-transform lg:static lg:w-64 lg:translate-x-0`}
         >
           <nav className="space-y-1 p-4 pt-20 lg:pt-4">
             {navItems.map((item) => {
@@ -195,7 +219,7 @@ export default function AdminLayout({
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 p-6 lg:p-8">
+        <main className="min-w-0 flex-1 p-4 sm:p-6 lg:p-8">
           <div className="max-w-7xl mx-auto">{children}</div>
         </main>
       </div>

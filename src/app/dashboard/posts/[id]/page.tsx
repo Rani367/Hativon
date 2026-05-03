@@ -372,10 +372,10 @@ export default function EditPostPage({
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="mx-auto max-w-4xl space-y-5 sm:space-y-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <div className="flex-1">
-          <h1 className="text-3xl font-bold">ערוך כתבה</h1>
+          <h1 className="text-2xl font-bold sm:text-3xl">ערוך כתבה</h1>
           <p className="mt-1 text-muted-foreground">
             עדכנו את הכתבה, שמרו טיוטה או פרסמו מחדש כשתהיו מוכנים.
           </p>
@@ -387,7 +387,7 @@ export default function EditPostPage({
             errorMessage={errorMessage}
             onRetry={handleRetryAutoSave}
           />
-          <Button variant="destructive" onClick={handleDelete}>
+          <Button variant="destructive" onClick={handleDelete} className="w-full md:w-auto">
             <Trash2 className="h-4 w-4 me-2" />
             מחק
           </Button>
@@ -395,17 +395,17 @@ export default function EditPostPage({
       </div>
 
       <Card className="border-dashed bg-muted/30">
-        <CardContent className="flex flex-col gap-2 p-5 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+        <CardContent className="flex flex-col gap-2 p-4 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between sm:p-5">
           <p>שינויים נשמרים אוטומטית בזמן העריכה.</p>
           <p>לפני פרסום, כדאי לבדוק כותרת, תיאור ותמונת שער.</p>
         </CardContent>
       </Card>
 
       <Card>
-        <CardHeader>
+        <CardHeader className="px-4 sm:px-6">
           <CardTitle>פרטי הכתבה</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 px-4 sm:px-6">
           <PostFormFields
             title={form.title}
             description={form.description}
