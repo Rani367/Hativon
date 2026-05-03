@@ -199,7 +199,7 @@ function PostOpenTransitionOverlay({
   return (
     <div
       aria-hidden="true"
-      className="pointer-events-auto fixed inset-0 z-[120] overflow-hidden"
+      className="pointer-events-none fixed inset-0 z-[120] overflow-hidden"
     >
       <motion.div
         className="absolute inset-0 bg-foreground/10 backdrop-blur-[2px]"
