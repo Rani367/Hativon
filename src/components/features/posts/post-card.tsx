@@ -58,6 +58,7 @@ export default function PostCard({
   const {
     beginPostTransition,
     isPostReturnTransitionActive,
+    isSourceActive,
     registerPostTransitionTarget,
   } = usePostOpenTransition();
   const wordCount = post.content ? getWordCount(post.content) : 0;
@@ -68,7 +69,8 @@ export default function PostCard({
   const displayDescription = truncateDescription(post.description);
   const isReturnTargetActive =
     hasCoverImage && isPostReturnTransitionActive(post.id);
-  const shouldRegisterReturnTarget = isReturnTargetActive;
+  const concealCard =
+    hasCoverImage && (isSourceActive(sourceId) || isReturnTargetActive);
   const preloadCoverImage = () => {
     if (!post.coverImage || typeof window === "undefined") {
       return;
@@ -108,7 +110,7 @@ export default function PostCard({
   }, []);
 
   useEffect(() => {
-    if (!shouldRegisterReturnTarget) {
+    if (!isReturnTargetActive) {
       return;
     }
 
@@ -127,9 +129,9 @@ export default function PostCard({
     };
   }, [
     getTransitionTargets,
+    isReturnTargetActive,
     post.id,
     registerPostTransitionTarget,
-    shouldRegisterReturnTarget,
   ]);
 
   const handleClick = (event: MouseEvent<HTMLAnchorElement>) => {
@@ -171,6 +173,7 @@ export default function PostCard({
         className={cn(
           "group relative h-full overflow-hidden rounded-lg border-border/70 bg-card/80 pt-0 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-xl supports-[backdrop-filter]:bg-background/80",
           compact && "gap-2",
+          concealCard && "opacity-0",
         )}
       >
         <Link
