@@ -55,12 +55,13 @@ export function PostPageTransitionShell({
     beginPostReturnTransition,
     isPostTransitionActive,
     registerPostTransitionTarget,
-    shouldDelayPostBody,
   } = usePostOpenTransition();
 
   const hasCoverImage = Boolean(post.coverImage);
-  const concealOpeningRegion = hasCoverImage && isPostTransitionActive(post.id);
-  const delayPostBody = shouldDelayPostBody(post.id);
+  const shouldRegisterOpeningTarget =
+    hasCoverImage && isPostTransitionActive(post.id);
+  const concealOpeningRegion = false;
+  const delayPostBody = false;
   const formattedDate = formatHebrewDate(post.date);
   const readingTime = calculateReadingTime(wordCount);
   const returnHref = getArchivePathForDate(post.date);
@@ -99,7 +100,7 @@ export function PostPageTransitionShell({
   }, []);
 
   useEffect(() => {
-    if (!concealOpeningRegion) {
+    if (!shouldRegisterOpeningTarget) {
       return;
     }
 
@@ -117,10 +118,10 @@ export function PostPageTransitionShell({
       window.cancelAnimationFrame(animationFrameId);
     };
   }, [
-    concealOpeningRegion,
     getTransitionTargets,
     post.id,
     registerPostTransitionTarget,
+    shouldRegisterOpeningTarget,
   ]);
 
   const handleReturnClick = (event: MouseEvent<HTMLAnchorElement>) => {
