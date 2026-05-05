@@ -3,7 +3,9 @@
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { type MouseEvent } from "react";
 import { ArchiveMenuButton } from "@/components/features/archive/archive-menu-button";
+import { getRememberedIssuePathForCurrentPost } from "@/lib/navigation/last-issue-path";
 
 const UserMenu = dynamic(
   () => import("@/components/features/auth/user-menu").then((mod) => mod.UserMenu),
@@ -29,6 +31,20 @@ export function Header() {
   const isHiddenRoute =
     pathname?.startsWith("/admin") || pathname?.startsWith("/dashboard");
 
+  const handleLogoClick = (event: MouseEvent<HTMLAnchorElement>) => {
+    if (!pathname?.startsWith("/posts/")) {
+      return;
+    }
+
+    const rememberedIssuePath = getRememberedIssuePathForCurrentPost();
+    if (!rememberedIssuePath || window.history.length <= 1) {
+      return;
+    }
+
+    event.preventDefault();
+    window.history.back();
+  };
+
   if (isHiddenRoute) {
     return null;
   }
@@ -46,6 +62,7 @@ export function Header() {
               href="/"
               className="flex items-center whitespace-nowrap text-lg font-bold text-foreground sm:text-xl md:text-2xl"
               prefetch={false}
+              onClick={handleLogoClick}
             >
               חטיבון
             </Link>

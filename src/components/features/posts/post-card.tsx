@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import Image from "next/image";
 import { type MouseEvent } from "react";
 import { formatHebrewDate } from "@/lib/date/format";
@@ -70,11 +69,10 @@ export default function PostCard({
           compact ? "gap-2" : ""
         }`}
       >
-        <Link
+        <a
           href={href}
           className="absolute inset-0 z-10"
           aria-label={post.title}
-          prefetch={false}
           onClick={handleClick}
           onMouseEnter={preloadCoverImage}
           onTouchStart={preloadCoverImage}

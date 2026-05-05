@@ -7,6 +7,19 @@ interface RememberedIssuePath {
   timestamp: number;
 }
 
+function getPostIdFromPathname(pathname: string): string | null {
+  const [resource, postId] = pathname.split("/").filter(Boolean);
+  if (resource !== "posts" || !postId) {
+    return null;
+  }
+
+  try {
+    return decodeURIComponent(postId);
+  } catch {
+    return postId;
+  }
+}
+
 export function rememberCurrentIssuePath(postId: string) {
   if (typeof window === "undefined") {
     return;
@@ -56,4 +69,13 @@ export function getRememberedIssuePath(postId: string): string | null {
     window.sessionStorage.removeItem(LAST_ISSUE_PATH_KEY);
     return null;
   }
+}
+
+export function getRememberedIssuePathForCurrentPost(): string | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  const postId = getPostIdFromPathname(window.location.pathname);
+  return postId ? getRememberedIssuePath(postId) : null;
 }
