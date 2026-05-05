@@ -2,11 +2,11 @@
 
 import { useEffect, useRef, type ReactNode } from "react";
 import Image from "next/image";
-import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { formatHebrewDate } from "@/lib/date/format";
 import { calculateReadingTime } from "@/lib/utils";
 import { type Post } from "@/types/post.types";
+import { BackToIssueButton } from "./back-to-issue-button";
 import {
   measureTransitionRect,
   usePostOpenTransition,
@@ -74,13 +74,7 @@ export function PostPageTransitionShell({
   return (
     <article className="mx-auto max-w-4xl py-2 sm:px-6 sm:py-8">
       <div className="mb-4 sm:mb-6">
-        <Link
-          href="/"
-          prefetch={false}
-          className="inline-flex min-h-10 items-center rounded-full border px-3 py-1 text-sm text-muted-foreground transition-colors hover:bg-muted"
-        >
-          חזרה לגיליון
-        </Link>
+        <BackToIssueButton postId={post.id} />
       </div>
 
       {post.coverImage && (

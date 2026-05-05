@@ -11,6 +11,7 @@ import { getPostCardImageUrl } from "@/lib/images/post-images";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Clock, Calendar } from "lucide-react";
+import { rememberCurrentIssuePath } from "@/lib/navigation/last-issue-path";
 
 interface PostCardProps {
   post: Post | PostSummary;
@@ -58,6 +59,8 @@ export default function PostCard({
     if (event.defaultPrevented) {
       return;
     }
+
+    rememberCurrentIssuePath(post.id);
   };
 
   return (
