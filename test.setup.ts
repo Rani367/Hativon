@@ -93,6 +93,7 @@ const _realGetPostById = _realQueriesModule.getPostById;
 const _realGetPublishedPostById = _realQueriesModule.getPublishedPostById;
 const _realGetPostsByAuthor = _realQueriesModule.getPostsByAuthor;
 const _realGetPostsByMonth = _realQueriesModule.getPostsByMonth;
+const _realGetPostSummariesByMonth = _realQueriesModule.getPostSummariesByMonth;
 const _realGetArchiveMonths = _realQueriesModule.getArchiveMonths;
 const _realGetPostStats = _realQueriesModule.getPostStats;
 
@@ -102,6 +103,7 @@ _g.__realPostsQueries = {
   getPublishedPostById: _realGetPublishedPostById,
   getPostsByAuthor: _realGetPostsByAuthor,
   getPostsByMonth: _realGetPostsByMonth,
+  getPostSummariesByMonth: _realGetPostSummariesByMonth,
   getArchiveMonths: _realGetArchiveMonths,
   getPostStats: _realGetPostStats,
 };
@@ -111,6 +113,7 @@ _g.__postsQueriesGetPostByIdMock = _realGetPostById;
 _g.__postsQueriesGetPublishedPostByIdMock = _realGetPublishedPostById;
 _g.__postsQueriesGetPostsByAuthorMock = _realGetPostsByAuthor;
 _g.__postsQueriesGetPostsByMonthMock = _realGetPostsByMonth;
+_g.__postsQueriesGetPostSummariesByMonthMock = _realGetPostSummariesByMonth;
 _g.__postsQueriesGetArchiveMonthsMock = _realGetArchiveMonths;
 _g.__postsQueriesGetPostStatsMock = _realGetPostStats;
 
@@ -125,6 +128,8 @@ mock.module("@/lib/posts/queries", () => ({
     (_g.__postsQueriesGetPostsByAuthorMock as (...a: unknown[]) => unknown)(...args),
   getPostsByMonth: (...args: unknown[]) =>
     (_g.__postsQueriesGetPostsByMonthMock as (...a: unknown[]) => unknown)(...args),
+  getPostSummariesByMonth: (...args: unknown[]) =>
+    (_g.__postsQueriesGetPostSummariesByMonthMock as (...a: unknown[]) => unknown)(...args),
   getArchiveMonths: (...args: unknown[]) =>
     (_g.__postsQueriesGetArchiveMonthsMock as (...a: unknown[]) => unknown)(...args),
   getPostStats: (...args: unknown[]) =>
@@ -135,6 +140,9 @@ _g.__postsBarrelGetAllPostsMock = mock(() => Promise.resolve([]));
 _g.__postsBarrelGetPostByIdMock = mock(() => Promise.resolve(null));
 _g.__postsBarrelGetPublishedPostByIdMock = mock(() => Promise.resolve(null));
 _g.__postsBarrelGetPostsByAuthorMock = mock(() => Promise.resolve([]));
+_g.__postsBarrelGetPostSummariesByMonthMock = mock(() =>
+  Promise.resolve({ posts: [], total: 0, limit: 12, offset: 0, hasMore: false }),
+);
 _g.__postsBarrelGetPostStatsMock = mock(() =>
   Promise.resolve({ total: 0, published: 0, drafts: 0, today: 0, thisWeek: 0, thisMonth: 0 }),
 );
@@ -148,6 +156,7 @@ _g.__postsBarrelCanUserEditPostMock = mock(() => false);
 _g.__postsBarrelCanUserDeletePostMock = mock(() => false);
 _g.__postsBarrelGenerateDescriptionMock = mock(() => "");
 _g.__postsBarrelRowToPostMock = mock(() => ({}));
+_g.__postsBarrelRowToPostSummaryMock = mock(() => ({}));
 
 mock.module("@/lib/posts", () => ({
   getAllPosts: (...args: unknown[]) =>
@@ -158,6 +167,8 @@ mock.module("@/lib/posts", () => ({
     (_g.__postsBarrelGetPublishedPostByIdMock as (...a: unknown[]) => unknown)(...args),
   getPostsByAuthor: (...args: unknown[]) =>
     (_g.__postsBarrelGetPostsByAuthorMock as (...a: unknown[]) => unknown)(...args),
+  getPostSummariesByMonth: (...args: unknown[]) =>
+    (_g.__postsBarrelGetPostSummariesByMonthMock as (...a: unknown[]) => unknown)(...args),
   getPostStats: (...args: unknown[]) =>
     (_g.__postsBarrelGetPostStatsMock as (...a: unknown[]) => unknown)(...args),
   getPosts: (...args: unknown[]) =>
@@ -180,6 +191,8 @@ mock.module("@/lib/posts", () => ({
     (_g.__postsBarrelGenerateDescriptionMock as (...a: unknown[]) => unknown)(...args),
   rowToPost: (...args: unknown[]) =>
     (_g.__postsBarrelRowToPostMock as (...a: unknown[]) => unknown)(...args),
+  rowToPostSummary: (...args: unknown[]) =>
+    (_g.__postsBarrelRowToPostSummaryMock as (...a: unknown[]) => unknown)(...args),
   MAX_DESCRIPTION_LENGTH: 300,
 }));
 
