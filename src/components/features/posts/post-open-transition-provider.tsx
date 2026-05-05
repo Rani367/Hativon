@@ -212,7 +212,6 @@ function PostOpenTransitionOverlay({
           alt={snapshot.imageAlt}
           fill
           sizes="100vw"
-          unoptimized
           className="object-cover"
         />
       </MotionBlock>

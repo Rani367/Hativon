@@ -143,6 +143,7 @@ describe("rowToPost", () => {
       content: "תוכן בדיקה",
       coverImage: "https://example.com/image.jpg",
       description: "תיאור בדיקה",
+      wordCount: 2,
       date: "2024-01-01T00:00:00.000Z",
       author: "שם מחבר",
       authorId: "author-123",

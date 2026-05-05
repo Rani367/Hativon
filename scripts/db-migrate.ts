@@ -10,8 +10,12 @@
  *   bun run db:migrate rollback N - Rollback last N migrations
  */
 
+import { resolve } from "path";
+import { config } from "dotenv";
 import { runMigrations, rollbackMigrations, getMigrationStatus } from '../src/lib/db/migrations';
 import { migrations } from '../src/lib/db/migrations/registry';
+
+config({ path: resolve(__dirname, "../.env.local") });
 
 async function main() {
   const command = process.argv[2] || 'up';

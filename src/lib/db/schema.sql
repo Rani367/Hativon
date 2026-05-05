@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS posts (
   content TEXT NOT NULL,
   cover_image TEXT,
   description TEXT NOT NULL,
+  word_count INTEGER NOT NULL DEFAULT 0,
   date TIMESTAMP NOT NULL,
   author TEXT,
   author_id TEXT,

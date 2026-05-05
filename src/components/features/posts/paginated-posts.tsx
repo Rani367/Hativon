@@ -1,41 +1,78 @@
 "use client";
 
-import { useState, useTransition, useCallback, memo } from "react";
-import { Post } from "@/types/post.types";
+import { useCallback, memo, useState, useTransition } from "react";
+import type { PostSummary } from "@/types/post.types";
 import PostCard from "@/components/features/posts/post-card";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
+import { logError } from "@/lib/logger";
 
 interface PaginatedPostsProps {
-  initialPosts: Post[];
+  initialPosts: PostSummary[];
+  initialHasMore: boolean;
   postsPerPage?: number;
+  year: number;
+  month: string;
 }
 
 const MemoizedPostCard = memo(PostCard);
-const PRIORITY_COUNT = 6;
+const PRIORITY_COUNT = 1;
 
 function PaginatedPosts({
   initialPosts,
+  initialHasMore,
   postsPerPage = 12,
+  year,
+  month,
 }: PaginatedPostsProps) {
-  const [displayCount, setDisplayCount] = useState(postsPerPage);
+  const [posts, setPosts] = useState(initialPosts);
+  const [hasMore, setHasMore] = useState(initialHasMore);
+  const [error, setError] = useState<string | null>(null);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [isPending, startTransition] = useTransition();
 
-  const visiblePosts = initialPosts.slice(0, displayCount);
-  const hasMore = displayCount < initialPosts.length;
+  const loadMore = useCallback(async () => {
+    if (isLoadingMore) {
+      return;
+    }
 
-  const loadMore = useCallback(() => {
-    startTransition(() => {
-      setDisplayCount((prev) =>
-        Math.min(prev + postsPerPage, initialPosts.length),
-      );
-    });
-  }, [postsPerPage, initialPosts.length]);
+    setError(null);
+    setIsLoadingMore(true);
+
+    try {
+      const params = new URLSearchParams({
+        year: String(year),
+        month,
+        limit: String(postsPerPage),
+        offset: String(posts.length),
+      });
+      const response = await fetch(`/api/posts?${params.toString()}`);
+
+      if (!response.ok) {
+        throw new Error("Failed to load posts");
+      }
+
+      const result = (await response.json()) as {
+        posts: PostSummary[];
+        hasMore: boolean;
+      };
+
+      startTransition(() => {
+        setPosts((currentPosts) => [...currentPosts, ...result.posts]);
+        setHasMore(result.hasMore);
+      });
+    } catch (loadError) {
+      logError("Failed to load more posts:", loadError);
+      setError("טעינת כתבות נוספות נכשלה");
+    } finally {
+      setIsLoadingMore(false);
+    }
+  }, [isLoadingMore, month, posts.length, postsPerPage, year]);
 
   return (
     <>
       <div className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2 xl:grid-cols-3 xl:gap-8">
-        {visiblePosts.map((post, index) => (
+        {posts.map((post, index) => (
           <MemoizedPostCard
             key={post.id}
             post={post}
@@ -45,16 +82,20 @@ function PaginatedPosts({
         ))}
       </div>
 
+      {error && (
+        <p className="mt-6 text-center text-sm text-destructive">{error}</p>
+      )}
+
       {hasMore && (
         <div className="mt-8 flex justify-center sm:mt-12">
           <Button
             onClick={loadMore}
-            disabled={isPending}
+            disabled={isPending || isLoadingMore}
             size="lg"
             variant="outline"
             className="w-full sm:w-auto"
           >
-            {isPending ? (
+            {isPending || isLoadingMore ? (
               <>
                 <Loader2 className="me-2 animate-spin" />
                 טוען...

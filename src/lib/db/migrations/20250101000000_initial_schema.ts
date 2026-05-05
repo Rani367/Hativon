@@ -41,6 +41,7 @@ const migration: Migration = {
         content TEXT NOT NULL,
         cover_image TEXT,
         description VARCHAR(500),
+        word_count INTEGER NOT NULL DEFAULT 0,
         date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         author VARCHAR(100),
         author_id VARCHAR(255),

@@ -1,7 +1,11 @@
-import type { Post, PostStats } from "@/types/post.types";
-import type { PostQueryResult, StatsQueryResult } from "@/types/database.types";
+import type { Post, PostStats, PostSummary } from "@/types/post.types";
+import type {
+  PostQueryResult,
+  PostSummaryQueryResult,
+  StatsQueryResult,
+} from "@/types/database.types";
 import { db } from "../db/client";
-import { rowToPost } from "./utils";
+import { rowToPost, rowToPostSummary } from "./utils";
 
 /**
  * Pagination options for querying posts
@@ -16,6 +20,14 @@ export interface PaginationOptions {
  */
 export interface PaginatedPosts {
   posts: Post[];
+  total: number;
+  limit: number;
+  offset: number;
+  hasMore: boolean;
+}
+
+export interface PaginatedPostSummaries {
+  posts: PostSummary[];
   total: number;
   limit: number;
   offset: number;
@@ -257,6 +269,76 @@ export async function getPostsByMonth(
       console.error("[ERROR] Failed to fetch posts by month:", error);
     }
     return [];
+  }
+}
+
+export async function getPostSummariesByMonth(
+  year: number,
+  month: number,
+  pagination: PaginationOptions = {},
+): Promise<PaginatedPostSummaries> {
+  const limit = pagination.limit || 12;
+  const offset = pagination.offset || 0;
+
+  try {
+    const countResult = await db.query`
+      SELECT COUNT(*) as count
+      FROM posts
+      WHERE status = 'published'
+        AND EXTRACT(YEAR FROM date) = ${year}
+        AND EXTRACT(MONTH FROM date) = ${month}
+    `;
+
+    const total = parseInt((countResult.rows[0] as { count: string }).count);
+
+    const result = (await db.query`
+      SELECT
+        p.id,
+        p.title,
+        p.cover_image,
+        p.description,
+        p.word_count,
+        p.date,
+        p.author,
+        p.author_id,
+        p.author_grade,
+        p.author_class,
+        CASE WHEN u.id IS NULL AND p.author_id IS NOT NULL AND p.author_id != 'legacy-admin' THEN true ELSE false END as author_deleted,
+        p.is_teacher_post,
+        p.tags,
+        p.category,
+        p.status,
+        p.created_at,
+        p.updated_at
+      FROM posts p
+      LEFT JOIN users u ON p.author_id = u.id::text
+      WHERE p.status = 'published'
+        AND EXTRACT(YEAR FROM p.date) = ${year}
+        AND EXTRACT(MONTH FROM p.date) = ${month}
+      ORDER BY (p.cover_image IS NOT NULL AND p.cover_image != '') DESC, p.date DESC, p.created_at DESC
+      LIMIT ${limit} OFFSET ${offset}
+    `) as PostSummaryQueryResult;
+
+    return {
+      posts: result.rows.map(rowToPostSummary),
+      total,
+      limit,
+      offset,
+      hasMore: offset + limit < total,
+    };
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    if (!errorMessage.includes('relation "posts" does not exist')) {
+      console.error("[ERROR] Failed to fetch post summaries by month:", error);
+    }
+
+    return {
+      posts: [],
+      total: 0,
+      limit,
+      offset,
+      hasMore: false,
+    };
   }
 }
 

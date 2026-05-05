@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { put } from "@vercel/blob";
 import { getCurrentUser } from "@/lib/auth/middleware";
 import { logError } from "@/lib/logger";
+import { createPostImageVariants, fileToDataUrl } from "@/lib/images/server";
 
 /**
  * Image file signatures (magic bytes) for validation
@@ -80,33 +81,44 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const variants = await createPostImageVariants(file);
+
     // Check if Vercel Blob token is available
     if (!process.env.BLOB_READ_WRITE_TOKEN) {
-      // Fallback to base64 data URL for local development
-      const arrayBuffer = await file.arrayBuffer();
-      const base64 = Buffer.from(arrayBuffer).toString("base64");
-      const dataUrl = `data:${file.type};base64,${base64}`;
+      // Fallback to optimized data URLs for local development
+      const [fullDataUrl, cardDataUrl] = await Promise.all([
+        fileToDataUrl(variants.full.file),
+        fileToDataUrl(variants.card.file),
+      ]);
 
       return NextResponse.json({
-        url: dataUrl,
-        filename: file.name,
+        url: fullDataUrl,
+        cardUrl: cardDataUrl,
+        filename: variants.full.filename,
       });
     }
 
     // Generate unique filename
     const timestamp = Date.now();
     const randomString = Math.random().toString(36).substring(7);
-    const extension = file.name.split(".").pop();
-    const filename = `posts/${timestamp}-${randomString}.${extension}`;
+    const assetId = `${timestamp}-${randomString}`;
+    const fullPath = `posts/${assetId}/${variants.full.filename}`;
+    const cardPath = `posts/${assetId}/${variants.card.filename}`;
 
     // Upload to Vercel Blob
-    const blob = await put(filename, file, {
-      access: "public",
-    });
+    const [fullBlob, cardBlob] = await Promise.all([
+      put(fullPath, variants.full.file, {
+        access: "public",
+      }),
+      put(cardPath, variants.card.file, {
+        access: "public",
+      }),
+    ]);
 
     return NextResponse.json({
-      url: blob.url,
-      filename: filename,
+      url: fullBlob.url,
+      cardUrl: cardBlob.url,
+      filename: fullPath,
     });
   } catch (error) {
     logError("Image upload error:", error);

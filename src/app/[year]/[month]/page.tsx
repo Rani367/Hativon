@@ -1,8 +1,6 @@
 import { notFound } from "next/navigation";
-import { Suspense } from "react";
-import type { Post } from "@/types/post.types";
 import {
-  getCachedPostsByMonth,
+  getCachedPostSummariesByMonth,
   getCachedArchiveMonths,
 } from "@/lib/posts/cached-queries";
 import {
@@ -11,8 +9,7 @@ import {
   isValidYearMonth,
   monthNumberToEnglish,
 } from "@/lib/date/months";
-import { EmptyPostsState } from "@/components/features/posts/empty-posts-state";
-import PaginatedPosts from "@/components/features/posts/paginated-posts";
+import { IssuePage } from "@/components/features/posts/issue-page";
 
 // Static generation with ISR - pages are pre-built at build time
 export const revalidate = 60;
@@ -36,35 +33,6 @@ interface ArchivePageProps {
   }>;
 }
 
-function PostsSkeleton() {
-  return (
-    <div className="grid grid-cols-1 items-start gap-4 sm:gap-6 md:grid-cols-2 xl:grid-cols-3">
-      {Array.from({ length: 6 }).map((_, i) => (
-        <div key={i} className="rounded-lg bg-card/50 animate-pulse">
-          <div className="aspect-[16/11] rounded-t-lg bg-muted sm:aspect-[4/3]" />
-          <div className="space-y-3 p-4 sm:p-7">
-            <div className="h-4 w-1/3 rounded bg-muted" />
-            <div className="h-6 w-full rounded bg-muted" />
-            <div className="h-4 w-2/3 rounded bg-muted" />
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function PostsContent({
-  posts,
-}: {
-  posts: Post[];
-}) {
-  if (posts.length === 0) {
-    return <EmptyPostsState />;
-  }
-
-  return <PaginatedPosts initialPosts={posts} postsPerPage={12} />;
-}
-
 export default async function ArchivePage({ params }: ArchivePageProps) {
   const { year: yearStr, month: monthStr } = await params;
 
@@ -83,22 +51,17 @@ export default async function ArchivePage({ params }: ArchivePageProps) {
   }
 
   const hebrewMonth = englishToHebrewMonth(monthStr);
-  const posts = await getCachedPostsByMonth(year, monthNumber);
+  const result = await getCachedPostSummariesByMonth(year, monthNumber, {
+    limit: 12,
+    offset: 0,
+  });
 
   return (
-    <div className="mx-auto w-full py-2 sm:py-6">
-      <div className="mb-6 text-center sm:mb-8">
-        <h1 className="text-2xl font-bold leading-tight sm:text-3xl md:text-4xl">
-          גיליון {hebrewMonth} {year}
-        </h1>
-        <p className="mt-2 text-muted-foreground">
-          {posts.length} {posts.length === 1 ? "כתבה" : "כתבות"}
-        </p>
-      </div>
-
-      <Suspense fallback={<PostsSkeleton />}>
-        <PostsContent posts={posts} />
-      </Suspense>
-    </div>
+    <IssuePage
+      year={year}
+      month={monthStr}
+      hebrewMonth={hebrewMonth}
+      result={result}
+    />
   );
 }

@@ -78,6 +78,8 @@ function createMockRequest(formData: FormData): NextRequest {
 // Track mock state
 let mockGetCurrentUser: ReturnType<typeof mock>;
 let mockPut: ReturnType<typeof mock>;
+let mockCreatePostImageVariants: ReturnType<typeof mock>;
+let mockFileToDataUrl: ReturnType<typeof mock>;
 
 // logError is controlled via global delegate in test/setup.ts
 const _g = globalThis as Record<string, unknown>;
@@ -91,6 +93,21 @@ describe("POST /api/upload", () => {
 
     mockGetCurrentUser = mock(() => undefined);
     mockPut = mock(() => undefined);
+    mockCreatePostImageVariants = mock(() =>
+      Promise.resolve({
+        full: {
+          file: new File(["full"], "full.webp", { type: "image/webp" }),
+          filename: "full.webp",
+        },
+        card: {
+          file: new File(["card"], "card.webp", { type: "image/webp" }),
+          filename: "card.webp",
+        },
+      }),
+    );
+    mockFileToDataUrl = mock((file: File) =>
+      Promise.resolve(`data:${file.type};base64,${file.name}`),
+    );
     _g.__logErrorMock = mock(() => undefined);
 
     mock.module("@/lib/auth/middleware", () => ({
@@ -99,6 +116,11 @@ describe("POST /api/upload", () => {
 
     mock.module("@vercel/blob", () => ({
       put: mockPut,
+    }));
+
+    mock.module("@/lib/images/server", () => ({
+      createPostImageVariants: mockCreatePostImageVariants,
+      fileToDataUrl: mockFileToDataUrl,
     }));
 
     // @/lib/logger is mocked via global delegate in test/setup.ts
@@ -212,8 +234,9 @@ describe("POST /api/upload", () => {
     const data = await response.json();
 
     expect(response.status).toBe(200);
-    expect(data.url).toContain("data:image/jpeg;base64,");
-    expect(data.filename).toBeDefined();
+    expect(data.url).toBe("data:image/webp;base64,full.webp");
+    expect(data.cardUrl).toBe("data:image/webp;base64,card.webp");
+    expect(data.filename).toBe("full.webp");
     expect(mockPut).not.toHaveBeenCalled();
   });
 
@@ -225,10 +248,12 @@ describe("POST /api/upload", () => {
       username: "testuser",
     });
 
-    mockPut.mockResolvedValue({
-      url: "https://blob.vercel-storage.com/test-image.jpg",
-      pathname: "posts/12345-abc123.jpg",
-    });
+    mockPut.mockImplementation((pathname: string) =>
+      Promise.resolve({
+        url: `https://blob.vercel-storage.com/${pathname}`,
+        pathname,
+      }),
+    );
 
     const { POST } = await import("../route");
 
@@ -241,14 +266,23 @@ describe("POST /api/upload", () => {
     const data = await response.json();
 
     expect(response.status).toBe(200);
-    expect(data.url).toBe("https://blob.vercel-storage.com/test-image.jpg");
-    expect(data.filename).toMatch(/^posts\/\d+-[a-z0-9]+\.\w+$/);
-    expect(mockPut).toHaveBeenCalledTimes(1);
+    expect(data.url).toMatch(
+      /^https:\/\/blob\.vercel-storage\.com\/posts\/\d+-[a-z0-9]+\/full\.webp$/,
+    );
+    expect(data.cardUrl).toMatch(
+      /^https:\/\/blob\.vercel-storage\.com\/posts\/\d+-[a-z0-9]+\/card\.webp$/,
+    );
+    expect(data.filename).toMatch(/^posts\/\d+-[a-z0-9]+\/full\.webp$/);
+    expect(mockPut).toHaveBeenCalledTimes(2);
 
-    const putCall = mockPut.mock.calls[0];
-    expect(putCall[0]).toMatch(/^posts\/\d+-[a-z0-9]+\.\w+$/);
-    expect(putCall[1]).toHaveProperty("type", "image/jpeg");
-    expect(putCall[2]).toEqual({ access: "public" });
+    const fullPutCall = mockPut.mock.calls[0];
+    const cardPutCall = mockPut.mock.calls[1];
+    expect(fullPutCall[0]).toMatch(/^posts\/\d+-[a-z0-9]+\/full\.webp$/);
+    expect(fullPutCall[1]).toHaveProperty("type", "image/webp");
+    expect(fullPutCall[2]).toEqual({ access: "public" });
+    expect(cardPutCall[0]).toMatch(/^posts\/\d+-[a-z0-9]+\/card\.webp$/);
+    expect(cardPutCall[1]).toHaveProperty("type", "image/webp");
+    expect(cardPutCall[2]).toEqual({ access: "public" });
   });
 
   it("generates unique filename with timestamp and random string", async () => {
@@ -259,10 +293,12 @@ describe("POST /api/upload", () => {
       username: "testuser",
     });
 
-    mockPut.mockResolvedValue({
-      url: "https://blob.vercel-storage.com/test-image.jpg",
-      pathname: "posts/12345-abc123.jpg",
-    });
+    mockPut.mockImplementation((pathname: string) =>
+      Promise.resolve({
+        url: `https://blob.vercel-storage.com/${pathname}`,
+        pathname,
+      }),
+    );
 
     const { POST } = await import("../route");
 
@@ -274,12 +310,12 @@ describe("POST /api/upload", () => {
     await POST(request);
 
     const putCall = mockPut.mock.calls[0];
-    expect(putCall[0]).toMatch(/^posts\/\d+-[a-z0-9]+\.\w+$/);
-    expect(putCall[1]).toHaveProperty("type", "image/jpeg");
+    expect(putCall[0]).toMatch(/^posts\/\d+-[a-z0-9]+\/full\.webp$/);
+    expect(putCall[1]).toHaveProperty("type", "image/webp");
     expect(putCall[2]).toEqual({ access: "public" });
   });
 
-  it("preserves file extension in uploaded filename", async () => {
+  it("uses optimized webp filenames for uploaded images", async () => {
     process.env.BLOB_READ_WRITE_TOKEN = "test-token";
 
     mockGetCurrentUser.mockResolvedValue({
@@ -287,10 +323,12 @@ describe("POST /api/upload", () => {
       username: "testuser",
     });
 
-    mockPut.mockResolvedValue({
-      url: "https://blob.vercel-storage.com/test-image.png",
-      pathname: "posts/12345-abc123.png",
-    });
+    mockPut.mockImplementation((pathname: string) =>
+      Promise.resolve({
+        url: `https://blob.vercel-storage.com/${pathname}`,
+        pathname,
+      }),
+    );
 
     const { POST } = await import("../route");
 
@@ -302,8 +340,8 @@ describe("POST /api/upload", () => {
     await POST(request);
 
     const putCall = mockPut.mock.calls[0];
-    expect(putCall[0]).toMatch(/^posts\/\d+-[a-z0-9]+\.\w+$/);
-    expect(putCall[1]).toHaveProperty("type", "image/png");
+    expect(putCall[0]).toMatch(/^posts\/\d+-[a-z0-9]+\/full\.webp$/);
+    expect(putCall[1]).toHaveProperty("type", "image/webp");
     expect(putCall[2]).toEqual({ access: "public" });
   });
 
@@ -315,10 +353,12 @@ describe("POST /api/upload", () => {
       username: "testuser",
     });
 
-    mockPut.mockResolvedValue({
-      url: "https://blob.vercel-storage.com/test-image.jpg",
-      pathname: "posts/12345-abc123.jpg",
-    });
+    mockPut.mockImplementation((pathname: string) =>
+      Promise.resolve({
+        url: `https://blob.vercel-storage.com/${pathname}`,
+        pathname,
+      }),
+    );
 
     const { POST } = await import("../route");
 
@@ -330,8 +370,8 @@ describe("POST /api/upload", () => {
     await POST(request);
 
     const putCall = mockPut.mock.calls[0];
-    expect(putCall[0]).toMatch(/^posts\/\d+-[a-z0-9]+\.\w+$/);
-    expect(putCall[1]).toHaveProperty("type", "image/jpeg");
+    expect(putCall[0]).toMatch(/^posts\/\d+-[a-z0-9]+\/full\.webp$/);
+    expect(putCall[1]).toHaveProperty("type", "image/webp");
     expect(putCall[2]).toEqual({ access: "public" });
   });
 
@@ -382,10 +422,12 @@ describe("POST /api/upload", () => {
     ];
 
     for (const { type, ext } of imageTypes) {
-      mockPut.mockResolvedValue({
-        url: `https://blob.vercel-storage.com/test-image.${ext}`,
-        pathname: `posts/12345-abc123.${ext}`,
-      });
+      mockPut.mockImplementation((pathname: string) =>
+        Promise.resolve({
+          url: `https://blob.vercel-storage.com/${pathname}`,
+          pathname,
+        }),
+      );
 
       const formData = new FormData();
       const file = createMockImageFile(`test.${ext}`, type);
@@ -406,10 +448,12 @@ describe("POST /api/upload", () => {
 
     process.env.BLOB_READ_WRITE_TOKEN = "test-token";
 
-    mockPut.mockResolvedValue({
-      url: "https://blob.vercel-storage.com/test-image.jpg",
-      pathname: "posts/12345-abc123.jpg",
-    });
+    mockPut.mockImplementation((pathname: string) =>
+      Promise.resolve({
+        url: `https://blob.vercel-storage.com/${pathname}`,
+        pathname,
+      }),
+    );
 
     const { POST } = await import("../route");
 

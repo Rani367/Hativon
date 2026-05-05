@@ -8,6 +8,7 @@ import { Upload, X, Loader2 } from "lucide-react";
 import Image from "next/image";
 import { toast } from "sonner";
 import { logError } from "@/lib/logger";
+import { getPostCardImageUrl } from "@/lib/images/post-images";
 
 interface ImageUploadProps {
   value: string;
@@ -77,6 +78,7 @@ export function ImageUpload({
   const handleRemoveImage = () => {
     onChange("");
   };
+  const previewImage = getPostCardImageUrl(value);
 
   return (
     <div className="space-y-2">
@@ -86,7 +88,7 @@ export function ImageUpload({
         <div className="space-y-2">
           <div className="relative rounded-lg overflow-hidden border h-40 sm:h-48">
             <Image
-              src={value}
+              src={previewImage || value}
               alt="תצוגה מקדימה"
               fill
               className="object-cover"
