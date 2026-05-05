@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 import {
+  canRestoreForwardPost,
   getRememberedIssuePath,
   getRememberedIssuePathForCurrentPost,
   rememberCurrentIssuePath,
@@ -42,5 +43,17 @@ describe("last issue path navigation memory", () => {
     rememberCurrentIssuePath("post-2");
 
     expect(getRememberedIssuePath("post-2")).toBeNull();
+  });
+
+  it("knows when the same post can be restored from forward history", () => {
+    rememberCurrentIssuePath("post-1", "/posts/post-1");
+
+    expect(canRestoreForwardPost("post-1", "/posts/post-1")).toBe(true);
+  });
+
+  it("does not restore forward history for a different post", () => {
+    rememberCurrentIssuePath("post-1", "/posts/post-1");
+
+    expect(canRestoreForwardPost("post-2", "/posts/post-2")).toBe(false);
   });
 });
