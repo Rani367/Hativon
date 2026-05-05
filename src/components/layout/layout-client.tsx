@@ -4,6 +4,7 @@ import { ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import { Header } from "./header";
 import type { ArchiveMonth } from "@/lib/posts/queries";
+import { PostOpenTransitionProvider } from "@/components/features/posts/post-open-transition-provider";
 
 interface LayoutClientProps {
   children: ReactNode;
@@ -25,14 +26,16 @@ export function LayoutClient({
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <Header archives={archives} defaultMonth={defaultMonth} />
-      <main className="mx-auto w-full max-w-[1600px] flex-1 px-4 py-6 sm:px-6 sm:py-10 lg:px-8 xl:px-12">
-        {children}
-      </main>
-      <footer className="py-4 text-center text-xs text-muted-foreground/50">
-        נבנה על ידי רני מלאך
-      </footer>
-    </div>
+    <PostOpenTransitionProvider>
+      <div className="min-h-screen bg-background flex flex-col">
+        <Header archives={archives} defaultMonth={defaultMonth} />
+        <main className="mx-auto w-full max-w-[1600px] flex-1 px-4 py-6 sm:px-6 sm:py-10 lg:px-8 xl:px-12">
+          {children}
+        </main>
+        <footer className="py-4 text-center text-xs text-muted-foreground/50">
+          נבנה על ידי רני מלאך
+        </footer>
+      </div>
+    </PostOpenTransitionProvider>
   );
 }
