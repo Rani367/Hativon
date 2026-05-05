@@ -123,6 +123,16 @@ const nextConfig: NextConfig = {
           },
         ],
       },
+      // Service worker must be checked for updates on every visit.
+      {
+        source: "/sw.js",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "no-cache",
+          },
+        ],
+      },
       // Security headers for all routes
       {
         source: "/:path*",
@@ -164,6 +174,7 @@ const nextConfig: NextConfig = {
               "img-src 'self' data: blob: https:",
               "font-src 'self' https://fonts.gstatic.com",
               "connect-src 'self' https://*.vercel-storage.com",
+              "worker-src 'self'",
               "frame-ancestors 'none'",
             ].join("; "),
           },
