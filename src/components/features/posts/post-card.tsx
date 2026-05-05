@@ -35,6 +35,14 @@ export default function PostCard({
   const hasTags = Boolean(post.tags?.length);
   const displayDescription = truncateDescription(post.description);
   const cardImageUrl = getPostCardImageUrl(post.coverImage);
+  const preloadCoverImage = () => {
+    if (!post.coverImage || typeof window === "undefined") {
+      return;
+    }
+
+    const image = new window.Image();
+    image.src = post.coverImage;
+  };
 
   const authorLine = post.author
     ? `מאת ${post.author}${post.authorDeleted ? " (נמחק)" : ""}${
@@ -63,8 +71,11 @@ export default function PostCard({
           href={href}
           className="absolute inset-0 z-10"
           aria-label={post.title}
-          prefetch={false}
+          prefetch={true}
           onClick={handleClick}
+          onMouseEnter={preloadCoverImage}
+          onTouchStart={preloadCoverImage}
+          onFocus={preloadCoverImage}
         />
         <div
           className={`relative w-full overflow-hidden rounded-t-lg ${
