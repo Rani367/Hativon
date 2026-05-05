@@ -10,7 +10,10 @@ import { getPostCardImageUrl } from "@/lib/images/post-images";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Clock, Calendar } from "lucide-react";
-import { rememberCurrentIssuePath } from "@/lib/navigation/last-issue-path";
+import {
+  canRestoreForwardPost,
+  rememberCurrentIssuePath,
+} from "@/lib/navigation/last-issue-path";
 
 interface PostCardProps {
   post: Post | PostSummary;
@@ -59,7 +62,20 @@ export default function PostCard({
       return;
     }
 
-    rememberCurrentIssuePath(post.id);
+    if (
+      event.button === 0 &&
+      !event.metaKey &&
+      !event.altKey &&
+      !event.ctrlKey &&
+      !event.shiftKey &&
+      canRestoreForwardPost(post.id, href)
+    ) {
+      event.preventDefault();
+      window.history.forward();
+      return;
+    }
+
+    rememberCurrentIssuePath(post.id, href);
   };
 
   return (

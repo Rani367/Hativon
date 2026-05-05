@@ -1,8 +1,16 @@
 const LAST_ISSUE_PATH_KEY = "hativon_last_issue_path";
+const ISSUE_FORWARD_POST_STATE_KEY = "__hativonIssueForwardPost";
 const MAX_REMEMBERED_ISSUE_AGE_MS = 30 * 60 * 1000;
 
 interface RememberedIssuePath {
   path: string;
+  postId: string;
+  timestamp: number;
+}
+
+interface IssueForwardPostState {
+  href: string;
+  issuePath: string;
   postId: string;
   timestamp: number;
 }
@@ -20,13 +28,72 @@ function getPostIdFromPathname(pathname: string): string | null {
   }
 }
 
-export function rememberCurrentIssuePath(postId: string) {
+function getCurrentPath() {
+  return window.location.pathname + window.location.search + window.location.hash;
+}
+
+function normalizePostHref(href: string) {
+  return new URL(href, window.location.origin).pathname;
+}
+
+function isObjectState(
+  state: unknown,
+): state is Record<string, unknown> {
+  return state !== null && typeof state === "object" && !Array.isArray(state);
+}
+
+function getForwardPostState(): IssueForwardPostState | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  const historyState = window.history.state;
+  if (!isObjectState(historyState)) {
+    return null;
+  }
+
+  const forwardPostState = historyState[ISSUE_FORWARD_POST_STATE_KEY];
+  if (!isObjectState(forwardPostState)) {
+    return null;
+  }
+
+  const { href, issuePath, postId, timestamp } = forwardPostState;
+  if (
+    typeof href !== "string" ||
+    typeof issuePath !== "string" ||
+    typeof postId !== "string" ||
+    typeof timestamp !== "number"
+  ) {
+    return null;
+  }
+
+  return { href, issuePath, postId, timestamp };
+}
+
+function rememberForwardPost(postId: string, postHref: string, issuePath: string) {
+  const nextHistoryState = isObjectState(window.history.state)
+    ? { ...window.history.state }
+    : {};
+
+  nextHistoryState[ISSUE_FORWARD_POST_STATE_KEY] = {
+    href: normalizePostHref(postHref),
+    issuePath,
+    postId,
+    timestamp: Date.now(),
+  } satisfies IssueForwardPostState;
+
+  window.history.replaceState(nextHistoryState, "", issuePath);
+}
+
+export function rememberCurrentIssuePath(
+  postId: string,
+  postHref = `/posts/${encodeURIComponent(postId)}`,
+) {
   if (typeof window === "undefined") {
     return;
   }
 
-  const currentPath =
-    window.location.pathname + window.location.search + window.location.hash;
+  const currentPath = getCurrentPath();
 
   if (!currentPath.startsWith("/posts/")) {
     const rememberedIssuePath: RememberedIssuePath = {
@@ -38,6 +105,7 @@ export function rememberCurrentIssuePath(postId: string) {
       LAST_ISSUE_PATH_KEY,
       JSON.stringify(rememberedIssuePath),
     );
+    rememberForwardPost(postId, postHref, currentPath);
   }
 }
 
@@ -78,4 +146,26 @@ export function getRememberedIssuePathForCurrentPost(): string | null {
 
   const postId = getPostIdFromPathname(window.location.pathname);
   return postId ? getRememberedIssuePath(postId) : null;
+}
+
+export function canRestoreForwardPost(postId: string, postHref: string): boolean {
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  const forwardPostState = getForwardPostState();
+  if (!forwardPostState) {
+    return false;
+  }
+
+  const isExpired =
+    Date.now() - forwardPostState.timestamp > MAX_REMEMBERED_ISSUE_AGE_MS;
+
+  return (
+    !isExpired &&
+    forwardPostState.postId === postId &&
+    forwardPostState.href === normalizePostHref(postHref) &&
+    forwardPostState.issuePath === getCurrentPath() &&
+    window.history.length > 1
+  );
 }
