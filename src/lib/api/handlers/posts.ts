@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { safeRevalidateTag } from "@/lib/cache/revalidate";
 import {
   getPostById,
   updatePost,
@@ -97,9 +96,6 @@ export async function handleUpdatePost(
       return NextResponse.json({ error: "Post not found" }, { status: 404 });
     }
 
-    // Granular cache invalidation - only revalidate posts tag
-    safeRevalidateTag("posts", "max");
-
     return NextResponse.json(updatedPost);
   } catch (error) {
     logError("Error updating post:", error);
@@ -138,14 +134,11 @@ export async function handleDeletePost(
       );
     }
 
-    const success = await deletePost(id);
+    const success = await deletePost(id, existingPost);
 
     if (!success) {
       return NextResponse.json({ error: "Post not found" }, { status: 404 });
     }
-
-    // Granular cache invalidation - only revalidate posts tag
-    safeRevalidateTag("posts", "max");
 
     return NextResponse.json({ success: true });
   } catch (error) {

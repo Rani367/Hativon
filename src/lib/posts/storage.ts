@@ -4,7 +4,7 @@ import { db } from "../db/client";
 import { v4 as uuidv4 } from "uuid";
 import { generateDescription, rowToPost } from "./utils";
 import { getPostById } from "./queries";
-import { safeRevalidateTag } from "../cache/revalidate";
+import { revalidatePublicPostChange } from "../cache/public-posts";
 import { getWordCount } from "@/lib/utils/text-utils";
 
 /**
@@ -63,8 +63,7 @@ export async function createPost(input: PostInput): Promise<Post> {
 
     const post = rowToPost(result.rows[0]);
 
-    // Revalidate cache to show new post instantly
-    safeRevalidateTag("posts", "max");
+    revalidatePublicPostChange(null, post);
 
     return post;
   } catch (error) {
@@ -154,8 +153,7 @@ export async function updatePost(
 
     const post = rowToPost(result.rows[0]);
 
-    // Revalidate cache to show updates instantly
-    safeRevalidateTag("posts", "max");
+    revalidatePublicPostChange(existing, post);
 
     return post;
   } catch (error) {
@@ -170,8 +168,14 @@ export async function updatePost(
  * @param id - Post UUID
  * @returns true if post was deleted, false if not found or deletion failed
  */
-export async function deletePost(id: string): Promise<boolean> {
+export async function deletePost(
+  id: string,
+  existingPost?: Post | null,
+): Promise<boolean> {
   try {
+    const existing =
+      existingPost === undefined ? await getPostById(id) : existingPost;
+
     const result = (await db.query`
       DELETE FROM posts
       WHERE id = ${id}
@@ -179,9 +183,8 @@ export async function deletePost(id: string): Promise<boolean> {
 
     const deleted = result.rowCount > 0;
 
-    // Revalidate cache to remove deleted post instantly
     if (deleted) {
-      safeRevalidateTag("posts", "max");
+      revalidatePublicPostChange(existing, null);
     }
 
     return deleted;

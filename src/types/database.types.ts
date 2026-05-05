@@ -71,6 +71,23 @@ export interface DbPostRow {
   updated_at: Date;
 }
 
+export type DbPostSummaryRow = Pick<
+  DbPostRow,
+  | "id"
+  | "title"
+  | "cover_image"
+  | "description"
+  | "word_count"
+  | "date"
+  | "author"
+  | "author_grade"
+  | "author_class"
+  | "author_deleted"
+  | "is_teacher_post"
+  | "tags"
+  | "category"
+>;
+
 /**
  * Database statistics result
  */
@@ -116,6 +133,6 @@ export type ResetTokenQueryResult = DbQueryResult<DbResetTokenRow>;
  */
 export type UserQueryResult = DbQueryResult<DbUserRow>;
 export type PostQueryResult = DbQueryResult<DbPostRow>;
-export type PostSummaryQueryResult = DbQueryResult<Omit<DbPostRow, "content">>;
+export type PostSummaryQueryResult = DbQueryResult<DbPostSummaryRow>;
 export type ExistsQueryResult = DbQueryResult<DbExistsResult>;
 export type StatsQueryResult = DbQueryResult<DbStatsRow>;

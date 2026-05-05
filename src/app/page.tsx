@@ -8,7 +8,7 @@ import {
 } from "@/lib/date/months";
 import { IssuePage } from "@/components/features/posts/issue-page";
 
-export const revalidate = 60;
+export const revalidate = false;
 
 export default async function Home() {
   const { year, month } = await getCachedDefaultMonth();

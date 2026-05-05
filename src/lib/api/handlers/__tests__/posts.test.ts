@@ -4,7 +4,7 @@ import { describe, it, expect, beforeEach, mock } from "bun:test";
 // next/cache is also mocked in setup.ts
 
 import { handleGetPost, handleUpdatePost, handleDeletePost } from "../posts";
-import { revalidateTag } from "next/cache";
+import { revalidatePath } from "next/cache";
 
 // Access global delegates for assertions and mock control
 const _g = globalThis as Record<string, unknown>;
@@ -43,7 +43,7 @@ describe("Post Handlers", () => {
     _g.__postsBarrelCanUserEditPostMock = mockCanUserEditPost;
     _g.__postsBarrelCanUserDeletePostMock = mockCanUserDeletePost;
     _g.__logErrorMock = mock(() => undefined);
-    (revalidateTag as ReturnType<typeof mock>).mockReset();
+    (revalidatePath as ReturnType<typeof mock>).mockReset();
   });
 
   describe("handleGetPost", () => {
@@ -139,7 +139,7 @@ describe("Post Handlers", () => {
         false,
         mockPost,
       );
-      expect(revalidateTag).toHaveBeenCalledWith("posts", "max");
+      expect(revalidatePath).not.toHaveBeenCalled();
     });
 
     it("updates post when admin", async () => {
@@ -304,7 +304,7 @@ describe("Post Handlers", () => {
         false,
         mockPost,
       );
-      expect(revalidateTag).toHaveBeenCalledWith("posts", "max");
+      expect(revalidatePath).not.toHaveBeenCalled();
     });
 
     it("deletes post when admin", async () => {

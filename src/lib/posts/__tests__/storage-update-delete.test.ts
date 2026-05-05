@@ -1,4 +1,5 @@
 import { describe, it, expect, mock, spyOn, beforeEach } from "bun:test";
+import { revalidatePath } from "next/cache";
 
 // Use global delegate for db mock (set up in test/setup.ts)
 const _g = globalThis as Record<string, unknown>;
@@ -23,6 +24,7 @@ describe("Post Storage - Update and Delete Operations", () => {
     mockGetPostById = mock(() => undefined);
     _g.__dbQueryMock = mockDbQuery;
     _g.__postsQueriesGetPostByIdMock = mockGetPostById;
+    (revalidatePath as ReturnType<typeof mock>).mockReset();
   });
 
   describe("updatePost", () => {
@@ -192,6 +194,9 @@ describe("Post Storage - Update and Delete Operations", () => {
       expect(result?.tags).toEqual(["new", "tags"]);
       expect(result?.category).toBe("Tech");
       expect(result?.status).toBe("published");
+      expect(revalidatePath).toHaveBeenCalledWith("/");
+      expect(revalidatePath).toHaveBeenCalledWith("/2025/january");
+      expect(revalidatePath).toHaveBeenCalledWith("/posts/post-123");
     });
 
     it("returns null when update query returns no rows", async () => {
@@ -268,6 +273,28 @@ describe("Post Storage - Update and Delete Operations", () => {
 
       expect(result).toBe(true);
       expect(mockDbQuery).toHaveBeenCalledTimes(1);
+      expect(revalidatePath).not.toHaveBeenCalled();
+    });
+
+    it("revalidates public paths when deleting a published post", async () => {
+      mockGetPostById.mockResolvedValue({
+        id: "post-123",
+        title: "Published",
+        content: "Content",
+        description: "Content",
+        date: "2025-01-01T00:00:00.000Z",
+        status: "published",
+      });
+      mockDbQuery.mockResolvedValue({ rowCount: 1 });
+
+      const { deletePost } = await import("../storage");
+
+      const result = await deletePost("post-123");
+
+      expect(result).toBe(true);
+      expect(revalidatePath).toHaveBeenCalledWith("/");
+      expect(revalidatePath).toHaveBeenCalledWith("/2025/january");
+      expect(revalidatePath).toHaveBeenCalledWith("/posts/post-123");
     });
 
     it("returns false when post is not found", async () => {

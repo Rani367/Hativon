@@ -300,16 +300,12 @@ export async function getPostSummariesByMonth(
         p.word_count,
         p.date,
         p.author,
-        p.author_id,
         p.author_grade,
         p.author_class,
         CASE WHEN u.id IS NULL AND p.author_id IS NOT NULL AND p.author_id != 'legacy-admin' THEN true ELSE false END as author_deleted,
         p.is_teacher_post,
         p.tags,
-        p.category,
-        p.status,
-        p.created_at,
-        p.updated_at
+        p.category
       FROM posts p
       LEFT JOIN users u ON p.author_id = u.id::text
       WHERE p.status = 'published'

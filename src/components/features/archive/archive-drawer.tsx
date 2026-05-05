@@ -156,6 +156,7 @@ export function ArchiveDrawer({
                 <nav className="space-y-2">
                   <Link
                     href={`/${latestYear}/${latestMonth}`}
+                    prefetch={false}
                     onClick={() => {
                       triggerHaptic();
                       onClose();
@@ -214,6 +215,7 @@ export function ArchiveDrawer({
                                     <Link
                                       key={month.month}
                                       href={`/${yearGroup.year}/${month.monthNameEn}`}
+                                      prefetch={false}
                                       onClick={() => {
                                         triggerHaptic();
                                         onClose();

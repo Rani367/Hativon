@@ -59,6 +59,7 @@ export default function EditPostPage({
     postId: id,
     initialVersion,
     enabled: !loading && !!post,
+    serverSave: post?.status !== "published",
     onConflict: () => {
       setShowConflictDialog(true);
     },

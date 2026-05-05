@@ -14,7 +14,7 @@ mock.module("@/lib/auth/middleware", () => ({
 // @/lib/posts barrel, @/lib/logger, and next/cache are mocked via global delegates in test/setup.ts
 
 import { GET, PATCH, DELETE } from "../[id]/route";
-import { revalidateTag } from "next/cache";
+import { revalidatePath } from "next/cache";
 import type { Post } from "@/types/post.types";
 import type { User } from "@/types/user.types";
 
@@ -68,7 +68,7 @@ describe("User Posts API Routes", () => {
     _g.__postsBarrelUpdatePostMock = mockUpdatePost;
     _g.__postsBarrelDeletePostMock = mockDeletePost;
     _g.__logErrorMock = mock(() => undefined);
-    (revalidateTag as ReturnType<typeof mock>).mockReset();
+    (revalidatePath as ReturnType<typeof mock>).mockReset();
   });
 
   describe("GET /api/user/posts/[id]", () => {
@@ -211,7 +211,7 @@ describe("User Posts API Routes", () => {
       expect(mockUpdatePost).toHaveBeenCalledWith("post-456", {
         title: "Updated Title",
       });
-      expect(revalidateTag).toHaveBeenCalledWith("posts", "max");
+      expect(revalidatePath).not.toHaveBeenCalled();
     });
 
     it("returns 404 when updatePost returns null", async () => {
@@ -305,8 +305,8 @@ describe("User Posts API Routes", () => {
 
       expect(response.status).toBe(200);
       expect(body.success).toBe(true);
-      expect(mockDeletePost).toHaveBeenCalledWith("post-456");
-      expect(revalidateTag).toHaveBeenCalledWith("posts", "max");
+      expect(mockDeletePost).toHaveBeenCalledWith("post-456", mockPost);
+      expect(revalidatePath).not.toHaveBeenCalled();
     });
 
     it("returns 404 when deletePost returns false", async () => {
