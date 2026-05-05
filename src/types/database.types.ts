@@ -56,6 +56,7 @@ export interface DbPostRow {
   content: string;
   cover_image: string | null;
   description: string;
+  word_count?: number;
   date: Date;
   author: string | null;
   author_id: string | null;
@@ -115,5 +116,6 @@ export type ResetTokenQueryResult = DbQueryResult<DbResetTokenRow>;
  */
 export type UserQueryResult = DbQueryResult<DbUserRow>;
 export type PostQueryResult = DbQueryResult<DbPostRow>;
+export type PostSummaryQueryResult = DbQueryResult<Omit<DbPostRow, "content">>;
 export type ExistsQueryResult = DbQueryResult<DbExistsResult>;
 export type StatsQueryResult = DbQueryResult<DbStatsRow>;

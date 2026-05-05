@@ -1,11 +1,34 @@
-import { redirect } from "next/navigation";
-import { getDefaultMonthWithFallback } from "@/lib/settings";
+import {
+  getCachedDefaultMonth,
+  getCachedPostSummariesByMonth,
+} from "@/lib/posts/cached-queries";
+import {
+  englishMonthToNumber,
+  englishToHebrewMonth,
+} from "@/lib/date/months";
+import { IssuePage } from "@/components/features/posts/issue-page";
 
-// Pre-render homepage and revalidate every 5 minutes
-// (to pick up default month changes from admin panel)
-export const revalidate = 300; // 5 minutes
+export const revalidate = 60;
 
 export default async function Home() {
-  const { year, month } = await getDefaultMonthWithFallback();
-  redirect(`/${year}/${month}`);
+  const { year, month } = await getCachedDefaultMonth();
+  const monthNumber = englishMonthToNumber(month);
+
+  if (!monthNumber) {
+    return null;
+  }
+
+  const result = await getCachedPostSummariesByMonth(year, monthNumber, {
+    limit: 12,
+    offset: 0,
+  });
+
+  return (
+    <IssuePage
+      year={year}
+      month={month}
+      hebrewMonth={englishToHebrewMonth(month)}
+      result={result}
+    />
+  );
 }

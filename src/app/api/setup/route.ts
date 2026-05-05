@@ -4,6 +4,7 @@ import { head } from "@vercel/blob";
 import { logError } from "@/lib/logger";
 import { createRateLimiter, getClientIdentifier } from "@/lib/rate-limit";
 import { verifyAdminPassword } from "@/lib/auth/admin";
+import { getWordCount } from "@/lib/utils/text-utils";
 
 /**
  * One-time setup endpoint for Vercel production
@@ -150,6 +151,7 @@ export async function POST(request: NextRequest) {
         content TEXT NOT NULL,
         cover_image TEXT,
         description TEXT NOT NULL,
+        word_count INTEGER NOT NULL DEFAULT 0,
         date TIMESTAMP NOT NULL,
         author TEXT,
         author_id TEXT,
@@ -221,7 +223,7 @@ export async function POST(request: NextRequest) {
             try {
               await db.query`
                 INSERT INTO posts (
-                  id, title, content, cover_image, description,
+                  id, title, content, cover_image, description, word_count,
                   date, author, author_id, author_grade, author_class,
                   tags, category, status, created_at, updated_at
                 )
@@ -231,6 +233,7 @@ export async function POST(request: NextRequest) {
                   ${post.content},
                   ${post.coverImage || null},
                   ${post.description},
+                  ${getWordCount(post.content || "")},
                   ${new Date(post.date)},
                   ${post.author || null},
                   ${post.authorId || null},

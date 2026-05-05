@@ -128,14 +128,6 @@ export default function RootLayout({
           rel="dns-prefetch"
           href="https://hqsluqjwqsbrbrz6.public.blob.vercel-storage.com"
         />
-        {/* Preload critical above-the-fold image if exists */}
-        <link
-          rel="preload"
-          as="image"
-          href="/main.jpg"
-          type="image/jpeg"
-          fetchPriority="high"
-        />
       </head>
       <body className={heebo.className}>
         <ClientProviders>

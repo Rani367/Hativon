@@ -11,6 +11,7 @@ export {
   getPostStats as getCachedPostStats,
   getPublishedPostById as getCachedPublishedPostById,
   getPostsByMonth as getCachedPostsByMonth,
+  getPostSummariesByMonth as getCachedPostSummariesByMonth,
   getArchiveMonths as getCachedArchiveMonths,
 } from "./queries";
 

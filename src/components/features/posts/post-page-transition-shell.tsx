@@ -102,7 +102,6 @@ export function PostPageTransitionShell({
             sizes="(max-width: 768px) 100vw, 896px"
             placeholder="blur"
             blurDataURL={BLUR_DATA_URL}
-            unoptimized
           />
         </div>
       )}

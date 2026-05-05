@@ -3,6 +3,7 @@ import { getPosts, getPost as getPostBase, getWordCount } from "@/lib/posts";
 import { notFound } from "next/navigation";
 import { Metadata } from "next";
 import { PostPageTransitionShell } from "@/components/features/posts/post-page-transition-shell";
+import { PostOpenTransitionProvider } from "@/components/features/posts/post-open-transition-provider";
 
 // Request-level cache for getPost - dedupes calls in generateMetadata and page component
 const getPost = cache(getPostBase);
@@ -148,23 +149,25 @@ export default async function PostPage({ params }: PostPageProps) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: safeJsonLd }}
       />
-      <PostPageTransitionShell post={post} wordCount={wordCount}>
-        <Suspense
-          fallback={
-            <div className="animate-pulse space-y-4">
-              <div className="h-4 w-full rounded bg-muted" />
-              <div className="h-4 w-5/6 rounded bg-muted" />
-              <div className="h-4 w-4/6 rounded bg-muted" />
-              <div className="h-4 w-full rounded bg-muted" />
-              <div className="h-4 w-3/4 rounded bg-muted" />
+      <PostOpenTransitionProvider>
+        <PostPageTransitionShell post={post} wordCount={wordCount}>
+          <Suspense
+            fallback={
+              <div className="animate-pulse space-y-4">
+                <div className="h-4 w-full rounded bg-muted" />
+                <div className="h-4 w-5/6 rounded bg-muted" />
+                <div className="h-4 w-4/6 rounded bg-muted" />
+                <div className="h-4 w-full rounded bg-muted" />
+                <div className="h-4 w-3/4 rounded bg-muted" />
+              </div>
+            }
+          >
+            <div className="prose max-w-none rounded-2xl border bg-background p-4 shadow-sm dark:prose-invert sm:prose-lg sm:rounded-[2rem] sm:p-8">
+              <PostContent content={post.content} />
             </div>
-          }
-        >
-          <div className="prose max-w-none rounded-2xl border bg-background p-4 shadow-sm dark:prose-invert sm:prose-lg sm:rounded-[2rem] sm:p-8">
-            <PostContent content={post.content} />
-          </div>
-        </Suspense>
-      </PostPageTransitionShell>
+          </Suspense>
+        </PostPageTransitionShell>
+      </PostOpenTransitionProvider>
     </>
   );
 }

@@ -16,11 +16,16 @@ export {
   getPostById,
   getPublishedPostById,
   getPostsByAuthor,
+  getPostSummariesByMonth,
   getPostStats,
 } from "./queries";
 
 // Query types
-export type { PaginationOptions, PaginatedPosts } from "./queries";
+export type {
+  PaginationOptions,
+  PaginatedPosts,
+  PaginatedPostSummaries,
+} from "./queries";
 
 // Public API (published posts only)
 export { getPosts, getPost, getWordCount } from "./posts";
@@ -35,5 +40,6 @@ export { canUserEditPost, canUserDeletePost } from "./permissions";
 export {
   generateDescription,
   rowToPost,
+  rowToPostSummary,
   MAX_DESCRIPTION_LENGTH,
 } from "./utils";

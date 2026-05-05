@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from "uuid";
 import { generateDescription, rowToPost } from "./utils";
 import { getPostById } from "./queries";
 import { safeRevalidateTag } from "../cache/revalidate";
+import { getWordCount } from "@/lib/utils/text-utils";
 
 /**
  * Default post status for new posts
@@ -28,11 +29,12 @@ export async function createPost(input: PostInput): Promise<Post> {
       ? input.description.trim()
       : generateDescription(input.content);
   const status = input.status || DEFAULT_POST_STATUS;
+  const wordCount = getWordCount(input.content);
 
   try {
     const result = (await db.query`
       INSERT INTO posts (
-        id, slug, title, content, cover_image, description,
+        id, slug, title, content, cover_image, description, word_count,
         date, author, author_id, author_grade, author_class,
         is_teacher_post, tags, category, status, created_at, updated_at
       )
@@ -43,6 +45,7 @@ export async function createPost(input: PostInput): Promise<Post> {
         ${input.content},
         ${input.coverImage || null},
         ${description},
+        ${wordCount},
         ${now},
         ${input.author || null},
         ${input.authorId || null},
@@ -91,15 +94,19 @@ export async function updatePost(
     }
 
     // Merge input with existing values so we can use a static template literal query
-    const title = input.title !== undefined ? input.title : existing.title;
+    const title = input.title !== undefined ? input.title : existing.title || "";
     const content =
-      input.content !== undefined ? input.content : existing.content;
+      input.content !== undefined ? input.content : existing.content || "";
     const description =
       input.description && input.description.trim()
         ? input.description.trim()
         : input.content !== undefined
           ? generateDescription(input.content)
-          : existing.description;
+          : existing.description || generateDescription(content);
+    const wordCount =
+      input.content !== undefined
+        ? getWordCount(input.content)
+        : existing.wordCount ?? getWordCount(content);
     const coverImage =
       input.coverImage !== undefined
         ? input.coverImage
@@ -127,6 +134,7 @@ export async function updatePost(
         title = ${title},
         content = ${content},
         description = ${description},
+        word_count = ${wordCount},
         cover_image = ${coverImage || null},
         author = ${author || null},
         author_id = ${authorId || null},

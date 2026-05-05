@@ -4,15 +4,16 @@ import Link from "next/link";
 import Image from "next/image";
 import { type MouseEvent } from "react";
 import { formatHebrewDate } from "@/lib/date/format";
-import { Post } from "@/types/post.types";
+import type { Post, PostSummary } from "@/types/post.types";
 import { calculateReadingTime, cn, getWordCount, triggerHaptic } from "@/lib/utils";
 import { truncateDescription } from "@/lib/posts/utils";
+import { getPostCardImageUrl } from "@/lib/images/post-images";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Clock, Calendar } from "lucide-react";
 
 interface PostCardProps {
-  post: Post;
+  post: Post | PostSummary;
   priority?: boolean;
   compact?: boolean;
   uniformHeightBelowMd?: boolean;
@@ -27,19 +28,13 @@ export default function PostCard({
   compact = false,
   uniformHeightBelowMd = false,
 }: PostCardProps) {
-  const wordCount = post.content ? getWordCount(post.content) : 0;
+  const wordCount =
+    post.wordCount ?? ("content" in post && post.content ? getWordCount(post.content) : 0);
   const readingTime = calculateReadingTime(wordCount);
   const shouldUseUniformMobileHeight = uniformHeightBelowMd && !compact;
   const hasTags = Boolean(post.tags?.length);
   const displayDescription = truncateDescription(post.description);
-  const preloadCoverImage = () => {
-    if (!post.coverImage || typeof window === "undefined") {
-      return;
-    }
-
-    const image = new window.Image();
-    image.src = post.coverImage;
-  };
+  const cardImageUrl = getPostCardImageUrl(post.coverImage);
 
   const authorLine = post.author
     ? `מאת ${post.author}${post.authorDeleted ? " (נמחק)" : ""}${
@@ -68,20 +63,17 @@ export default function PostCard({
           href={href}
           className="absolute inset-0 z-10"
           aria-label={post.title}
-          prefetch={true}
+          prefetch={false}
           onClick={handleClick}
-          onMouseEnter={preloadCoverImage}
-          onTouchStart={preloadCoverImage}
-          onFocus={preloadCoverImage}
         />
         <div
           className={`relative w-full overflow-hidden rounded-t-lg ${
             compact ? "aspect-[16/9]" : "aspect-[16/11] sm:aspect-[4/3]"
           }`}
         >
-          {post.coverImage ? (
+          {cardImageUrl ? (
             <Image
-              src={post.coverImage}
+              src={cardImageUrl}
               alt={post.title}
               width={800}
               height={800}
@@ -91,13 +83,12 @@ export default function PostCard({
               sizes={
                 compact
                   ? "(max-width: 1024px) 100vw, 30rem"
-                  : "(max-width: 768px) 100vw, (max-width: 1279px) 50vw, 40vw"
+                  : "(max-width: 767px) calc(100vw - 2rem), (max-width: 1279px) calc(50vw - 3rem), 500px"
               }
               className="absolute inset-0 h-full w-full object-cover"
               quality={75}
               placeholder="blur"
               blurDataURL={BLUR_DATA_URL}
-              unoptimized
             />
           ) : (
             <div className="flex h-full w-full items-end bg-gradient-to-br from-muted via-muted/70 to-amber-100/60 p-5">

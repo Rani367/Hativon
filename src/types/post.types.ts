@@ -4,6 +4,7 @@ export interface Post {
   content: string;
   coverImage?: string;
   description: string;
+  wordCount?: number;
   date: string;
   author?: string;
   authorId?: string; // User ID reference for post ownership
@@ -18,11 +19,15 @@ export interface Post {
   updatedAt: string;
 }
 
+export type PostSummary = Omit<Post, "content" | "wordCount"> & {
+  wordCount: number;
+};
+
 export interface PostInput {
   title: string;
   content: string;
   description?: string; // Optional custom description - if not provided, auto-generated from content
-  coverImage: string; // Required cover image for post
+  coverImage?: string; // Required for publishing, optional for drafts/autosave
   author?: string;
   authorId?: string; // User ID reference for post ownership
   authorGrade?: string; // Author's grade (ז, ח, ט, י)
