@@ -76,6 +76,7 @@ export function PostPageTransitionShell({
       <div className="mb-4 sm:mb-6">
         <Link
           href="/"
+          prefetch={false}
           className="inline-flex min-h-10 items-center rounded-full border px-3 py-1 text-sm text-muted-foreground transition-colors hover:bg-muted"
         >
           חזרה לגיליון

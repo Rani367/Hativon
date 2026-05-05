@@ -34,7 +34,7 @@ export const autoSavePayloadSchema = z.object({
   title: autoSaveTitleSchema,
   content: autoSaveContentSchema,
   description: postDescriptionSchema,
-  coverImage: coverImageSchema,
+  coverImage: coverImageSchema.optional(),
   customAuthor: z.string().max(100).optional(),
 
   // Conflict detection - timestamp of when form was loaded

@@ -11,8 +11,8 @@ import {
 } from "@/lib/date/months";
 import { IssuePage } from "@/components/features/posts/issue-page";
 
-// Static generation with ISR - pages are pre-built at build time
-export const revalidate = 60;
+// Static generation with publish-triggered revalidation.
+export const revalidate = false;
 
 // Allow dynamic rendering for months not pre-generated at build time
 export const dynamicParams = true;

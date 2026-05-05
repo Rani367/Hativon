@@ -53,6 +53,9 @@ describe("GET /api/posts", () => {
     expect(response.status).toBe(200);
     expect(data.posts).toHaveLength(1);
     expect(data.posts[0]).not.toHaveProperty("content");
+    expect(data.posts[0]).not.toHaveProperty("status");
+    expect(data.posts[0]).not.toHaveProperty("createdAt");
+    expect(data.posts[0]).not.toHaveProperty("updatedAt");
     expect(mockGetPostSummariesByMonth).toHaveBeenCalledWith(2026, 5, {
       limit: 12,
       offset: 0,

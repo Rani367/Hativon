@@ -3,20 +3,13 @@
 import { ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import { Header } from "./header";
-import type { ArchiveMonth } from "@/lib/posts/queries";
 import { PostOpenTransitionProvider } from "@/components/features/posts/post-open-transition-provider";
 
 interface LayoutClientProps {
   children: ReactNode;
-  archives: ArchiveMonth[];
-  defaultMonth: { year: number; month: string };
 }
 
-export function LayoutClient({
-  children,
-  archives,
-  defaultMonth,
-}: LayoutClientProps) {
+export function LayoutClient({ children }: LayoutClientProps) {
   const pathname = usePathname();
 
   // Don't wrap admin or dashboard routes with the main site layout
@@ -28,7 +21,7 @@ export function LayoutClient({
   return (
     <PostOpenTransitionProvider>
       <div className="min-h-screen bg-background flex flex-col">
-        <Header archives={archives} defaultMonth={defaultMonth} />
+        <Header />
         <main className="mx-auto w-full max-w-[1600px] flex-1 px-4 py-6 sm:px-6 sm:py-10 lg:px-8 xl:px-12">
           {children}
         </main>

@@ -28,6 +28,8 @@ interface UseAutoSaveOptions {
   initialVersion?: string;
   /** Whether auto-save is enabled (default: true) */
   enabled?: boolean;
+  /** Whether changes should be saved to the server (default: true) */
+  serverSave?: boolean;
   /** Callback when save completes successfully */
   onSaveComplete?: (id: string, updatedAt: string) => void;
   /** Callback when conflict is detected */
@@ -77,6 +79,7 @@ export function useAutoSave({
   postId,
   initialVersion,
   enabled = true,
+  serverSave = true,
   onSaveComplete,
   onConflict,
 }: UseAutoSaveOptions): UseAutoSaveReturn {
@@ -184,6 +187,13 @@ export function useAutoSave({
     async (data: PostFormData) => {
       if (!enabled) return;
 
+      if (!serverSave) {
+        setStatus("saved");
+        setLastSaved(new Date());
+        setErrorMessage(null);
+        return;
+      }
+
       // Cancel any in-flight request
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
@@ -272,7 +282,14 @@ export function useAutoSave({
         );
       }
     },
-    [enabled, currentPostId, serverVersion, onSaveComplete, onConflict],
+    [
+      enabled,
+      serverSave,
+      currentPostId,
+      serverVersion,
+      onSaveComplete,
+      onConflict,
+    ],
   );
 
   /**

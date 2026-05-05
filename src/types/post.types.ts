@@ -19,9 +19,21 @@ export interface Post {
   updatedAt: string;
 }
 
-export type PostSummary = Omit<Post, "content" | "wordCount"> & {
+export interface PostSummary {
+  id: string;
+  title: string;
+  coverImage?: string;
+  description: string;
   wordCount: number;
-};
+  date: string;
+  author?: string;
+  authorGrade?: string;
+  authorClass?: number;
+  authorDeleted?: boolean;
+  isTeacherPost?: boolean;
+  tags?: string[];
+  category?: string;
+}
 
 export interface PostInput {
   title: string;

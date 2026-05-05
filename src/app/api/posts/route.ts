@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getPostSummariesByMonth } from "@/lib/posts";
 import { logError } from "@/lib/logger";
+import type { PostSummary } from "@/types/post.types";
 
 const DEFAULT_LIMIT = 12;
 const MAX_LIMIT = 24;
@@ -18,6 +19,24 @@ const MONTH_NAME_TO_NUMBER: Record<string, number> = {
   november: 11,
   december: 12,
 };
+
+function toPublicPostSummary(post: PostSummary): PostSummary {
+  return {
+    id: post.id,
+    title: post.title,
+    coverImage: post.coverImage,
+    description: post.description,
+    wordCount: post.wordCount,
+    date: post.date,
+    author: post.author,
+    authorGrade: post.authorGrade,
+    authorClass: post.authorClass,
+    authorDeleted: post.authorDeleted,
+    isTeacherPost: post.isTeacherPost,
+    tags: post.tags,
+    category: post.category,
+  };
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -66,11 +85,17 @@ export async function GET(request: NextRequest) {
       offset,
     });
 
-    return NextResponse.json(result, {
-      headers: {
-        "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
+    return NextResponse.json(
+      {
+        ...result,
+        posts: result.posts.map(toPublicPostSummary),
       },
-    });
+      {
+        headers: {
+          "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
+        },
+      },
+    );
   } catch (error) {
     logError("Error fetching public posts:", error);
     return NextResponse.json(

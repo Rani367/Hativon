@@ -37,11 +37,11 @@ interface PostPageProps {
   params: Promise<{ id: string }>;
 }
 
-// Enable ISR with 5 minute revalidation for instant loading
-export const revalidate = 300;
+// Static generation with publish-triggered revalidation.
+export const revalidate = false;
 
-// Pre-render all posts at build time - return 404 for unknown IDs
-export const dynamicParams = false;
+// Allow newly published posts to render without a redeploy.
+export const dynamicParams = true;
 
 // Generate static params for all published posts
 export async function generateStaticParams() {

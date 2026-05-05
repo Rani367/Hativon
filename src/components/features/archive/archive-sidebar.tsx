@@ -144,6 +144,7 @@ export function ArchiveSidebar({ archives }: ArchiveSidebarProps) {
           <div className="overflow-y-auto max-h-[calc(100vh-12rem)]">
             <Link
               href={`/${latestYear}/${latestMonth}`}
+              prefetch={false}
               className={cn(
                 "block px-3 py-2 rounded-lg text-sm font-semibold transition-colors mb-2",
                 "hover:bg-accent",
@@ -194,6 +195,7 @@ export function ArchiveSidebar({ archives }: ArchiveSidebarProps) {
                           <Link
                             key={month.month}
                             href={`/${yearGroup.year}/${month.monthNameEn}`}
+                            prefetch={false}
                             className={cn(
                               "block px-3 py-2 rounded-lg text-sm transition-colors",
                               "hover:bg-accent",

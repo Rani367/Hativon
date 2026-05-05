@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { safeRevalidateTag } from "@/lib/cache/revalidate";
 import { createPost, updatePost, getPostById } from "@/lib/posts";
 import { getCurrentUser } from "@/lib/auth/middleware";
 import { logError } from "@/lib/logger";
@@ -73,8 +72,6 @@ export async function POST(request: NextRequest) {
         status: "draft",
       });
 
-      safeRevalidateTag("posts", "max");
-
       return NextResponse.json({
         success: true,
         id: newPost.id,
@@ -95,6 +92,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: "Forbidden - You can only edit your own posts" },
         { status: 403 },
+      );
+    }
+
+    if (existingPost.status === "published") {
+      return NextResponse.json(
+        { error: "Published posts must be saved explicitly" },
+        { status: 400 },
       );
     }
 
@@ -145,8 +149,6 @@ export async function POST(request: NextRequest) {
     if (!updatedPost) {
       return NextResponse.json({ error: "Post not found" }, { status: 404 });
     }
-
-    safeRevalidateTag("posts", "max");
 
     return NextResponse.json({
       success: true,

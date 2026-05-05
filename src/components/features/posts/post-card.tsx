@@ -71,7 +71,7 @@ export default function PostCard({
           href={href}
           className="absolute inset-0 z-10"
           aria-label={post.title}
-          prefetch={true}
+          prefetch={false}
           onClick={handleClick}
           onMouseEnter={preloadCoverImage}
           onTouchStart={preloadCoverImage}

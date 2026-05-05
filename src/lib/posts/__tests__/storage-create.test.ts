@@ -1,5 +1,6 @@
 import { describe, it, expect, mock, spyOn, beforeEach } from "bun:test";
 import type { PostInput } from "@/types/post.types";
+import { revalidatePath } from "next/cache";
 
 // Use global delegate for db mock (set up in test/setup.ts)
 const _g = globalThis as Record<string, unknown>;
@@ -21,6 +22,7 @@ describe("Post Storage - Create Operations", () => {
 
     mockDbQuery = mock(() => undefined);
     _g.__dbQueryMock = mockDbQuery;
+    (revalidatePath as ReturnType<typeof mock>).mockReset();
   });
 
   describe("createPost", () => {
@@ -210,6 +212,9 @@ describe("Post Storage - Create Operations", () => {
       expect(result.tags).toEqual(["tag1", "tag2"]);
       expect(result.category).toBe("News");
       expect(result.status).toBe("published");
+      expect(revalidatePath).toHaveBeenCalledWith("/");
+      expect(revalidatePath).toHaveBeenCalledWith("/2025/january");
+      expect(revalidatePath).toHaveBeenCalledWith("/posts/test-uuid-1234");
     });
 
     it("creates post with minimal fields (null author data)", async () => {
@@ -279,6 +284,7 @@ describe("Post Storage - Create Operations", () => {
       const result = await createPost(input);
 
       expect(result.status).toBe("draft");
+      expect(revalidatePath).not.toHaveBeenCalled();
     });
 
     it("throws error when database insertion fails", async () => {
