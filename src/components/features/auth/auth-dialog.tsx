@@ -60,10 +60,6 @@ function AuthDialogPanel({
     <div className="flex min-h-0 flex-col">
       <DialogHeader className="shrink-0">
         <DialogTitle className="text-center">ברוך הבא לחטיבון</DialogTitle>
-        <DialogDescription className="text-center">
-          התחברו או הירשמו כדי לכתוב, לשמור טיוטות ולפרסם כתבות לקהילת בית
-          הספר
-        </DialogDescription>
       </DialogHeader>
 
       <Tabs
