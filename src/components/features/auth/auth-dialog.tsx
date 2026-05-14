@@ -31,7 +31,7 @@ export function AuthDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="flex max-w-[calc(100%-2rem)] flex-col gap-4 rounded-lg px-4 pt-2 pb-4 sm:max-w-[425px] sm:px-6 sm:pt-3 sm:pb-6"
+        className="flex min-h-[min(500px,calc(100dvh-2rem))] max-w-[calc(100%-2rem)] flex-col gap-4 rounded-lg px-4 pt-2 pb-10 sm:min-h-[500px] sm:max-w-[425px] sm:px-6 sm:pt-3 sm:pb-10"
         dir="rtl"
       >
         <AuthDialogPanel defaultTab={defaultTab} onSuccess={handleSuccess} />
