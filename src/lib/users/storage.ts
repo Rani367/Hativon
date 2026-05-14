@@ -1,5 +1,10 @@
 import { randomBytes, createHash } from "crypto";
-import type { User, UserRegistration, UserUpdate } from "@/types/user.types";
+import type {
+  User,
+  UserPreferencesUpdate,
+  UserRegistration,
+  UserUpdate,
+} from "@/types/user.types";
 import type { UserQueryResult, DbMutationResult } from "@/types/database.types";
 import { db } from "../db/client";
 import { BCRYPT_SALT_ROUNDS, PASSWORD_RESET_TOKEN_EXPIRY_MS } from "../constants/auth";
@@ -23,6 +28,8 @@ export async function createUser(data: UserRegistration): Promise<User> {
         class_number as "classNumber",
         is_teacher as "isTeacher",
         password_reset_requested as "passwordResetRequested",
+        theme_preference as "themePreference",
+        dark_mode_announcement_dismissed as "darkModeAnnouncementDismissed",
         created_at as "createdAt",
         updated_at as "updatedAt",
         last_login as "lastLogin"
@@ -70,6 +77,44 @@ export async function updateUser(
       class_number as "classNumber",
       is_teacher as "isTeacher",
       password_reset_requested as "passwordResetRequested",
+      theme_preference as "themePreference",
+      dark_mode_announcement_dismissed as "darkModeAnnouncementDismissed",
+      created_at as "createdAt",
+      updated_at as "updatedAt",
+      last_login as "lastLogin"
+  `) as UserQueryResult;
+
+  if (result.rows.length === 0) {
+    throw new Error("משתמש לא נמצא");
+  }
+
+  return result.rows[0] as User;
+}
+
+export async function updateUserPreferences(
+  userId: string,
+  updates: UserPreferencesUpdate,
+): Promise<User> {
+  const { themePreference, darkModeAnnouncementDismissed } = updates;
+
+  const result = (await db.query`
+    UPDATE users
+    SET
+      theme_preference = COALESCE(${themePreference}, theme_preference),
+      dark_mode_announcement_dismissed = COALESCE(${darkModeAnnouncementDismissed}, dark_mode_announcement_dismissed),
+      updated_at = CURRENT_TIMESTAMP
+    WHERE id = ${userId}
+    RETURNING
+      id,
+      username,
+      display_name as "displayName",
+      email,
+      grade,
+      class_number as "classNumber",
+      is_teacher as "isTeacher",
+      password_reset_requested as "passwordResetRequested",
+      theme_preference as "themePreference",
+      dark_mode_announcement_dismissed as "darkModeAnnouncementDismissed",
       created_at as "createdAt",
       updated_at as "updatedAt",
       last_login as "lastLogin"

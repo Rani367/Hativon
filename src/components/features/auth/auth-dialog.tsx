@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import {
   AnimatedDialog as Dialog,
   AnimatedDialogContent as DialogContent,
-  AnimatedDialogDescription as DialogDescription,
   AnimatedDialogHeader as DialogHeader,
   AnimatedDialogTitle as DialogTitle,
 } from "@/components/ui/animated-dialog";

@@ -9,6 +9,8 @@ CREATE TABLE IF NOT EXISTS users (
   class_number INTEGER CHECK (class_number >= 1 AND class_number <= 4),
   is_teacher BOOLEAN DEFAULT FALSE,
   password_reset_requested BOOLEAN DEFAULT FALSE,
+  theme_preference VARCHAR(10) NOT NULL DEFAULT 'light' CHECK (theme_preference IN ('light', 'dark')),
+  dark_mode_announcement_dismissed BOOLEAN NOT NULL DEFAULT FALSE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   last_login TIMESTAMP

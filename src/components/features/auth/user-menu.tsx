@@ -106,7 +106,7 @@ export function UserMenu() {
         <DropdownMenuSeparator />
         <DropdownMenuItem
           onClick={handleLogout}
-          className="cursor-pointer text-red-600 dark:text-red-400"
+          className="cursor-pointer text-destructive"
         >
           <LogOut className="me-2 h-4 w-4" />
           <span>התנתק</span>

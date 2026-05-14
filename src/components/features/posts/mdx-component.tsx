@@ -25,7 +25,7 @@ const components = {
     <p className="mb-4 break-words leading-7">{children}</p>
   ),
   a: ({ children, href }: { children?: React.ReactNode; href?: string }) => (
-    <a href={href} className="text-blue-500">
+    <a href={href} className="text-primary underline underline-offset-2">
       {children}
     </a>
   ),

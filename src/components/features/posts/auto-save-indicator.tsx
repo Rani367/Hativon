@@ -65,7 +65,7 @@ export function AutoSaveIndicator({
 
       {status === "saved" && lastSaved && (
         <>
-          <Check className="h-4 w-4 text-green-600" />
+          <Check className="h-4 w-4 text-green-600 dark:text-green-400" />
           <span className="text-muted-foreground">
             הטיוטה נשמרה ב-{formatTime(lastSaved)}
           </span>
@@ -74,7 +74,7 @@ export function AutoSaveIndicator({
 
       {status === "idle" && lastSaved && (
         <>
-          <Check className="h-4 w-4 text-green-600" />
+          <Check className="h-4 w-4 text-green-600 dark:text-green-400" />
           <span className="text-muted-foreground">
             הטיוטה נשמרה ב-{formatTime(lastSaved)}
           </span>

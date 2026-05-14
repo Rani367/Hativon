@@ -145,6 +145,19 @@ export const userUpdateSchema = z
     message: "לפחות שדה אחד נדרש לעדכון",
   });
 
+export const themePreferenceSchema = z.enum(["light", "dark"], {
+  message: "מצב תצוגה חייב להיות light או dark",
+});
+
+export const userPreferencesUpdateSchema = z
+  .object({
+    themePreference: themePreferenceSchema.optional(),
+    darkModeAnnouncementDismissed: z.boolean().optional(),
+  })
+  .refine((data) => Object.keys(data).length > 0, {
+    message: "לפחות שדה אחד נדרש לעדכון",
+  });
+
 /**
  * Post validation schemas
  */

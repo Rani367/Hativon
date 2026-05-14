@@ -17,11 +17,15 @@ mock.module("../../users", () => ({
   usernameExists: mock(() => undefined),
   createUser: mock(() => undefined),
   updateUser: mock(() => undefined),
+  updateUserPreferences: mock(() => undefined),
   updateLastLogin: mock(() => undefined),
   deleteUser: mock(() => undefined),
   setPasswordResetFlag: mock(() => undefined),
   clearPasswordResetFlag: mock(() => undefined),
   resetUserPassword: mock(() => undefined),
+  createResetToken: mock(() => undefined),
+  validateResetToken: mock(() => undefined),
+  consumeResetToken: mock(() => undefined),
   validatePassword: mock(() => undefined),
 }));
 // @/lib/db/client is mocked via global delegates in test/setup.ts
@@ -43,6 +47,8 @@ const mockUser: User = {
   grade: "ח",
   classNumber: 2,
   isTeacher: false,
+  themePreference: "light",
+  darkModeAnnouncementDismissed: false,
   createdAt: "2024-01-01T00:00:00.000Z",
   updatedAt: "2024-01-01T00:00:00.000Z",
 };

@@ -1,5 +1,5 @@
 import { describe, it, expect, mock, beforeEach } from "bun:test";
-import type { UserUpdate } from "@/types/user.types";
+import type { UserPreferencesUpdate, UserUpdate } from "@/types/user.types";
 
 // Use global delegate for db mock (set up in test/setup.ts)
 const _g = globalThis as Record<string, unknown>;
@@ -15,6 +15,79 @@ describe("User Storage - Update and Delete Operations", () => {
 
     mockDbQuery = mock(() => undefined);
     _g.__dbQueryMock = mockDbQuery;
+  });
+
+  describe("updateUserPreferences", () => {
+    it("updates theme preference", async () => {
+      const mockUserRow = {
+        id: "user-theme",
+        username: "themeuser",
+        displayName: "Theme User",
+        email: null,
+        grade: "י",
+        classNumber: 1,
+        isTeacher: false,
+        passwordResetRequested: false,
+        themePreference: "dark",
+        darkModeAnnouncementDismissed: false,
+        createdAt: new Date("2025-01-01"),
+        updatedAt: new Date("2025-01-02"),
+        lastLogin: null,
+      };
+
+      mockDbQuery.mockResolvedValue({ rows: [mockUserRow] });
+
+      const { updateUserPreferences } = await import("../storage");
+
+      const updates: UserPreferencesUpdate = {
+        themePreference: "dark",
+      };
+
+      const result = await updateUserPreferences("user-theme", updates);
+
+      expect(result.themePreference).toBe("dark");
+      expect(result.darkModeAnnouncementDismissed).toBe(false);
+      expect(mockDbQuery).toHaveBeenCalledTimes(1);
+    });
+
+    it("updates popup dismissal without requiring a theme change", async () => {
+      const mockUserRow = {
+        id: "user-dismissed",
+        username: "dismisseduser",
+        displayName: "Dismissed User",
+        email: null,
+        grade: "ח",
+        classNumber: 2,
+        isTeacher: false,
+        passwordResetRequested: false,
+        themePreference: "light",
+        darkModeAnnouncementDismissed: true,
+        createdAt: new Date("2025-01-01"),
+        updatedAt: new Date("2025-01-02"),
+        lastLogin: null,
+      };
+
+      mockDbQuery.mockResolvedValue({ rows: [mockUserRow] });
+
+      const { updateUserPreferences } = await import("../storage");
+
+      const result = await updateUserPreferences("user-dismissed", {
+        darkModeAnnouncementDismissed: true,
+      });
+
+      expect(result.themePreference).toBe("light");
+      expect(result.darkModeAnnouncementDismissed).toBe(true);
+    });
+
+    it("throws Hebrew error when updating preferences for a missing user", async () => {
+      mockDbQuery.mockResolvedValue({ rows: [] });
+
+      const { updateUserPreferences } = await import("../storage");
+
+      await expect(
+        updateUserPreferences("missing-user", { themePreference: "dark" }),
+      ).rejects.toThrow("משתמש לא נמצא");
+    });
   });
 
   describe("updateUser", () => {

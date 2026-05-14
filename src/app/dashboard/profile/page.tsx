@@ -289,7 +289,7 @@ export default function ProfilePage() {
             </div>
 
             {/* Current Values Display */}
-            <div className="rounded-lg border bg-blue-500/10 border-blue-500/50 p-4">
+            <div className="rounded-lg border border-blue-500/50 bg-blue-500/10 p-4 dark:bg-blue-500/15">
               <p className="text-sm font-medium mb-2 text-blue-600 dark:text-blue-400">
                 ערכים נוכחיים:
               </p>

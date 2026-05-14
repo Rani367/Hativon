@@ -3,6 +3,7 @@
  */
 
 export type Grade = "ז" | "ח" | "ט" | "י";
+export type ThemePreference = "light" | "dark";
 
 export interface User {
   id: string;
@@ -13,6 +14,8 @@ export interface User {
   classNumber?: number;
   isTeacher: boolean;
   passwordResetRequested?: boolean;
+  themePreference: ThemePreference;
+  darkModeAnnouncementDismissed: boolean;
   createdAt: string;
   updatedAt: string;
   lastLogin?: string;
@@ -45,6 +48,11 @@ export interface UserUpdate {
   email?: string;
   grade?: Grade;
   classNumber?: number;
+}
+
+export interface UserPreferencesUpdate {
+  themePreference?: ThemePreference;
+  darkModeAnnouncementDismissed?: boolean;
 }
 
 /**

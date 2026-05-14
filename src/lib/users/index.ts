@@ -22,6 +22,7 @@ export {
 export {
   createUser,
   updateUser,
+  updateUserPreferences,
   updateLastLogin,
   deleteUser,
   setPasswordResetFlag,

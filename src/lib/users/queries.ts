@@ -22,6 +22,8 @@ export async function getUserById(id: string): Promise<User | null> {
       class_number as "classNumber",
       is_teacher as "isTeacher",
       password_reset_requested as "passwordResetRequested",
+      theme_preference as "themePreference",
+      dark_mode_announcement_dismissed as "darkModeAnnouncementDismissed",
       created_at as "createdAt",
       updated_at as "updatedAt",
       last_login as "lastLogin"
@@ -51,6 +53,8 @@ export async function getUserByUsername(
       class_number as "classNumber",
       is_teacher as "isTeacher",
       password_reset_requested as "passwordResetRequested",
+      theme_preference as "themePreference",
+      dark_mode_announcement_dismissed as "darkModeAnnouncementDismissed",
       created_at as "createdAt",
       updated_at as "updatedAt",
       last_login as "lastLogin"
@@ -83,6 +87,8 @@ export async function getUserWithPassword(
       class_number as "classNumber",
       is_teacher as "isTeacher",
       password_reset_requested as "passwordResetRequested",
+      theme_preference as "themePreference",
+      dark_mode_announcement_dismissed as "darkModeAnnouncementDismissed",
       created_at as "createdAt",
       updated_at as "updatedAt",
       last_login as "lastLogin"
@@ -110,6 +116,8 @@ export async function getAllUsers(): Promise<User[]> {
       class_number as "classNumber",
       is_teacher as "isTeacher",
       password_reset_requested as "passwordResetRequested",
+      theme_preference as "themePreference",
+      dark_mode_announcement_dismissed as "darkModeAnnouncementDismissed",
       created_at as "createdAt",
       updated_at as "updatedAt",
       last_login as "lastLogin"

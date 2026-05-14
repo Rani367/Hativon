@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Moon, Sun } from "lucide-react";
 import { cn, triggerHaptic } from "@/lib/utils";
+import { logError } from "@/lib/logger";
+import { useAuth } from "@/components/features/auth/auth-provider";
 import { useTheme } from "next-themes";
 
 interface ThemeToggleProps {
@@ -11,7 +13,9 @@ interface ThemeToggleProps {
 
 export function ModeToggle({ className }: ThemeToggleProps) {
   const { setTheme, resolvedTheme } = useTheme();
+  const { checkAuth, user } = useAuth();
   const [mounted, setMounted] = useState(false);
+  const userId = user?.id;
 
   // Prevent hydration mismatch by only rendering after mount
   useEffect(() => {
@@ -24,68 +28,95 @@ export function ModeToggle({ className }: ThemeToggleProps) {
     };
   }, []);
 
+  const syncThemePreference = useCallback(
+    async (themePreference: "light" | "dark") => {
+      if (!userId || userId === "legacy-admin") {
+        return;
+      }
+
+      try {
+        const response = await fetch("/api/user/preferences", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ themePreference }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to sync theme preference");
+        }
+
+        await checkAuth();
+      } catch (error) {
+        logError("Failed to sync theme preference:", error);
+      }
+    },
+    [checkAuth, userId],
+  );
+
+  const isDark = resolvedTheme === "dark";
+  const nextTheme = isDark ? "light" : "dark";
+
+  const handleToggle = () => {
+    triggerHaptic();
+    setTheme(nextTheme);
+    void syncThemePreference(nextTheme);
+  };
+
   if (!mounted) {
-    // Return a placeholder during SSR with same dimensions
     return (
       <div
         className={cn(
-          "flex w-16 h-8 p-1 rounded-full border transition-all duration-300",
-          "bg-white border-zinc-200",
-          className
+          "flex h-8 w-16 rounded-full border border-border bg-background p-1",
+          className,
         )}
       >
-        <div className="flex justify-between items-center w-full">
-          <div className="flex justify-center items-center w-6 h-6 rounded-full bg-gray-200">
-            <Sun className="w-4 h-4 text-gray-700" strokeWidth={1.5} />
-          </div>
+        <div className="flex size-6 items-center justify-center rounded-full bg-muted">
+          <Sun className="size-4 text-muted-foreground" strokeWidth={1.5} />
         </div>
       </div>
     );
   }
 
-  const isDark = resolvedTheme === "dark";
-
   return (
-    <div
+    <button
+      type="button"
       className={cn(
-        "flex w-16 h-8 p-1 rounded-full cursor-pointer transition-all duration-300",
-        isDark
-          ? "bg-zinc-950 border border-zinc-800"
-          : "bg-white border border-zinc-200",
-        className
+        "flex h-8 w-16 cursor-pointer rounded-full border border-border bg-background p-1 shadow-xs transition-colors duration-300 hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+        className,
       )}
-      onClick={() => { triggerHaptic(); setTheme(isDark ? "light" : "dark"); }}
-      role="button"
-      tabIndex={0}
+      onClick={handleToggle}
+      role="switch"
+      aria-checked={isDark}
+      aria-label={isDark ? "הפעל מצב בהיר" : "הפעל מצב כהה"}
     >
-      <div className="flex justify-between items-center w-full">
+      <span className="flex w-full items-center justify-between">
         <div
           className={cn(
-            "flex justify-center items-center w-6 h-6 rounded-full transition-transform duration-300",
+            "flex size-6 items-center justify-center rounded-full transition-transform duration-300",
             isDark
-              ? "transform translate-x-0 bg-zinc-800"
-              : "transform ltr:translate-x-8 rtl:-translate-x-8 bg-gray-200"
+              ? "translate-x-0 bg-primary text-primary-foreground"
+              : "ltr:translate-x-8 rtl:-translate-x-8 bg-muted text-muted-foreground",
           )}
         >
           {isDark ? (
-            <Moon className="w-4 h-4 text-white" strokeWidth={1.5} />
+            <Moon className="size-4" strokeWidth={1.5} />
           ) : (
-            <Sun className="w-4 h-4 text-gray-700" strokeWidth={1.5} />
+            <Sun className="size-4" strokeWidth={1.5} />
           )}
         </div>
         <div
           className={cn(
-            "flex justify-center items-center w-6 h-6 rounded-full transition-transform duration-300",
-            isDark ? "bg-transparent" : "transform ltr:-translate-x-8 rtl:translate-x-8"
+            "flex size-6 items-center justify-center rounded-full text-muted-foreground transition-transform duration-300",
+            isDark ? "bg-transparent" : "ltr:-translate-x-8 rtl:translate-x-8",
           )}
         >
           {isDark ? (
-            <Sun className="w-4 h-4 text-gray-500" strokeWidth={1.5} />
+            <Sun className="size-4" strokeWidth={1.5} />
           ) : (
-            <Moon className="w-4 h-4 text-black" strokeWidth={1.5} />
+            <Moon className="size-4" strokeWidth={1.5} />
           )}
         </div>
-      </div>
-    </div>
+      </span>
+    </button>
   );
 }

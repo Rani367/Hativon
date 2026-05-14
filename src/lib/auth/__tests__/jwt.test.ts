@@ -65,6 +65,8 @@ const mockUser: User = {
   grade: "ח",
   classNumber: 2,
   isTeacher: false,
+  themePreference: "light",
+  darkModeAnnouncementDismissed: false,
   createdAt: "2024-01-01T00:00:00.000Z",
   updatedAt: "2024-01-01T00:00:00.000Z",
 };

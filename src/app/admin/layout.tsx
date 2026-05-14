@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { ModeToggle } from "@/components/shared/mode-toggle";
 import { Home, FileText, Menu, MoreVertical, Users } from "lucide-react";
 import {
   DropdownMenu,
@@ -161,13 +162,15 @@ export default function AdminLayout({
           <div className="flex min-w-0 flex-1 items-center justify-between gap-2">
             <h1 className="truncate text-base font-semibold sm:text-xl">פאנל ניהול</h1>
             <div className="hidden items-center gap-4 md:flex">
+              <ModeToggle />
               <Link href="/">
                 <Button variant="outline" size="sm">
                   חזור לאתר
                 </Button>
               </Link>
             </div>
-            <DropdownMenu>
+            <ModeToggle className="md:hidden" />
+            <DropdownMenu dir="rtl">
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
@@ -178,7 +181,7 @@ export default function AdminLayout({
                   <MoreVertical className="h-5 w-5" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-44" dir="rtl">
+              <DropdownMenuContent align="start" className="w-44">
                 <DropdownMenuItem asChild>
                   <Link href="/">חזור לאתר</Link>
                 </DropdownMenuItem>

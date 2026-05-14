@@ -1,5 +1,5 @@
-import { describe, it, expect, mock } from "bun:test";
-import { render, screen } from "@testing-library/react";
+import { afterEach, describe, it, expect, mock } from "bun:test";
+import { cleanup, render, screen } from "@testing-library/react";
 import * as React from "react";
 import { LoginForm } from "../login-form";
 
@@ -42,6 +42,10 @@ mock.module("../auth-provider", () => ({
 }));
 
 describe("LoginForm - Basic Rendering", () => {
+  afterEach(() => {
+    cleanup();
+  });
+
   it("renders without crashing", () => {
     const { container } = render(<LoginForm />);
     const form = container.querySelector("form");

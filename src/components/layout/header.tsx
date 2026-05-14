@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { type MouseEvent } from "react";
 import { ArchiveMenuButton } from "@/components/features/archive/archive-menu-button";
+import { ModeToggle } from "@/components/shared/mode-toggle";
 import { getRememberedIssuePathForCurrentPost } from "@/lib/navigation/last-issue-path";
 
 const UserMenu = dynamic(
@@ -68,6 +69,7 @@ export function Header() {
             </Link>
           </div>
           <div className="flex min-w-0 items-center justify-end gap-1.5 sm:gap-4">
+            <ModeToggle className="shrink-0" />
             <NewPostButton />
           </div>
         </div>

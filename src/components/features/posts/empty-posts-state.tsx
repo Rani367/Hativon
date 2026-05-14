@@ -36,7 +36,7 @@ export function EmptyPostsState() {
 
   return (
     <>
-      <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed bg-gradient-to-br from-amber-50 via-background to-sky-50 px-4 py-10 text-center sm:rounded-[2rem] sm:py-14">
+      <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed bg-gradient-to-br from-amber-50 via-background to-sky-50 px-4 py-10 text-center dark:from-muted/50 dark:to-background sm:rounded-[2rem] sm:py-14">
         <div className="mb-6 max-w-xl sm:mb-8">
           <p className="mb-3 text-sm font-medium text-muted-foreground">
             גיליון חדש מתחיל כאן

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { ModeToggle } from "@/components/shared/mode-toggle";
 import {
   FileText,
   PlusCircle,
@@ -154,6 +155,7 @@ export default function DashboardLayout({
               </p>
             </div>
             <div className="hidden items-center gap-3 md:flex">
+              <ModeToggle />
               <span className="hidden max-w-32 truncate text-sm text-muted-foreground lg:inline">
                 {userName}
               </span>
@@ -175,7 +177,8 @@ export default function DashboardLayout({
                 התנתק
               </Button>
             </div>
-            <DropdownMenu>
+            <ModeToggle className="md:hidden" />
+            <DropdownMenu dir="rtl">
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
@@ -186,7 +189,7 @@ export default function DashboardLayout({
                   <MoreVertical className="h-5 w-5" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-48" dir="rtl">
+              <DropdownMenuContent align="start" className="w-48">
                 {isTeacher && (
                   <DropdownMenuItem asChild>
                     <Link href="/admin/dashboard">

@@ -119,7 +119,7 @@ export default function PostCard({
               blurDataURL={BLUR_DATA_URL}
             />
           ) : (
-            <div className="flex h-full w-full items-end bg-gradient-to-br from-muted via-muted/70 to-amber-100/60 p-5">
+            <div className="flex h-full w-full items-end bg-gradient-to-br from-muted via-muted/70 to-amber-100/60 p-5 dark:to-background">
               <p className="text-sm font-medium text-muted-foreground">
                 כתבה ללא תמונת שער
               </p>
