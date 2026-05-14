@@ -50,7 +50,7 @@ export function Header() {
   }
 
   return (
-    <header className="border-b">
+    <header className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur-md">
       <nav className="mx-auto w-full max-w-[1600px] px-4 sm:px-6 lg:px-8 xl:px-12">
         <div className="grid h-14 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 sm:h-20 sm:gap-4">
           <div className="flex min-w-0 items-center justify-start gap-1.5 sm:gap-4">
@@ -60,11 +60,13 @@ export function Header() {
           <div className="flex items-center justify-center">
             <Link
               href="/"
-              className="flex items-center whitespace-nowrap text-lg font-bold text-foreground sm:text-xl md:text-2xl"
+              className="group flex items-center whitespace-nowrap text-lg font-bold tracking-tight text-foreground transition-all hover:scale-105 active:scale-95 sm:text-xl md:text-2xl"
               prefetch={false}
               onClick={handleLogoClick}
             >
-              חטיבון
+              <span className="bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+                חטיבון
+              </span>
             </Link>
           </div>
           <div className="flex min-w-0 items-center justify-end gap-1.5 sm:gap-4">

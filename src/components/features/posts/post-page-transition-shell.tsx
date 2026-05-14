@@ -42,6 +42,21 @@ export function PostPageTransitionShell({
   const delayPostBody = shouldDelayPostBody(post.id);
 
   useEffect(() => {
+    const handleScroll = () => {
+      const scrollTotal = document.documentElement.scrollHeight - window.innerHeight;
+      if (scrollTotal <= 0) return;
+      const scrollPercent = (window.scrollY / scrollTotal) * 100;
+      const progressBar = document.getElementById('reading-progress');
+      if (progressBar) {
+        progressBar.style.width = `${scrollPercent}%`;
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  useEffect(() => {
     if (!concealOpeningRegion) {
       return;
     }
@@ -73,6 +88,10 @@ export function PostPageTransitionShell({
 
   return (
     <article className="mx-auto max-w-4xl py-2 sm:px-6 sm:py-8">
+      <div className="fixed top-0 left-0 right-0 z-[60] h-1.5 w-full bg-muted">
+        <div className="h-full bg-primary transition-all duration-300" style={{ width: '0%' }} id="reading-progress" />
+      </div>
+
       <div className="mb-4 sm:mb-6">
         <BackToIssueButton postId={post.id} />
       </div>
@@ -80,7 +99,7 @@ export function PostPageTransitionShell({
       {post.coverImage && (
         <div
           ref={imageContainerRef}
-          className={`relative mb-6 w-full overflow-hidden rounded-2xl border shadow-sm transition-opacity duration-200 sm:mb-8 sm:rounded-[2rem] ${
+          className={`relative mb-6 w-full overflow-hidden rounded-3xl border shadow-xl transition-opacity duration-200 sm:mb-12 sm:rounded-[3rem] ${
             concealOpeningRegion ? "opacity-0" : "opacity-100"
           }`}
         >
@@ -103,7 +122,7 @@ export function PostPageTransitionShell({
 
       <header
         ref={headerRef}
-        className={`mb-6 rounded-2xl border bg-card/70 p-4 shadow-sm transition-opacity duration-200 sm:mb-10 sm:rounded-[2rem] sm:p-8 ${
+        className={`mb-6 rounded-3xl border-none bg-linear-to-b from-primary/[0.03] to-transparent p-4 transition-opacity duration-200 sm:mb-16 sm:p-8 ${
           concealOpeningRegion ? "opacity-0" : "opacity-100"
         }`}
       >

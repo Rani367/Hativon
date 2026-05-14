@@ -81,7 +81,7 @@ export default function PostCard({
   return (
     <div className="h-full">
       <Card
-        className={`group relative h-full overflow-hidden rounded-lg border-border/70 bg-card/80 pt-0 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-xl supports-[backdrop-filter]:bg-background/80 ${
+        className={`group relative flex h-full flex-col overflow-hidden rounded-2xl border-border/50 bg-card pt-0 shadow-sm transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.1)] active:scale-[0.98] ${
           compact ? "gap-2" : ""
         }`}
       >
@@ -95,7 +95,7 @@ export default function PostCard({
           onFocus={preloadCoverImage}
         />
         <div
-          className={`relative w-full overflow-hidden rounded-t-lg ${
+          className={`relative w-full overflow-hidden ${
             compact ? "aspect-[16/9]" : "aspect-[16/11] sm:aspect-[4/3]"
           }`}
         >
@@ -113,7 +113,7 @@ export default function PostCard({
                   ? "(max-width: 1024px) 100vw, 30rem"
                   : "(max-width: 767px) calc(100vw - 2rem), (max-width: 1279px) calc(50vw - 3rem), 500px"
               }
-              className="absolute inset-0 h-full w-full object-cover"
+              className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-110"
               quality={75}
               placeholder="blur"
               blurDataURL={BLUR_DATA_URL}
@@ -129,7 +129,7 @@ export default function PostCard({
             <div className="absolute top-3 start-3 z-20 sm:top-4 sm:start-4">
               <Badge
                 variant="secondary"
-                className="bg-background/80 shadow-sm backdrop-blur-sm"
+                className="bg-background/90 font-semibold shadow-sm backdrop-blur-md"
               >
                 {post.category}
               </Badge>
@@ -176,8 +176,8 @@ export default function PostCard({
             <div>
               <h2
                 className={cn(
-                  "font-bold leading-tight text-foreground transition-colors duration-300 group-hover:text-foreground/95",
-                  compact ? "line-clamp-2 text-xl" : "text-xl sm:text-2xl lg:text-[2rem]",
+                  "font-black leading-tight tracking-tight text-foreground transition-colors duration-300 group-hover:text-primary",
+                  compact ? "line-clamp-2 text-xl" : "text-xl sm:text-2xl lg:text-3xl",
                   shouldUseUniformMobileHeight &&
                     "line-clamp-2 min-h-12 overflow-hidden md:min-h-0 md:overflow-visible md:line-clamp-none",
                 )}
@@ -229,9 +229,9 @@ export default function PostCard({
                           <Badge
                             key={tag}
                             variant="outline"
-                            className="bg-background/80"
+                            className="bg-muted/50 border-none transition-colors hover:bg-muted"
                           >
-                            {tag}
+                            #{tag}
                           </Badge>
                         ))}
                       </div>

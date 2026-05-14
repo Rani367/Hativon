@@ -3,6 +3,7 @@
 import { useCallback, memo, useState, useTransition } from "react";
 import type { PostSummary } from "@/types/post.types";
 import PostCard from "@/components/features/posts/post-card";
+import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { logError } from "@/lib/logger";
@@ -71,16 +72,31 @@ function PaginatedPosts({
 
   return (
     <>
-      <div className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2 xl:grid-cols-3 xl:gap-8">
-        {posts.map((post, index) => (
-          <MemoizedPostCard
-            key={post.id}
-            post={post}
-            priority={index < PRIORITY_COUNT}
-            uniformHeightBelowMd
-          />
-        ))}
-      </div>
+      <motion.div
+        layout
+        className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2 xl:grid-cols-3 xl:gap-8"
+      >
+        <AnimatePresence mode="popLayout">
+          {posts.map((post, index) => (
+            <motion.div
+              key={post.id}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{
+                duration: 0.4,
+                delay: Math.min(index * 0.1, 1),
+                ease: "easeOut"
+              }}
+            >
+              <MemoizedPostCard
+                post={post}
+                priority={index < PRIORITY_COUNT}
+                uniformHeightBelowMd
+              />
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      </motion.div>
 
       {error && (
         <p className="mt-6 text-center text-sm text-destructive">{error}</p>

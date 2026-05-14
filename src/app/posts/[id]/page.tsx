@@ -160,7 +160,7 @@ export default async function PostPage({ params }: PostPageProps) {
             </div>
           }
         >
-          <div className="prose max-w-none rounded-2xl border bg-background p-4 shadow-sm dark:prose-invert sm:prose-lg sm:rounded-[2rem] sm:p-8">
+          <div className="prose max-w-none rounded-3xl border border-border/40 bg-card p-4 shadow-xs dark:prose-invert sm:prose-lg sm:rounded-[2.5rem] sm:p-12 lg:prose-xl">
             <PostContent content={post.content} />
           </div>
         </Suspense>

@@ -43,9 +43,9 @@
 }
 
 :root {
-    --radius: 0.625rem;
-    --background: oklch(1 0 0);
-    --foreground: oklch(0.145 0 0);
+    --radius: 0.75rem;
+    --background: oklch(0.99 0.001 240);
+    --foreground: oklch(0.2 0.01 240);
     --card: oklch(1 0 0);
     --card-foreground: oklch(0.145 0 0);
     --popover: oklch(1 0 0);
@@ -79,16 +79,21 @@
 
 @layer base {
     * {
-        @apply border-border outline-ring/50;
+        @apply border-border outline-ring/50 transition-colors duration-200;
     }
     body {
-        @apply bg-background text-foreground;
+        @apply bg-background text-foreground selection:bg-primary/10 selection:text-primary;
+        background-image:
+            radial-gradient(at 0% 0%, oklch(0.97 0.01 240 / 0.5) 0px, transparent 50%),
+            radial-gradient(at 100% 100%, oklch(0.97 0.01 240 / 0.5) 0px, transparent 50%);
+        background-attachment: fixed;
     }
 
     html,
     body {
         max-width: 100%;
         overflow-x: clip;
+        scroll-behavior: smooth;
     }
 
     /* Custom scrollbar */
