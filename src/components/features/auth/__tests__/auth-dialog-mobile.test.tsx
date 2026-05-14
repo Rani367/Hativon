@@ -70,6 +70,9 @@ describe("AuthDialog mobile layout", () => {
     expect(dialog).toHaveClass("rounded-lg");
     expect(dialog).toHaveClass("max-w-[calc(100%-2rem)]");
     expect(dialog).toHaveClass("pt-2");
+    expect(
+      screen.getByText(/התחברו או הירשמו כדי לכתוב/),
+    ).toBeInTheDocument();
     expect(screen.getByRole("tablist")).toHaveClass("h-11");
     expect(screen.getByRole("button", { name: "סגור" })).toHaveClass("top-0.5");
     expect(dialog.querySelector(".overflow-y-auto")).not.toBeInTheDocument();
