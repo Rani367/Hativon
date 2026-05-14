@@ -44,7 +44,7 @@ const AnimatedDialogContent = React.forwardRef<
       {...props}
     >
       {children}
-      <DialogPrimitive.Close className="absolute left-3 top-3 inline-flex size-11 items-center justify-center rounded-md opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground sm:left-4 sm:top-4 sm:size-9">
+      <DialogPrimitive.Close className="absolute left-1.5 top-0.5 inline-flex size-11 items-center justify-center rounded-md opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground sm:left-3 sm:top-2 sm:size-9">
         <X className="size-5 sm:size-4" />
         <span className="sr-only">סגור</span>
       </DialogPrimitive.Close>
