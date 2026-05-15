@@ -25,3 +25,6 @@ Recent commits use short, imperative subjects tied to the affected area, for exa
 
 ## Security & Configuration Tips
 Keep secrets in `.env.local` only; never commit credentials. Required local variables are `ADMIN_PASSWORD`, `JWT_SECRET`, and `NEXT_PUBLIC_SITE_URL`. `POSTGRES_URL` and `POSTGRES_URL_NON_POOLING` enable full auth and database-backed flows, while `BLOB_READ_WRITE_TOKEN` enables production-style uploads.
+
+## important 
+always run 'bun run verify' after finishing your changes. then, fix all failiures, even if unrelated to your changes. it should always pass in the end.
