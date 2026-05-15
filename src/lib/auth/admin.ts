@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { serialize } from "cookie";
 import jwt from "jsonwebtoken";
 import { timingSafeEqual } from "crypto";
+import bcrypt from "bcryptjs";
 import { logError } from "@/lib/logger";
 
 // Require ADMIN_PASSWORD to be set - no fallback for security
@@ -63,8 +64,7 @@ export async function verifyAdminPassword(password: string): Promise<boolean> {
   const isBcryptHash = /^\$2[aby]\$/.test(ADMIN_PASSWORD);
 
   if (isBcryptHash) {
-    // Use Bun.password for hashed password verification (constant-time)
-    return await Bun.password.verify(password, ADMIN_PASSWORD);
+    return await bcrypt.compare(password, ADMIN_PASSWORD);
   } else {
     // For plain text passwords (backward compatibility)
     // Use constant-time comparison to prevent timing attacks
