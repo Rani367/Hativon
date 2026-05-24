@@ -32,8 +32,6 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({
       preferences: {
         themePreference: updatedUser.themePreference,
-        darkModeAnnouncementDismissed:
-          updatedUser.darkModeAnnouncementDismissed,
       },
       user: updatedUser,
     });

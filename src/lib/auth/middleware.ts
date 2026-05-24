@@ -35,7 +35,6 @@ export async function getCurrentUser(): Promise<User | null> {
         classNumber: 1,
         isTeacher: true,
         themePreference: "light",
-        darkModeAnnouncementDismissed: false,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         lastLogin: undefined,
@@ -57,7 +56,6 @@ export async function getCurrentUser(): Promise<User | null> {
         classNumber: undefined,
         isTeacher: false, // Conservative default
         themePreference: "light",
-        darkModeAnnouncementDismissed: false,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         lastLogin: undefined,

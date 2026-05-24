@@ -34,7 +34,6 @@ export interface DbUserRow {
   isTeacher?: boolean;
   passwordResetRequested?: boolean;
   themePreference?: "light" | "dark";
-  darkModeAnnouncementDismissed?: boolean;
   createdAt: string;
   updatedAt: string;
   lastLogin: string | null;

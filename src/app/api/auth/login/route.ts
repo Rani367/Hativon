@@ -102,7 +102,6 @@ export async function POST(request: NextRequest) {
           classNumber: 1,
           isTeacher: true,
           themePreference: "light" as const,
-          darkModeAnnouncementDismissed: false,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
           lastLogin: undefined,

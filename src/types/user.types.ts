@@ -15,7 +15,6 @@ export interface User {
   isTeacher: boolean;
   passwordResetRequested?: boolean;
   themePreference: ThemePreference;
-  darkModeAnnouncementDismissed: boolean;
   createdAt: string;
   updatedAt: string;
   lastLogin?: string;
@@ -52,7 +51,6 @@ export interface UserUpdate {
 
 export interface UserPreferencesUpdate {
   themePreference?: ThemePreference;
-  darkModeAnnouncementDismissed?: boolean;
 }
 
 /**

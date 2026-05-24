@@ -49,7 +49,6 @@ const mockUser: User = {
   isTeacher: false,
   passwordResetRequested: false,
   themePreference: "light",
-  darkModeAnnouncementDismissed: false,
   createdAt: "2024-01-01T00:00:00.000Z",
   updatedAt: "2024-01-01T00:00:00.000Z",
 };
@@ -115,44 +114,4 @@ describe("PATCH /api/user/preferences", () => {
     expect(body.preferences.themePreference).toBe("dark");
   });
 
-  it("updates the announcement dismissal", async () => {
-    const updatedUser = {
-      ...mockUser,
-      darkModeAnnouncementDismissed: true,
-    };
-    mockUpdateUserPreferences.mockResolvedValue(updatedUser);
-
-    const response = await PATCH(
-      createRequest({ darkModeAnnouncementDismissed: true }),
-    );
-    const body = await response.json();
-
-    expect(response.status).toBe(200);
-    expect(mockUpdateUserPreferences).toHaveBeenCalledWith("user-123", {
-      darkModeAnnouncementDismissed: true,
-    });
-    expect(body.preferences.darkModeAnnouncementDismissed).toBe(true);
-  });
-
-  it("updates theme and dismissal together", async () => {
-    const updatedUser = {
-      ...mockUser,
-      themePreference: "dark" as const,
-      darkModeAnnouncementDismissed: true,
-    };
-    mockUpdateUserPreferences.mockResolvedValue(updatedUser);
-
-    const response = await PATCH(
-      createRequest({
-        themePreference: "dark",
-        darkModeAnnouncementDismissed: true,
-      }),
-    );
-
-    expect(response.status).toBe(200);
-    expect(mockUpdateUserPreferences).toHaveBeenCalledWith("user-123", {
-      themePreference: "dark",
-      darkModeAnnouncementDismissed: true,
-    });
-  });
 });
