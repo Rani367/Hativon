@@ -29,7 +29,6 @@ describe("User Storage - Update and Delete Operations", () => {
         isTeacher: false,
         passwordResetRequested: false,
         themePreference: "dark",
-        darkModeAnnouncementDismissed: false,
         createdAt: new Date("2025-01-01"),
         updatedAt: new Date("2025-01-02"),
         lastLogin: null,
@@ -46,37 +45,7 @@ describe("User Storage - Update and Delete Operations", () => {
       const result = await updateUserPreferences("user-theme", updates);
 
       expect(result.themePreference).toBe("dark");
-      expect(result.darkModeAnnouncementDismissed).toBe(false);
       expect(mockDbQuery).toHaveBeenCalledTimes(1);
-    });
-
-    it("updates popup dismissal without requiring a theme change", async () => {
-      const mockUserRow = {
-        id: "user-dismissed",
-        username: "dismisseduser",
-        displayName: "Dismissed User",
-        email: null,
-        grade: "ח",
-        classNumber: 2,
-        isTeacher: false,
-        passwordResetRequested: false,
-        themePreference: "light",
-        darkModeAnnouncementDismissed: true,
-        createdAt: new Date("2025-01-01"),
-        updatedAt: new Date("2025-01-02"),
-        lastLogin: null,
-      };
-
-      mockDbQuery.mockResolvedValue({ rows: [mockUserRow] });
-
-      const { updateUserPreferences } = await import("../storage");
-
-      const result = await updateUserPreferences("user-dismissed", {
-        darkModeAnnouncementDismissed: true,
-      });
-
-      expect(result.themePreference).toBe("light");
-      expect(result.darkModeAnnouncementDismissed).toBe(true);
     });
 
     it("throws Hebrew error when updating preferences for a missing user", async () => {

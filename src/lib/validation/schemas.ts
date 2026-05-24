@@ -152,7 +152,6 @@ export const themePreferenceSchema = z.enum(["light", "dark"], {
 export const userPreferencesUpdateSchema = z
   .object({
     themePreference: themePreferenceSchema.optional(),
-    darkModeAnnouncementDismissed: z.boolean().optional(),
   })
   .refine((data) => Object.keys(data).length > 0, {
     message: "לפחות שדה אחד נדרש לעדכון",

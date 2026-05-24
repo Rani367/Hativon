@@ -30,7 +30,6 @@ export async function createUser(data: UserRegistration): Promise<User> {
         is_teacher as "isTeacher",
         password_reset_requested as "passwordResetRequested",
         theme_preference as "themePreference",
-        dark_mode_announcement_dismissed as "darkModeAnnouncementDismissed",
         created_at as "createdAt",
         updated_at as "updatedAt",
         last_login as "lastLogin"
@@ -79,7 +78,6 @@ export async function updateUser(
       is_teacher as "isTeacher",
       password_reset_requested as "passwordResetRequested",
       theme_preference as "themePreference",
-      dark_mode_announcement_dismissed as "darkModeAnnouncementDismissed",
       created_at as "createdAt",
       updated_at as "updatedAt",
       last_login as "lastLogin"
@@ -96,13 +94,12 @@ export async function updateUserPreferences(
   userId: string,
   updates: UserPreferencesUpdate,
 ): Promise<User> {
-  const { themePreference, darkModeAnnouncementDismissed } = updates;
+  const { themePreference } = updates;
 
   const result = (await db.query`
     UPDATE users
     SET
       theme_preference = COALESCE(${themePreference}, theme_preference),
-      dark_mode_announcement_dismissed = COALESCE(${darkModeAnnouncementDismissed}, dark_mode_announcement_dismissed),
       updated_at = CURRENT_TIMESTAMP
     WHERE id = ${userId}
     RETURNING
@@ -115,7 +112,6 @@ export async function updateUserPreferences(
       is_teacher as "isTeacher",
       password_reset_requested as "passwordResetRequested",
       theme_preference as "themePreference",
-      dark_mode_announcement_dismissed as "darkModeAnnouncementDismissed",
       created_at as "createdAt",
       updated_at as "updatedAt",
       last_login as "lastLogin"

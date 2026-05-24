@@ -13,6 +13,7 @@ import addPasswordReset from "./20260226000000_add_password_reset";
 import addPasswordResetTokens from "./20260320000000_add_password_reset_tokens";
 import addPostWordCount from "./20260505000000_add_post_word_count";
 import addUserThemePreferences from "./20260515000000_add_user_theme_preferences";
+import removeDarkModeAnnouncement from "./20260524000000_remove_dark_mode_announcement";
 
 /**
  * All registered migrations in execution order
@@ -25,6 +26,7 @@ export const migrations: Migration[] = [
   addPasswordResetTokens,
   addPostWordCount,
   addUserThemePreferences,
+  removeDarkModeAnnouncement,
 ];
 
 /**
