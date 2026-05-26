@@ -56,3 +56,6 @@ scripts/description-backup.json
 
 # IDE files
 .vscode
+
+# Claude Code local config
+.claude/
