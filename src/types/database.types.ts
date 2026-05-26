@@ -68,6 +68,9 @@ export interface DbPostRow {
   tags: string[] | null;
   category: string | null;
   status: string;
+  is_ai_generated?: boolean; // True if the cover image was detected as AI-generated
+  ai_detection_score?: number | null; // AI probability (0..1) from the detector
+  ai_detected_at?: Date | null; // When the cover image was last scanned
   created_at: Date;
   updated_at: Date;
 }
@@ -87,6 +90,7 @@ export type DbPostSummaryRow = Pick<
   | "is_teacher_post"
   | "tags"
   | "category"
+  | "is_ai_generated"
 >;
 
 /**

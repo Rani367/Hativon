@@ -1,4 +1,4 @@
-import { describe, it, expect, mock, spyOn, beforeEach } from "bun:test";
+import { describe, it, expect, mock, spyOn, beforeEach, afterEach } from "bun:test";
 import type { PostInput } from "@/types/post.types";
 import { revalidatePath } from "next/cache";
 
@@ -14,15 +14,27 @@ mock.module("uuid", () => ({
 
 // Path to storage module for cache clearing between tests
 const storageModulePath = require.resolve("../storage");
+const originalFetch = globalThis.fetch;
 
 describe("Post Storage - Create Operations", () => {
   beforeEach(() => {
     // Clear module cache to get fresh non-contaminated imports
     delete require.cache[storageModulePath];
 
+    // Keep AI image detection hermetic: no API key (no model fallback) and a
+    // stubbed fetch so the metadata pre-check never downloads a cover image.
+    process.env.HUGGINGFACE_API_KEY = "";
+    globalThis.fetch = mock(async () =>
+      new Response(null, { status: 404 }),
+    ) as unknown as typeof fetch;
+
     mockDbQuery = mock(() => undefined);
     _g.__dbQueryMock = mockDbQuery;
     (revalidatePath as ReturnType<typeof mock>).mockReset();
+  });
+
+  afterEach(() => {
+    globalThis.fetch = originalFetch;
   });
 
   describe("createPost", () => {

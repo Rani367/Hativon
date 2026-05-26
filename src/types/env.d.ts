@@ -80,6 +80,29 @@ declare global {
       POSTGRES_URL_NON_POOLING?: string;
 
       // ============================================
+      // AI IMAGE DETECTION (OPTIONAL)
+      // ============================================
+      /**
+       * Free Hugging Face token used to scan post cover images for AI generation.
+       * Create one at https://huggingface.co/settings/tokens (fine-grained,
+       * "Make calls to Inference Providers").
+       * If unset, AI image detection is disabled (images treated as not AI-generated).
+       */
+      HUGGINGFACE_API_KEY?: string;
+
+      /**
+       * Detector model id on Hugging Face.
+       * Default: Organika/sdxl-detector
+       */
+      HF_AI_DETECTOR_MODEL?: string;
+
+      /**
+       * AI-probability cutoff (0..1) above which an image is flagged as AI-generated.
+       * Default: 0.5
+       */
+      AI_DETECTION_THRESHOLD?: string;
+
+      // ============================================
       // VERCEL ENVIRONMENT
       // ============================================
       /**

@@ -6,6 +6,7 @@ import { generateDescription, rowToPost } from "./utils";
 import { getPostById } from "./queries";
 import { revalidatePublicPostChange } from "../cache/public-posts";
 import { getWordCount } from "@/lib/utils/text-utils";
+import { detectAiImage } from "../ai-detection/detect";
 
 /**
  * Default post status for new posts
@@ -31,12 +32,19 @@ export async function createPost(input: PostInput): Promise<Post> {
   const status = input.status || DEFAULT_POST_STATUS;
   const wordCount = getWordCount(input.content);
 
+  // Scan the cover image for AI generation (fail-open: not-AI on any failure).
+  const detection = input.coverImage
+    ? await detectAiImage(input.coverImage)
+    : { isAiGenerated: false, score: null };
+
   try {
     const result = (await db.query`
       INSERT INTO posts (
         id, slug, title, content, cover_image, description, word_count,
         date, author, author_id, author_grade, author_class,
-        is_teacher_post, tags, category, status, created_at, updated_at
+        is_teacher_post, tags, category,
+        is_ai_generated, ai_detection_score, ai_detected_at,
+        status, created_at, updated_at
       )
       VALUES (
         ${id},
@@ -54,6 +62,9 @@ export async function createPost(input: PostInput): Promise<Post> {
         ${input.isTeacherPost || false},
         ${input.tags || []},
         ${input.category || null},
+        ${detection.isAiGenerated},
+        ${detection.score},
+        ${input.coverImage ? now : null},
         ${status},
         ${now},
         ${now}
@@ -152,6 +163,37 @@ export async function updatePost(
     }
 
     const post = rowToPost(result.rows[0]);
+
+    // Re-scan for AI generation only when the cover image actually changed.
+    // The main UPDATE above leaves the AI columns untouched, so an unchanged
+    // image keeps its previous detection result.
+    const coverImageChanged =
+      (coverImage || null) !== (existing.coverImage || null);
+    if (coverImageChanged) {
+      if (coverImage) {
+        const detection = await detectAiImage(coverImage);
+        await db.query`
+          UPDATE posts SET
+            is_ai_generated = ${detection.isAiGenerated},
+            ai_detection_score = ${detection.score},
+            ai_detected_at = ${new Date()}
+          WHERE id = ${id}
+        `;
+        post.isAiGenerated = detection.isAiGenerated;
+        post.aiDetectionScore = detection.score ?? undefined;
+      } else {
+        // Cover image removed — clear any previous detection.
+        await db.query`
+          UPDATE posts SET
+            is_ai_generated = FALSE,
+            ai_detection_score = NULL,
+            ai_detected_at = NULL
+          WHERE id = ${id}
+        `;
+        post.isAiGenerated = false;
+        post.aiDetectionScore = undefined;
+      }
+    }
 
     revalidatePublicPostChange(existing, post);
 
