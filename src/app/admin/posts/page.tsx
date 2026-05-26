@@ -86,7 +86,6 @@ function AdminPostMobileCard({
 export default function PostsListPage() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"all" | "published" | "draft">("all");
   const [loading, setLoading] = useState(true);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [postToDelete, setPostToDelete] = useState<string | null>(null);
@@ -101,10 +100,6 @@ export default function PostsListPage() {
   const filteredPosts = useMemo(() => {
     let filtered = posts;
 
-    if (statusFilter !== "all") {
-      filtered = filtered.filter((post) => post.status === statusFilter);
-    }
-
     if (search) {
       const searchLower = search.toLowerCase();
       filtered = filtered.filter(
@@ -113,7 +108,7 @@ export default function PostsListPage() {
     }
 
     return filtered;
-  }, [posts, search, statusFilter]);
+  }, [posts, search]);
 
   useEffect(() => {
     let isMounted = true;
@@ -260,44 +255,16 @@ export default function PostsListPage() {
         </p>
       </div>
 
-      {/* Filters */}
+      {/* Search */}
       <Card className="p-4">
-        <div className="flex flex-col gap-4 sm:flex-row">
-          <div className="flex-1 relative">
-            <Search className="absolute start-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="חפש כתבות..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="h-11 ps-10 sm:h-9"
-            />
-          </div>
-          <div className="grid grid-cols-3 gap-2 sm:flex">
-            <Button
-              variant={statusFilter === "all" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setStatusFilter("all")}
-              className="h-11 w-full sm:h-9"
-            >
-              הכל
-            </Button>
-            <Button
-              variant={statusFilter === "published" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setStatusFilter("published")}
-              className="h-11 w-full sm:h-9"
-            >
-              פורסמו
-            </Button>
-            <Button
-              variant={statusFilter === "draft" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setStatusFilter("draft")}
-              className="h-11 w-full sm:h-9"
-            >
-              טיוטות
-            </Button>
-          </div>
+        <div className="relative">
+          <Search className="absolute start-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="חפש כתבות..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="h-11 ps-10 sm:h-9"
+          />
         </div>
       </Card>
 
