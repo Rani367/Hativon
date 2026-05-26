@@ -14,8 +14,6 @@ export interface Post {
   isTeacherPost?: boolean; // True if the post was created by a teacher
   tags?: string[];
   category?: string;
-  isAiGenerated?: boolean; // True if the cover image was detected as AI-generated
-  aiDetectionScore?: number; // AI probability (0..1) from the detector
   status: "draft" | "published";
   createdAt: string;
   updatedAt: string;
@@ -35,7 +33,6 @@ export interface PostSummary {
   isTeacherPost?: boolean;
   tags?: string[];
   category?: string;
-  isAiGenerated?: boolean; // True if the cover image was detected as AI-generated
 }
 
 export interface PostInput {

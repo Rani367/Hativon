@@ -14,7 +14,6 @@
     "db:migrate:status": "bun scripts/db-migrate.ts status",
     "db:migrate:rollback": "bun scripts/db-migrate.ts rollback",
     "images:backfill": "bun scripts/backfill-post-image-variants.ts",
-    "ai:backfill": "bun scripts/backfill-ai-image-detection.ts",
     "db:create-migration": "bun scripts/create-migration.ts",
     "create-test-user": "bun scripts/create-test-user-simple.ts",
     "check-db": "bun scripts/check-db.ts",

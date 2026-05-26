@@ -153,7 +153,6 @@ describe("rowToPost", () => {
       isTeacherPost: false,
       tags: ["תג1", "תג2"],
       category: "קטגוריה",
-      isAiGenerated: false,
       status: "published",
       createdAt: "2024-01-01T10:00:00.000Z",
       updatedAt: "2024-01-01T12:00:00.000Z",

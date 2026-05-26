@@ -9,7 +9,7 @@ import { truncateDescription } from "@/lib/posts/utils";
 import { getPostCardImageUrl } from "@/lib/images/post-images";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { Clock, Calendar, Sparkles } from "lucide-react";
+import { Clock, Calendar } from "lucide-react";
 import {
   canRestoreForwardPost,
   rememberCurrentIssuePath,
@@ -142,17 +142,6 @@ export default function PostCard({
                 className="bg-amber-500/90 text-white shadow-sm backdrop-blur-sm"
               >
                 פוסט של מורה
-              </Badge>
-            </div>
-          )}
-          {post.isAiGenerated && (
-            <div className="absolute bottom-3 start-3 z-20 sm:bottom-4 sm:start-4">
-              <Badge
-                variant="default"
-                className="gap-1 bg-rose-600/90 text-white shadow-sm backdrop-blur-sm"
-              >
-                <Sparkles className="h-3.5 w-3.5" />
-                נוצר בבינה מלאכותית
               </Badge>
             </div>
           )}

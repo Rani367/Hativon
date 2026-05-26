@@ -44,8 +44,6 @@ export function rowToPost(row: DbPostRow): Post {
     isTeacherPost: row.is_teacher_post || false,
     tags: row.tags || [],
     category: row.category || undefined,
-    isAiGenerated: row.is_ai_generated || false,
-    aiDetectionScore: row.ai_detection_score ?? undefined,
     status: row.status as "draft" | "published",
     createdAt: row.created_at.toISOString(),
     updatedAt: row.updated_at.toISOString(),
@@ -67,6 +65,5 @@ export function rowToPostSummary(row: DbPostSummaryRow): PostSummary {
     isTeacherPost: row.is_teacher_post || false,
     tags: row.tags || [],
     category: row.category || undefined,
-    isAiGenerated: row.is_ai_generated || false,
   };
 }

@@ -8,22 +8,6 @@ import { db } from "../db/client";
 import { rowToPost, rowToPostSummary } from "./utils";
 
 /**
- * True when an error is Postgres "undefined_column" (42703) for the AI columns.
- *
- * The public feeds order by `is_ai_generated`, which is added by the
- * `add_ai_image_detection` migration. If a database hasn't run that migration
- * yet (e.g. a fresh preview-branch database), we fall back to the legacy query
- * so the feed keeps working — the AI ordering/flag activates automatically once
- * the migration has run there.
- */
-function isMissingAiColumnError(error: unknown): boolean {
-  const e = error as { code?: string; message?: string } | null;
-  if (!e) return false;
-  if (e.code === "42703") return true;
-  return typeof e.message === "string" && e.message.includes("is_ai_generated");
-}
-
-/**
  * Pagination options for querying posts
  */
 export interface PaginationOptions {
@@ -223,29 +207,15 @@ export async function getPublishedPostById(id: string): Promise<Post | null> {
  */
 export async function getPostsByAuthor(authorId: string): Promise<Post[]> {
   try {
-    let result: PostQueryResult;
-    try {
-      result = (await db.query`
-        SELECT
-          p.*,
-          CASE WHEN u.id IS NULL AND p.author_id IS NOT NULL AND p.author_id != 'legacy-admin' THEN true ELSE false END as author_deleted
-        FROM posts p
-        LEFT JOIN users u ON p.author_id = u.id::text
-        WHERE p.author_id = ${authorId}
-        ORDER BY p.is_ai_generated ASC, p.date DESC, p.created_at DESC
-      `) as PostQueryResult;
-    } catch (error) {
-      if (!isMissingAiColumnError(error)) throw error;
-      result = (await db.query`
-        SELECT
-          p.*,
-          CASE WHEN u.id IS NULL AND p.author_id IS NOT NULL AND p.author_id != 'legacy-admin' THEN true ELSE false END as author_deleted
-        FROM posts p
-        LEFT JOIN users u ON p.author_id = u.id::text
-        WHERE p.author_id = ${authorId}
-        ORDER BY p.date DESC, p.created_at DESC
-      `) as PostQueryResult;
-    }
+    const result = (await db.query`
+      SELECT
+        p.*,
+        CASE WHEN u.id IS NULL AND p.author_id IS NOT NULL AND p.author_id != 'legacy-admin' THEN true ELSE false END as author_deleted
+      FROM posts p
+      LEFT JOIN users u ON p.author_id = u.id::text
+      WHERE p.author_id = ${authorId}
+      ORDER BY p.date DESC, p.created_at DESC
+    `) as PostQueryResult;
 
     return result.rows.map(rowToPost);
   } catch (error) {
@@ -280,33 +250,17 @@ export async function getPostsByMonth(
   month: number,
 ): Promise<Post[]> {
   try {
-    let result: PostQueryResult;
-    try {
-      result = (await db.query`
-        SELECT
-          p.*,
-          CASE WHEN u.id IS NULL AND p.author_id IS NOT NULL AND p.author_id != 'legacy-admin' THEN true ELSE false END as author_deleted
-        FROM posts p
-        LEFT JOIN users u ON p.author_id = u.id::text
-        WHERE p.status = 'published'
-          AND EXTRACT(YEAR FROM p.date) = ${year}
-          AND EXTRACT(MONTH FROM p.date) = ${month}
-        ORDER BY p.is_ai_generated ASC, (p.cover_image IS NOT NULL AND p.cover_image != '') DESC, p.date DESC, p.created_at DESC
-      `) as PostQueryResult;
-    } catch (error) {
-      if (!isMissingAiColumnError(error)) throw error;
-      result = (await db.query`
-        SELECT
-          p.*,
-          CASE WHEN u.id IS NULL AND p.author_id IS NOT NULL AND p.author_id != 'legacy-admin' THEN true ELSE false END as author_deleted
-        FROM posts p
-        LEFT JOIN users u ON p.author_id = u.id::text
-        WHERE p.status = 'published'
-          AND EXTRACT(YEAR FROM p.date) = ${year}
-          AND EXTRACT(MONTH FROM p.date) = ${month}
-        ORDER BY (p.cover_image IS NOT NULL AND p.cover_image != '') DESC, p.date DESC, p.created_at DESC
-      `) as PostQueryResult;
-    }
+    const result = (await db.query`
+      SELECT
+        p.*,
+        CASE WHEN u.id IS NULL AND p.author_id IS NOT NULL AND p.author_id != 'legacy-admin' THEN true ELSE false END as author_deleted
+      FROM posts p
+      LEFT JOIN users u ON p.author_id = u.id::text
+      WHERE p.status = 'published'
+        AND EXTRACT(YEAR FROM p.date) = ${year}
+        AND EXTRACT(MONTH FROM p.date) = ${month}
+      ORDER BY (p.cover_image IS NOT NULL AND p.cover_image != '') DESC, p.date DESC, p.created_at DESC
+    `) as PostQueryResult;
 
     return result.rows.map(rowToPost);
   } catch (error) {
@@ -337,58 +291,29 @@ export async function getPostSummariesByMonth(
 
     const total = parseInt((countResult.rows[0] as { count: string }).count);
 
-    let result: PostSummaryQueryResult;
-    try {
-      result = (await db.query`
-        SELECT
-          p.id,
-          p.title,
-          p.cover_image,
-          p.description,
-          p.word_count,
-          p.date,
-          p.author,
-          p.author_grade,
-          p.author_class,
-          CASE WHEN u.id IS NULL AND p.author_id IS NOT NULL AND p.author_id != 'legacy-admin' THEN true ELSE false END as author_deleted,
-          p.is_teacher_post,
-          p.tags,
-          p.category,
-          p.is_ai_generated
-        FROM posts p
-        LEFT JOIN users u ON p.author_id = u.id::text
-        WHERE p.status = 'published'
-          AND EXTRACT(YEAR FROM p.date) = ${year}
-          AND EXTRACT(MONTH FROM p.date) = ${month}
-        ORDER BY p.is_ai_generated ASC, (p.cover_image IS NOT NULL AND p.cover_image != '') DESC, p.date DESC, p.created_at DESC
-        LIMIT ${limit} OFFSET ${offset}
-      `) as PostSummaryQueryResult;
-    } catch (error) {
-      if (!isMissingAiColumnError(error)) throw error;
-      result = (await db.query`
-        SELECT
-          p.id,
-          p.title,
-          p.cover_image,
-          p.description,
-          p.word_count,
-          p.date,
-          p.author,
-          p.author_grade,
-          p.author_class,
-          CASE WHEN u.id IS NULL AND p.author_id IS NOT NULL AND p.author_id != 'legacy-admin' THEN true ELSE false END as author_deleted,
-          p.is_teacher_post,
-          p.tags,
-          p.category
-        FROM posts p
-        LEFT JOIN users u ON p.author_id = u.id::text
-        WHERE p.status = 'published'
-          AND EXTRACT(YEAR FROM p.date) = ${year}
-          AND EXTRACT(MONTH FROM p.date) = ${month}
-        ORDER BY (p.cover_image IS NOT NULL AND p.cover_image != '') DESC, p.date DESC, p.created_at DESC
-        LIMIT ${limit} OFFSET ${offset}
-      `) as PostSummaryQueryResult;
-    }
+    const result = (await db.query`
+      SELECT
+        p.id,
+        p.title,
+        p.cover_image,
+        p.description,
+        p.word_count,
+        p.date,
+        p.author,
+        p.author_grade,
+        p.author_class,
+        CASE WHEN u.id IS NULL AND p.author_id IS NOT NULL AND p.author_id != 'legacy-admin' THEN true ELSE false END as author_deleted,
+        p.is_teacher_post,
+        p.tags,
+        p.category
+      FROM posts p
+      LEFT JOIN users u ON p.author_id = u.id::text
+      WHERE p.status = 'published'
+        AND EXTRACT(YEAR FROM p.date) = ${year}
+        AND EXTRACT(MONTH FROM p.date) = ${month}
+      ORDER BY (p.cover_image IS NOT NULL AND p.cover_image != '') DESC, p.date DESC, p.created_at DESC
+      LIMIT ${limit} OFFSET ${offset}
+    `) as PostSummaryQueryResult;
 
     return {
       posts: result.rows.map(rowToPostSummary),
