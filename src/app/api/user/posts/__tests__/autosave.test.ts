@@ -44,6 +44,19 @@ const publishedPost: Post = {
   updatedAt: "2024-01-01T00:00:00.000Z",
 };
 
+const draftPost: Post = {
+  id: "2d3f8c5a-1b2c-4d5e-8f90-1a2b3c4d5e6f",
+  title: "Draft Post",
+  content: "Draft content",
+  description: "Draft description",
+  date: "2024-01-01T00:00:00.000Z",
+  authorId: "user-123",
+  author: "Test User",
+  status: "draft",
+  createdAt: "2024-01-01T00:00:00.000Z",
+  updatedAt: "2024-01-02T00:00:00.000Z",
+};
+
 function createMockRequest(body: Record<string, unknown>): NextRequest {
   return {
     json: mock(() => Promise.resolve(body)),
@@ -82,5 +95,77 @@ describe("POST /api/user/posts/autosave", () => {
     expect(body.error).toBe("Published posts must be saved explicitly");
     expect(mockUpdatePost).not.toHaveBeenCalled();
     expect(revalidatePath).not.toHaveBeenCalled();
+  });
+
+  it("returns 409 conflict when the server version is newer than expectedVersion", async () => {
+    mockGetCurrentUser.mockResolvedValue(mockUser);
+    mockGetPostById.mockResolvedValue(draftPost);
+
+    const response = await POST(
+      createMockRequest({
+        postId: draftPost.id,
+        title: "My local edit",
+        content: "My local content",
+        // Older than draftPost.updatedAt (2024-01-02) -> conflict
+        expectedVersion: "2024-01-01T00:00:00.000Z",
+      }),
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(409);
+    expect(body.conflict).toBe(true);
+    expect(body.serverVersion).toBe(draftPost.updatedAt);
+    expect(body.serverContent.title).toBe(draftPost.title);
+    expect(body.serverContent.content).toBe(draftPost.content);
+    // Must not overwrite when there is a real conflict
+    expect(mockUpdatePost).not.toHaveBeenCalled();
+  });
+
+  it("commits when expectedVersion equals the server version (overwrite path)", async () => {
+    mockGetCurrentUser.mockResolvedValue(mockUser);
+    mockGetPostById.mockResolvedValue(draftPost);
+    mockUpdatePost.mockResolvedValue({
+      ...draftPost,
+      updatedAt: "2024-01-03T00:00:00.000Z",
+    });
+
+    const response = await POST(
+      createMockRequest({
+        postId: draftPost.id,
+        title: "Updated title",
+        content: "Updated content",
+        // Equal to draftPost.updatedAt -> must pass the strict ">" check
+        expectedVersion: draftPost.updatedAt,
+      }),
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.success).toBe(true);
+    expect(body.isNew).toBe(false);
+    expect(body.updatedAt).toBe("2024-01-03T00:00:00.000Z");
+    expect(mockUpdatePost).toHaveBeenCalledTimes(1);
+  });
+
+  it("commits when no expectedVersion is provided (initial save)", async () => {
+    mockGetCurrentUser.mockResolvedValue(mockUser);
+    mockGetPostById.mockResolvedValue(draftPost);
+    mockUpdatePost.mockResolvedValue({
+      ...draftPost,
+      updatedAt: "2024-01-03T00:00:00.000Z",
+    });
+
+    const response = await POST(
+      createMockRequest({
+        postId: draftPost.id,
+        title: "Updated title",
+        content: "Updated content",
+      }),
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.success).toBe(true);
+    expect(mockUpdatePost).toHaveBeenCalledTimes(1);
   });
 });

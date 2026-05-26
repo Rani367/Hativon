@@ -64,6 +64,8 @@ interface UseAutoSaveReturn {
   dismissConflict: () => void;
   /** Cancel any pending save operations */
   cancelPendingSave: () => void;
+  /** Imperatively set the known server version (used when resolving conflicts) */
+  setServerVersion: (version: string) => void;
 }
 
 /**
@@ -93,7 +95,7 @@ export function useAutoSave({
     null,
   );
   const [currentPostId, setCurrentPostId] = useState<string | null>(postId);
-  const [serverVersion, setServerVersion] = useState<string | undefined>(
+  const [serverVersion, setServerVersionState] = useState<string | undefined>(
     initialVersion,
   );
 
@@ -101,6 +103,34 @@ export function useAutoSave({
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const latestDataRef = useRef<PostFormData | null>(null);
+
+  // Sources of truth for values sent to the server. Kept in refs so serialized
+  // /queued saves always read the freshest value (not a stale closure).
+  const serverVersionRef = useRef<string | undefined>(initialVersion);
+  const currentPostIdRef = useRef<string | null>(postId);
+  // True while a save request is in flight (used to serialize saves).
+  const savingRef = useRef(false);
+  // Latest payload queued while a save is in flight.
+  const pendingDataRef = useRef<PostFormData | null>(null);
+  // Holds the latest performSave so the queue can flush without a dep cycle.
+  const performSaveRef = useRef<((data: PostFormData) => void) | null>(null);
+
+  /**
+   * Update the known server version in both the ref (network token) and state
+   * (used by the localStorage backup). Always keep them in sync.
+   */
+  const applyServerVersion = useCallback((version: string | undefined) => {
+    serverVersionRef.current = version;
+    setServerVersionState(version);
+  }, []);
+
+  /**
+   * Update the current post id in both the ref (network payload) and state.
+   */
+  const applyCurrentPostId = useCallback((id: string) => {
+    currentPostIdRef.current = id;
+    setCurrentPostId(id);
+  }, []);
 
   // Check for localStorage recovery data on mount
   useEffect(() => {
@@ -156,6 +186,22 @@ export function useAutoSave({
     };
   }, []);
 
+  // Sync the version token whenever initialVersion changes (initial fetch, or
+  // a conflict resolution that reloads/overwrites). Monotonic guard: only ever
+  // advance forward, so this can never regress the token or fight the newer
+  // version set by a successful save.
+  useEffect(() => {
+    if (!initialVersion) return;
+
+    const current = serverVersionRef.current;
+    if (
+      !current ||
+      new Date(initialVersion).getTime() >= new Date(current).getTime()
+    ) {
+      applyServerVersion(initialVersion);
+    }
+  }, [initialVersion, applyServerVersion]);
+
   /**
    * Save to localStorage immediately (no debounce)
    */
@@ -181,7 +227,12 @@ export function useAutoSave({
   );
 
   /**
-   * Perform the actual save to server
+   * Perform the actual save to server.
+   *
+   * Saves are serialized: only one request is ever in flight. If a save is
+   * requested while one is running, the latest payload is queued and flushed
+   * once the in-flight save succeeds. This prevents the abort-then-commit race
+   * that desynced the version token and caused false conflicts.
    */
   const performSave = useCallback(
     async (data: PostFormData) => {
@@ -194,14 +245,22 @@ export function useAutoSave({
         return;
       }
 
-      // Cancel any in-flight request
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
+      // A save is already in flight - queue the latest snapshot and bail.
+      // Form payloads are full snapshots, so coalescing to the newest is safe.
+      if (savingRef.current) {
+        pendingDataRef.current = data;
+        return;
       }
 
+      savingRef.current = true;
+      // We're about to send the freshest snapshot; drop any stale queued one.
+      pendingDataRef.current = null;
+      // Fresh controller, used only for unmount / explicit cancel.
       abortControllerRef.current = new AbortController();
       setStatus("saving");
       setErrorMessage(null);
+
+      let succeeded = false;
 
       try {
         const response = await fetch("/api/user/posts/autosave", {
@@ -210,13 +269,13 @@ export function useAutoSave({
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            postId: currentPostId,
+            postId: currentPostIdRef.current,
             title: data.title,
             content: data.content,
             description: data.description,
             coverImage: data.coverImage,
             customAuthor: data.customAuthor,
-            expectedVersion: serverVersion,
+            expectedVersion: serverVersionRef.current,
           }),
           signal: abortControllerRef.current.signal,
         });
@@ -240,11 +299,11 @@ export function useAutoSave({
         // Update state on success
         setStatus("saved");
         setLastSaved(new Date());
-        setServerVersion(result.updatedAt);
+        applyServerVersion(result.updatedAt);
 
         // Update post ID if this was a new post
         if (result.isNew && result.id) {
-          setCurrentPostId(result.id);
+          applyCurrentPostId(result.id);
 
           // Move localStorage backup to new key
           const oldKey = getAutoSaveStorageKey(null);
@@ -264,11 +323,14 @@ export function useAutoSave({
 
         // Clear localStorage backup after successful save
         if (typeof window !== "undefined") {
-          const storageKey = getAutoSaveStorageKey(result.id || currentPostId);
+          const storageKey = getAutoSaveStorageKey(
+            result.id || currentPostIdRef.current,
+          );
           localStorage.removeItem(storageKey);
         }
 
         onSaveComplete?.(result.id, result.updatedAt);
+        succeeded = true;
       } catch (error) {
         // Ignore abort errors
         if (error instanceof Error && error.name === "AbortError") {
@@ -280,17 +342,35 @@ export function useAutoSave({
         setErrorMessage(
           error instanceof Error ? error.message : "Auto-save failed",
         );
+      } finally {
+        savingRef.current = false;
+
+        // Flush a queued save only after a successful one - so the freshly
+        // advanced version token is used. After a conflict/error we leave the
+        // queue for the user's next edit (or conflict resolution) to drive.
+        if (succeeded && pendingDataRef.current) {
+          const next = pendingDataRef.current;
+          pendingDataRef.current = null;
+          // Defer to a microtask to avoid a deep recursive call stack.
+          void Promise.resolve().then(() => performSaveRef.current?.(next));
+        }
       }
     },
     [
       enabled,
       serverSave,
-      currentPostId,
-      serverVersion,
       onSaveComplete,
       onConflict,
+      applyServerVersion,
+      applyCurrentPostId,
     ],
   );
+
+  // Keep a ref to the latest performSave so the queue flush can re-invoke it
+  // without performSave depending on itself.
+  useEffect(() => {
+    performSaveRef.current = performSave;
+  }, [performSave]);
 
   /**
    * Trigger an immediate save
@@ -389,6 +469,8 @@ export function useAutoSave({
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
     }
+    // Drop any queued save so it can't fire after navigation/submit.
+    pendingDataRef.current = null;
   }, []);
 
   return {
@@ -404,5 +486,6 @@ export function useAutoSave({
     clearRecovery,
     dismissConflict,
     cancelPendingSave,
+    setServerVersion: applyServerVersion,
   };
 }

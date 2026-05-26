@@ -55,6 +55,7 @@ export default function EditPostPage({
     clearRecovery,
     dismissConflict,
     cancelPendingSave,
+    setServerVersion,
   } = useAutoSave({
     postId: id,
     initialVersion,
@@ -190,13 +191,16 @@ export default function EditPostPage({
   const handleConflictOverwrite = useCallback(() => {
     setShowConflictDialog(false);
     dismissConflict();
-    // Update the expected version to current server version to force overwrite
+    // Adopt the current server version so the retry save's expectedVersion
+    // matches and the overwrite is accepted (no 409). Update both the hook's
+    // live token and initialVersion (the latter for any remount/recovery).
     if (conflictData) {
+      setServerVersion(conflictData.serverVersion);
       setInitialVersion(conflictData.serverVersion);
     }
     // Trigger a save with updated version
     handleRetryAutoSave();
-  }, [dismissConflict, conflictData, handleRetryAutoSave]);
+  }, [dismissConflict, conflictData, handleRetryAutoSave, setServerVersion]);
 
   // Handle conflict - reload from server
   const handleConflictReload = useCallback(async () => {
@@ -209,6 +213,9 @@ export default function EditPostPage({
       if (response.ok) {
         const data = await response.json();
         setPost(data);
+        // Adopt the freshly-loaded server version so the next autosave doesn't
+        // re-trigger the conflict.
+        setServerVersion(data.updatedAt);
         setInitialVersion(data.updatedAt);
         setForm({
           title: data.title,
@@ -228,7 +235,7 @@ export default function EditPostPage({
       logError("Failed to reload post:", error);
       toast.error("טעינת הכתבה נכשלה");
     }
-  }, [id, dismissConflict]);
+  }, [id, dismissConflict, setServerVersion]);
 
   // Handle conflict - continue editing
   const handleConflictContinue = useCallback(() => {
