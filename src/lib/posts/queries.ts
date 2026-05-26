@@ -214,7 +214,7 @@ export async function getPostsByAuthor(authorId: string): Promise<Post[]> {
       FROM posts p
       LEFT JOIN users u ON p.author_id = u.id::text
       WHERE p.author_id = ${authorId}
-      ORDER BY p.date DESC, p.created_at DESC
+      ORDER BY p.is_ai_generated ASC, p.date DESC, p.created_at DESC
     `) as PostQueryResult;
 
     return result.rows.map(rowToPost);
@@ -259,7 +259,7 @@ export async function getPostsByMonth(
       WHERE p.status = 'published'
         AND EXTRACT(YEAR FROM p.date) = ${year}
         AND EXTRACT(MONTH FROM p.date) = ${month}
-      ORDER BY (p.cover_image IS NOT NULL AND p.cover_image != '') DESC, p.date DESC, p.created_at DESC
+      ORDER BY p.is_ai_generated ASC, (p.cover_image IS NOT NULL AND p.cover_image != '') DESC, p.date DESC, p.created_at DESC
     `) as PostQueryResult;
 
     return result.rows.map(rowToPost);
@@ -305,13 +305,14 @@ export async function getPostSummariesByMonth(
         CASE WHEN u.id IS NULL AND p.author_id IS NOT NULL AND p.author_id != 'legacy-admin' THEN true ELSE false END as author_deleted,
         p.is_teacher_post,
         p.tags,
-        p.category
+        p.category,
+        p.is_ai_generated
       FROM posts p
       LEFT JOIN users u ON p.author_id = u.id::text
       WHERE p.status = 'published'
         AND EXTRACT(YEAR FROM p.date) = ${year}
         AND EXTRACT(MONTH FROM p.date) = ${month}
-      ORDER BY (p.cover_image IS NOT NULL AND p.cover_image != '') DESC, p.date DESC, p.created_at DESC
+      ORDER BY p.is_ai_generated ASC, (p.cover_image IS NOT NULL AND p.cover_image != '') DESC, p.date DESC, p.created_at DESC
       LIMIT ${limit} OFFSET ${offset}
     `) as PostSummaryQueryResult;
 
