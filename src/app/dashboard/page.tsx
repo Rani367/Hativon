@@ -362,12 +362,12 @@ export default function DashboardPage() {
                   className="h-11 ps-10 sm:h-9"
                 />
               </div>
-              <div className="grid grid-cols-3 gap-2 sm:flex">
+              <div className="grid grid-cols-3 gap-2 sm:flex sm:shrink-0">
                 <Button
                   variant={statusFilter === "all" ? "default" : "outline"}
                   size="sm"
                   onClick={() => setStatusFilter("all")}
-                  className="h-11 w-full sm:h-9"
+                  className="h-11 w-full sm:h-9 sm:w-auto"
                 >
                   הכל
                 </Button>
@@ -375,7 +375,7 @@ export default function DashboardPage() {
                   variant={statusFilter === "published" ? "default" : "outline"}
                   size="sm"
                   onClick={() => setStatusFilter("published")}
-                  className="h-11 w-full sm:h-9"
+                  className="h-11 w-full sm:h-9 sm:w-auto"
                 >
                   פורסמו
                 </Button>
@@ -383,7 +383,7 @@ export default function DashboardPage() {
                   variant={statusFilter === "draft" ? "default" : "outline"}
                   size="sm"
                   onClick={() => setStatusFilter("draft")}
-                  className="h-11 w-full sm:h-9"
+                  className="h-11 w-full sm:h-9 sm:w-auto"
                 >
                   טיוטות
                 </Button>
