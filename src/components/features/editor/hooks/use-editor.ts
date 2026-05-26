@@ -7,73 +7,13 @@
 
 import { useEditor as useTiptapEditor, Editor } from "@tiptap/react";
 import { useCallback, useEffect, useRef } from "react";
-import TurndownService from "turndown";
-import { marked } from "marked";
 import { createExtensions, editorProps } from "../extensions";
-
-// Configure marked for consistent HTML output
-marked.setOptions({
-  breaks: true, // Convert \n to <br>
-  gfm: true, // GitHub Flavored Markdown
-});
-
-// Configure Turndown for markdown conversion
-const turndownService = new TurndownService({
-  headingStyle: "atx",
-  codeBlockStyle: "fenced",
-  bulletListMarker: "-",
-  emDelimiter: "*",
-  strongDelimiter: "**",
-});
-
-// Custom rule for code blocks
-turndownService.addRule("codeBlock", {
-  filter: (node) => {
-    return node.nodeName === "PRE" && node.firstChild?.nodeName === "CODE";
-  },
-  replacement: (content, node) => {
-    const codeNode = (node as HTMLElement).querySelector("code");
-    const language = codeNode?.className?.match(/language-(\w+)/)?.[1] || "";
-    const code = codeNode?.textContent || content;
-    return `\n\`\`\`${language}\n${code}\n\`\`\`\n`;
-  },
-});
-
-// Custom rule for blockquotes to handle RTL properly
-turndownService.addRule("blockquote", {
-  filter: "blockquote",
-  replacement: (content) => {
-    const lines = content.trim().split("\n");
-    return "\n" + lines.map((line) => `> ${line}`).join("\n") + "\n";
-  },
-});
+import { htmlToMarkdown, markdownToHtml } from "../markdown";
 
 interface UseEditorOptions {
   initialContent: string;
   onChange: (markdown: string) => void;
   placeholder?: string;
-}
-
-/**
- * Converts HTML from the editor to Markdown
- */
-function htmlToMarkdown(html: string): string {
-  if (!html || html === "<p></p>") {
-    return "";
-  }
-  return turndownService.turndown(html).trim();
-}
-
-/**
- * Converts Markdown to HTML for the editor
- * Tiptap expects HTML content, not raw markdown
- */
-function markdownToHtml(markdown: string): string {
-  if (!markdown) {
-    return "";
-  }
-  // marked.parse returns string when async is false (default)
-  return marked.parse(markdown, { async: false }) as string;
 }
 
 /**

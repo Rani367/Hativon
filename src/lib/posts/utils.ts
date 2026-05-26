@@ -20,6 +20,7 @@ export function generateDescription(content: string): string {
     .replace(/```[\s\S]*?```/g, "") // code blocks
     .replace(/`[^`]*`/g, "") // inline code
     .replace(/[#*_~\[\]()]/g, "") // markdown syntax
+    .replace(/&nbsp;/gi, " ") // blank-line markers
     .replace(/\s+/g, " ")
     .trim();
 

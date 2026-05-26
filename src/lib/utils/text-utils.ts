@@ -6,6 +6,7 @@ export function getWordCount(markdown: string): number {
     .replace(/```[\s\S]*?```/g, '') // Remove code blocks
     .replace(/`[^`]*`/g, '') // Remove inline code
     .replace(/[#*_~\[\]()]/g, '') // Remove markdown syntax
+    .replace(/&nbsp;/gi, ' ') // Drop blank-line markers
     .replace(/\s+/g, ' ') // Normalize whitespace
     .trim();
 
