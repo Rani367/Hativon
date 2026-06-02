@@ -58,7 +58,8 @@ export function ArchiveSidebar({ archives }: ArchiveSidebarProps) {
       yearGroup.months.push({
         month: archive.month,
         monthNameEn,
-        monthNameHe,
+        // A merged "double issue" carries a span label (e.g. "מאי–יוני").
+        monthNameHe: archive.label ?? monthNameHe,
         count: archive.count,
       });
     }

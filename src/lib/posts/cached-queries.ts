@@ -12,7 +12,13 @@ export {
   getPublishedPostById as getCachedPublishedPostById,
   getPostsByMonth as getCachedPostsByMonth,
   getPostSummariesByMonth as getCachedPostSummariesByMonth,
-  getArchiveMonths as getCachedArchiveMonths,
 } from "./queries";
+
+// Archive months are served with merged "double issues" collapsed into a single
+// entry, and `getIssue` resolves a (year, month) to its (possibly merged) issue.
+export {
+  getMergedArchiveMonths as getCachedArchiveMonths,
+  getIssue as getCachedIssue,
+} from "@/lib/issues/merged-issues";
 
 export { getDefaultMonthWithFallback as getCachedDefaultMonth } from "@/lib/settings";

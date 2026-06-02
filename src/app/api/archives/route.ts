@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
-import { getArchiveMonths } from "@/lib/posts/queries";
+import { getMergedArchiveMonths } from "@/lib/issues/merged-issues";
 import { logError } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const archives = await getArchiveMonths();
+    const archives = await getMergedArchiveMonths();
 
     return NextResponse.json(archives, {
       headers: {

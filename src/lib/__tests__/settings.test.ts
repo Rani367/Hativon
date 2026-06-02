@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, mock, spyOn } from "bun:test";
+import * as realMonths from "../date/months";
 
 // @/lib/db/client is mocked via global delegates in test/setup.ts.
 // Use the global delegates to control db behaviour per test.
@@ -6,26 +7,12 @@ const _g = globalThis as Record<string, unknown>;
 let mockDbQuery: ReturnType<typeof mock>;
 let mockIsDatabaseAvailable: ReturnType<typeof mock>;
 
-// Mock the date/months module
+// Mock the date/months module. mock.module is process-global, so keep every real
+// export intact (other modules — e.g. lib/issues/merged-issues — import helpers
+// like monthNumberToHebrew) and override only getCurrentMonthYear for determinism.
 mock.module("../date/months", () => ({
+  ...realMonths,
   getCurrentMonthYear: () => ({ year: 2025, month: "january" }),
-  monthNumberToEnglish: (month: number) => {
-    const months: Record<number, string> = {
-      1: "january",
-      2: "february",
-      3: "march",
-      4: "april",
-      5: "may",
-      6: "june",
-      7: "july",
-      8: "august",
-      9: "september",
-      10: "october",
-      11: "november",
-      12: "december",
-    };
-    return months[month] || null;
-  },
 }));
 
 // Path to settings module for cache clearing between tests

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getPostSummariesByMonth } from "@/lib/posts";
+import { getIssue } from "@/lib/issues/merged-issues";
 import { logError } from "@/lib/logger";
 import type { PostSummary } from "@/types/post.types";
 
@@ -80,10 +80,13 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const result = await getPostSummariesByMonth(year, monthNumber, {
+    // Resolve through getIssue so load-more on a merged "double issue" pages over
+    // the full combined range, keeping offsets aligned with the initial render.
+    const issue = await getIssue(year, monthNumber, {
       limit,
       offset,
     });
+    const result = issue.result;
 
     return NextResponse.json(
       {

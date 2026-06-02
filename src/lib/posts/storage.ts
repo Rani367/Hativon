@@ -63,7 +63,7 @@ export async function createPost(input: PostInput): Promise<Post> {
 
     const post = rowToPost(result.rows[0]);
 
-    revalidatePublicPostChange(null, post);
+    await revalidatePublicPostChange(null, post);
 
     return post;
   } catch (error) {
@@ -153,7 +153,7 @@ export async function updatePost(
 
     const post = rowToPost(result.rows[0]);
 
-    revalidatePublicPostChange(existing, post);
+    await revalidatePublicPostChange(existing, post);
 
     return post;
   } catch (error) {
@@ -184,7 +184,7 @@ export async function deletePost(
     const deleted = result.rowCount > 0;
 
     if (deleted) {
-      revalidatePublicPostChange(existing, null);
+      await revalidatePublicPostChange(existing, null);
     }
 
     return deleted;

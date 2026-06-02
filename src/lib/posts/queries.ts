@@ -235,6 +235,11 @@ export interface ArchiveMonth {
   year: number;
   month: number; // 1-12
   count: number; // Number of published posts in this month
+  /**
+   * Optional Hebrew label override (month span, year appended at render time).
+   * Set when this row represents a merged "double issue" (e.g. "מאי–יוני").
+   */
+  label?: string;
 }
 
 /**
@@ -326,6 +331,90 @@ export async function getPostSummariesByMonth(
     const errorMessage = error instanceof Error ? error.message : String(error);
     if (!errorMessage.includes('relation "posts" does not exist')) {
       console.error("[ERROR] Failed to fetch post summaries by month:", error);
+    }
+
+    return {
+      posts: [],
+      total: 0,
+      limit,
+      offset,
+      hasMore: false,
+    };
+  }
+}
+
+/**
+ * Get published post summaries within a half-open date range.
+ * Mirrors getPostSummariesByMonth exactly (same SELECT and ORDER BY) but filters
+ * by `date >= start AND date < endExclusive`, which is what backs merged
+ * "double issues" spanning multiple months.
+ *
+ * Bounds must be passed as plain timestamp strings (e.g. "2026-05-01 00:00:00"),
+ * NOT JS Date objects: the `date` column is TIMESTAMP without time zone and the
+ * month filters use EXTRACT (no tz conversion), so binding Date objects could
+ * shift the boundary and drop/add posts at month edges.
+ *
+ * @param startInclusive - Range start as a timestamp string (inclusive)
+ * @param endExclusive - Range end as a timestamp string (exclusive)
+ * @param pagination - Optional pagination parameters (limit, offset)
+ */
+export async function getPostSummariesByDateRange(
+  startInclusive: string,
+  endExclusive: string,
+  pagination: PaginationOptions = {},
+): Promise<PaginatedPostSummaries> {
+  const limit = pagination.limit || 12;
+  const offset = pagination.offset || 0;
+
+  try {
+    const countResult = await db.query`
+      SELECT COUNT(*) as count
+      FROM posts
+      WHERE status = 'published'
+        AND date >= ${startInclusive}
+        AND date < ${endExclusive}
+    `;
+
+    const total = parseInt((countResult.rows[0] as { count: string }).count);
+
+    const result = (await db.query`
+      SELECT
+        p.id,
+        p.title,
+        p.cover_image,
+        p.description,
+        p.word_count,
+        p.date,
+        p.author,
+        p.author_grade,
+        p.author_class,
+        CASE WHEN u.id IS NULL AND p.author_id IS NOT NULL AND p.author_id != 'legacy-admin' THEN true ELSE false END as author_deleted,
+        p.is_teacher_post,
+        p.tags,
+        p.category
+      FROM posts p
+      LEFT JOIN users u ON p.author_id = u.id::text
+      WHERE p.status = 'published'
+        AND p.date >= ${startInclusive}
+        AND p.date < ${endExclusive}
+      ORDER BY (p.cover_image IS NOT NULL AND p.cover_image != '') DESC, p.date DESC, p.created_at DESC
+      LIMIT ${limit} OFFSET ${offset}
+    `) as PostSummaryQueryResult;
+
+    return {
+      posts: result.rows.map(rowToPostSummary),
+      total,
+      limit,
+      offset,
+      hasMore: offset + limit < total,
+    };
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    if (!errorMessage.includes('relation "posts" does not exist')) {
+      console.error(
+        "[ERROR] Failed to fetch post summaries by date range:",
+        error,
+      );
     }
 
     return {

@@ -110,6 +110,8 @@ const _realGetPublishedPostById = _realQueriesModule.getPublishedPostById;
 const _realGetPostsByAuthor = _realQueriesModule.getPostsByAuthor;
 const _realGetPostsByMonth = _realQueriesModule.getPostsByMonth;
 const _realGetPostSummariesByMonth = _realQueriesModule.getPostSummariesByMonth;
+const _realGetPostSummariesByDateRange =
+  _realQueriesModule.getPostSummariesByDateRange;
 const _realGetArchiveMonths = _realQueriesModule.getArchiveMonths;
 const _realGetPostStats = _realQueriesModule.getPostStats;
 
@@ -120,6 +122,7 @@ _g.__realPostsQueries = {
   getPostsByAuthor: _realGetPostsByAuthor,
   getPostsByMonth: _realGetPostsByMonth,
   getPostSummariesByMonth: _realGetPostSummariesByMonth,
+  getPostSummariesByDateRange: _realGetPostSummariesByDateRange,
   getArchiveMonths: _realGetArchiveMonths,
   getPostStats: _realGetPostStats,
 };
@@ -131,6 +134,8 @@ _g.__postsQueriesGetPublishedPostByIdMock = _realGetPublishedPostById;
 _g.__postsQueriesGetPostsByAuthorMock = _realGetPostsByAuthor;
 _g.__postsQueriesGetPostsByMonthMock = _realGetPostsByMonth;
 _g.__postsQueriesGetPostSummariesByMonthMock = _realGetPostSummariesByMonth;
+_g.__postsQueriesGetPostSummariesByDateRangeMock =
+  _realGetPostSummariesByDateRange;
 _g.__postsQueriesGetArchiveMonthsMock = _realGetArchiveMonths;
 _g.__postsQueriesGetPostStatsMock = _realGetPostStats;
 
@@ -147,6 +152,8 @@ mock.module("@/lib/posts/queries", () => ({
     (_g.__postsQueriesGetPostsByMonthMock as (...a: unknown[]) => unknown)(...args),
   getPostSummariesByMonth: (...args: unknown[]) =>
     (_g.__postsQueriesGetPostSummariesByMonthMock as (...a: unknown[]) => unknown)(...args),
+  getPostSummariesByDateRange: (...args: unknown[]) =>
+    (_g.__postsQueriesGetPostSummariesByDateRangeMock as (...a: unknown[]) => unknown)(...args),
   getArchiveMonths: (...args: unknown[]) =>
     (_g.__postsQueriesGetArchiveMonthsMock as (...a: unknown[]) => unknown)(...args),
   getPostStats: (...args: unknown[]) =>

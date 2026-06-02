@@ -1,11 +1,11 @@
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import {
-  getCachedPostSummariesByMonth,
   getCachedArchiveMonths,
+  getCachedIssue,
 } from "@/lib/posts/cached-queries";
+import { resolveMergeGroup } from "@/lib/issues/merged-issues";
 import {
   englishMonthToNumber,
-  englishToHebrewMonth,
   isValidYearMonth,
   monthNumberToEnglish,
 } from "@/lib/date/months";
@@ -17,7 +17,9 @@ export const revalidate = false;
 // Allow dynamic rendering for months not pre-generated at build time
 export const dynamicParams = true;
 
-// Generate static params for all archive pages at build time
+// Generate static params for all archive pages at build time. Archive months are
+// already merge-collapsed, so only canonical months are pre-rendered; a merged
+// member month (e.g. /2026/may) is handled dynamically and redirected below.
 export async function generateStaticParams() {
   const archives = await getCachedArchiveMonths();
   return archives.map((archive) => ({
@@ -50,18 +52,29 @@ export default async function ArchivePage({ params }: ArchivePageProps) {
     notFound();
   }
 
-  const hebrewMonth = englishToHebrewMonth(monthStr);
-  const result = await getCachedPostSummariesByMonth(year, monthNumber, {
+  // If this month is a member of a merged issue but not its canonical month,
+  // redirect to the canonical combined issue (permanent — the merge is permanent).
+  const group = await resolveMergeGroup(year, monthNumber);
+  if (
+    group &&
+    (group.canonicalYear !== year || group.canonicalMonth !== monthNumber)
+  ) {
+    permanentRedirect(
+      `/${group.canonicalYear}/${monthNumberToEnglish(group.canonicalMonth)}`,
+    );
+  }
+
+  const issue = await getCachedIssue(year, monthNumber, {
     limit: 12,
     offset: 0,
   });
 
   return (
     <IssuePage
-      year={year}
-      month={monthStr}
-      hebrewMonth={hebrewMonth}
-      result={result}
+      year={issue.canonicalYear}
+      month={issue.canonicalMonthEn}
+      hebrewMonth={issue.hebrewLabel}
+      result={issue.result}
     />
   );
 }

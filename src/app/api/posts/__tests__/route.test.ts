@@ -10,6 +10,11 @@ function createRequest(url: string): NextRequest {
 
 describe("GET /api/posts", () => {
   beforeEach(() => {
+    // The route resolves through getIssue. With no merge configured, getIssue's
+    // no-merge path calls getPostSummariesByMonth from @/lib/posts/queries.
+    // Pin the DB mock so the settings read (merged_issues) returns nothing.
+    _g.__dbQueryMock = mock(() => Promise.resolve({ rows: [] }));
+
     mockGetPostSummariesByMonth = mock(() =>
       Promise.resolve({
         posts: [],
@@ -20,7 +25,7 @@ describe("GET /api/posts", () => {
       }),
     );
 
-    _g.__postsBarrelGetPostSummariesByMonthMock = mockGetPostSummariesByMonth;
+    _g.__postsQueriesGetPostSummariesByMonthMock = mockGetPostSummariesByMonth;
   });
 
   it("returns paginated post summaries for a valid month", async () => {

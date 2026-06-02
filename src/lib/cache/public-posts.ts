@@ -1,5 +1,6 @@
 import type { Post } from "@/types/post.types";
 import { monthNumberToEnglish } from "@/lib/date/months";
+import { resolveMergeGroup } from "@/lib/issues/merged-issues";
 import { safeRevalidatePath } from "./revalidate";
 
 type PublicPostSnapshot = Pick<
@@ -44,7 +45,9 @@ function getPublicSignature(post: PublicPostSnapshot): string | null {
   });
 }
 
-function getArchivePath(post: PublicPostSnapshot): string | null {
+function getArchiveYearMonth(
+  post: PublicPostSnapshot,
+): { year: number; month: number } | null {
   if (!post || post.status !== "published") {
     return null;
   }
@@ -54,15 +57,15 @@ function getArchivePath(post: PublicPostSnapshot): string | null {
     return null;
   }
 
-  const month = monthNumberToEnglish(date.getUTCMonth() + 1);
-  if (!month) {
-    return null;
-  }
-
-  return `/${date.getUTCFullYear()}/${month}`;
+  return { year: date.getUTCFullYear(), month: date.getUTCMonth() + 1 };
 }
 
-export function revalidatePublicPostChange(
+function archivePathOf(year: number, month: number): string | null {
+  const monthEn = monthNumberToEnglish(month);
+  return monthEn ? `/${year}/${monthEn}` : null;
+}
+
+export async function revalidatePublicPostChange(
   before: PublicPostSnapshot,
   after: PublicPostSnapshot,
 ) {
@@ -83,14 +86,32 @@ export function revalidatePublicPostChange(
     paths.add(`/posts/${after.id}`);
   }
 
-  const beforeArchivePath = getArchivePath(before);
-  if (beforeArchivePath) {
-    paths.add(beforeArchivePath);
+  // Revalidate the affected month page(s), plus — if the month belongs to a
+  // merged "double issue" — the canonical page (the real cached page; member
+  // months only redirect to it). Dedupe by year-month to avoid repeat lookups.
+  const months = new Map<string, { year: number; month: number }>();
+  for (const ym of [getArchiveYearMonth(before), getArchiveYearMonth(after)]) {
+    if (ym) {
+      months.set(`${ym.year}-${ym.month}`, ym);
+    }
   }
 
-  const afterArchivePath = getArchivePath(after);
-  if (afterArchivePath) {
-    paths.add(afterArchivePath);
+  for (const { year, month } of months.values()) {
+    const ownPath = archivePathOf(year, month);
+    if (ownPath) {
+      paths.add(ownPath);
+    }
+
+    const group = await resolveMergeGroup(year, month);
+    if (group) {
+      const canonicalPath = archivePathOf(
+        group.canonicalYear,
+        group.canonicalMonth,
+      );
+      if (canonicalPath) {
+        paths.add(canonicalPath);
+      }
+    }
   }
 
   for (const path of paths) {
