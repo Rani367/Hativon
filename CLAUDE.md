@@ -8,7 +8,7 @@ Hebrew/RTL school-newspaper app on Next.js 16 (App Router, React 19) + Vercel.
 
 Use **Bun** — there's no `packageManager` field, so don't default to npm/pnpm.
 
-- `bun run verify` (`bun test && bun run build`) — **run after every change; fix all failures even if unrelated; must pass before a PR.** Caveat: `next.config.ts` sets `typescript.ignoreBuildErrors: true`, so the build does **not** catch type errors — run `bunx tsc --noEmit` to typecheck.
+- `bun run verify` (`bun run lint && bun run typecheck && bun test && bun run build`) — **run after every change; fix all failures even if unrelated; must pass before a PR.** It now bundles `typecheck` (`tsc --noEmit`), which is what actually catches type errors — `next.config.ts` sets `typescript.ignoreBuildErrors: true`, so the build itself does **not**. CI runs the identical gate via `bun run pre-deploy` (an alias for `verify`).
 - `bun run dev` — dev server (a `predev` hook frees port 3000 first).
 - `bun run db:migrate` — custom migration runner (`:status`, `:rollback [N]` variants); `db:init` loads `schema.sql`, `db:create-migration` scaffolds one.
 - `bun run hash-admin-password` — hash `ADMIN_PASSWORD` for production; `bun run create-test-user` — seed a local user.

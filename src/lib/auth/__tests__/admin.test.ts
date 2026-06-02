@@ -143,9 +143,10 @@ describe("Admin Authentication", () => {
 
   afterEach(() => {
     if (savedNodeEnv === undefined) {
-      delete process.env.NODE_ENV;
+      delete (process.env as Record<string, string | undefined>).NODE_ENV;
     } else {
-      process.env.NODE_ENV = savedNodeEnv;
+      (process.env as Record<string, string | undefined>).NODE_ENV =
+        savedNodeEnv;
     }
   });
 
@@ -246,7 +247,8 @@ describe("Admin Authentication", () => {
     });
 
     it("sets secure flag in production environment", async () => {
-      process.env.NODE_ENV = "production";
+      (process.env as Record<string, string | undefined>).NODE_ENV =
+        "production";
 
       await setAdminAuth();
 
@@ -286,7 +288,8 @@ describe("Admin Authentication", () => {
     });
 
     it("includes Secure flag in production", () => {
-      process.env.NODE_ENV = "production";
+      (process.env as Record<string, string | undefined>).NODE_ENV =
+        "production";
 
       const result = getAdminClearCookie();
 
@@ -294,7 +297,8 @@ describe("Admin Authentication", () => {
     });
 
     it("excludes Secure flag in development", () => {
-      process.env.NODE_ENV = "development";
+      (process.env as Record<string, string | undefined>).NODE_ENV =
+        "development";
 
       const result = getAdminClearCookie();
 

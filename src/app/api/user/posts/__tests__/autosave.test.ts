@@ -17,6 +17,7 @@ import { POST } from "../autosave/route";
 let mockGetCurrentUser: ReturnType<typeof mock>;
 let mockGetPostById: ReturnType<typeof mock>;
 let mockUpdatePost: ReturnType<typeof mock>;
+let mockCreatePost: ReturnType<typeof mock>;
 
 const mockUser: User = {
   id: "user-123",
@@ -57,6 +58,13 @@ const draftPost: Post = {
   updatedAt: "2024-01-02T00:00:00.000Z",
 };
 
+// A draft owned by a different user (used for the ownership check).
+const othersDraftPost: Post = {
+  ...draftPost,
+  authorId: "someone-else",
+  author: "Other Student",
+};
+
 function createMockRequest(body: Record<string, unknown>): NextRequest {
   return {
     json: mock(() => Promise.resolve(body)),
@@ -69,10 +77,12 @@ describe("POST /api/user/posts/autosave", () => {
     mockGetCurrentUser = mock(() => undefined);
     mockGetPostById = mock(() => undefined);
     mockUpdatePost = mock(() => undefined);
+    mockCreatePost = mock(() => undefined);
 
     _g.__getCurrentUserMock = mockGetCurrentUser;
     _g.__postsBarrelGetPostByIdMock = mockGetPostById;
     _g.__postsBarrelUpdatePostMock = mockUpdatePost;
+    _g.__postsBarrelCreatePostMock = mockCreatePost;
     _g.__logErrorMock = mock(() => undefined);
     (revalidatePath as ReturnType<typeof mock>).mockReset();
   });
@@ -167,5 +177,77 @@ describe("POST /api/user/posts/autosave", () => {
     expect(response.status).toBe(200);
     expect(body.success).toBe(true);
     expect(mockUpdatePost).toHaveBeenCalledTimes(1);
+  });
+
+  it("returns 401 when the request is not authenticated", async () => {
+    // getCurrentUser defaults to undefined in beforeEach.
+    const response = await POST(
+      createMockRequest({
+        postId: draftPost.id,
+        title: "Anything",
+        content: "Anything",
+      }),
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(401);
+    expect(body.error).toBe("Unauthorized");
+    expect(mockUpdatePost).not.toHaveBeenCalled();
+    expect(mockCreatePost).not.toHaveBeenCalled();
+  });
+
+  it("creates a new draft when postId is null", async () => {
+    mockGetCurrentUser.mockResolvedValue(mockUser);
+    mockCreatePost.mockResolvedValue({
+      id: "11111111-2222-3333-4444-555555555555",
+      updatedAt: "2024-02-01T00:00:00.000Z",
+    });
+
+    const response = await POST(
+      createMockRequest({
+        postId: null,
+        title: "Fresh draft",
+        content: "Fresh content",
+      }),
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.success).toBe(true);
+    expect(body.isNew).toBe(true);
+    expect(body.id).toBe("11111111-2222-3333-4444-555555555555");
+    expect(mockCreatePost).toHaveBeenCalledTimes(1);
+    expect(mockUpdatePost).not.toHaveBeenCalled();
+  });
+
+  it("rejects a new post that has neither title nor content", async () => {
+    mockGetCurrentUser.mockResolvedValue(mockUser);
+
+    const response = await POST(
+      createMockRequest({ postId: null, title: "", content: "" }),
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(body.error).toBe("Title or content required for new post");
+    expect(mockCreatePost).not.toHaveBeenCalled();
+  });
+
+  it("returns 403 when auto-saving a post owned by another user", async () => {
+    mockGetCurrentUser.mockResolvedValue(mockUser);
+    mockGetPostById.mockResolvedValue(othersDraftPost);
+
+    const response = await POST(
+      createMockRequest({
+        postId: othersDraftPost.id,
+        title: "Hijack attempt",
+        content: "Not my post",
+      }),
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(403);
+    expect(body.error).toContain("only edit your own posts");
+    expect(mockUpdatePost).not.toHaveBeenCalled();
   });
 });

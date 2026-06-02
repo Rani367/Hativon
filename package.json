@@ -8,6 +8,7 @@
     "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint src",
+    "typecheck": "tsc --noEmit",
     "postinstall": "bun scripts/postinstall.ts",
     "db:init": "bun scripts/init-db.ts",
     "db:migrate": "bun scripts/db-migrate.ts",
@@ -18,7 +19,8 @@
     "create-test-user": "bun scripts/create-test-user-simple.ts",
     "check-db": "bun scripts/check-db.ts",
     "hash-admin-password": "bun scripts/hash-admin-password.ts",
-    "verify": "bun test && bun run build",
+    "verify": "bun run lint && bun run typecheck && bun test && bun run build",
+    "pre-deploy": "bun run verify",
     "test": "bun test",
     "test:run": "bun test",
     "test:coverage": "bun test --coverage"

@@ -212,14 +212,16 @@ describe("JWT Token Management", () => {
     });
 
     it("sets Secure flag in production", () => {
-      process.env.NODE_ENV = "production";
+      (process.env as Record<string, string | undefined>).NODE_ENV =
+        "production";
 
       const cookie = createAuthCookie(mockUser);
       expect(cookie).toContain("Secure");
     });
 
     it("does not set Secure flag in development", () => {
-      process.env.NODE_ENV = "development";
+      (process.env as Record<string, string | undefined>).NODE_ENV =
+        "development";
 
       const cookie = createAuthCookie(mockUser);
       expect(cookie).not.toContain("Secure");

@@ -49,7 +49,7 @@ bun run create-test-user # Create test user
 
 ### Deployment
 ```bash
-bun run verify           # Tests + build
+bun run verify           # Lint + typecheck + tests + build (same gate CI runs)
 git push                 # Triggers Vercel deployment
 ```
 

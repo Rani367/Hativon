@@ -31,6 +31,28 @@ describe("editor markdown conversion - blank line preservation", () => {
   });
 });
 
+describe("editor markdown conversion - Hebrew / RTL content", () => {
+  it("round-trips Hebrew paragraphs with a preserved blank line", () => {
+    const md = "שלום עולם\n\n&nbsp;\n\nכתבה חדשה";
+    expect(htmlToMarkdown(markdownToHtml(md))).toBe(md);
+  });
+
+  it("round-trips mixed Hebrew and Latin text across paragraphs", () => {
+    const md = "שלום world\n\nשורה שנייה";
+    expect(htmlToMarkdown(markdownToHtml(md))).toBe(md);
+  });
+
+  it("counts Hebrew words and ignores blank-line markers", () => {
+    expect(getWordCount("שלום\n\n&nbsp;\n\nעולם")).toBe(2);
+  });
+
+  it("strips blank-line markers from a generated Hebrew description", () => {
+    const desc = generateDescription("שלום\n\n&nbsp;\n\nעולם");
+    expect(desc).not.toContain("&nbsp;");
+    expect(desc).toBe("שלום עולם");
+  });
+});
+
 describe("blank-line markers do not leak into derived text", () => {
   it("getWordCount ignores blank-line markers", () => {
     expect(getWordCount("hello\n\n&nbsp;\n\n&nbsp;\n\nworld")).toBe(2);

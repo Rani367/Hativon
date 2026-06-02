@@ -75,7 +75,10 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
     const usernameResult = usernameSchema.safeParse(values.username);
     const displayNameResult = displayNameSchema.safeParse(values.displayName);
 
-    clearErrors(["username", "displayName", "root"]);
+    clearErrors(["username", "displayName"]);
+    // RHF only accepts the form-level "root" key as a standalone argument,
+    // not inside the field-name array above.
+    clearErrors("root");
 
     if (!usernameResult.success) {
       setFirstStepError(

@@ -237,7 +237,8 @@ describe("User Storage - Update and Delete Operations", () => {
 
       const result = await updateUser("user-time", updates);
 
-      expect(result.updatedAt).toEqual(updatedDate);
+      // updatedAt is a Date at runtime (pg driver) though User types it as string.
+      expect(result.updatedAt as unknown).toEqual(updatedDate);
       expect(result.updatedAt).not.toEqual(result.createdAt);
     });
 

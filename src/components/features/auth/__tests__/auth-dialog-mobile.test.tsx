@@ -106,7 +106,7 @@ describe("RegisterForm mobile interactions", () => {
     expect(label).toHaveTextContent("חשבון מורה או צוות");
     expect(label).not.toHaveClass("flex-1");
     expect(row?.children[0]).toContainElement(checkbox);
-    expect(row?.children[1]).toBe(label);
+    expect(row?.children[1]).toBe(label as Element);
   });
 
   it("moves teacher registration into a compact second step", async () => {

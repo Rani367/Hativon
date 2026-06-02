@@ -53,7 +53,7 @@ const mockUser: User = {
 };
 
 describe("Authentication Middleware", () => {
-  const mockGet = mock(() => undefined);
+  const mockGet = mock((): { value: string } | undefined => undefined);
   const mockSet = mock(() => undefined);
   const mockDelete = mock(() => undefined);
 

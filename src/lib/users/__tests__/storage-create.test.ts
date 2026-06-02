@@ -123,7 +123,9 @@ describe("User Storage - Create Operations", () => {
 
       const result = await createUser(input);
 
-      expect(result).toEqual({
+      // The storage layer returns Date objects (pg driver) and null, while the
+      // User type models these fields as string/optional — widen for the compare.
+      expect(result as unknown).toEqual({
         id: "user-789",
         username: "fulluser",
         displayName: "Full User Name",
