@@ -2,7 +2,7 @@
 
 My school's newspaper application with Hebrew/RTL support.
 
-**Live Site:** https://hativon.vercel.app
+**prod:** https://hativon.vercel.app
 
 ## Setup
 
