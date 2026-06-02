@@ -1,6 +1,6 @@
 # Hativon
 
-A school newspaper application with Hebrew/RTL support.
+My school's newspaper application with Hebrew/RTL support.
 
 **Live Site:** https://hativon.vercel.app
 
