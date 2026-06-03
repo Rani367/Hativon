@@ -30,6 +30,7 @@ export default function EditPostPage({
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [post, setPost] = useState<Post | null>(null);
+  const [aiImageLocked, setAiImageLocked] = useState(false);
   const [initialVersion, setInitialVersion] = useState<string | undefined>();
   const [showRecoveryDialog, setShowRecoveryDialog] = useState(false);
   const [showConflictDialog, setShowConflictDialog] = useState(false);
@@ -384,6 +385,14 @@ export default function EditPostPage({
     setForm((prev) => ({ ...prev, aiGeneratedImage: value }));
   };
 
+  // When a newly uploaded image carries AI-provenance metadata, lock to "AI".
+  const handleAiDetected = (aiGenerated: boolean) => {
+    setAiImageLocked(aiGenerated);
+    if (aiGenerated) {
+      setForm((prev) => ({ ...prev, aiGeneratedImage: true }));
+    }
+  };
+
   if (loading) {
     return <div className="text-center py-8">טוען...</div>;
   }
@@ -434,12 +443,14 @@ export default function EditPostPage({
             coverImage={form.coverImage}
             customAuthor={form.customAuthor}
             aiGeneratedImage={form.aiGeneratedImage}
+            aiImageLocked={aiImageLocked}
             onTitleChange={handleTitleChange}
             onDescriptionChange={handleDescriptionChange}
             onContentChange={handleContentChange}
             onCoverImageChange={handleCoverImageChange}
             onCustomAuthorChange={handleCustomAuthorChange}
             onAiGeneratedImageChange={handleAiGeneratedImageChange}
+            onAiDetected={handleAiDetected}
             showImageUrlInput={true}
             showCustomAuthor={true}
           />

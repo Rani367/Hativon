@@ -13,6 +13,8 @@ import { getPostCardImageUrl } from "@/lib/images/post-images";
 interface ImageUploadProps {
   value: string;
   onChange: (url: string) => void;
+  /** Called after an upload with whether the file carried AI-provenance metadata. */
+  onAiDetected?: (aiGenerated: boolean) => void;
   label?: string;
   description?: string;
   id?: string;
@@ -23,6 +25,7 @@ interface ImageUploadProps {
 export function ImageUpload({
   value,
   onChange,
+  onAiDetected,
   label = "תמונת שער *",
   description = "תמונת שער לכתבה.",
   id = "imageUpload",
@@ -61,6 +64,7 @@ export function ImageUpload({
       if (response.ok) {
         const data = await response.json();
         onChange(data.url);
+        onAiDetected?.(Boolean(data.aiGenerated));
         toast.success("התמונה הועלתה בהצלחה");
       } else {
         toast.error("העלאת התמונה נכשלה");
@@ -77,6 +81,7 @@ export function ImageUpload({
 
   const handleRemoveImage = () => {
     onChange("");
+    onAiDetected?.(false);
   };
   const previewImage = getPostCardImageUrl(value);
 

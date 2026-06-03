@@ -31,6 +31,7 @@ export default function NewPostPage() {
     aiGeneratedImage: null as boolean | null,
     status: "draft" as "draft" | "published",
   });
+  const [aiImageLocked, setAiImageLocked] = useState(false);
   const [errors, setErrors] = useState<{
     title?: string;
     description?: string;
@@ -278,6 +279,15 @@ export default function NewPostPage() {
     }
   };
 
+  // When an uploaded image carries AI-provenance metadata, lock the choice to "AI".
+  const handleAiDetected = (aiGenerated: boolean) => {
+    setAiImageLocked(aiGenerated);
+    if (aiGenerated) {
+      setForm((prev) => ({ ...prev, aiGeneratedImage: true }));
+      setErrors((prev) => ({ ...prev, aiGeneratedImage: undefined }));
+    }
+  };
+
   // Show loading while checking for existing draft
   if (checkingDraft) {
     return <div className="text-center py-8">טוען...</div>;
@@ -320,12 +330,14 @@ export default function NewPostPage() {
             coverImage={form.coverImage}
             customAuthor={form.customAuthor}
             aiGeneratedImage={form.aiGeneratedImage}
+            aiImageLocked={aiImageLocked}
             onTitleChange={handleTitleChange}
             onDescriptionChange={handleDescriptionChange}
             onContentChange={handleContentChange}
             onCoverImageChange={handleCoverImageChange}
             onCustomAuthorChange={handleCustomAuthorChange}
             onAiGeneratedImageChange={handleAiGeneratedImageChange}
+            onAiDetected={handleAiDetected}
             errors={errors}
             showCustomAuthor={true}
           />

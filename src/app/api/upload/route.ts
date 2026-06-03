@@ -3,6 +3,7 @@ import { put } from "@vercel/blob";
 import { getCurrentUser } from "@/lib/auth/middleware";
 import { logError } from "@/lib/logger";
 import { createPostImageVariants, fileToDataUrl } from "@/lib/images/server";
+import { bufferHasAiProvenance } from "@/lib/images/ai-metadata";
 
 /**
  * Image file signatures (magic bytes) for validation
@@ -81,6 +82,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Detect AI-provenance metadata on the ORIGINAL bytes — re-encoding into
+    // the card/full variants below strips it, so this must run first.
+    const aiGenerated = bufferHasAiProvenance(
+      Buffer.from(await file.arrayBuffer()),
+    );
+
     const variants = await createPostImageVariants(file);
 
     // Check if Vercel Blob token is available
@@ -95,6 +102,7 @@ export async function POST(request: NextRequest) {
         url: fullDataUrl,
         cardUrl: cardDataUrl,
         filename: variants.full.filename,
+        aiGenerated,
       });
     }
 
@@ -119,6 +127,7 @@ export async function POST(request: NextRequest) {
       url: fullBlob.url,
       cardUrl: cardBlob.url,
       filename: fullPath,
+      aiGenerated,
     });
   } catch (error) {
     logError("Image upload error:", error);

@@ -2,6 +2,7 @@
 
 import { MAX_POST_DESCRIPTION_LENGTH } from "@/lib/constants";
 import { cn } from "@/lib/utils";
+import { Lock } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -16,12 +17,15 @@ interface PostFormFieldsProps {
   customAuthor?: string;
   /** null = not yet answered, true = AI-generated, false = real photo */
   aiGeneratedImage: boolean | null;
+  /** When true, the cover image carries AI metadata — the choice is locked to "AI". */
+  aiImageLocked?: boolean;
   onTitleChange: (value: string) => void;
   onDescriptionChange: (value: string) => void;
   onContentChange: (value: string) => void;
   onCoverImageChange: (url: string) => void;
   onCustomAuthorChange?: (value: string) => void;
   onAiGeneratedImageChange: (value: boolean) => void;
+  onAiDetected?: (aiGenerated: boolean) => void;
   errors?: {
     title?: string;
     description?: string;
@@ -41,12 +45,14 @@ export function PostFormFields({
   coverImage,
   customAuthor = "",
   aiGeneratedImage,
+  aiImageLocked = false,
   onTitleChange,
   onDescriptionChange,
   onContentChange,
   onCoverImageChange,
   onCustomAuthorChange,
   onAiGeneratedImageChange,
+  onAiDetected,
   errors = {},
   idPrefix = "",
   showImageUrlInput = false,
@@ -150,6 +156,7 @@ export function PostFormFields({
       <ImageUpload
         value={coverImage}
         onChange={onCoverImageChange}
+        onAiDetected={onAiDetected}
         id={imageUploadId}
         showUrlInput={showImageUrlInput}
         error={errors.coverImage}
@@ -168,7 +175,8 @@ export function PostFormFields({
           >
             <label
               className={cn(
-                "flex flex-1 cursor-pointer items-center gap-2 rounded-md border p-3 text-sm transition-colors",
+                "flex flex-1 items-center gap-2 rounded-md border p-3 text-sm transition-colors",
+                aiImageLocked ? "cursor-not-allowed" : "cursor-pointer",
                 aiGeneratedImage === true
                   ? "border-primary bg-primary/5"
                   : "border-input hover:bg-muted/50",
@@ -180,14 +188,18 @@ export function PostFormFields({
                 value="ai"
                 checked={aiGeneratedImage === true}
                 onChange={() => onAiGeneratedImageChange(true)}
+                disabled={aiImageLocked}
                 className="size-4 accent-primary"
               />
               <span>נוצרה באמצעות AI</span>
             </label>
             <label
               className={cn(
-                "flex flex-1 cursor-pointer items-center gap-2 rounded-md border p-3 text-sm transition-colors",
-                aiGeneratedImage === false
+                "flex flex-1 items-center gap-2 rounded-md border p-3 text-sm transition-colors",
+                aiImageLocked
+                  ? "cursor-not-allowed opacity-50"
+                  : "cursor-pointer",
+                aiGeneratedImage === false && !aiImageLocked
                   ? "border-primary bg-primary/5"
                   : "border-input hover:bg-muted/50",
               )}
@@ -198,6 +210,7 @@ export function PostFormFields({
                 value="real"
                 checked={aiGeneratedImage === false}
                 onChange={() => onAiGeneratedImageChange(false)}
+                disabled={aiImageLocked}
                 className="size-4 accent-primary"
               />
               <span>צולמה / לא AI</span>
@@ -212,9 +225,17 @@ export function PostFormFields({
               {errors.aiGeneratedImage}
             </p>
           )}
-          <p className="text-xs text-muted-foreground">
-            כתבות שתמונתן נוצרה ב-AI יסומנו בתגית ויוצגו בתחתית הגלריה.
-          </p>
+          {aiImageLocked ? (
+            <p className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+              <Lock className="h-3.5 w-3.5 shrink-0" />
+              זוהתה חתימת בינה מלאכותית בקובץ — סומן אוטומטית כתמונת AI ולא ניתן
+              לשינוי.
+            </p>
+          ) : (
+            <p className="text-xs text-muted-foreground">
+              כתבות שתמונתן נוצרה ב-AI יסומנו בתגית ויוצגו בתחתית הגלריה.
+            </p>
+          )}
         </div>
       )}
     </>
