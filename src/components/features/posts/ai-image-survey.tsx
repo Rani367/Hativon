@@ -60,8 +60,11 @@ export function AiImageSurvey() {
         const res = await fetch("/api/admin/posts");
         if (!res.ok) return;
         const data = await res.json();
+        // Only ever survey the user's OWN image posts. /api/admin/posts returns
+        // every post when the session is also admin-authenticated, so filter by
+        // authorId rather than trusting the response to be user-scoped.
         const imagePosts: Post[] = (data.posts ?? []).filter(
-          (post: Post) => post.coverImage,
+          (post: Post) => post.coverImage && post.authorId === user.id,
         );
         if (cancelled || imagePosts.length === 0) return;
         setPosts(imagePosts);

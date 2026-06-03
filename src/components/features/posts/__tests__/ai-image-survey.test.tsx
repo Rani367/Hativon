@@ -45,6 +45,7 @@ function makePost(overrides: Partial<Post> = {}): Post {
     content: "תוכן",
     description: "תיאור",
     coverImage: "https://example.com/posts/post-1/full.jpg",
+    authorId: "user-123",
     aiGeneratedImage: false,
     date: "2026-01-01T00:00:00.000Z",
     status: "published",
@@ -111,6 +112,39 @@ describe("AiImageSurvey", () => {
     render(<AiImageSurvey />);
 
     await waitFor(() => expect(fetchFn).toHaveBeenCalledWith("/api/admin/posts"));
+    await new Promise((r) => setTimeout(r, 20));
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("only surveys the user's own posts when the endpoint returns others' posts (admin session)", async () => {
+    // /api/admin/posts returns every post for an admin-authenticated session;
+    // the survey must ignore posts authored by other users.
+    const fetchFn = mockFetch([
+      makePost({ id: "mine", title: "שלי", authorId: "user-123" }),
+      makePost({ id: "other-1", title: "של מישהו אחר", authorId: "other-user" }),
+      makePost({ id: "other-2", title: "עוד אחד", authorId: "legacy-admin" }),
+    ]);
+
+    render(<AiImageSurvey />);
+
+    await screen.findByText("עזרו לנו לסמן תמונות שנוצרו ב-AI");
+    expect(screen.getAllByText("שלי").length).toBeGreaterThan(0);
+    expect(screen.queryByText("של מישהו אחר")).toBeNull();
+    expect(screen.queryByText("עוד אחד")).toBeNull();
+    // Exactly one (owned) post → exactly one checkbox.
+    expect(screen.getAllByRole("checkbox")).toHaveLength(1);
+    expect(fetchFn).toHaveBeenCalledWith("/api/admin/posts");
+  });
+
+  it("does not open for an admin whose own posts have no images", async () => {
+    // System has posts, but none authored by this user → no survey.
+    mockFetch([
+      makePost({ id: "other-1", authorId: "other-user" }),
+      makePost({ id: "other-2", authorId: "legacy-admin" }),
+    ]);
+
+    render(<AiImageSurvey />);
+
     await new Promise((r) => setTimeout(r, 20));
     expect(screen.queryByRole("dialog")).toBeNull();
   });
