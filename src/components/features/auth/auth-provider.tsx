@@ -70,6 +70,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const data = await response.json();
 
       if (data.success && data.user) {
+        // Allow the one-time AI-image survey to re-appear after a fresh login.
+        if (typeof window !== "undefined") {
+          window.sessionStorage.removeItem("aiImageSurveySnoozed");
+        }
         setUser(data.user);
         return { success: true };
       } else {
@@ -93,6 +97,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const result = await response.json();
 
       if (result.success && result.user) {
+        if (typeof window !== "undefined") {
+          window.sessionStorage.removeItem("aiImageSurveySnoozed");
+        }
         setUser(result.user);
         return { success: true };
       } else {

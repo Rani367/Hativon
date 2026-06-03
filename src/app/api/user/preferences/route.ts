@@ -32,6 +32,7 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({
       preferences: {
         themePreference: updatedUser.themePreference,
+        aiImageSurveyDismissed: updatedUser.aiImageSurveyDismissed,
       },
       user: updatedUser,
     });

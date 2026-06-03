@@ -152,6 +152,7 @@ export const themePreferenceSchema = z.enum(["light", "dark"], {
 export const userPreferencesUpdateSchema = z
   .object({
     themePreference: themePreferenceSchema.optional(),
+    aiImageSurveyDismissed: z.boolean().optional(),
   })
   .refine((data) => Object.keys(data).length > 0, {
     message: "לפחות שדה אחד נדרש לעדכון",
@@ -216,6 +217,7 @@ export const postInputSchema = z.object({
   authorGrade: gradeSchema.optional(),
   authorClass: classNumberSchema.optional(),
   isTeacherPost: z.boolean().optional(),
+  aiGeneratedImage: z.boolean().optional(),
   tags: tagsSchema,
   category: categorySchema,
   status: postStatusSchema.optional(),
@@ -236,6 +238,7 @@ export const postUpdateSchema = z
     description: postDescriptionSchema,
     coverImage: coverImageOptionalSchema,
     author: z.string().max(100).optional(),
+    aiGeneratedImage: z.boolean().optional(),
     tags: tagsSchema,
     category: categorySchema,
     status: postStatusSchema.optional(),

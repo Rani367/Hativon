@@ -128,6 +128,7 @@ describe("rowToPost", () => {
       author_grade: "י",
       author_class: 2,
       author_deleted: false,
+      ai_generated_image: true,
       tags: ["תג1", "תג2"],
       category: "קטגוריה",
       status: "published",
@@ -151,12 +152,36 @@ describe("rowToPost", () => {
       authorClass: 2,
       authorDeleted: false,
       isTeacherPost: false,
+      aiGeneratedImage: true,
       tags: ["תג1", "תג2"],
       category: "קטגוריה",
       status: "published",
       createdAt: "2024-01-01T10:00:00.000Z",
       updatedAt: "2024-01-01T12:00:00.000Z",
     });
+  });
+
+  it("defaults aiGeneratedImage to false when column is absent/null", () => {
+    const mockRow: DbPostRow = {
+      id: "test-id",
+      title: "Test",
+      content: "Content",
+      cover_image: "https://example.com/image.jpg",
+      description: "Desc",
+      date: new Date("2024-01-01"),
+      author: null,
+      author_id: null,
+      author_grade: null,
+      author_class: null,
+      author_deleted: false,
+      tags: null,
+      category: null,
+      status: "published",
+      created_at: new Date("2024-01-01T10:00:00Z"),
+      updated_at: new Date("2024-01-01T12:00:00Z"),
+    };
+
+    expect(rowToPost(mockRow).aiGeneratedImage).toBe(false);
   });
 
   it("handles null values correctly", () => {

@@ -15,6 +15,7 @@ import addPostWordCount from "./20260505000000_add_post_word_count";
 import addUserThemePreferences from "./20260515000000_add_user_theme_preferences";
 import removeDarkModeAnnouncement from "./20260524000000_remove_dark_mode_announcement";
 import mergeMayJune2026 from "./20260602000000_merge_may_june_2026";
+import addAiImageFields from "./20260603000000_add_ai_image_fields";
 
 /**
  * All registered migrations in execution order
@@ -29,6 +30,7 @@ export const migrations: Migration[] = [
   addUserThemePreferences,
   removeDarkModeAnnouncement,
   mergeMayJune2026,
+  addAiImageFields,
 ];
 
 /**

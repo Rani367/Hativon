@@ -15,6 +15,7 @@ export interface User {
   isTeacher: boolean;
   passwordResetRequested?: boolean;
   themePreference: ThemePreference;
+  aiImageSurveyDismissed?: boolean; // True once the user completed the AI-image backfill survey
   createdAt: string;
   updatedAt: string;
   lastLogin?: string;
@@ -51,6 +52,7 @@ export interface UserUpdate {
 
 export interface UserPreferencesUpdate {
   themePreference?: ThemePreference;
+  aiImageSurveyDismissed?: boolean;
 }
 
 /**

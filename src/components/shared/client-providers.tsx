@@ -2,6 +2,7 @@
 
 import { ReactNode } from "react";
 import { AuthProvider } from "@/components/features/auth/auth-provider";
+import { AiImageSurvey } from "@/components/features/posts/ai-image-survey";
 import { THEME_STORAGE_KEY } from "@/lib/theme/preferences";
 import { NavigationCacheRegistrar } from "./navigation-cache-registrar";
 import { ThemeProvider } from "./theme-provider";
@@ -21,6 +22,7 @@ export function ClientProviders({ children }: ClientProvidersProps) {
     >
       <AuthProvider>
         <NavigationCacheRegistrar />
+        <AiImageSurvey />
         {children}
       </AuthProvider>
     </ThemeProvider>

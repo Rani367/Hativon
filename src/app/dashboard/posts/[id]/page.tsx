@@ -39,6 +39,7 @@ export default function EditPostPage({
     content: "",
     coverImage: "",
     customAuthor: "",
+    aiGeneratedImage: null as boolean | null,
     status: "draft" as "draft" | "published",
   });
 
@@ -99,6 +100,7 @@ export default function EditPostPage({
             content: data.content,
             coverImage: data.coverImage || "",
             customAuthor: data.author || "",
+            aiGeneratedImage: data.aiGeneratedImage ?? false,
             status: data.status,
           });
         } else {
@@ -223,6 +225,7 @@ export default function EditPostPage({
           content: data.content,
           coverImage: data.coverImage || "",
           customAuthor: data.author || "",
+          aiGeneratedImage: data.aiGeneratedImage ?? false,
           status: data.status,
         });
         // Clear localStorage backup
@@ -254,6 +257,11 @@ export default function EditPostPage({
       return;
     }
 
+    if (form.aiGeneratedImage === null) {
+      toast.error("נא לבחור אם תמונת השער נוצרה באמצעות בינה מלאכותית");
+      return;
+    }
+
     // Cancel any pending auto-save
     cancelPendingSave();
 
@@ -271,6 +279,7 @@ export default function EditPostPage({
           content: form.content,
           coverImage: form.coverImage,
           author: form.customAuthor || undefined,
+          aiGeneratedImage: form.aiGeneratedImage,
           status,
         }),
       });
@@ -371,6 +380,10 @@ export default function EditPostPage({
     triggerAutoSave(newForm);
   };
 
+  const handleAiGeneratedImageChange = (value: boolean) => {
+    setForm((prev) => ({ ...prev, aiGeneratedImage: value }));
+  };
+
   if (loading) {
     return <div className="text-center py-8">טוען...</div>;
   }
@@ -420,11 +433,13 @@ export default function EditPostPage({
             content={form.content}
             coverImage={form.coverImage}
             customAuthor={form.customAuthor}
+            aiGeneratedImage={form.aiGeneratedImage}
             onTitleChange={handleTitleChange}
             onDescriptionChange={handleDescriptionChange}
             onContentChange={handleContentChange}
             onCoverImageChange={handleCoverImageChange}
             onCustomAuthorChange={handleCustomAuthorChange}
+            onAiGeneratedImageChange={handleAiGeneratedImageChange}
             showImageUrlInput={true}
             showCustomAuthor={true}
           />

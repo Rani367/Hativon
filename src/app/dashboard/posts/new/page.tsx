@@ -28,6 +28,7 @@ export default function NewPostPage() {
     content: "",
     coverImage: "",
     customAuthor: "",
+    aiGeneratedImage: null as boolean | null,
     status: "draft" as "draft" | "published",
   });
   const [errors, setErrors] = useState<{
@@ -35,6 +36,7 @@ export default function NewPostPage() {
     description?: string;
     content?: string;
     coverImage?: string;
+    aiGeneratedImage?: string;
   }>({});
 
   // Auto-save hook
@@ -122,6 +124,7 @@ export default function NewPostPage() {
         content: recovered.content || "",
         coverImage: recovered.coverImage || "",
         customAuthor: recovered.customAuthor || "",
+        aiGeneratedImage: null,
         status: "draft",
       });
       toast.success("הטיוטה שוחזרה בהצלחה");
@@ -166,6 +169,11 @@ export default function NewPostPage() {
       newErrors.coverImage = "נא להעלות תמונת שער";
     }
 
+    if (form.coverImage && form.aiGeneratedImage === null) {
+      newErrors.aiGeneratedImage =
+        "נא לבחור אם תמונת השער נוצרה באמצעות בינה מלאכותית";
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -199,6 +207,7 @@ export default function NewPostPage() {
           content: form.content,
           coverImage: form.coverImage || undefined,
           author: form.customAuthor || undefined,
+          aiGeneratedImage: form.aiGeneratedImage ?? false,
           status,
         }),
       });
@@ -262,6 +271,13 @@ export default function NewPostPage() {
     triggerAutoSave(newForm);
   };
 
+  const handleAiGeneratedImageChange = (value: boolean) => {
+    setForm((prev) => ({ ...prev, aiGeneratedImage: value }));
+    if (errors.aiGeneratedImage) {
+      setErrors({ ...errors, aiGeneratedImage: undefined });
+    }
+  };
+
   // Show loading while checking for existing draft
   if (checkingDraft) {
     return <div className="text-center py-8">טוען...</div>;
@@ -303,11 +319,13 @@ export default function NewPostPage() {
             content={form.content}
             coverImage={form.coverImage}
             customAuthor={form.customAuthor}
+            aiGeneratedImage={form.aiGeneratedImage}
             onTitleChange={handleTitleChange}
             onDescriptionChange={handleDescriptionChange}
             onContentChange={handleContentChange}
             onCoverImageChange={handleCoverImageChange}
             onCustomAuthorChange={handleCustomAuthorChange}
+            onAiGeneratedImageChange={handleAiGeneratedImageChange}
             errors={errors}
             showCustomAuthor={true}
           />

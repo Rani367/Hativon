@@ -1,6 +1,7 @@
 "use client";
 
 import { MAX_POST_DESCRIPTION_LENGTH } from "@/lib/constants";
+import { cn } from "@/lib/utils";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -13,16 +14,20 @@ interface PostFormFieldsProps {
   content: string;
   coverImage: string;
   customAuthor?: string;
+  /** null = not yet answered, true = AI-generated, false = real photo */
+  aiGeneratedImage: boolean | null;
   onTitleChange: (value: string) => void;
   onDescriptionChange: (value: string) => void;
   onContentChange: (value: string) => void;
   onCoverImageChange: (url: string) => void;
   onCustomAuthorChange?: (value: string) => void;
+  onAiGeneratedImageChange: (value: boolean) => void;
   errors?: {
     title?: string;
     description?: string;
     content?: string;
     coverImage?: string;
+    aiGeneratedImage?: string;
   };
   idPrefix?: string;
   showImageUrlInput?: boolean;
@@ -35,11 +40,13 @@ export function PostFormFields({
   content,
   coverImage,
   customAuthor = "",
+  aiGeneratedImage,
   onTitleChange,
   onDescriptionChange,
   onContentChange,
   onCoverImageChange,
   onCustomAuthorChange,
+  onAiGeneratedImageChange,
   errors = {},
   idPrefix = "",
   showImageUrlInput = false,
@@ -50,6 +57,7 @@ export function PostFormFields({
   const contentId = idPrefix ? `content-${idPrefix}` : "content";
   const imageUploadId = idPrefix ? `imageUpload-${idPrefix}` : "imageUpload";
   const customAuthorId = idPrefix ? `customAuthor-${idPrefix}` : "customAuthor";
+  const aiImageId = idPrefix ? `aiImage-${idPrefix}` : "aiImage";
 
   return (
     <>
@@ -146,6 +154,69 @@ export function PostFormFields({
         showUrlInput={showImageUrlInput}
         error={errors.coverImage}
       />
+
+      {coverImage && (
+        <div className="space-y-2">
+          <Label>האם תמונת השער נוצרה באמצעות בינה מלאכותית? *</Label>
+          <div
+            role="radiogroup"
+            aria-invalid={!!errors.aiGeneratedImage}
+            aria-describedby={
+              errors.aiGeneratedImage ? `${aiImageId}-error` : undefined
+            }
+            className="flex flex-col gap-2 sm:flex-row sm:gap-3"
+          >
+            <label
+              className={cn(
+                "flex flex-1 cursor-pointer items-center gap-2 rounded-md border p-3 text-sm transition-colors",
+                aiGeneratedImage === true
+                  ? "border-primary bg-primary/5"
+                  : "border-input hover:bg-muted/50",
+              )}
+            >
+              <input
+                type="radio"
+                name={aiImageId}
+                value="ai"
+                checked={aiGeneratedImage === true}
+                onChange={() => onAiGeneratedImageChange(true)}
+                className="size-4 accent-primary"
+              />
+              <span>נוצרה באמצעות AI</span>
+            </label>
+            <label
+              className={cn(
+                "flex flex-1 cursor-pointer items-center gap-2 rounded-md border p-3 text-sm transition-colors",
+                aiGeneratedImage === false
+                  ? "border-primary bg-primary/5"
+                  : "border-input hover:bg-muted/50",
+              )}
+            >
+              <input
+                type="radio"
+                name={aiImageId}
+                value="real"
+                checked={aiGeneratedImage === false}
+                onChange={() => onAiGeneratedImageChange(false)}
+                className="size-4 accent-primary"
+              />
+              <span>צולמה / לא AI</span>
+            </label>
+          </div>
+          {errors.aiGeneratedImage && (
+            <p
+              id={`${aiImageId}-error`}
+              className="text-sm text-destructive"
+              role="alert"
+            >
+              {errors.aiGeneratedImage}
+            </p>
+          )}
+          <p className="text-xs text-muted-foreground">
+            כתבות שתמונתן נוצרה ב-AI יסומנו בתגית ויוצגו בתחתית הגלריה.
+          </p>
+        </div>
+      )}
     </>
   );
 }

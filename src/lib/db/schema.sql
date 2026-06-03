@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS users (
   is_teacher BOOLEAN DEFAULT FALSE,
   password_reset_requested BOOLEAN DEFAULT FALSE,
   theme_preference VARCHAR(10) NOT NULL DEFAULT 'light' CHECK (theme_preference IN ('light', 'dark')),
+  ai_image_survey_dismissed BOOLEAN NOT NULL DEFAULT FALSE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   last_login TIMESTAMP
@@ -29,6 +30,7 @@ CREATE TABLE IF NOT EXISTS posts (
   author_grade VARCHAR(10),
   author_class INTEGER,
   is_teacher_post BOOLEAN DEFAULT FALSE,
+  ai_generated_image BOOLEAN NOT NULL DEFAULT FALSE,
   tags TEXT[] DEFAULT ARRAY[]::TEXT[],
   category TEXT,
   status VARCHAR(20) NOT NULL CHECK (status IN ('draft', 'published')) DEFAULT 'draft',

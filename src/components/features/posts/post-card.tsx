@@ -145,6 +145,16 @@ export default function PostCard({
               </Badge>
             </div>
           )}
+          {post.aiGeneratedImage && (
+            <div className="absolute bottom-3 start-3 z-20 sm:bottom-4 sm:start-4">
+              <Badge
+                variant="default"
+                className="bg-violet-600/90 text-white shadow-sm backdrop-blur-sm"
+              >
+                תמונת AI
+              </Badge>
+            </div>
+          )}
         </div>
 
         <div className="flex flex-1 flex-col">

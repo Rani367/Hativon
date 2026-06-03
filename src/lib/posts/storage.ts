@@ -36,7 +36,7 @@ export async function createPost(input: PostInput): Promise<Post> {
       INSERT INTO posts (
         id, slug, title, content, cover_image, description, word_count,
         date, author, author_id, author_grade, author_class,
-        is_teacher_post, tags, category, status, created_at, updated_at
+        is_teacher_post, ai_generated_image, tags, category, status, created_at, updated_at
       )
       VALUES (
         ${id},
@@ -52,6 +52,7 @@ export async function createPost(input: PostInput): Promise<Post> {
         ${input.authorGrade || null},
         ${input.authorClass || null},
         ${input.isTeacherPost || false},
+        ${input.aiGeneratedImage || false},
         ${input.tags || []},
         ${input.category || null},
         ${status},
@@ -127,6 +128,10 @@ export async function updatePost(
       input.category !== undefined ? input.category : existing.category;
     const status =
       input.status !== undefined ? input.status : existing.status;
+    const aiGeneratedImage =
+      input.aiGeneratedImage !== undefined
+        ? input.aiGeneratedImage
+        : existing.aiGeneratedImage;
 
     const result = (await db.query`
       UPDATE posts SET
@@ -141,6 +146,7 @@ export async function updatePost(
         author_class = ${authorClass || null},
         tags = ${tags || []},
         category = ${category || null},
+        ai_generated_image = ${aiGeneratedImage || false},
         status = ${status},
         updated_at = CURRENT_TIMESTAMP
       WHERE id = ${id}
