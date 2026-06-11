@@ -137,7 +137,7 @@ export default function PostCard({
             </div>
           )}
           {post.isCreatorPost ? (
-            <div className="absolute top-3 end-3 z-20 sm:top-4 sm:end-4">
+            <div className="absolute bottom-3 end-3 z-20 sm:bottom-4 sm:end-4">
               <CreatorBadge />
             </div>
           ) : (
