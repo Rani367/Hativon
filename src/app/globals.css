@@ -191,18 +191,18 @@
     overflow: hidden;
     background-image: linear-gradient(
         110deg,
-        #8b5cf6 0%,
-        #ec4899 22%,
-        #06b6d4 44%,
-        #3b82f6 66%,
-        #a855f7 88%,
-        #8b5cf6 100%
+        #e83a8c 0%,
+        #ff6b4a 20%,
+        #ffc24b 40%,
+        #1fbf8f 62%,
+        #0e9aa7 82%,
+        #e83a8c 100%
     );
     background-size: 220% 220%;
     box-shadow:
-        0 2px 12px -2px rgba(139, 92, 246, 0.65),
-        0 0 18px -6px rgba(6, 182, 212, 0.5),
-        inset 0 0 0 1px rgba(255, 255, 255, 0.22);
+        0 2px 12px -2px rgba(232, 58, 140, 0.6),
+        0 0 18px -6px rgba(31, 191, 143, 0.5),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.25);
     animation: creator-holo 5s ease infinite;
 }
 
