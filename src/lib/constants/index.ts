@@ -42,6 +42,17 @@ export const MIN_CLASS_NUMBER = 1;
 export const MAX_CLASS_NUMBER = 4;
 
 /**
+ * Site creator
+ *
+ * The single account allowed to display the animated "יוצר האתר" (site creator)
+ * badge. The flag is derived in SQL from the joined account's real `username`
+ * (see `getPosts` et al. in `lib/posts/queries.ts`) and is never stored or
+ * writable, so it cannot be obtained any other way. `username` is UNIQUE, so no
+ * other user can register this name.
+ */
+export const CREATOR_USERNAME = 'rani';
+
+/**
  * File upload limits
  */
 export const MAX_IMAGE_SIZE_MB = 5;

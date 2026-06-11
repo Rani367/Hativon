@@ -8,6 +8,7 @@ import { calculateReadingTime, cn, getWordCount, triggerHaptic } from "@/lib/uti
 import { truncateDescription } from "@/lib/posts/utils";
 import { getPostCardImageUrl } from "@/lib/images/post-images";
 import { Badge } from "@/components/ui/badge";
+import { CreatorBadge } from "@/components/features/posts/creator-badge";
 import { Card } from "@/components/ui/card";
 import { Clock, Calendar } from "lucide-react";
 import {
@@ -135,15 +136,21 @@ export default function PostCard({
               </Badge>
             </div>
           )}
-          {post.isTeacherPost && (
+          {post.isCreatorPost ? (
             <div className="absolute top-3 end-3 z-20 sm:top-4 sm:end-4">
-              <Badge
-                variant="default"
-                className="bg-amber-500/90 text-white shadow-sm backdrop-blur-sm"
-              >
-                פוסט של מורה
-              </Badge>
+              <CreatorBadge />
             </div>
+          ) : (
+            post.isTeacherPost && (
+              <div className="absolute top-3 end-3 z-20 sm:top-4 sm:end-4">
+                <Badge
+                  variant="default"
+                  className="bg-amber-500/90 text-white shadow-sm backdrop-blur-sm"
+                >
+                  פוסט של מורה
+                </Badge>
+              </div>
+            )
           )}
           {post.aiGeneratedImage && (
             <div className="absolute bottom-3 start-3 z-20 sm:bottom-4 sm:start-4">

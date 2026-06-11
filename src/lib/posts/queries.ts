@@ -5,6 +5,7 @@ import type {
   StatsQueryResult,
 } from "@/types/database.types";
 import { db } from "../db/client";
+import { CREATOR_USERNAME } from "@/lib/constants";
 import { rowToPost, rowToPostSummary } from "./utils";
 
 /**
@@ -67,7 +68,8 @@ export async function getPosts(
         ? ((await db.query`
             SELECT
               p.*,
-              CASE WHEN u.id IS NULL AND p.author_id IS NOT NULL AND p.author_id != 'legacy-admin' THEN true ELSE false END as author_deleted
+              CASE WHEN u.id IS NULL AND p.author_id IS NOT NULL AND p.author_id != 'legacy-admin' THEN true ELSE false END as author_deleted,
+              CASE WHEN u.username = ${CREATOR_USERNAME} THEN true ELSE false END as is_creator_post
             FROM posts p
             LEFT JOIN users u ON p.author_id = u.id::text
             WHERE p.status = 'published'
@@ -77,7 +79,8 @@ export async function getPosts(
         : ((await db.query`
             SELECT
               p.*,
-              CASE WHEN u.id IS NULL AND p.author_id IS NOT NULL AND p.author_id != 'legacy-admin' THEN true ELSE false END as author_deleted
+              CASE WHEN u.id IS NULL AND p.author_id IS NOT NULL AND p.author_id != 'legacy-admin' THEN true ELSE false END as author_deleted,
+              CASE WHEN u.username = ${CREATOR_USERNAME} THEN true ELSE false END as is_creator_post
             FROM posts p
             LEFT JOIN users u ON p.author_id = u.id::text
             ORDER BY p.date DESC, p.created_at DESC
@@ -100,7 +103,8 @@ export async function getPosts(
       ? ((await db.query`
           SELECT
             p.*,
-            CASE WHEN u.id IS NULL AND p.author_id IS NOT NULL AND p.author_id != 'legacy-admin' THEN true ELSE false END as author_deleted
+            CASE WHEN u.id IS NULL AND p.author_id IS NOT NULL AND p.author_id != 'legacy-admin' THEN true ELSE false END as author_deleted,
+            CASE WHEN u.username = ${CREATOR_USERNAME} THEN true ELSE false END as is_creator_post
           FROM posts p
           LEFT JOIN users u ON p.author_id = u.id::text
           WHERE p.status = 'published'
@@ -109,7 +113,8 @@ export async function getPosts(
       : ((await db.query`
           SELECT
             p.*,
-            CASE WHEN u.id IS NULL AND p.author_id IS NOT NULL AND p.author_id != 'legacy-admin' THEN true ELSE false END as author_deleted
+            CASE WHEN u.id IS NULL AND p.author_id IS NOT NULL AND p.author_id != 'legacy-admin' THEN true ELSE false END as author_deleted,
+            CASE WHEN u.username = ${CREATOR_USERNAME} THEN true ELSE false END as is_creator_post
           FROM posts p
           LEFT JOIN users u ON p.author_id = u.id::text
           ORDER BY p.date DESC, p.created_at DESC
@@ -145,7 +150,8 @@ export async function getPostById(id: string): Promise<Post | null> {
     const result = (await db.query`
       SELECT
         p.*,
-        CASE WHEN u.id IS NULL AND p.author_id IS NOT NULL AND p.author_id != 'legacy-admin' THEN true ELSE false END as author_deleted
+        CASE WHEN u.id IS NULL AND p.author_id IS NOT NULL AND p.author_id != 'legacy-admin' THEN true ELSE false END as author_deleted,
+        CASE WHEN u.username = ${CREATOR_USERNAME} THEN true ELSE false END as is_creator_post
       FROM posts p
       LEFT JOIN users u ON p.author_id = u.id::text
       WHERE p.id = ${id}
@@ -178,7 +184,8 @@ export async function getPublishedPostById(id: string): Promise<Post | null> {
     const result = (await db.query`
       SELECT
         p.*,
-        CASE WHEN u.id IS NULL AND p.author_id IS NOT NULL AND p.author_id != 'legacy-admin' THEN true ELSE false END as author_deleted
+        CASE WHEN u.id IS NULL AND p.author_id IS NOT NULL AND p.author_id != 'legacy-admin' THEN true ELSE false END as author_deleted,
+        CASE WHEN u.username = ${CREATOR_USERNAME} THEN true ELSE false END as is_creator_post
       FROM posts p
       LEFT JOIN users u ON p.author_id = u.id::text
       WHERE p.id = ${id} AND p.status = 'published'
@@ -210,7 +217,8 @@ export async function getPostsByAuthor(authorId: string): Promise<Post[]> {
     const result = (await db.query`
       SELECT
         p.*,
-        CASE WHEN u.id IS NULL AND p.author_id IS NOT NULL AND p.author_id != 'legacy-admin' THEN true ELSE false END as author_deleted
+        CASE WHEN u.id IS NULL AND p.author_id IS NOT NULL AND p.author_id != 'legacy-admin' THEN true ELSE false END as author_deleted,
+        CASE WHEN u.username = ${CREATOR_USERNAME} THEN true ELSE false END as is_creator_post
       FROM posts p
       LEFT JOIN users u ON p.author_id = u.id::text
       WHERE p.author_id = ${authorId}
@@ -258,7 +266,8 @@ export async function getPostsByMonth(
     const result = (await db.query`
       SELECT
         p.*,
-        CASE WHEN u.id IS NULL AND p.author_id IS NOT NULL AND p.author_id != 'legacy-admin' THEN true ELSE false END as author_deleted
+        CASE WHEN u.id IS NULL AND p.author_id IS NOT NULL AND p.author_id != 'legacy-admin' THEN true ELSE false END as author_deleted,
+        CASE WHEN u.username = ${CREATOR_USERNAME} THEN true ELSE false END as is_creator_post
       FROM posts p
       LEFT JOIN users u ON p.author_id = u.id::text
       WHERE p.status = 'published'
@@ -309,6 +318,7 @@ export async function getPostSummariesByMonth(
         p.author_class,
         CASE WHEN u.id IS NULL AND p.author_id IS NOT NULL AND p.author_id != 'legacy-admin' THEN true ELSE false END as author_deleted,
         p.is_teacher_post,
+        CASE WHEN u.username = ${CREATOR_USERNAME} THEN true ELSE false END as is_creator_post,
         p.ai_generated_image,
         p.tags,
         p.category
@@ -391,6 +401,7 @@ export async function getPostSummariesByDateRange(
         p.author_class,
         CASE WHEN u.id IS NULL AND p.author_id IS NOT NULL AND p.author_id != 'legacy-admin' THEN true ELSE false END as author_deleted,
         p.is_teacher_post,
+        CASE WHEN u.username = ${CREATOR_USERNAME} THEN true ELSE false END as is_creator_post,
         p.ai_generated_image,
         p.tags,
         p.category

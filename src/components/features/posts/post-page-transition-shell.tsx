@@ -3,6 +3,7 @@
 import { useEffect, useRef, type ReactNode } from "react";
 import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
+import { CreatorBadge } from "@/components/features/posts/creator-badge";
 import { formatHebrewDate } from "@/lib/date/format";
 import { calculateReadingTime } from "@/lib/utils";
 import { type Post } from "@/types/post.types";
@@ -140,8 +141,9 @@ export function PostPageTransitionShell({
           {post.title}
         </h1>
 
-        <div className="mb-4 flex flex-wrap gap-2 sm:gap-3">
-          {post.isTeacherPost && (
+        <div className="mb-4 flex flex-wrap items-center gap-2 sm:gap-3">
+          {post.isCreatorPost && <CreatorBadge size="lg" />}
+          {!post.isCreatorPost && post.isTeacherPost && (
             <Badge
               variant="default"
               className="bg-amber-500 px-3 py-1 text-sm text-white sm:px-4 sm:py-1.5 sm:text-base"

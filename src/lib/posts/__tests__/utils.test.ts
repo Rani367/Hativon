@@ -152,6 +152,7 @@ describe("rowToPost", () => {
       authorClass: 2,
       authorDeleted: false,
       isTeacherPost: false,
+      isCreatorPost: false,
       aiGeneratedImage: true,
       tags: ["תג1", "תג2"],
       category: "קטגוריה",
