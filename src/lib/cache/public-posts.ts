@@ -17,6 +17,7 @@ type PublicPostSnapshot = Pick<
   | "authorClass"
   | "authorDeleted"
   | "isTeacherPost"
+  | "aiGeneratedImage"
   | "tags"
   | "category"
   | "status"
@@ -40,6 +41,7 @@ function getPublicSignature(post: PublicPostSnapshot): string | null {
     authorClass: post.authorClass || null,
     authorDeleted: post.authorDeleted || false,
     isTeacherPost: post.isTeacherPost || false,
+    aiGeneratedImage: post.aiGeneratedImage || false,
     tags: post.tags || [],
     category: post.category || null,
   });

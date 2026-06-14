@@ -9,6 +9,11 @@
 import { db, isDatabaseAvailable } from "./db/client";
 import { getCurrentMonthYear, monthNumberToEnglish } from "./date/months";
 import { getArchiveMonths } from "./posts/queries";
+import {
+  MERGED_ISSUES_SETTING_KEY,
+  parseMergeGroups,
+  resolveDefaultMonth,
+} from "./issues/merge-core";
 
 const MONTH_TO_NUMBER: Record<string, number> = {
   january: 1,
@@ -286,8 +291,14 @@ const AUTO_SWITCH_MIN_POSTS = 15;
 
 /**
  * Get the default month for the homepage, with fallback to current month.
- * Automatically switches the default to the current calendar month
- * if it has at least AUTO_SWITCH_MIN_POSTS published posts.
+ *
+ * Merge-aware: a month that belongs to a "double issue" merge group is
+ * evaluated as its whole combined span and promoted under the group's canonical
+ * month. The default auto-switches to the current calendar month's (possibly
+ * merged) issue once it has at least AUTO_SWITCH_MIN_POSTS published posts —
+ * so e.g. a combined May–June issue is promoted on its summed count, not on
+ * either month alone. With no merge groups configured this behaves exactly like
+ * the plain per-calendar-month switch.
  *
  * @returns Object with year and month (English name)
  */
@@ -303,34 +314,43 @@ export async function getDefaultMonthWithFallback(): Promise<{
     return current;
   }
 
-  // Check if stored default already matches the current calendar month
   const defaultMonthNumber = MONTH_TO_NUMBER[defaultMonth.month.toLowerCase()];
   const currentMonthNumber = MONTH_TO_NUMBER[current.month.toLowerCase()];
 
-  if (
-    defaultMonth.year === current.year &&
-    defaultMonthNumber === currentMonthNumber
-  ) {
+  // Guard against an unrecognized stored month name — keep it as-is.
+  if (!defaultMonthNumber || !currentMonthNumber) {
     return defaultMonth;
   }
 
-  // Current month differs from stored default — check post count
   try {
-    const archives = await getArchiveMonths();
-    const currentArchive = archives.find(
-      (a) => a.year === current.year && a.month === currentMonthNumber,
-    );
+    const [groups, archives] = await Promise.all([
+      getSetting(MERGED_ISSUES_SETTING_KEY).then(parseMergeGroups),
+      getArchiveMonths(),
+    ]);
 
-    if (currentArchive && currentArchive.count >= AUTO_SWITCH_MIN_POSTS) {
-      // Auto-switch: persist and return the current month
-      await setDefaultMonth(current.year, current.month);
-      return current;
+    const decision = resolveDefaultMonth({
+      storedDefault: { year: defaultMonth.year, month: defaultMonthNumber },
+      current: { year: current.year, month: currentMonthNumber },
+      archives,
+      groups,
+      minPosts: AUTO_SWITCH_MIN_POSTS,
+    });
+
+    const decidedMonthEn = monthNumberToEnglish(decision.month);
+    if (!decidedMonthEn) {
+      return defaultMonth;
     }
-  } catch {
-    // If archive query had a problem, keep the stored default
-  }
 
-  return defaultMonth;
+    if (decision.switched) {
+      // Auto-switch: persist the (canonical) month and return it.
+      await setDefaultMonth(decision.year, decidedMonthEn);
+    }
+
+    return { year: decision.year, month: decidedMonthEn };
+  } catch {
+    // If the merge-group / archive lookup had a problem, keep the stored default
+    return defaultMonth;
+  }
 }
 
 export interface ArchiveMonthWithDefault {
