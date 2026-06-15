@@ -14,7 +14,7 @@ import { MAARECHET_URL } from "@/lib/constants";
  * version suffix to re-announce after a future change. Mounted from
  * LayoutClient, so it only appears on the public site (not admin/dashboard).
  */
-const STORAGE_KEY = "hativon_maarechet_announcement_v1";
+const STORAGE_KEY = "hativon_maarechet_announcement_v2";
 
 export function WelcomeMaarechetDialog() {
   const [open, setOpen] = React.useState(false);
