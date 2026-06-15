@@ -53,6 +53,13 @@ export const MAX_CLASS_NUMBER = 4;
 export const CREATOR_USERNAME = 'rani';
 
 /**
+ * External sister app: the school schedule ("מערכת שעות") app.
+ * Override with NEXT_PUBLIC_MAARECHET_URL; falls back to the production deploy.
+ */
+export const MAARECHET_URL =
+  process.env.NEXT_PUBLIC_MAARECHET_URL ?? 'https://maarechet.vercel.app';
+
+/**
  * File upload limits
  */
 export const MAX_IMAGE_SIZE_MB = 5;
