@@ -58,14 +58,14 @@ export function WelcomeMaarechetDialog() {
       <DialogPrimitive.Portal>
         <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
         <DialogPrimitive.Content className="fixed left-1/2 top-1/2 z-50 w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-2xl border border-border bg-card shadow-2xl duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95">
-          {/* Gradient hero */}
-          <div className="relative overflow-hidden bg-gradient-to-br from-violet-600 via-indigo-600 to-sky-500 px-6 pb-8 pt-10 text-center">
-            <div className="pointer-events-none absolute -right-10 -top-12 h-36 w-36 rounded-full bg-white/20 blur-2xl" />
-            <div className="pointer-events-none absolute -bottom-14 -left-8 h-36 w-36 rounded-full bg-fuchsia-400/30 blur-2xl" />
+          {/* Monochrome hero (inverts with the theme: black-on-light, white-on-dark) */}
+          <div className="relative overflow-hidden bg-foreground px-6 pb-8 pt-10 text-center text-background">
+            <div className="pointer-events-none absolute -right-10 -top-12 h-36 w-36 rounded-full bg-background/15 blur-2xl" />
+            <div className="pointer-events-none absolute -bottom-14 -left-8 h-36 w-36 rounded-full bg-background/10 blur-2xl" />
 
             <DialogPrimitive.Close
               onClick={() => triggerHaptic()}
-              className="absolute left-3 top-3 inline-flex size-9 items-center justify-center rounded-full text-white/80 transition hover:bg-white/15 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+              className="absolute left-3 top-3 inline-flex size-9 items-center justify-center rounded-full text-background/70 transition hover:bg-background/15 hover:text-background focus:outline-none focus-visible:ring-2 focus-visible:ring-background/60"
               aria-label="סגור"
             >
               <X className="size-5" />
@@ -75,16 +75,16 @@ export function WelcomeMaarechetDialog() {
               initial={{ scale: 0.6, opacity: 0, rotate: -8 }}
               animate={{ scale: 1, opacity: 1, rotate: 0 }}
               transition={{ type: "spring", stiffness: 220, damping: 16, delay: 0.05 }}
-              className="mx-auto mb-4 flex size-16 items-center justify-center rounded-2xl bg-white/15 ring-1 ring-inset ring-white/40 backdrop-blur"
+              className="mx-auto mb-4 flex size-16 items-center justify-center rounded-2xl bg-background/15 ring-1 ring-inset ring-background/40 backdrop-blur"
             >
-              <CalendarDays className="size-8 text-white" strokeWidth={1.75} />
+              <CalendarDays className="size-8 text-background" strokeWidth={1.75} />
             </motion.div>
 
             <motion.span
               initial={{ opacity: 0, y: -6 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.18, duration: 0.3 }}
-              className="inline-flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-1 text-xs font-bold text-white ring-1 ring-inset ring-white/30"
+              className="inline-flex items-center gap-1.5 rounded-full bg-background/20 px-3 py-1 text-xs font-bold text-background ring-1 ring-inset ring-background/30"
             >
               <Sparkles className="size-3.5" />
               חדש באתר
@@ -128,7 +128,7 @@ export function WelcomeMaarechetDialog() {
                   triggerHaptic();
                   dismiss();
                 }}
-                className="group inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-gradient-to-l from-violet-600 to-indigo-600 px-5 text-sm font-bold text-white shadow-lg shadow-indigo-600/25 transition hover:brightness-110 active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-card"
+                className="group inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-foreground px-5 text-sm font-bold text-background shadow-lg shadow-foreground/20 transition hover:bg-foreground/90 active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card"
               >
                 <CalendarDays className="size-4" />
                 למערכת השעות
