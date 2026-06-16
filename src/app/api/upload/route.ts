@@ -20,6 +20,16 @@ const IMAGE_SIGNATURES: Record<string, number[][]> = {
 };
 
 /**
+ * Parse a single crop coordinate field from FormData.
+ * Returns null for missing, empty, or non-numeric values.
+ */
+function parseCropField(value: FormDataEntryValue | null): number | null {
+  if (typeof value !== "string" || value.trim() === "") return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+/**
  * Validate that file content matches known image signatures
  */
 async function validateImageSignature(file: File): Promise<boolean> {
@@ -88,7 +98,19 @@ export async function POST(request: NextRequest) {
       Buffer.from(await file.arrayBuffer()),
     );
 
-    const variants = await createPostImageVariants(file);
+    // Optional client-chosen crop for the card/thumbnail (natural, EXIF-oriented
+    // pixels). Only honored when all four fields are present and finite; bounds
+    // validation lives in createPostImageVariants (never trust client coords).
+    const cropX = parseCropField(formData.get("cropX"));
+    const cropY = parseCropField(formData.get("cropY"));
+    const cropWidth = parseCropField(formData.get("cropWidth"));
+    const cropHeight = parseCropField(formData.get("cropHeight"));
+    const crop =
+      cropX !== null && cropY !== null && cropWidth !== null && cropHeight !== null
+        ? { x: cropX, y: cropY, width: cropWidth, height: cropHeight }
+        : undefined;
+
+    const variants = await createPostImageVariants(file, crop);
 
     // Check if Vercel Blob token is available
     if (!process.env.BLOB_READ_WRITE_TOKEN) {

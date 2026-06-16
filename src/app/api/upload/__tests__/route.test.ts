@@ -490,4 +490,77 @@ describe("POST /api/upload", () => {
     expect(data.error).toBe("Failed to upload image");
     expect(_g.__logErrorMock as ReturnType<typeof mock>).toHaveBeenCalled();
   });
+
+  describe("crop parameters", () => {
+    beforeEach(() => {
+      mockGetCurrentUser.mockResolvedValue({
+        id: "user-123",
+        username: "testuser",
+      });
+    });
+
+    it("passes a crop rect when all four fields are present and numeric", async () => {
+      const { POST } = await import("../route");
+
+      const formData = new FormData();
+      formData.append("file", createMockImageFile("test.jpg", "image/jpeg"));
+      formData.append("cropX", "10");
+      formData.append("cropY", "20");
+      formData.append("cropWidth", "300");
+      formData.append("cropHeight", "225");
+
+      const response = await POST(createMockRequest(formData));
+
+      expect(response.status).toBe(200);
+      expect(mockCreatePostImageVariants).toHaveBeenCalledTimes(1);
+      const [, crop] = mockCreatePostImageVariants.mock.calls[0];
+      expect(crop).toEqual({ x: 10, y: 20, width: 300, height: 225 });
+    });
+
+    it("passes undefined when no crop fields are provided", async () => {
+      const { POST } = await import("../route");
+
+      const formData = new FormData();
+      formData.append("file", createMockImageFile("test.jpg", "image/jpeg"));
+
+      const response = await POST(createMockRequest(formData));
+
+      expect(response.status).toBe(200);
+      const [, crop] = mockCreatePostImageVariants.mock.calls[0];
+      expect(crop).toBeUndefined();
+    });
+
+    it("passes undefined when crop fields are partial", async () => {
+      const { POST } = await import("../route");
+
+      const formData = new FormData();
+      formData.append("file", createMockImageFile("test.jpg", "image/jpeg"));
+      formData.append("cropX", "10");
+      formData.append("cropY", "20");
+      // cropWidth / cropHeight missing
+
+      const response = await POST(createMockRequest(formData));
+
+      expect(response.status).toBe(200);
+      const [, crop] = mockCreatePostImageVariants.mock.calls[0];
+      expect(crop).toBeUndefined();
+    });
+
+    it("passes undefined when a crop field is non-numeric", async () => {
+      const { POST } = await import("../route");
+
+      const formData = new FormData();
+      formData.append("file", createMockImageFile("test.jpg", "image/jpeg"));
+      formData.append("cropX", "abc");
+      formData.append("cropY", "20");
+      formData.append("cropWidth", "300");
+      formData.append("cropHeight", "225");
+
+      const response = await POST(createMockRequest(formData));
+
+      expect(response.status).toBe(200);
+      const [, crop] = mockCreatePostImageVariants.mock.calls[0];
+      expect(crop).toBeUndefined();
+    });
+  });
 });
