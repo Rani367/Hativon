@@ -48,6 +48,7 @@ export async function GET(request: NextRequest) {
     const includeStats = searchParams.get("stats") === "true";
     const limit = searchParams.get("limit");
     const offset = searchParams.get("offset");
+    const scope = searchParams.get("scope"); // "mine" => current user's own posts only
 
     // Check if pagination is requested
     const usePagination = limit !== null || offset !== null;
@@ -82,8 +83,10 @@ export async function GET(request: NextRequest) {
     let total: number | undefined;
     let hasMore: boolean | undefined;
 
-    // Admin sees all posts, regular user sees only their own
-    if (isAdmin) {
+    // Admin sees all posts, regular user sees only their own.
+    // The "My Posts" dashboard passes scope=mine so the creator/admin sees only
+    // theirs — the all-posts view belongs to the admin panel, not /dashboard.
+    if (isAdmin && scope !== "mine") {
       const result = await getAllPosts(false, paginationOptions);
       if (usePagination && typeof result === "object" && "posts" in result) {
         posts = result.posts;
@@ -121,8 +124,10 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Sort by date (newest first) - only if not using database pagination
-    if (!usePagination || !isAdmin) {
+    // Sort by date (newest first) - only if not using database pagination.
+    // scope=mine takes the user branch (no DB pagination), so sort it like a
+    // regular user's dashboard does even when the session is admin-authenticated.
+    if (!usePagination || !isAdmin || scope === "mine") {
       posts.sort(
         (a, b) =>
           new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),

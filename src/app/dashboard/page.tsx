@@ -132,6 +132,10 @@ export default function DashboardPage() {
         const params = new URLSearchParams();
         params.set("limit", String(POSTS_PER_PAGE));
         params.set("offset", String(currentOffset));
+        // Always scope "My Posts" to the current user, even when the account is
+        // also admin-authenticated; otherwise the creator/admin sees every post
+        // on the platform (the all-posts view belongs to the admin panel).
+        params.set("scope", "mine");
 
         if (statusFilter !== "all") {
           params.set("status", statusFilter);
