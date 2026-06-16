@@ -13,6 +13,7 @@ type PublicPostSnapshot = Pick<
   | "wordCount"
   | "date"
   | "author"
+  | "authorId"
   | "authorGrade"
   | "authorClass"
   | "authorDeleted"
@@ -37,6 +38,7 @@ function getPublicSignature(post: PublicPostSnapshot): string | null {
     wordCount: post.wordCount ?? null,
     date: post.date,
     author: post.author || null,
+    authorId: post.authorId || null,
     authorGrade: post.authorGrade || null,
     authorClass: post.authorClass || null,
     authorDeleted: post.authorDeleted || false,
