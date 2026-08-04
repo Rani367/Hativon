@@ -25,7 +25,7 @@ Use **Bun** — there's no `packageManager` field, so don't default to npm/pnpm.
 - ESLint errors on unused vars (prefix intentionally-unused args with `_`); `console` allows only `warn`/`error`.
 - Tests: `bunfig.toml` preloads `test.setup.ts` with shared mocks (DB, logger, posts, Next.js navigation/headers/cache) — reuse them, don't redefine per file. Tests live in colocated `__tests__/` dirs.
 - Manually verify auth flows and any DB/migration changes locally before pushing — these are easy to break in ways tests don't catch.
-
+- always push directly to main, no branches.
 ## Environment
 
 Required in `.env.local`: `ADMIN_PASSWORD`, `JWT_SECRET` (32+ chars), `NEXT_PUBLIC_SITE_URL`. Without `POSTGRES_URL*` the app falls back to admin-only mode (no user auth).
