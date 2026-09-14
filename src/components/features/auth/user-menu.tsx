@@ -12,7 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { User, LogOut, FileText, LayoutDashboard, UserCog, Shield } from "lucide-react";
+import { User, LogIn, LogOut, FileText, LayoutDashboard, UserCog, Shield } from "lucide-react";
 import { AuthDialog } from "./auth-dialog";
 
 export function UserMenu() {
@@ -30,9 +30,11 @@ export function UserMenu() {
           variant="default"
           size="sm"
           onClick={() => setAuthDialogOpen(true)}
-          className="h-11 cursor-pointer sm:h-9"
+          className="h-11 min-w-11 cursor-pointer gap-2 px-3 sm:h-9"
+          aria-label="התחבר"
         >
-          התחבר
+          <LogIn className="h-4 w-4" />
+          <span className="hidden sm:inline">התחבר</span>
         </Button>
         {authDialogOpen && (
           <AuthDialog
