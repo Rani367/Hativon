@@ -4,7 +4,6 @@ import { ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import { Header } from "./header";
 import { PostOpenTransitionProvider } from "@/components/features/posts/post-open-transition-provider";
-import { WelcomeMaarechetDialog } from "@/components/shared/welcome-maarechet-dialog";
 
 interface LayoutClientProps {
   children: ReactNode;
@@ -30,7 +29,6 @@ export function LayoutClient({ children }: LayoutClientProps) {
           נבנה על ידי רני מלאך
         </footer>
       </div>
-      <WelcomeMaarechetDialog />
     </PostOpenTransitionProvider>
   );
 }
