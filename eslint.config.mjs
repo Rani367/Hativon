@@ -24,6 +24,22 @@ export default defineConfig([
       "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_" }],
     },
   },
+  {
+    files: ["scripts/**"],
+    rules: {
+      "no-console": "off",
+    },
+  },
+  {
+    // Public pages use plain links and images on purpose: a full page load keeps
+    // the browser's own back button, and the photo morph needs the same image
+    // URL on both pages. See src/app/(public)/public.css.
+    files: ["src/app/(public)/**", "src/app/not-found.tsx", "src/components/public/**"],
+    rules: {
+      "@next/next/no-html-link-for-pages": "off",
+      "@next/next/no-img-element": "off",
+    },
+  },
   globalIgnores([
     ".next/**",
     "out/**",
