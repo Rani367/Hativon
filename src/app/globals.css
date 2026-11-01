@@ -11,6 +11,7 @@
   --line: #e0e0e0;
 
   --gutter: clamp(1.25rem, 4vw, 3rem);
+  --page-max: 110rem;
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 
   color-scheme: light;
@@ -30,6 +31,28 @@ html {
   scrollbar-gutter: stable;
   background: var(--paper);
   -webkit-text-size-adjust: 100%;
+}
+
+/*
+ * Big monitors. Sizes are in rem, so this grows the type, spacing and page width
+ * together, and the site looks the same at any size rather than small and adrift.
+ */
+@media (min-width: 1920px) {
+  html {
+    font-size: 112.5%;
+  }
+}
+
+@media (min-width: 2560px) {
+  html {
+    font-size: 125%;
+  }
+}
+
+@media (min-width: 3840px) {
+  html {
+    font-size: 175%;
+  }
 }
 
 body {
