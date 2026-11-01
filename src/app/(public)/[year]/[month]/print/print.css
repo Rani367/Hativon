@@ -1,7 +1,6 @@
 /*
  * A printed issue: a cover with contents, then every article in full. On screen
- * it's a preview of the same thing. Photos are gray to save ink and to match the
- * site, so the printed issue is entirely black and white.
+ * it's a preview of the same thing.
  */
 @page {
   size: A4;
@@ -136,7 +135,6 @@
   max-height: 24rem;
   margin-block: 1.5rem;
   object-fit: contain;
-  filter: grayscale(1);
 }
 
 .print-article .article-body {
@@ -253,11 +251,6 @@
 
   .print-article .article-body figure {
     margin-inline: 0;
-  }
-
-  .print-article .article-body figure img {
-    animation: none;
-    filter: grayscale(1);
   }
 
   .print-article .article-body figcaption {

@@ -35,7 +35,7 @@ Request handlers run on **Node**, proven by `/api/health`. Bun is only for insta
 
 - Imports use the `@/*` alias for `src/`; filenames are kebab-case.
 - All Hebrew lives in `src/lib/copy.ts` and `src/lib/studio-copy.ts`: "כתבה" for an article, and the plural imperative.
-- Black and white only. The one colour on the site is a student's opened photo.
+- The interface is black and white, with no accent colour. Photos stay in full colour.
 - ESLint errors on unused vars (prefix intentionally-unused args with `_`); `console` allows only `warn`/`error`.
 - Tests live in colocated `__tests__/` dirs. Test logic that's easy to get wrong, not the framework.
 - Manually verify auth flows and any DB/migration changes on a Neon branch before pushing.

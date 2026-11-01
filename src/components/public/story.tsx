@@ -40,11 +40,11 @@ export function Story({ post, lead = false, eager = false }: StoryProps) {
         ) : null}
         <h2 className="story-title">{post.title}</h2>
         <p className="story-description">{post.description}</p>
+        <p className="story-meta">
+          <Byline post={post} />
+          <PostLabels post={post} />
+        </p>
       </a>
-      <p className="story-meta">
-        <Byline post={post} />
-        <PostLabels post={post} />
-      </p>
     </article>
   );
 }

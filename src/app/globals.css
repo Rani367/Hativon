@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 /*
- * Black and white only. There is no accent colour: the one colour on the site is
- * a student's photo once it's opened.
+ * The interface is black and white, with no accent colour. All the colour on the
+ * site comes from the photos.
  */
 :root {
   --paper: #ffffff;
