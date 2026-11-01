@@ -59,7 +59,3 @@ scripts/description-backup.json
 
 # Claude Code local config
 .claude/
-# playwright
-/test-results
-/playwright-report
-/e2e/.auth

@@ -9,6 +9,8 @@ export const copy = {
     credit: "נבנה על ידי רני מלאך",
   },
   nav: {
+    main: "ניווט ראשי",
+    skipToContent: "דילוג לתוכן",
     home: "לדף הבית",
     issues: "גיליונות",
     search: "חיפוש",
@@ -22,6 +24,11 @@ export const copy = {
     issuesTitle: "גיליונות",
     articleCount: (count: number) =>
       count === 1 ? "כתבה אחת" : `${count} כתבות`,
+  },
+  print: {
+    link: "הדפסת הגיליון",
+    button: "הדפסה",
+    title: (label: string, year: number) => `הדפסת גיליון ${label} ${year}`,
   },
   article: {
     byline: (name: string) => `מאת ${name}`,

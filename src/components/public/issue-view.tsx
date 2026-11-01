@@ -1,5 +1,7 @@
+import type { CSSProperties } from "react";
 import { copy } from "@/lib/copy";
 import type { Issue } from "@/lib/issues/issues";
+import { getLabelWidth } from "@/lib/issues/label-width";
 import { Story } from "./story";
 
 // Enough to fill the first screen on any device.
@@ -11,7 +13,10 @@ export function IssueView({ issue }: { issue: Issue }) {
   return (
     <main id="main" className="issue">
       <header className="issue-header">
-        <h1 className="issue-month">
+        <h1
+          className="issue-month"
+          style={{ "--label-width": getLabelWidth(issue.label) } as CSSProperties}
+        >
           <span className="issue-month-mask">
             <span className="issue-month-text">{issue.label}</span>
           </span>
@@ -19,6 +24,9 @@ export function IssueView({ issue }: { issue: Issue }) {
         <p className="issue-meta">
           <bdi>{issue.year}</bdi>
           <span>{copy.issue.articleCount(issue.posts.length)}</span>
+          <a className="issue-print-link ink-link" href={`${issue.path}/print`}>
+            {copy.print.link}
+          </a>
         </p>
       </header>
 

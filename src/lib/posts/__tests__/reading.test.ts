@@ -1,5 +1,27 @@
 import { describe, expect, it } from "bun:test";
-import { getReadingMinutes, getWordCount } from "../reading";
+import {
+  getReadingMinutes,
+  getWordCount,
+  isOpeningOfArticle,
+} from "../reading";
+
+describe("isOpeningOfArticle", () => {
+  const content = "להורי ותלמידי החטיבה **היקרים**,\n\nעם סיומה של שנת הלימודים";
+
+  it("spots a generated description, cut off with an ellipsis", () => {
+    expect(isOpeningOfArticle("להורי ותלמידי החטיבה היקרים, עם...", content)).toBe(
+      true,
+    );
+  });
+
+  it("keeps a description the writer wrote", () => {
+    expect(isOpeningOfArticle("סיכום שנת הלימודים", content)).toBe(false);
+  });
+
+  it("keeps nothing for an empty description", () => {
+    expect(isOpeningOfArticle("", content)).toBe(false);
+  });
+});
 
 describe("getWordCount", () => {
   it("counts words", () => {

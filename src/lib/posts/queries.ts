@@ -36,6 +36,44 @@ function toSummary(row: Row): PostSummary {
   };
 }
 
+function toPost(row: Row): Post {
+  return {
+    ...toSummary(row),
+    content: row.content as string,
+    tags: (row.tags as string[] | null) ?? [],
+    category: (row.category as string | null) || undefined,
+    updatedAt: (row.updated_at as Date).toISOString(),
+  };
+}
+
+/** Published articles in a range with their full text, for printing an issue. */
+export async function getPublishedArticlesInRange(
+  startInclusive: string,
+  endExclusive: string,
+): Promise<Post[]> {
+  const rows = await db()`
+    SELECT
+      p.id, p.title, p.description, p.content, p.cover_image, p.word_count,
+      p.date AT TIME ZONE 'UTC' AS date,
+      p.updated_at AT TIME ZONE 'UTC' AS updated_at,
+      p.author, p.author_grade, p.author_class,
+      p.is_teacher_post, p.ai_generated_image, p.tags, p.category,
+      (u.id IS NULL AND p.author_id IS NOT NULL) AS author_deleted,
+      (u.username IS NOT DISTINCT FROM ${CREATOR_USERNAME}) AS is_creator_post
+    FROM posts p
+    LEFT JOIN users u ON p.author_id = u.id::text
+    WHERE p.status = 'published'
+      AND p.date >= ${startInclusive}
+      AND p.date < ${endExclusive}
+    ORDER BY
+      p.ai_generated_image ASC,
+      (p.cover_image IS NOT NULL AND p.cover_image <> '') DESC,
+      p.date DESC
+  `;
+
+  return rows.map(toPost);
+}
+
 /** Published posts in a half-open date range, in reading order. */
 export async function getPublishedPostsInRange(
   startInclusive: string,
@@ -87,16 +125,7 @@ export const getPublishedPost = cache(
       LIMIT 1
     `;
 
-    const row = rows[0];
-    if (!row) return null;
-
-    return {
-      ...toSummary(row),
-      content: row.content as string,
-      tags: (row.tags as string[] | null) ?? [],
-      category: (row.category as string | null) || undefined,
-      updatedAt: (row.updated_at as Date).toISOString(),
-    };
+    return rows[0] ? toPost(rows[0]) : null;
   },
 );
 

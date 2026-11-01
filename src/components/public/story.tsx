@@ -17,7 +17,10 @@ interface StoryProps {
  * can't block navigation. See src/app/(public)/public.css.
  */
 export function Story({ post, lead = false, eager = false }: StoryProps) {
-  const photo = getPostCardImageUrl(post.coverImage);
+  // Cards are 768 pixels wide, which the lead would stretch until it blurs, and
+  // their 4:3 crop can lose a portrait's face in a wide frame. The full photo has
+  // neither problem.
+  const photo = lead ? post.coverImage : getPostCardImageUrl(post.coverImage);
 
   return (
     <article className={lead ? "story story-lead" : "story"}>

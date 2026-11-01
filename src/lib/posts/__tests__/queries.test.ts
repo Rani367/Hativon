@@ -5,7 +5,7 @@ mock.module("@/lib/db", () => ({ db: () => query }));
 
 const { getArchiveMonths, getPublishedPost, getPublishedPostStamps, getPublishedPostsInRange } =
   await import("../queries");
-const { getHomeIssue, getIssue, getIssues } = await import(
+const { getHomeIssue, getIssue, getIssueWithArticles, getIssues } = await import(
   "@/lib/issues/issues"
 );
 
@@ -81,6 +81,7 @@ describe("public queries", () => {
       ["getArchiveMonths", () => getArchiveMonths()],
       ["getPublishedPostStamps", () => getPublishedPostStamps()],
       ["getIssue", () => getIssue(2026, 6)],
+      ["getIssueWithArticles", () => getIssueWithArticles(2026, 6)],
       ["getIssues", () => getIssues()],
       ["getHomeIssue", () => getHomeIssue()],
     ];

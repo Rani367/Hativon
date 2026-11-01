@@ -1,7 +1,11 @@
 import { cache } from "react";
 import { monthNumberToEnglish, monthNumberToHebrew } from "@/lib/date/months";
-import { getArchiveMonths, getPublishedPostsInRange } from "@/lib/posts/queries";
-import type { PostSummary } from "@/lib/posts/types";
+import {
+  getArchiveMonths,
+  getPublishedArticlesInRange,
+  getPublishedPostsInRange,
+} from "@/lib/posts/queries";
+import type { Post, PostSummary } from "@/lib/posts/types";
 import { getSetting } from "@/lib/settings";
 import {
   type ArchiveMonth,
@@ -60,6 +64,30 @@ export async function getIssue(
   year: number,
   month: number,
 ): Promise<Issue | null> {
+  const span = await getIssueSpan(year, month);
+  const posts = await getPublishedPostsInRange(
+    span.startInclusive,
+    span.endExclusive,
+  );
+
+  return posts.length > 0 ? { ...span.issue, posts } : null;
+}
+
+/** The same issue with each article's full text, for printing. */
+export async function getIssueWithArticles(
+  year: number,
+  month: number,
+): Promise<(Omit<Issue, "posts"> & { articles: Post[] }) | null> {
+  const span = await getIssueSpan(year, month);
+  const articles = await getPublishedArticlesInRange(
+    span.startInclusive,
+    span.endExclusive,
+  );
+
+  return articles.length > 0 ? { ...span.issue, articles } : null;
+}
+
+async function getIssueSpan(year: number, month: number) {
   const group = findMergeGroup(await getMergeGroups(), year, month);
 
   const start = group
@@ -68,20 +96,17 @@ export async function getIssue(
   const end = group
     ? { year: group.endYear, month: group.endMonth }
     : { year, month };
-  const { startInclusive, endExclusive } = monthRangeBounds(start, end);
-
-  const posts = await getPublishedPostsInRange(startInclusive, endExclusive);
-  if (posts.length === 0) return null;
-
   const canonical = group
     ? { year: group.canonicalYear, month: group.canonicalMonth }
     : { year, month };
 
   return {
-    ...canonical,
-    path: getIssuePath(canonical.year, canonical.month),
-    label: group?.label ?? monthNumberToHebrew(month) ?? "",
-    posts,
+    ...monthRangeBounds(start, end),
+    issue: {
+      ...canonical,
+      path: getIssuePath(canonical.year, canonical.month),
+      label: group?.label ?? monthNumberToHebrew(month) ?? "",
+    },
   };
 }
 

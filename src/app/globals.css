@@ -1,1 +1,125 @@
 @import "tailwindcss";
+
+/*
+ * Black and white only. There is no accent colour: the one colour on the site is
+ * a student's photo once it's opened.
+ */
+:root {
+  --paper: #ffffff;
+  --ink: #000000;
+  --ink-2: #595959;
+  --line: #e0e0e0;
+
+  --gutter: clamp(1.25rem, 4vw, 3rem);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
+  color-scheme: light;
+}
+
+.dark {
+  --paper: #000000;
+  --ink: #ffffff;
+  --ink-2: #a6a6a6;
+  --line: #2b2b2b;
+
+  color-scheme: dark;
+}
+
+html {
+  /* Keeps the layout from shifting between pages with and without a scrollbar. */
+  scrollbar-gutter: stable;
+  background: var(--paper);
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  min-height: 100svh;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans), system-ui, sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  overflow-wrap: anywhere;
+}
+
+::selection {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 3px;
+}
+
+.skip-link {
+  position: absolute;
+  inset-block-start: 0.75rem;
+  inset-inline-start: var(--gutter);
+  z-index: 10;
+  padding: 0.5rem 1rem;
+  background: var(--ink);
+  color: var(--paper);
+  transform: translateY(-200%);
+}
+
+.skip-link:focus {
+  transform: none;
+}
+
+/* Error and not-found pages. */
+.notice {
+  display: grid;
+  gap: 1rem;
+  justify-items: start;
+  max-width: 40rem;
+  padding: clamp(4rem, 15vh, 10rem) var(--gutter);
+}
+
+.notice h1 {
+  font-family: var(--font-serif), serif;
+  font-size: clamp(2.5rem, 8vw, 4.5rem);
+  font-weight: 900;
+  line-height: 1.05;
+}
+
+.notice p {
+  color: var(--ink-2);
+  font-size: 1.125rem;
+}
+
+.notice a,
+.notice button {
+  margin-block-start: 0.5rem;
+  padding-block-end: 2px;
+  border-block-end: 1px solid currentColor;
+  cursor: pointer;
+}
+
+/* The theme switch expands a circle from the button, set up in theme-toggle.tsx. */
+html.theme-wipe::view-transition-old(root),
+html.theme-wipe::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+html.theme-wipe::view-transition-old(root) {
+  z-index: 0;
+}
+
+html.theme-wipe::view-transition-new(root) {
+  z-index: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

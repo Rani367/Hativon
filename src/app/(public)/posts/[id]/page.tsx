@@ -5,7 +5,11 @@ import { Byline, PostLabels } from "@/components/public/byline";
 import { copy } from "@/lib/copy";
 import { formatHebrewDate } from "@/lib/date/format";
 import { getPostCardImageUrl } from "@/lib/images/post-images";
-import { getReadingMinutes, getWordCount } from "@/lib/posts/reading";
+import {
+  getReadingMinutes,
+  getWordCount,
+  isOpeningOfArticle,
+} from "@/lib/posts/reading";
 import { getPublishedPost, getPublishedPostStamps } from "@/lib/posts/queries";
 import { SITE_NAME, getSiteUrl, shouldSkipPrerender } from "@/lib/site";
 
@@ -128,7 +132,9 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
 
       <header className="article-header">
         <h1 className="article-title">{post.title}</h1>
-        <p className="article-description">{post.description}</p>
+        {isOpeningOfArticle(post.description, post.content) ? null : (
+          <p className="article-description">{post.description}</p>
+        )}
         <p className="article-meta">
           <Byline post={post} />
           <time dateTime={post.date}>{formatHebrewDate(post.date)}</time>

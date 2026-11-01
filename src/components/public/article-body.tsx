@@ -10,40 +10,55 @@ import { rehypeUnwrapImages } from "@/lib/markdown/unwrap-images";
 // - No rehype-raw. Raw HTML in old posts is dropped, and enabling it would bring
 //   back hidden markup and open a script-injection hole.
 // - No remark-breaks. A single newline stays a space, or old articles reflow.
-const components: Components = {
-  // The article title is the page's only h1, so a heading written as "#" in an
-  // article becomes the next level down.
-  h1: ({ children }) => <h2>{children}</h2>,
-  a: ({ children, href }) => (
-    <a href={href} rel="noopener noreferrer">
-      {children}
-    </a>
-  ),
-  img: ({ src, alt }) =>
-    typeof src === "string" ? (
-      <figure>
-        {/* Plain <img>: next/image throws on hosts outside its allowlist, and
-            articles can link to images hosted anywhere. */}
-        <img src={src} alt={alt || copy.article.imageFallbackAlt} loading="lazy" />
-        {alt ? <figcaption>{alt}</figcaption> : null}
-      </figure>
-    ) : null,
-  // Code is left-to-right whatever the page's direction. No syntax colours: the
-  // highlighter cost 221 KB on every article, and the site is black and white.
-  pre: ({ children }) => <pre dir="ltr">{children}</pre>,
-  table: ({ children }) => (
-    <div className="article-table">
-      <table>{children}</table>
-    </div>
-  ),
-};
+function getComponents(imageLoading: "lazy" | "eager"): Components {
+  return {
+    // The article title is the page's only h1, so a heading written as "#" in an
+    // article becomes the next level down.
+    h1: ({ children }) => <h2>{children}</h2>,
+    a: ({ children, href }) => (
+      <a href={href} rel="noopener noreferrer">
+        {children}
+      </a>
+    ),
+    img: ({ src, alt }) =>
+      typeof src === "string" ? (
+        <figure>
+          {/* Plain <img>: next/image throws on hosts outside its allowlist, and
+              articles can link to images hosted anywhere. */}
+          <img
+            src={src}
+            alt={alt || copy.article.imageFallbackAlt}
+            loading={imageLoading}
+          />
+          {alt ? <figcaption>{alt}</figcaption> : null}
+        </figure>
+      ) : null,
+    // Code is left-to-right whatever the page's direction. No syntax colours: the
+    // highlighter cost 221 KB on every article, and the site is black and white.
+    pre: ({ children }) => <pre dir="ltr">{children}</pre>,
+    table: ({ children }) => (
+      <div className="article-table">
+        <table>{children}</table>
+      </div>
+    ),
+  };
+}
+
+interface ArticleBodyProps {
+  content: string;
+  /** Printing needs every photo at once, so print pages pass "eager". */
+  imageLoading?: "lazy" | "eager";
+}
 
 /** The body of an article. Runs on the server only, so it ships no JavaScript. */
-export function ArticleBody({ content }: { content: string }) {
+export function ArticleBody({
+  content,
+  imageLoading = "lazy",
+}: ArticleBodyProps) {
   return (
     <div className="article-body">
       <Markdown
-        components={components}
+        components={getComponents(imageLoading)}
         remarkPlugins={[remarkGfm]}
         rehypePlugins={[rehypeSanitize, rehypeUnwrapImages]}
       >
