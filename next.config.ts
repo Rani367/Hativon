@@ -34,15 +34,6 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
 
-  // The merged May–June 2026 issue lives at /2026/june. This runs before the
-  // page, whose permanentRedirect sends a doubled Location header on Vercel
-  // ("/2026/june, /2026/june"), which browsers follow to a 404.
-  async redirects() {
-    return [
-      { source: "/2026/may", destination: "/2026/june", permanent: false },
-    ];
-  },
-
   async headers() {
     return [
       {
