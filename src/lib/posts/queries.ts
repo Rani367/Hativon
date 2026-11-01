@@ -129,6 +129,35 @@ export const getPublishedPost = cache(
   },
 );
 
+/**
+ * Published articles containing a term, title matches first. Both sides go
+ * through normalize_search_text in the database, so they can't drift apart.
+ */
+export async function searchPublishedPosts(term: string): Promise<PostSummary[]> {
+  const rows = await db()`
+    WITH search AS (
+      SELECT '%' || replace(normalize_search_text(${term}), '%', '\\%') || '%' AS pattern
+    )
+    SELECT
+      p.id, p.title, p.description, p.cover_image, p.word_count,
+      p.date AT TIME ZONE 'UTC' AS date,
+      p.author, p.author_grade, p.author_class,
+      p.is_teacher_post, p.ai_generated_image,
+      (u.id IS NULL AND p.author_id IS NOT NULL) AS author_deleted,
+      (u.username IS NOT DISTINCT FROM ${CREATOR_USERNAME}) AS is_creator_post
+    FROM posts p
+    CROSS JOIN search
+    LEFT JOIN users u ON p.author_id = u.id::text
+    WHERE p.status = 'published' AND p.search_text LIKE search.pattern
+    ORDER BY
+      (normalize_search_text(p.title) LIKE search.pattern) DESC,
+      p.date DESC
+    LIMIT 30
+  `;
+
+  return rows.map(toSummary);
+}
+
 /** Every month with published posts, newest first. */
 export async function getArchiveMonths(): Promise<ArchiveMonth[]> {
   const rows = await db()`

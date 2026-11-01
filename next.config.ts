@@ -34,6 +34,14 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
 
+  // Addresses from the old app.
+  async redirects() {
+    return [
+      { source: "/admin/dashboard", destination: "/admin", permanent: false },
+      { source: "/admin/posts", destination: "/admin", permanent: false },
+    ];
+  },
+
   async headers() {
     return [
       {

@@ -3,15 +3,12 @@
   "buildCommand": "bun run build",
   "installCommand": "bun install --frozen-lockfile",
   "framework": "nextjs",
-  "regions": ["iad1"],
+  "regions": [
+    "iad1"
+  ],
   "build": {
     "env": {
       "NEXT_TELEMETRY_DISABLED": "1"
-    }
-  },
-  "functions": {
-    "src/app/api/**/*.ts": {
-      "maxDuration": 10
     }
   },
   "headers": [

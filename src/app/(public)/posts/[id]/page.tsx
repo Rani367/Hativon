@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ArticleBody } from "@/components/public/article-body";
 import { Byline, PostLabels } from "@/components/public/byline";
+import { ReadBeacon } from "@/components/public/read-beacon";
 import { copy } from "@/lib/copy";
 import { formatHebrewDate } from "@/lib/date/format";
 import { getPostCardImageUrl } from "@/lib/images/post-images";
@@ -153,6 +154,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
       </header>
 
       <ArticleBody content={post.content} />
+      <ReadBeacon postId={post.id} />
     </main>
   );
 }

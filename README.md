@@ -1,58 +1,34 @@
 # Hativon
 
-My school's newspaper application with Hebrew/RTL support.
+A Hebrew, right-to-left school newspaper. Students write articles, teachers look after them, and each month's articles form an issue that can be read online or printed.
 
-**prod:** https://hativon.vercel.app
+**Live:** https://hativon.vercel.app
 
 ## Setup
 
 ```bash
-bun install    # Installs dependencies and auto-configures everything
-bun dev    # Start development server at http://localhost:3000
+bun install
+cp .env.example .env.local   # Point POSTGRES_URL at a Neon branch, never production
+bun run dev                  # http://localhost:3000
 ```
-
-Default credentials after setup:
-- Test user: `user` / `12345678`
-- Admin panel (`/admin`): uses `ADMIN_PASSWORD` from `.env.local`
 
 ## Commands
 
-### Development
 ```bash
-bun run dev              # Start dev server
-bun run build            # Production build
-bun run lint             # ESLint check
+bun run verify                  # Lint, typecheck, tests and build. Run after every change.
+bun run db:migrate              # Apply pending migrations
+bun run db:migrate --status     # Show what is pending
 ```
 
-### Testing
-```bash
-bun test                 # Run tests
-bun test --coverage      # With coverage
-```
+## How it fits together
 
-### Manual verification
-```text
-1. Student flow: register/login -> edit profile -> create draft -> recover autosave -> publish
-2. Teacher flow: register/login as teacher -> open /admin/dashboard -> review posts/users
-3. Reading flow: open current month page on mobile width -> open a post -> confirm metadata/readability
-4. Edge cases: empty month, teacher badge visibility, deleting a draft, dashboard pagination
-```
+- **Issues aren't a table.** An issue is every published post whose `date` falls in a month, or in a span of months merged into a double issue. See `src/lib/issues/`.
+- **Public pages** are server components with almost no JavaScript, cached until something changes them. Every change to a post goes through `src/lib/posts/studio.ts`, which refreshes them.
+- **Articles are stored as Markdown.** The editor works in HTML and converts on every change. See `src/lib/markdown/editor-convert.ts`.
+- **Writers and teachers** use `/dashboard` and `/admin`. The class code for signing up is set in `/admin/issues`.
 
-### Database
-```bash
-bun run db:init          # Initialize schema
-bun run db:migrate       # Run migrations
-bun run db:migrate:status
-bun run db:migrate:rollback
-bun run create-test-user # Create test user
-```
+## Database
 
-### Deployment
-```bash
-bun run verify           # Lint + typecheck + tests + build (same gate CI runs)
-git push                 # Triggers Vercel deployment
-```
+`db/baseline.sql` is the schema the migrations start from. Another app shares the production database, so never restore it wholesale: copy only Hativon's tables.
 
-## Documentation
-
-This README is the current project documentation.
+Migrations are plain SQL in `db/migrations/`. They run by hand, never during a build, and they must stay additive so a rollback to the previous deployment keeps working. The runner refuses production unless `ALLOW_PRODUCTION_MIGRATION=yes` is set.

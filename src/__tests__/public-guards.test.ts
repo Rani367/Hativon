@@ -32,6 +32,7 @@ const relative = (file: string) => path.relative(SOURCE, file);
 // The only client components a reader's browser has to run.
 const ALLOWED_CLIENT_COMPONENTS = [
   "components/public/print-button.tsx",
+  "components/public/read-beacon.tsx",
   "components/public/theme-toggle.tsx",
 ];
 
