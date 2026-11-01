@@ -1,27 +1,35 @@
 @import "tailwindcss";
 
 /*
- * The interface is black and white, with no accent colour. All the colour on the
- * site comes from the photos.
+ * A neutral, minimal interface: no accent colour, soft surfaces, generous space.
+ * All the colour on the site comes from the photos.
  */
 :root {
   --paper: #ffffff;
-  --ink: #000000;
-  --ink-2: #595959;
-  --line: #e0e0e0;
+  --surface: #f5f5f5;
+  --ink: #0a0a0a;
+  --ink-2: #6b6b6b;
+  --line: #e8e8e8;
+  --glass: rgb(255 255 255 / 0.72);
 
   --gutter: clamp(1.25rem, 4vw, 3rem);
   --page-max: 110rem;
-  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --radius: 1.25rem;
+  --radius-small: 0.75rem;
+
+  /* Long, soft landings. Most of the movement happens early. */
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
 
   color-scheme: light;
 }
 
 .dark {
-  --paper: #000000;
-  --ink: #ffffff;
-  --ink-2: #a6a6a6;
-  --line: #2b2b2b;
+  --paper: #0a0a0a;
+  --surface: #171717;
+  --ink: #fafafa;
+  --ink-2: #a3a3a3;
+  --line: #262626;
+  --glass: rgb(10 10 10 / 0.7);
 
   color-scheme: dark;
 }
@@ -74,14 +82,16 @@ body {
 :focus-visible {
   outline: 2px solid var(--ink);
   outline-offset: 3px;
+  border-radius: 0.25rem;
 }
 
 .skip-link {
   position: absolute;
   inset-block-start: 0.75rem;
   inset-inline-start: var(--gutter);
-  z-index: 10;
+  z-index: 20;
   padding: 0.5rem 1rem;
+  border-radius: 999px;
   background: var(--ink);
   color: var(--paper);
   transform: translateY(-200%);
@@ -91,33 +101,82 @@ body {
   transform: none;
 }
 
+/* A rounded pill, used for quiet actions everywhere. */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 2.5rem;
+  padding: 0.375rem 1.125rem;
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    transform 300ms var(--ease),
+    background-color 300ms var(--ease),
+    opacity 300ms var(--ease);
+}
+
+@media (hover: hover) {
+  .pill:hover {
+    background: var(--line);
+  }
+}
+
+.pill:active {
+  transform: scale(0.96);
+}
+
 /* Error and not-found pages. */
 .notice {
   display: grid;
   gap: 1rem;
   justify-items: start;
   max-width: 40rem;
-  padding: clamp(4rem, 15vh, 10rem) var(--gutter);
+  margin-inline: auto;
+  padding: clamp(5rem, 18vh, 11rem) var(--gutter);
+  animation: rise 700ms var(--ease) both;
 }
 
 .notice h1 {
-  font-family: var(--font-serif), serif;
-  font-size: clamp(2.5rem, 8vw, 4.5rem);
-  font-weight: 900;
-  line-height: 1.05;
+  font-size: clamp(2.25rem, 7vw, 3.5rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
 }
 
 .notice p {
   color: var(--ink-2);
-  font-size: 1.125rem;
+  font-size: 1.0625rem;
 }
 
 .notice a,
 .notice button {
   margin-block-start: 0.5rem;
-  padding-block-end: 2px;
-  border-block-end: 1px solid currentColor;
+  padding: 0.5rem 1.125rem;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--paper);
+  font-size: 0.875rem;
+  font-weight: 500;
   cursor: pointer;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(1.25rem);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
 }
 
 /* The theme switch expands a circle from the button, set up in theme-toggle.tsx. */

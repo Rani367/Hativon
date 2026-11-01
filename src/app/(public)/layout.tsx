@@ -23,15 +23,17 @@ export default function PublicLayout({ children }: { children: ReactNode }) {
       </a>
 
       <header className="masthead">
-        <a className="masthead-name" href="/">
-          {SITE_NAME}
-        </a>
-        <nav className="masthead-nav" aria-label={copy.nav.main}>
-          <a href="/issues">{copy.nav.issues}</a>
-          <a href="/search">{copy.nav.search}</a>
-          <a href="/dashboard">{copy.nav.write}</a>
-          <ThemeToggle />
-        </nav>
+        <div className="masthead-bar">
+          <a className="masthead-name" href="/">
+            {SITE_NAME}
+          </a>
+          <nav className="masthead-nav" aria-label={copy.nav.main}>
+            <a href="/issues">{copy.nav.issues}</a>
+            <a href="/search">{copy.nav.search}</a>
+            <a href="/dashboard">{copy.nav.write}</a>
+            <ThemeToggle />
+          </nav>
+        </div>
       </header>
 
       {children}

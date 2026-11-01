@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import type { CSSProperties } from "react";
 import { ArticleBody } from "@/components/public/article-body";
 import { Byline, PostLabels } from "@/components/public/byline";
 import { PrintButton } from "@/components/public/print-button";
@@ -8,7 +7,6 @@ import { copy } from "@/lib/copy";
 import { formatHebrewDate } from "@/lib/date/format";
 import { englishMonthToNumber } from "@/lib/date/months";
 import { getIssueWithArticles } from "@/lib/issues/issues";
-import { getLabelWidth } from "@/lib/issues/label-width";
 import { isOpeningOfArticle } from "@/lib/posts/reading";
 import { SITE_NAME, getSiteUrl } from "@/lib/site";
 import "./print.css";
@@ -56,19 +54,14 @@ export default async function PrintPage({ params }: PrintPageProps) {
     <main id="main" className="print-issue">
       <div className="print-toolbar">
         <PrintButton />
-        <a className="ink-link" href={issue.path}>
+        <a className="pill" href={issue.path}>
           {copy.article.backToIssue(issue.label)}
         </a>
       </div>
 
       <section className="print-cover">
         <p className="print-name">{SITE_NAME}</p>
-        <h1
-          className="print-month"
-          style={{ "--label-width": getLabelWidth(issue.label) } as CSSProperties}
-        >
-          {issue.label}
-        </h1>
+        <h1 className="print-month">{issue.label}</h1>
         <p className="print-edition">
           <bdi>{issue.year}</bdi>
           <span>{copy.issue.articleCount(issue.articles.length)}</span>

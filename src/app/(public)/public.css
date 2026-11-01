@@ -1,11 +1,8 @@
 /*
  * The public site.
  *
- * Motion: one thing moves on its own, the month name on page load. Everything
- * else answers something the reader did.
- *
- * The photo morph is a cross-document View Transition. Nothing here or in
- * src/lib/page-script.ts can stop navigation: there is no overlay and no
+ * The photo and headline morph is a cross-document View Transition. Nothing here
+ * or in src/lib/page-script.ts can stop navigation: there is no overlay and no
  * preventDefault. If the browser can't do it, or anything fails, the reader gets
  * a normal page load. The old app's overlay locked up twice (commit 823c34a).
  */
@@ -23,20 +20,49 @@
   pointer-events: none;
 }
 
-::view-transition-old(root),
-::view-transition-new(root) {
-  animation-duration: 240ms;
+/* Pages drift rather than cut: the old one lifts away, the new one settles in. */
+@keyframes page-out {
+  to {
+    opacity: 0;
+    transform: translateY(-0.5rem);
+  }
 }
 
-/* The masthead stays still while the page changes under it. */
-.masthead {
+@keyframes page-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.75rem);
+  }
+}
+
+::view-transition-old(root) {
+  animation: page-out 240ms var(--ease) both;
+}
+
+::view-transition-new(root) {
+  animation: page-in 520ms var(--ease) 60ms both;
+}
+
+/* The bar stays still while the page changes under it. */
+.masthead-bar {
   view-transition-name: masthead;
 }
 
-/* The story's photo grows into the article's, crossfading on the way. */
+::view-transition-group(masthead) {
+  z-index: 3;
+}
+
+/* The tapped story's photo and headline fly to their places in the article. */
+::view-transition-group(story-photo),
+::view-transition-group(story-title) {
+  z-index: 2;
+  animation-duration: 620ms;
+  animation-timing-function: var(--ease);
+}
+
 ::view-transition-group(story-photo) {
-  animation-duration: 420ms;
-  animation-timing-function: var(--ease-out);
+  overflow: clip;
+  border-radius: var(--radius);
 }
 
 ::view-transition-old(story-photo),
@@ -44,6 +70,16 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+  animation-duration: 620ms;
+}
+
+/* Headlines keep their right edge, so Hebrew text doesn't slide sideways. */
+::view-transition-old(story-title),
+::view-transition-new(story-title) {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: top right;
   animation-duration: 420ms;
 }
 
@@ -56,135 +92,136 @@
   margin-inline: auto;
 }
 
-/* Masthead */
+/* Floating glass bar */
 .masthead {
-  position: relative;
-  z-index: 2;
+  position: sticky;
+  inset-block-start: 0.75rem;
+  z-index: 10;
+  padding-inline: var(--gutter);
+  padding-block-start: 0.75rem;
+}
+
+.masthead-bar {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
-  gap: 1.5rem;
-  padding: 1.25rem var(--gutter);
-  background: var(--paper);
+  gap: 1rem;
+  min-height: 3.25rem;
+  padding: 0.375rem 1.25rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--glass);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  animation: rise 700ms var(--ease) both;
 }
 
 .masthead-name {
-  font-family: var(--font-serif), serif;
-  font-size: 1.625rem;
-  font-weight: 900;
+  font-size: 1.1875rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
   line-height: 1;
 }
 
 .masthead-nav {
   display: flex;
-  align-items: baseline;
-  gap: clamp(1rem, 3vw, 1.75rem);
-  font-size: 0.9375rem;
+  align-items: center;
+  gap: clamp(0.125rem, 1vw, 0.375rem);
+  font-size: 0.875rem;
+}
+
+.masthead-nav a {
+  padding: 0.4375rem clamp(0.5rem, 1.4vw, 0.875rem);
+  border-radius: 999px;
+  color: var(--ink-2);
+  font-weight: 500;
+  transition:
+    color 250ms var(--ease),
+    background-color 250ms var(--ease);
+}
+
+@media (hover: hover) {
+  .masthead-nav a:hover {
+    background: var(--surface);
+    color: var(--ink);
+  }
 }
 
 .theme-toggle {
-  position: relative;
+  flex: none;
   inline-size: 1.125rem;
   block-size: 1.125rem;
-  align-self: center;
+  margin-inline-start: 0.5rem;
   border: 1.5px solid var(--ink);
   border-radius: 50%;
-  background: linear-gradient(to right, var(--ink) 50%, var(--paper) 50%);
+  background: linear-gradient(to right, var(--ink) 50%, transparent 50%);
   cursor: pointer;
-  transition: transform 500ms var(--ease-out);
+  transition: transform 600ms var(--ease);
 }
 
 .dark .theme-toggle {
   transform: rotate(180deg);
 }
 
-/* Links draw an underline from the right, the way the text reads. */
-.ink-link,
-.masthead-nav a,
-.colophon a {
-  background-image: linear-gradient(currentColor, currentColor);
-  background-position: 100% 100%;
-  background-repeat: no-repeat;
-  background-size: 0 1px;
-  transition: background-size 320ms var(--ease-out);
-}
-
-@media (hover: hover) {
-  .ink-link:hover,
-  .masthead-nav a:hover,
-  .colophon a:hover {
-    background-size: 100% 1px;
-  }
-}
-
 /* Issue */
 .issue {
   padding-inline: var(--gutter);
-  padding-block-end: clamp(4rem, 10vw, 8rem);
+  padding-block-end: clamp(4rem, 10vw, 7rem);
 }
 
 .issue-header {
-  margin-block: clamp(1rem, 4vw, 3rem) clamp(2rem, 6vw, 5rem);
-  /* cqw below measures this box, so a scrollbar can't push the name over. */
-  container-type: inline-size;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1.5rem;
+  margin-block: clamp(2.5rem, 7vw, 5rem) clamp(2rem, 4vw, 3rem);
 }
 
-/*
- * The one bold thing on the page: the name is set to fill the column exactly,
- * from its measured width. --label-width comes from the page. The height cap
- * keeps a short name like מאי from swallowing the whole first screen.
- */
-.issue-month {
-  font-family: var(--font-serif), serif;
-  font-size: min(calc(100cqw / var(--label-width)), 54svh);
-  font-weight: 900;
-  line-height: 0.8;
+.issue-title {
+  font-size: clamp(3.25rem, 10vw, 7.5rem);
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  line-height: 1;
   white-space: nowrap;
 }
 
-/* Room for ל, the tallest letter, and for the tails of ץ and ק as it rises. */
-.issue-month-mask {
+/* The name rises from behind its own baseline as the page loads. */
+.issue-title-mask {
   display: block;
-  margin-block: -0.2em -0.22em;
-  padding-block: 0.2em 0.22em;
+  margin-block: -0.15em;
+  padding-block: 0.15em;
   overflow: clip;
 }
 
-.issue-month-text {
+.issue-title-text {
   display: block;
-  animation: month-rise 1100ms var(--ease-out) both;
+  animation: title-rise 1000ms var(--ease) both;
 }
 
-@keyframes month-rise {
+@keyframes title-rise {
   from {
-    transform: translateY(115%);
+    transform: translateY(110%);
   }
-}
-
-.issue-print-link {
-  margin-inline-start: auto;
-  color: var(--ink);
 }
 
 .issue-meta {
   display: flex;
-  gap: 1.25rem;
-  margin-block-start: clamp(0.75rem, 2vw, 1.5rem);
+  gap: 1rem;
+  margin-block-start: 0.875rem;
   color: var(--ink-2);
-  font-size: 1rem;
-  animation: settle-in 700ms 500ms var(--ease-out) both;
+  font-size: 0.9375rem;
+  animation: fade-in 700ms 300ms var(--ease) both;
 }
 
-@keyframes settle-in {
-  from {
-    opacity: 0;
-  }
+.issue-print-link {
+  flex: none;
+  animation: fade-in 700ms 400ms var(--ease) both;
 }
 
 .issue-empty {
   padding-block: clamp(4rem, 15vh, 10rem);
   color: var(--ink-2);
-  font-size: 1.25rem;
+  font-size: 1.125rem;
 }
 
 /* Stories */
@@ -194,8 +231,11 @@
 
 .story-frame {
   display: block;
+  margin-block-end: 1rem;
   overflow: hidden;
-  background: var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  transition: transform 500ms var(--ease);
 }
 
 .story-photo {
@@ -204,103 +244,108 @@
   height: auto;
   aspect-ratio: 4 / 3;
   object-fit: cover;
-  transition: transform 900ms var(--ease-out);
+  transition: transform 900ms var(--ease);
 }
 
 .story-title {
-  display: inline;
-  font-family: var(--font-serif), serif;
-  font-size: clamp(1.5rem, 2.6vw, 2.125rem);
-  font-weight: 700;
-  line-height: 1.2;
-  background-image: linear-gradient(currentColor, currentColor);
-  background-position: 100% 100%;
-  background-repeat: no-repeat;
-  background-size: 0 1px;
-  transition: background-size 420ms var(--ease-out);
-}
-
-.story-frame + .story-title {
-  margin-block-start: 1rem;
-}
-
-.story-frame {
-  margin-block-end: 1rem;
-}
-
-@media (hover: hover) {
-  .story-link:hover .story-title {
-    background-size: 100% 1px;
-  }
-
-  .story-link:hover .story-photo {
-    transform: scale(1.025);
-  }
+  font-size: 1.25rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+  transition: opacity 300ms var(--ease);
 }
 
 .story-description {
   display: -webkit-box;
-  margin-block-start: 0.625rem;
+  margin-block-start: 0.5rem;
   overflow: hidden;
   color: var(--ink-2);
-  font-size: 1.0625rem;
+  font-size: 0.9375rem;
   line-height: 1.6;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
-  line-clamp: 3;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
 }
 
 .story-meta,
 .article-meta {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.25rem 1rem;
+  align-items: center;
+  gap: 0.375rem 0.75rem;
   color: var(--ink-2);
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
 }
 
 .story-meta {
-  margin-block-start: 0.625rem;
+  margin-block-start: 0.75rem;
 }
 
 .post-labels {
   display: inline-flex;
-  gap: 1rem;
-  color: var(--ink);
+  gap: 0.375rem;
 }
 
-/* The lead sits beside its headline, so the first screen shows a story, not a photo. */
+.post-labels span {
+  padding: 0.125rem 0.625rem;
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+@media (hover: hover) {
+  .story-link:hover .story-photo {
+    transform: scale(1.04);
+  }
+
+  .story-link:hover .story-title {
+    opacity: 0.65;
+  }
+}
+
+.story-link:active .story-frame {
+  transform: scale(0.985);
+}
+
+/* The lead sits beside its headline, so the first screen shows a story. */
 .story-lead {
-  margin-block-end: clamp(3.5rem, 9vw, 7rem);
+  margin-block-end: clamp(3rem, 6vw, 4.5rem);
+  animation: rise 900ms 120ms var(--ease) both;
 }
 
 /* Faces sit near the top of portrait photos, which a wide frame would cut off. */
 .story-lead .story-photo {
   aspect-ratio: 16 / 10;
-  max-height: 46svh;
+  max-height: 50svh;
   object-position: 50% 22%;
 }
 
 .story-lead .story-title {
-  font-size: clamp(2rem, 3.8vw, 3.5rem);
-  font-weight: 900;
-  line-height: 1.1;
+  font-size: clamp(1.75rem, 3.2vw, 3rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
 }
 
 .story-lead .story-description {
-  font-size: clamp(1.0625rem, 1.4vw, 1.25rem);
+  margin-block-start: 0.875rem;
+  font-size: 1.0625rem;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
 }
 
 @media (min-width: 721px) {
   .story-lead .story-link {
     display: grid;
-    grid-template-columns: minmax(0, 6fr) minmax(0, 5fr);
-    grid-template-rows: auto auto 1fr;
-    column-gap: clamp(1.5rem, 3vw, 2.5rem);
+    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+    grid-template-rows: 1fr auto auto auto 1fr;
+    column-gap: clamp(1.5rem, 4vw, 3.5rem);
   }
 
   .story-lead .story-frame {
-    grid-row: 1 / span 3;
+    grid-row: 1 / -1;
     margin-block-end: 0;
   }
 
@@ -309,102 +354,103 @@
   .story-lead .story-meta {
     grid-column: 2;
   }
+
+  .story-lead .story-title {
+    grid-row: 2;
+  }
+
+  .story-lead .story-description {
+    grid-row: 3;
+  }
+
+  .story-lead .story-meta {
+    grid-row: 4;
+  }
 }
 
-/*
- * The rest are laid out like a page rather than a grid of equal cards: widths
- * and starting heights change on a repeating rhythm.
- */
 .issue-stories {
   display: grid;
-  grid-template-columns: repeat(12, minmax(0, 1fr));
-  gap: clamp(3.5rem, 7vw, 6rem) clamp(1.5rem, 3vw, 2.5rem);
-  align-items: start;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr));
+  gap: clamp(2.5rem, 4vw, 3.5rem) clamp(1.25rem, 2.5vw, 2rem);
 }
 
-.issue-stories .story:nth-child(4n + 1) {
-  grid-column: 1 / span 7;
-}
-
-.issue-stories .story:nth-child(4n + 2) {
-  grid-column: 9 / span 4;
-  margin-block-start: clamp(4rem, 9vw, 8rem);
-}
-
-.issue-stories .story:nth-child(4n + 3) {
-  grid-column: 2 / span 4;
-}
-
-.issue-stories .story:nth-child(4n + 4) {
-  grid-column: 7 / span 6;
-  margin-block-start: clamp(2rem, 5vw, 4.5rem);
-}
-
-@media (max-width: 720px) {
-  .issue-stories {
-    display: flex;
-    flex-direction: column;
-  }
-
-  .issue-stories .story:nth-child(n) {
-    margin-block-start: 0;
-  }
-}
-
-/*
- * Three across on wide screens. Card images are 768 pixels wide, so this keeps
- * them sharp instead of stretching two columns across the page.
- */
-@media (min-width: 1500px) {
-  .issue-stories .story:nth-child(n) {
-    margin-block-start: 0;
-  }
-
-  .issue-stories .story:nth-child(6n + 1) {
-    grid-column: 1 / span 5;
-  }
-
-  .issue-stories .story:nth-child(6n + 2) {
-    grid-column: 6 / span 3;
-    margin-block-start: 5rem;
-  }
-
-  .issue-stories .story:nth-child(6n + 3) {
-    grid-column: 9 / span 4;
-  }
-
-  .issue-stories .story:nth-child(6n + 4) {
-    grid-column: 1 / span 4;
-    margin-block-start: 3rem;
-  }
-
-  .issue-stories .story:nth-child(6n + 5) {
-    grid-column: 5 / span 3;
-  }
-
-  .issue-stories .story:nth-child(6n + 6) {
-    grid-column: 8 / span 5;
-    margin-block-start: 5rem;
+/* Stories ease in as they scroll into view. Browsers without this just show them. */
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .issue-stories .story,
+    .search-results .story {
+      animation: rise linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 45%;
+    }
   }
 }
 
 /* Article */
 .article {
-  padding-block-end: clamp(4rem, 10vw, 8rem);
+  padding-inline: var(--gutter);
+  padding-block: clamp(2rem, 5vw, 3.5rem) clamp(4rem, 10vw, 7rem);
+}
+
+.article-header,
+.article-body,
+.article-hero {
+  max-width: 44rem;
+  margin-inline: auto;
+}
+
+.article-header {
+  margin-block-end: clamp(1.75rem, 3vw, 2.5rem);
+}
+
+.article-title {
+  font-size: clamp(2.125rem, 5vw, 3.5rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  view-transition-name: story-title;
+}
+
+.article-description {
+  margin-block-start: 1rem;
+  color: var(--ink-2);
+  font-size: 1.1875rem;
+  line-height: 1.55;
+  animation: fade-in 700ms 200ms var(--ease) both;
+}
+
+.article-meta {
+  margin-block-start: 1.25rem;
+  animation: fade-in 700ms 280ms var(--ease) both;
+}
+
+.article-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  margin-block-start: 0.75rem;
+  font-size: 0.75rem;
+}
+
+.article-tags span {
+  padding: 0.125rem 0.625rem;
+  border-radius: 999px;
+  background: var(--surface);
 }
 
 /*
- * Both photos fill a fixed 4:3 frame. The full one is contained, so it's never
- * cropped and never makes the page jump when it loads, whatever its shape: any
- * spare space is paper-coloured and just reads as margin.
+ * Both photos fill a fixed frame. The full one is contained, so it's never cropped
+ * and never makes the page jump when it loads, whatever its shape. The card sits
+ * behind it, blurred, so a portrait photo is framed by its own colours.
  */
 .article-hero {
   position: relative;
-  max-width: 44rem;
   max-height: 55svh;
-  margin-inline: auto;
-  aspect-ratio: 4 / 3;
-  background: var(--line);
+  margin-block: clamp(1.5rem, 3vw, 2.25rem);
+  overflow: hidden;
+  aspect-ratio: 16 / 10;
+  border-radius: var(--radius);
+  background: var(--surface);
   view-transition-name: story-photo;
 }
 
@@ -418,51 +464,14 @@
 
 .article-hero-card {
   object-fit: cover;
+  filter: blur(3.5rem) saturate(1.3);
+  opacity: 0.35;
+  transform: scale(1.3);
 }
 
 .article-hero-full {
   object-fit: contain;
-  background: var(--paper);
-  animation: settle-in 500ms ease-out both;
-}
-
-.article-header,
-.article-body {
-  max-width: 44rem;
-  margin-inline: auto;
-  padding-inline: var(--gutter);
-}
-
-.article-header {
-  margin-block: clamp(2rem, 6vw, 4rem) clamp(2rem, 5vw, 3.5rem);
-}
-
-.article-title {
-  font-family: var(--font-serif), serif;
-  font-size: clamp(2.5rem, 7vw, 4.5rem);
-  font-weight: 900;
-  line-height: 1.08;
-}
-
-.article-description {
-  margin-block-start: 1.25rem;
-  color: var(--ink-2);
-  font-family: var(--font-serif), serif;
-  font-size: clamp(1.25rem, 2.2vw, 1.5rem);
-  line-height: 1.5;
-}
-
-.article-meta {
-  margin-block-start: 1.5rem;
-}
-
-.article-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.25rem 1rem;
-  margin-block-start: 0.5rem;
-  color: var(--ink-2);
-  font-size: 0.875rem;
+  animation: fade-in 500ms ease-out both;
 }
 
 /* A hairline that fills as the reader moves down the article. */
@@ -472,7 +481,7 @@
     position: fixed;
     inset-block-start: 0;
     inset-inline: 0;
-    z-index: 3;
+    z-index: 11;
     block-size: 2px;
     background: var(--ink);
     transform-origin: 100% 50%;
@@ -488,9 +497,9 @@
 }
 
 .article-body {
-  font-family: var(--font-serif), serif;
-  font-size: 1.1875rem;
+  font-size: 1.125rem;
   line-height: 1.8;
+  animation: rise 700ms 200ms var(--ease) both;
 }
 
 .article-body > * + * {
@@ -502,19 +511,20 @@
 .article-body h4 {
   margin-block-start: 2em;
   font-weight: 700;
-  line-height: 1.25;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
 }
 
 .article-body h2 {
-  font-size: 1.625em;
+  font-size: 1.5em;
 }
 
 .article-body h3 {
-  font-size: 1.3em;
+  font-size: 1.25em;
 }
 
 .article-body strong {
-  font-weight: 700;
+  font-weight: 600;
 }
 
 /* Hebrew has no true italic, and a browser-faked slant looks broken. */
@@ -525,8 +535,16 @@
 
 .article-body a {
   text-decoration: underline;
+  text-decoration-color: var(--ink-2);
   text-decoration-thickness: 1px;
   text-underline-offset: 0.2em;
+  transition: text-decoration-color 250ms var(--ease);
+}
+
+@media (hover: hover) {
+  .article-body a:hover {
+    text-decoration-color: var(--ink);
+  }
 }
 
 .article-body ul {
@@ -545,8 +563,9 @@
 
 .article-body blockquote {
   padding-inline-start: 1.25em;
-  border-inline-start: 2px solid var(--ink);
-  font-size: 1.15em;
+  border-inline-start: 3px solid var(--ink);
+  font-size: 1.125em;
+  font-weight: 500;
   line-height: 1.6;
 }
 
@@ -554,21 +573,31 @@
   width: 4rem;
   margin-block: 3em;
   border: 0;
-  border-block-start: 1px solid var(--ink);
+  border-block-start: 1px solid var(--line);
 }
 
 .article-body code {
+  padding: 0.125em 0.375em;
+  border-radius: 0.375rem;
+  background: var(--surface);
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 0.875em;
 }
 
 .article-body pre {
-  padding: 1em;
+  padding: 1.25em;
   overflow-x: auto;
-  border: 1px solid var(--line);
+  border-radius: var(--radius-small);
+  background: var(--surface);
   font-size: 0.875em;
   line-height: 1.6;
   text-align: left;
+}
+
+.article-body pre code {
+  padding: 0;
+  background: none;
+  font-size: 1em;
 }
 
 .article-table {
@@ -578,137 +607,150 @@
 .article-body table {
   width: 100%;
   border-collapse: collapse;
-  font-family: var(--font-sans), sans-serif;
   font-size: 0.875em;
 }
 
 .article-body th,
 .article-body td {
-  padding: 0.5em 0.75em;
+  padding: 0.625em 0.75em;
   border-block-end: 1px solid var(--line);
   text-align: start;
 }
 
 .article-body th {
-  border-block-end-color: var(--ink);
-  font-weight: 700;
-}
-
-.article-body figure {
-  margin-inline: calc(-1 * var(--gutter));
+  font-weight: 600;
 }
 
 .article-body figure img {
   display: block;
   width: 100%;
   height: auto;
+  border-radius: var(--radius);
 }
 
 .article-body figcaption {
-  padding: 0.75em var(--gutter) 0;
+  padding-block-start: 0.625em;
   color: var(--ink-2);
-  font-family: var(--font-sans), sans-serif;
   font-size: 0.8125em;
   line-height: 1.5;
 }
 
 /* Archive */
 .archive {
-  padding: clamp(1rem, 4vw, 3rem) var(--gutter) clamp(4rem, 10vw, 8rem);
+  padding: clamp(2.5rem, 6vw, 4.5rem) var(--gutter) clamp(4rem, 10vw, 7rem);
+  animation: rise 700ms var(--ease) both;
 }
 
 .archive-title {
-  margin-block-end: clamp(2rem, 6vw, 4.5rem);
-  font-family: var(--font-serif), serif;
-  font-size: clamp(3.5rem, 13vw, 10rem);
-  font-weight: 900;
+  margin-block-end: clamp(2rem, 4vw, 3rem);
+  font-size: clamp(2.75rem, 8vw, 5.5rem);
+  font-weight: 800;
+  letter-spacing: -0.025em;
   line-height: 1;
 }
 
 .archive-year {
-  display: grid;
-  grid-template-columns: repeat(12, minmax(0, 1fr));
-  gap: 1rem clamp(1.5rem, 3vw, 2.5rem);
-  margin-block-end: clamp(3rem, 7vw, 5rem);
+  max-width: 44rem;
+  margin-block-end: 2.5rem;
 }
 
 .archive-year h2 {
-  grid-column: 1 / span 3;
+  margin-block-end: 0.5rem;
+  padding-inline: 1rem;
   color: var(--ink-2);
-  font-size: 1.125rem;
-}
-
-.archive-year ul {
-  grid-column: 4 / -1;
+  font-size: 0.875rem;
+  font-weight: 500;
 }
 
 .archive-year a {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  padding-block: 0.625rem;
-  font-family: var(--font-serif), serif;
-  font-size: clamp(1.75rem, 4vw, 3rem);
-  font-weight: 700;
-  line-height: 1.2;
+  padding: 0.875rem 1rem;
+  border-radius: var(--radius-small);
+  font-size: 1.25rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  transition:
+    background-color 250ms var(--ease),
+    transform 350ms var(--ease);
+}
+
+@media (hover: hover) {
+  .archive-year a:hover {
+    background: var(--surface);
+  }
+}
+
+.archive-year a:active {
+  transform: scale(0.99);
 }
 
 .archive-year a span:last-child {
   flex: none;
   color: var(--ink-2);
-  font-family: var(--font-sans), sans-serif;
-  font-size: 0.9375rem;
+  font-size: 0.875rem;
   font-weight: 400;
-}
-
-@media (max-width: 720px) {
-  .archive-year h2,
-  .archive-year ul {
-    grid-column: 1 / -1;
-  }
+  letter-spacing: 0;
 }
 
 /* Search */
 .search-form {
   display: flex;
-  gap: 1rem;
-  align-items: baseline;
-  max-width: 44rem;
-  border-block-end: 2px solid var(--ink);
+  align-items: center;
+  gap: 0.5rem;
+  max-width: 36rem;
+  padding: 0.375rem 0.375rem 0.375rem 0.375rem;
+  border-radius: 999px;
+  background: var(--surface);
+  transition: box-shadow 300ms var(--ease);
+}
+
+.search-form:focus-within {
+  box-shadow: 0 0 0 2px var(--ink);
 }
 
 .search-form input {
   flex: 1;
   min-width: 0;
-  padding-block: 0.5rem;
+  padding: 0.5rem 1rem;
   background: none;
   color: var(--ink);
-  font-family: var(--font-serif), serif;
-  font-size: clamp(1.5rem, 4vw, 2.25rem);
-  font-weight: 700;
+  font-size: 1.0625rem;
   outline: none;
 }
 
 .search-form input::placeholder {
   color: var(--ink-2);
-  font-weight: 400;
 }
 
 .search-form button {
-  font-size: 0.9375rem;
+  flex: none;
+  padding: 0.5rem 1.25rem;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--paper);
+  font-size: 0.875rem;
+  font-weight: 500;
   cursor: pointer;
+  transition: transform 300ms var(--ease);
+}
+
+.search-form button:active {
+  transform: scale(0.96);
 }
 
 .search-count {
-  margin-block: 1.25rem 2.5rem;
+  margin-block: 1.25rem 2rem;
   color: var(--ink-2);
+  font-size: 0.9375rem;
 }
 
 .search-results {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 20rem), 1fr));
-  gap: clamp(2.5rem, 5vw, 4rem) clamp(1.5rem, 3vw, 2.5rem);
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr));
+  gap: clamp(2.5rem, 4vw, 3.5rem) clamp(1.25rem, 2.5vw, 2rem);
 }
 
 /* Colophon */
@@ -718,7 +760,17 @@
   gap: 1.5rem;
   padding: 2rem var(--gutter) 3rem;
   color: var(--ink-2);
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
+}
+
+.colophon a {
+  transition: color 250ms var(--ease);
+}
+
+@media (hover: hover) {
+  .colophon a:hover {
+    color: var(--ink);
+  }
 }
 
 /* Printing any page, not just a whole issue, leaves out the site around it. */
@@ -748,8 +800,13 @@
     background: none;
   }
 
-  .issue-month-text,
-  .issue-meta {
+  .issue-title-text,
+  .issue-meta,
+  .article-body,
+  .article-meta,
+  .article-description,
+  .story-lead,
+  .issue-stories .story {
     animation: none;
   }
 }

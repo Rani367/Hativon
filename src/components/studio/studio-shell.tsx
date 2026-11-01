@@ -45,7 +45,7 @@ export function StudioShell({
             background: "var(--ink)",
             color: "var(--paper)",
             border: "none",
-            borderRadius: 0,
+            borderRadius: "999px",
           },
         }}
       />

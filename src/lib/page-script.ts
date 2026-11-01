@@ -6,9 +6,9 @@ import { THEME_STORAGE_KEY } from "@/lib/theme";
  *
  * Theme: applied here so a dark-mode reader never sees a white flash.
  *
- * Photo morph: tapping a story names only that photo, so the browser morphs one
- * image instead of capturing every photo on the page. The article's hero has the
- * same name in public.css. This code only sets a style. It never touches the
+ * Morph: tapping a story names only that story's photo and headline, so the
+ * browser moves those two instead of capturing the whole page. The article has
+ * the same names in public.css. This code only sets styles. It never touches the
  * click itself, so it can't get in the way of navigation, and if it throws the
  * reader gets a normal page load.
  */
@@ -19,18 +19,23 @@ export const PAGE_SCRIPT = `(function () {
     }
   } catch (e) {}
 
+  var names = { ".story-photo": "story-photo", ".story-title": "story-title" };
+
   document.addEventListener("click", function (event) {
     if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
     var link = event.target.closest && event.target.closest("a.story-link");
-    var photo = link && link.querySelector(".story-photo");
-    if (photo) photo.style.viewTransitionName = "story-photo";
+    if (!link) return;
+    Object.keys(names).forEach(function (selector) {
+      var element = link.querySelector(selector);
+      if (element) element.style.viewTransitionName = names[selector];
+    });
   });
 
-  // A page restored by the back button must not keep the name it left with.
+  // A page restored by the back button must not keep the names it left with.
   window.addEventListener("pageshow", function (event) {
     if (!event.persisted) return;
-    document.querySelectorAll(".story-photo").forEach(function (photo) {
-      photo.style.viewTransitionName = "";
+    document.querySelectorAll(".story-photo, .story-title").forEach(function (element) {
+      element.style.viewTransitionName = "";
     });
   });
 
