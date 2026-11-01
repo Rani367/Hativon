@@ -1,20 +1,14 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "bunVersion": "1.x",
   "buildCommand": "bun run build",
   "installCommand": "bun install --frozen-lockfile",
   "framework": "nextjs",
-  "regions": ["iad1"],
+  "regions": [
+    "iad1"
+  ],
   "build": {
     "env": {
-      "NODE_ENV": "production",
       "NEXT_TELEMETRY_DISABLED": "1"
-    }
-  },
-  "crons": [],
-  "functions": {
-    "src/app/api/**/*.ts": {
-      "maxDuration": 10
     }
   },
   "headers": [
@@ -26,33 +20,6 @@
           "value": "no-store, must-revalidate"
         }
       ]
-    },
-    {
-      "source": "/(.*)",
-      "headers": [
-        {
-          "key": "X-Content-Type-Options",
-          "value": "nosniff"
-        },
-        {
-          "key": "X-Frame-Options",
-          "value": "DENY"
-        },
-        {
-          "key": "X-XSS-Protection",
-          "value": "1; mode=block"
-        },
-        {
-          "key": "Referrer-Policy",
-          "value": "strict-origin-when-cross-origin"
-        }
-      ]
-    }
-  ],
-  "rewrites": [
-    {
-      "source": "/admin/:path*",
-      "destination": "/admin/:path*"
     }
   ]
 }

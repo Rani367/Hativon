@@ -1,111 +1,57 @@
-"use client";
+import { PostFilter } from "@/components/studio/post-filter";
+import { PostRows } from "@/components/studio/post-rows";
+import { getPostStats, listPosts } from "@/lib/posts/studio";
+import { studioCopy } from "@/lib/studio-copy";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { GraduationCap, LogIn } from "lucide-react";
-import { logError } from "@/lib/logger";
+const { admin: text, list } = studioCopy;
 
-type AuthState = "checking" | "authenticated" | "not-teacher" | "not-logged-in";
+interface AdminPageProps {
+  searchParams: Promise<{ q?: string; status?: string }>;
+}
 
-export default function AdminLoginPage() {
-  const router = useRouter();
-  const [authState, setAuthState] = useState<AuthState>("checking");
+export default async function AdminPage({ searchParams }: AdminPageProps) {
+  const { q, status } = await searchParams;
+  const filter = {
+    search: q || undefined,
+    status: status === "published" || status === "draft" ? status : undefined,
+  };
 
-  useEffect(() => {
-    async function checkAuth() {
-      try {
-        const response = await fetch("/api/check-auth");
-        const data = await response.json();
+  const [stats, posts] = await Promise.all([getPostStats(), listPosts(filter)]);
 
-        if (data.authenticated && data.isTeacher) {
-          // Teachers get automatic admin access - redirect to dashboard
-          setAuthState("authenticated");
-          router.replace("/admin/dashboard");
-          return;
-        }
-
-        if (data.authenticated) {
-          // Logged in but not a teacher
-          setAuthState("not-teacher");
-        } else {
-          // Not logged in at all
-          setAuthState("not-logged-in");
-        }
-      } catch (error) {
-        logError("Auth check failed:", error);
-        setAuthState("not-logged-in");
-      }
-    }
-
-    checkAuth();
-  }, [router]);
-
-  // Show loading state while checking OR while redirecting after authentication
-  if (authState === "checking" || authState === "authenticated") {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="animate-pulse text-muted-foreground">טוען...</div>
-      </div>
-    );
-  }
-
-  // Show teacher login required message
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1 text-center">
-          <div className="flex justify-center mb-4">
-            <div className="rounded-full bg-primary/10 p-3">
-              <GraduationCap className="h-6 w-6 text-primary" />
-            </div>
-          </div>
-          <CardTitle className="text-2xl">גישה לפאנל הניהול</CardTitle>
-          <CardDescription>
-            {authState === "not-teacher"
-              ? "רק מורים יכולים לגשת לפאנל הניהול"
-              : "התחברו עם חשבון מורה או איש צוות כדי לנהל את הגיליון"}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {authState === "not-teacher" ? (
-            <>
-              <p className="text-sm text-muted-foreground text-center">
-                החשבון שלך אינו מסומן כחשבון מורה. פנה למנהל המערכת אם אתה מורה וזקוק לגישה.
-              </p>
-              <div className="flex flex-col gap-2">
-                <Link href="/">
-                  <Button variant="outline" className="w-full">
-                    חזור לאתר
-                  </Button>
-                </Link>
-              </div>
-            </>
-          ) : (
-            <>
-              <p className="text-sm text-muted-foreground text-center">
-                יש להתחבר עם חשבון צוות מאושר כדי לנהל כתבות, משתמשים ובקשות
-                לאיפוס סיסמה.
-              </p>
-              <div className="flex flex-col gap-2">
-                <Link href="/?login=true">
-                  <Button className="w-full">
-                    <LogIn className="h-4 w-4 me-2" />
-                    התחבר
-                  </Button>
-                </Link>
-                <Link href="/">
-                  <Button variant="outline" className="w-full">
-                    חזור לאתר
-                  </Button>
-                </Link>
-              </div>
-            </>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+    <>
+      <h1 className="studio-title">{text.title}</h1>
+
+      <dl className="stats">
+        <div>
+          <dt>{text.total}</dt>
+          <dd>{stats.total}</dd>
+        </div>
+        <div>
+          <dt>{text.published}</dt>
+          <dd>{stats.published}</dd>
+        </div>
+        <div>
+          <dt>{text.drafts}</dt>
+          <dd>{stats.drafts}</dd>
+        </div>
+        <div>
+          <dt>{text.week}</dt>
+          <dd>{stats.week}</dd>
+        </div>
+        <div>
+          <dt>{text.reads}</dt>
+          <dd>{stats.reads}</dd>
+        </div>
+      </dl>
+
+      <PostFilter search={filter.search} status={filter.status} />
+
+      {posts.length > 0 ? (
+        <PostRows posts={posts} showAuthor />
+      ) : (
+        <p className="studio-note">{list.empty}</p>
+      )}
+    </>
   );
 }

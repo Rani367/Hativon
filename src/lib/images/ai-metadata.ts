@@ -21,14 +21,13 @@ const AI_PROVENANCE_MARKERS = [
 ];
 
 /**
- * @param buffer - the ORIGINAL uploaded image bytes (metadata is stripped once
- *   the image is re-encoded into card/full variants, so scan before that).
- * @returns true if the image metadata definitively marks it as AI-generated.
+ * @param bytes - the ORIGINAL image bytes. Re-encoding strips metadata, so this
+ *   must run before anything resizes the image, in the browser or on the server.
+ * @returns true if the metadata definitively marks the image as AI-generated.
  */
-export function bufferHasAiProvenance(buffer: Buffer): boolean {
-  if (!buffer || buffer.length === 0) {
-    return false;
-  }
-  const haystack = buffer.toString("latin1").toLowerCase();
+export function bytesHaveAiProvenance(bytes: Uint8Array): boolean {
+  if (bytes.length === 0) return false;
+
+  const haystack = new TextDecoder("latin1").decode(bytes).toLowerCase();
   return AI_PROVENANCE_MARKERS.some((marker) => haystack.includes(marker));
 }

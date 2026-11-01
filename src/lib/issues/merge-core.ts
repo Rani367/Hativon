@@ -1,47 +1,53 @@
 /**
- * Pure merge-group math for "double issue" support.
- *
- * This module holds only pure functions and types — it imports nothing at
- * runtime (the `ArchiveMonth` import is type-only and erased at compile time).
- * That keeps it a dependency-free leaf so both `lib/settings.ts` and
- * `lib/issues/merged-issues.ts` can depend on it without forming an import
- * cycle (merged-issues imports `getSetting` from settings).
- *
- * See `lib/issues/merged-issues.ts` for the DB-backed wrappers that load merge
- * groups from the `settings` table and resolve issues at query/render time.
+ * Pure math for issues. An issue isn't a table: it's every published post whose
+ * date falls in a calendar month, or in a span of months merged into a "double
+ * issue". Merge groups live in the `settings` table.
  */
-
-import type { ArchiveMonth } from "@/lib/posts/queries";
 
 export const MERGED_ISSUES_SETTING_KEY = "merged_issues";
+export const HOME_ISSUE_PIN_SETTING_KEY = "home_issue_pin";
 
-/**
- * A contiguous span of months presented as one combined issue.
- */
+/** The homepage moves to a new issue once it has this many published posts. */
+export const HOME_ISSUE_MIN_POSTS = 15;
+
+export interface ArchiveMonth {
+  year: number;
+  month: number; // 1-12
+  count: number;
+  /** Hebrew span of a merged issue, for example "מאי–יוני". */
+  label?: string;
+}
+
+/** A contiguous span of months presented as one issue. */
 export interface MergeGroup {
   startYear: number;
   startMonth: number; // 1-12
   endYear: number;
   endMonth: number; // 1-12
-  /** Month the merged issue lives under (its canonical URL/month). */
+  /** The month the merged issue lives under. */
   canonicalYear: number;
   canonicalMonth: number; // 1-12
-  /** Hebrew month span only (year appended at render time), e.g. "מאי–יוני". */
+  /** Hebrew span only. The year is added when displaying it. */
   label: string;
 }
 
-/** Absolute month index for ordering/containment math. */
+export interface MonthRef {
+  year: number;
+  month: number; // 1-12
+}
+
 export function monthIndex(year: number, month: number): number {
   return year * 12 + (month - 1);
 }
 
-export function pad2(n: number): string {
-  return n < 10 ? `0${n}` : String(n);
+function pad2(value: number): string {
+  return value < 10 ? `0${value}` : String(value);
 }
 
 export function isValidMergeGroup(value: unknown): value is MergeGroup {
   if (!value || typeof value !== "object") return false;
-  const g = value as Record<string, unknown>;
+
+  const group = value as Record<string, unknown>;
   const numericKeys = [
     "startYear",
     "startMonth",
@@ -49,86 +55,69 @@ export function isValidMergeGroup(value: unknown): value is MergeGroup {
     "endMonth",
     "canonicalYear",
     "canonicalMonth",
-  ] as const;
+  ];
+
   for (const key of numericKeys) {
-    if (typeof g[key] !== "number" || !Number.isInteger(g[key])) return false;
+    if (typeof group[key] !== "number" || !Number.isInteger(group[key])) {
+      return false;
+    }
   }
-  if (typeof g.label !== "string" || g.label.length === 0) return false;
-  // start must not be after end
+
+  if (typeof group.label !== "string" || group.label.length === 0) return false;
+
   return (
-    monthIndex(g.startYear as number, g.startMonth as number) <=
-    monthIndex(g.endYear as number, g.endMonth as number)
+    monthIndex(group.startYear as number, group.startMonth as number) <=
+    monthIndex(group.endYear as number, group.endMonth as number)
   );
 }
 
-/**
- * Pure: parse and validate the raw `merged_issues` setting value. Returns [] for
- * null/empty input, non-JSON, a non-array, and drops any invalid group entries.
- */
+/** Reads the raw setting. Bad JSON and invalid groups are dropped. */
 export function parseMergeGroups(raw: string | null): MergeGroup[] {
   if (!raw) return [];
+
   try {
     const parsed: unknown = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-    return parsed.filter(isValidMergeGroup);
+    return Array.isArray(parsed) ? parsed.filter(isValidMergeGroup) : [];
   } catch {
     return [];
   }
 }
 
-/**
- * Pure: find the group whose contiguous range contains (year, month).
- */
 export function findMergeGroup(
   groups: MergeGroup[],
   year: number,
   month: number,
 ): MergeGroup | null {
-  const idx = monthIndex(year, month);
+  const index = monthIndex(year, month);
   return (
     groups.find(
-      (g) =>
-        idx >= monthIndex(g.startYear, g.startMonth) &&
-        idx <= monthIndex(g.endYear, g.endMonth),
+      (group) =>
+        index >= monthIndex(group.startYear, group.startMonth) &&
+        index <= monthIndex(group.endYear, group.endMonth),
     ) ?? null
   );
 }
 
 /**
- * Pure: resolve (year, month) to the canonical (year, month) of the merge group
- * it belongs to, or the input unchanged when it is not part of any group.
+ * Half-open bounds of a span of months, as timestamp strings rather than Dates:
+ * posts.date has no time zone, so a Date could shift across a month boundary.
  */
-export function canonicalMonthOf(
-  groups: MergeGroup[],
-  year: number,
-  month: number,
-): { year: number; month: number } {
-  const group = findMergeGroup(groups, year, month);
-  if (!group) return { year, month };
-  return { year: group.canonicalYear, month: group.canonicalMonth };
+export function monthRangeBounds(
+  start: MonthRef,
+  end: MonthRef,
+): { startInclusive: string; endExclusive: string } {
+  const nextYear = end.month === 12 ? end.year + 1 : end.year;
+  const nextMonth = end.month === 12 ? 1 : end.month + 1;
+
+  return {
+    startInclusive: `${start.year}-${pad2(start.month)}-01 00:00:00`,
+    endExclusive: `${nextYear}-${pad2(nextMonth)}-01 00:00:00`,
+  };
 }
 
 /**
- * Half-open timestamp-string bounds for a merge group's full range.
- * `endExclusive` is the first day of the month AFTER the range.
- */
-export function rangeBoundsOf(group: MergeGroup): {
-  startInclusive: string;
-  endExclusive: string;
-} {
-  const startInclusive = `${group.startYear}-${pad2(group.startMonth)}-01 00:00:00`;
-  const endYear = group.endMonth === 12 ? group.endYear + 1 : group.endYear;
-  const endMonth = group.endMonth === 12 ? 1 : group.endMonth + 1;
-  const endExclusive = `${endYear}-${pad2(endMonth)}-01 00:00:00`;
-  return { startInclusive, endExclusive };
-}
-
-/**
- * Pure: collapse each merge group's member rows into a single canonical archive
- * row carrying the summed count and the Hebrew span label. Non-member rows pass
- * through unchanged. The merged row is emitted at the position of its first
- * (highest-index, i.e. latest) member so the year-DESC/month-DESC ordering of
- * the input is preserved.
+ * Collapses each merge group's months into one row with the summed count and
+ * the span label, keeping the newest-first order of the input.
  */
 export function collapseArchiveMonths(
   raw: ArchiveMonth[],
@@ -136,96 +125,79 @@ export function collapseArchiveMonths(
 ): ArchiveMonth[] {
   if (groups.length === 0) return raw;
 
-  // Total post count per group across all present member rows.
-  const totals = new Map<number, number>();
+  const totals = new Map<MergeGroup, number>();
   for (const row of raw) {
-    const gi = groups.findIndex(
-      (g) =>
-        monthIndex(row.year, row.month) >=
-          monthIndex(g.startYear, g.startMonth) &&
-        monthIndex(row.year, row.month) <= monthIndex(g.endYear, g.endMonth),
-    );
-    if (gi !== -1) {
-      totals.set(gi, (totals.get(gi) ?? 0) + row.count);
-    }
+    const group = findMergeGroup(groups, row.year, row.month);
+    if (group) totals.set(group, (totals.get(group) ?? 0) + row.count);
   }
 
-  const emitted = new Set<number>();
+  const emitted = new Set<MergeGroup>();
   const result: ArchiveMonth[] = [];
 
   for (const row of raw) {
-    const gi = groups.findIndex(
-      (g) =>
-        monthIndex(row.year, row.month) >=
-          monthIndex(g.startYear, g.startMonth) &&
-        monthIndex(row.year, row.month) <= monthIndex(g.endYear, g.endMonth),
-    );
+    const group = findMergeGroup(groups, row.year, row.month);
 
-    if (gi === -1) {
+    if (!group) {
       result.push(row);
-      continue;
-    }
-
-    if (!emitted.has(gi)) {
-      const g = groups[gi];
+    } else if (!emitted.has(group)) {
+      emitted.add(group);
       result.push({
-        year: g.canonicalYear,
-        month: g.canonicalMonth,
-        count: totals.get(gi) ?? row.count,
-        label: g.label,
+        year: group.canonicalYear,
+        month: group.canonicalMonth,
+        count: totals.get(group) ?? row.count,
+        label: group.label,
       });
-      emitted.add(gi);
     }
-    // Drop member rows (the canonical row above replaces them).
   }
 
   return result;
 }
 
+/** Reads the stored pin. Anything malformed counts as no pin. */
+export function parseHomeIssuePin(raw: string | null): MonthRef | null {
+  if (!raw) return null;
+
+  try {
+    const pin = JSON.parse(raw) as Partial<MonthRef> | null;
+    return pin &&
+      Number.isInteger(pin.year) &&
+      Number.isInteger(pin.month) &&
+      (pin.month as number) >= 1 &&
+      (pin.month as number) <= 12
+      ? { year: pin.year as number, month: pin.month as number }
+      : null;
+  } catch {
+    return null;
+  }
+}
+
 /**
- * Pure: decide which month the homepage should treat as its default/main issue.
+ * Picks the homepage issue: a teacher's pin if it still exists, otherwise the
+ * newest issue with enough posts, otherwise the newest issue of any size.
  *
- * Merge-aware: a month that belongs to a merge group is evaluated as its whole
- * combined span (summed post count) and promoted under the group's canonical
- * month. With no groups this reduces exactly to the per-calendar-month behavior.
- *
- * Returns the chosen (year, month) plus `switched` — true only when the current
- * month's (merged) issue clears `minPosts` and differs from the stored default,
- * signalling the caller to persist the new default.
+ * It takes no clock and writes nothing, so the homepage only ever changes
+ * because a post or a teacher changed something, and each of those revalidates
+ * the page. `issues` must be collapsed and sorted newest first.
  */
-export function resolveDefaultMonth(params: {
-  storedDefault: { year: number; month: number }; // month 1-12
-  current: { year: number; month: number }; // month 1-12
-  archives: ArchiveMonth[]; // RAW per-calendar-month counts
-  groups: MergeGroup[];
-  minPosts: number;
-}): { year: number; month: number; switched: boolean } {
-  const { storedDefault, current, archives, groups, minPosts } = params;
-
-  const storedCanonical = canonicalMonthOf(
-    groups,
-    storedDefault.year,
-    storedDefault.month,
-  );
-  const currentCanonical = canonicalMonthOf(groups, current.year, current.month);
-
-  // Stored default already represents the current (possibly merged) issue.
-  if (
-    storedCanonical.year === currentCanonical.year &&
-    storedCanonical.month === currentCanonical.month
-  ) {
-    return { ...storedDefault, switched: false };
+export function chooseHomeIssue(
+  pin: MonthRef | null,
+  issues: ArchiveMonth[],
+  groups: MergeGroup[] = [],
+): ArchiveMonth | null {
+  if (pin) {
+    const group = findMergeGroup(groups, pin.year, pin.month);
+    const target = group
+      ? { year: group.canonicalYear, month: group.canonicalMonth }
+      : pin;
+    const pinned = issues.find(
+      (issue) => issue.year === target.year && issue.month === target.month,
+    );
+    if (pinned) return pinned;
   }
 
-  // Compare the current month's combined post count against the threshold.
-  const collapsed = collapseArchiveMonths(archives, groups);
-  const currentRow = collapsed.find(
-    (a) => a.year === currentCanonical.year && a.month === currentCanonical.month,
+  return (
+    issues.find((issue) => issue.count >= HOME_ISSUE_MIN_POSTS) ??
+    issues[0] ??
+    null
   );
-
-  if (currentRow && currentRow.count >= minPosts) {
-    return { ...currentCanonical, switched: true };
-  }
-
-  return { ...storedDefault, switched: false };
 }

@@ -1,163 +1,87 @@
-import { NextRequest, NextResponse } from "next/server";
-import { createPost, updatePost, getPostById } from "@/lib/posts";
-import { getCurrentUser } from "@/lib/auth/middleware";
-import { logError } from "@/lib/logger";
-import { autoSavePayloadSchema } from "@/lib/validation/autosave-schemas";
+import { NextResponse } from "next/server";
+import { autoSavePayloadSchema } from "@/lib/autosave";
+import { isSameOrigin } from "@/lib/auth/guards";
+import { getSessionUser } from "@/lib/auth/session";
+import { canEditPost } from "@/lib/posts/rules";
+import {
+  createDraft,
+  getStudioPost,
+  updatePostFields,
+} from "@/lib/posts/studio";
 
 /**
- * POST /api/user/posts/autosave
- * Auto-save post content - creates new draft or updates existing post
- *
- * For new posts (postId is null): Creates a new draft post
- * For existing posts: Updates the post with conflict detection
- *
- * Returns 409 Conflict if server version differs from expectedVersion
+ * A route handler rather than a Server Action because the hook needs fetch,
+ * abort and a 409, and because open tabs must keep saving through a deploy.
  */
-export async function POST(request: NextRequest) {
-  try {
-    const user = await getCurrentUser();
+export async function POST(request: Request) {
+  if (!isSameOrigin(request)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
 
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const user = await getSessionUser();
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const payload = autoSavePayloadSchema.safeParse(await request.json());
+  if (!payload.success) {
+    return NextResponse.json({ error: "Invalid data" }, { status: 400 });
+  }
+
+  const { postId, expectedVersion, ...fields } = payload.data;
+
+  if (!postId) {
+    if (!fields.title?.trim() && !fields.content?.trim()) {
+      return NextResponse.json({ error: "Nothing to save" }, { status: 400 });
     }
 
-    const body = await request.json();
-
-    // Validate request body
-    const validation = autoSavePayloadSchema.safeParse(body);
-
-    if (!validation.success) {
-      const errors: Record<string, string> = {};
-      validation.error.issues.forEach((err) => {
-        const path = err.path.join(".");
-        errors[path] = err.message;
-      });
-
-      return NextResponse.json(
-        { error: "Invalid auto-save data", errors },
-        { status: 400 },
-      );
-    }
-
-    const {
-      postId,
-      title,
-      content,
-      description,
-      coverImage,
-      customAuthor,
-      expectedVersion,
-    } = validation.data;
-
-    // Handle new post creation
-    if (!postId) {
-      // Require at least title or content for new posts
-      if (!title && !content) {
-        return NextResponse.json(
-          { error: "Title or content required for new post" },
-          { status: 400 },
-        );
-      }
-
-      const newPost = await createPost({
-        title: title || "טיוטה ללא כותרת",
-        content: content || "",
-        description: description || undefined,
-        coverImage: coverImage || undefined,
-        author: customAuthor || user.displayName,
-        authorId: user.id,
-        authorGrade: user.isTeacher ? undefined : user.grade,
-        authorClass: user.isTeacher ? undefined : user.classNumber,
-        isTeacherPost: user.isTeacher,
-        status: "draft",
-      });
-
-      return NextResponse.json({
-        success: true,
-        id: newPost.id,
-        updatedAt: newPost.updatedAt,
-        isNew: true,
-      });
-    }
-
-    // Handle existing post update
-    const existingPost = await getPostById(postId);
-
-    if (!existingPost) {
-      return NextResponse.json({ error: "Post not found" }, { status: 404 });
-    }
-
-    // Check ownership - user can only auto-save their own posts
-    if (existingPost.authorId !== user.id) {
-      return NextResponse.json(
-        { error: "Forbidden - You can only edit your own posts" },
-        { status: 403 },
-      );
-    }
-
-    if (existingPost.status === "published") {
-      return NextResponse.json(
-        { error: "Published posts must be saved explicitly" },
-        { status: 400 },
-      );
-    }
-
-    // Conflict detection - check if server version differs
-    if (expectedVersion) {
-      const serverTime = new Date(existingPost.updatedAt).getTime();
-      const expectedTime = new Date(expectedVersion).getTime();
-
-      if (serverTime > expectedTime) {
-        // Server has newer version - return conflict response
-        return NextResponse.json(
-          {
-            conflict: true,
-            serverVersion: existingPost.updatedAt,
-            serverContent: {
-              title: existingPost.title,
-              content: existingPost.content,
-              description: existingPost.description,
-              coverImage: existingPost.coverImage,
-              customAuthor: existingPost.author,
-            },
-          },
-          { status: 409 },
-        );
-      }
-    }
-
-    // Build update payload - only include fields that are provided
-    const updatePayload: Record<string, string | undefined> = {};
-    if (title !== undefined) updatePayload.title = title;
-    if (content !== undefined) updatePayload.content = content;
-    if (description !== undefined) updatePayload.description = description;
-    if (coverImage !== undefined) updatePayload.coverImage = coverImage;
-    if (customAuthor !== undefined) updatePayload.author = customAuthor;
-
-    // Only update if there's something to update
-    if (Object.keys(updatePayload).length === 0) {
-      return NextResponse.json({
-        success: true,
-        id: postId,
-        updatedAt: existingPost.updatedAt,
-        isNew: false,
-      });
-    }
-
-    const updatedPost = await updatePost(postId, updatePayload);
-
-    if (!updatedPost) {
-      return NextResponse.json({ error: "Post not found" }, { status: 404 });
-    }
-
+    const draft = await createDraft(user, fields);
     return NextResponse.json({
       success: true,
-      id: updatedPost.id,
-      updatedAt: updatedPost.updatedAt,
-      isNew: false,
+      id: draft.id,
+      updatedAt: draft.updatedAt,
+      isNew: true,
     });
-  } catch (error) {
-    logError("Auto-save failed:", error);
-    return NextResponse.json({ error: "Auto-save failed" }, { status: 500 });
   }
+
+  const post = await getStudioPost(postId);
+  if (!post) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+  if (!canEditPost(user, post)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+  // Published posts only change when the writer presses save, so half-finished
+  // edits never reach readers.
+  if (post.status === "published") {
+    return NextResponse.json({ error: "Published" }, { status: 400 });
+  }
+
+  if (
+    expectedVersion &&
+    new Date(post.updatedAt).getTime() > new Date(expectedVersion).getTime()
+  ) {
+    return NextResponse.json(
+      {
+        conflict: true,
+        serverVersion: post.updatedAt,
+        serverContent: {
+          title: post.title,
+          content: post.content,
+          description: post.description,
+          coverImage: post.coverImage,
+          customAuthor: post.author,
+        },
+      },
+      { status: 409 },
+    );
+  }
+
+  const updated = await updatePostFields(user, post, fields);
+  return NextResponse.json({
+    success: true,
+    id: updated.id,
+    updatedAt: updated.updatedAt,
+    isNew: false,
+  });
 }

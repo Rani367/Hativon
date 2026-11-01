@@ -1,16 +1,17 @@
+"use client";
+
 import { useState, useEffect, useRef, useCallback } from "react";
-import { logError } from "@/lib/logger";
 import type {
   PostFormData,
   AutoSaveStatus,
   LocalStorageBackup,
   ConflictResponse,
-} from "@/lib/validation/autosave-schemas";
+} from "@/lib/autosave";
 import {
   getAutoSaveStorageKey,
   localStorageBackupSchema,
   AUTOSAVE_DRAFT_ID_KEY,
-} from "@/lib/validation/autosave-schemas";
+} from "@/lib/autosave";
 
 /**
  * Auto-save debounce delay in milliseconds
@@ -220,7 +221,7 @@ export function useAutoSave({
         localStorage.setItem(storageKey, JSON.stringify(backup));
       } catch (error) {
         // LocalStorage might be full or disabled
-        logError("Failed to save to localStorage:", error);
+        console.error("Failed to save to localStorage:", error);
       }
     },
     [currentPostId, serverVersion],
@@ -337,7 +338,7 @@ export function useAutoSave({
           return;
         }
 
-        logError("Auto-save failed:", error);
+        console.error("Auto-save failed:", error);
         setStatus("error");
         setErrorMessage(
           error instanceof Error ? error.message : "Auto-save failed",

@@ -1,561 +1,60 @@
-"use client";
-
-import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
-import {
-  PlusCircle,
-  Search,
-  Edit,
-  Trash2,
-  FileText,
-  ChevronRight,
-  ChevronLeft,
-} from "lucide-react";
-import { Post } from "@/types/post.types";
-import { formatHebrewDate } from "@/lib/date/format";
-import { toast } from "sonner";
-import { logError } from "@/lib/logger";
-import { useOptimisticList } from "@/hooks/use-optimistic-list";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { AiSurvey } from "@/components/studio/ai-survey";
+import { PostFilter } from "@/components/studio/post-filter";
+import { PostRows } from "@/components/studio/post-rows";
+import { requireUser } from "@/lib/auth/guards";
+import { listPosts } from "@/lib/posts/studio";
+import { studioCopy } from "@/lib/studio-copy";
 
-const POSTS_PER_PAGE = 20;
+const { list: text, nav } = studioCopy;
 
-function PostStatusBadge({ status }: { status: Post["status"] }) {
-  return (
-    <Badge variant={status === "published" ? "default" : "secondary"}>
-      {status === "published" ? "פורסם" : "טיוטה"}
-    </Badge>
-  );
+interface DashboardPageProps {
+  searchParams: Promise<{ q?: string; status?: string }>;
 }
 
-function DashboardPostMobileCard({
-  post,
-  isPending,
-  onDelete,
-}: {
-  post: Post;
-  isPending: (id: string) => boolean;
-  onDelete: (id: string) => void;
-}) {
-  return (
-    <div className="rounded-lg border bg-card p-4 shadow-sm">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0 flex-1">
-          <Link
-            href={`/dashboard/posts/${post.id}`}
-            className="block break-words text-base font-semibold leading-6 hover:underline"
-          >
-            {post.title}
-          </Link>
-          <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-            {post.category && (
-              <Badge variant="secondary" className="max-w-full">
-                {post.category}
-              </Badge>
-            )}
-            <span>{formatHebrewDate(post.createdAt)}</span>
-          </div>
-        </div>
-        <PostStatusBadge status={post.status} />
-      </div>
-      <div className="mt-4 grid grid-cols-2 gap-2">
-        <Button variant="outline" size="sm" className="h-11" asChild>
-          <Link href={`/dashboard/posts/${post.id}`}>
-            <Edit className="h-4 w-4" />
-            עריכה
-          </Link>
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => onDelete(post.id)}
-          disabled={isPending(post.id)}
-          className="h-11"
-        >
-          <Trash2 className="h-4 w-4 text-destructive" />
-          מחיקה
-        </Button>
-      </div>
-    </div>
-  );
-}
-
-export default function DashboardPage() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-
-  // Get pagination from URL params
-  const currentOffset = parseInt(searchParams.get("offset") || "0", 10);
-  const currentPage = Math.floor(currentOffset / POSTS_PER_PAGE) + 1;
-
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<
-    "all" | "published" | "draft"
-  >("all");
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [postToDelete, setPostToDelete] = useState<string | null>(null);
-  const [totalPosts, setTotalPosts] = useState(0);
-  const [hasMore, setHasMore] = useState(false);
-
-  // Optimistic delete hook
-  const { optimisticDelete, isPending } = useOptimisticList({
-    items: posts,
-    setItems: setPosts,
-    getItemId: (post) => post.id,
-  });
-
-  // Fetch posts when pagination or filters change
-  useEffect(() => {
-    let isMounted = true;
-
-    async function loadPosts() {
-      try {
-        setIsLoading(true);
-
-        // Build URL with pagination and filters
-        const params = new URLSearchParams();
-        params.set("limit", String(POSTS_PER_PAGE));
-        params.set("offset", String(currentOffset));
-        // Always scope "My Posts" to the current user, even when the account is
-        // also admin-authenticated; otherwise the creator/admin sees every post
-        // on the platform (the all-posts view belongs to the admin panel).
-        params.set("scope", "mine");
-
-        if (statusFilter !== "all") {
-          params.set("status", statusFilter);
-        }
-
-        if (search) {
-          params.set("search", search);
-        }
-
-        const response = await fetch(`/api/admin/posts?${params.toString()}`, {
-          cache: "no-store",
-        });
-
-        if (!isMounted) return;
-
-        const data = await response.json();
-        setPosts(data.posts || []);
-        setTotalPosts(data.total ?? data.posts?.length ?? 0);
-        setHasMore(data.hasMore ?? false);
-      } catch (error) {
-        if (isMounted) {
-          logError("Failed to fetch posts:", error);
-          toast.error("שגיאה בטעינת כתבות");
-        }
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
-      }
-    }
-
-    void loadPosts();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [currentOffset, search, statusFilter]);
-
-  // Navigate to page
-  const goToPage = (page: number) => {
-    const offset = (page - 1) * POSTS_PER_PAGE;
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("offset", String(offset));
-    router.push(`/dashboard?${params.toString()}`);
+export default async function DashboardPage({ searchParams }: DashboardPageProps) {
+  const user = await requireUser();
+  const { q, status } = await searchParams;
+  const filter = {
+    search: q || undefined,
+    status: status === "published" || status === "draft" ? status : undefined,
   };
 
-  const totalPages = Math.ceil(totalPosts / POSTS_PER_PAGE);
+  const [posts, all] = await Promise.all([
+    listPosts(filter, user.id),
+    user.aiImageSurveyDismissed ? [] : listPosts({}, user.id),
+  ]);
 
-  // Client-side filtering is now done server-side, so just return posts
-  const filteredPosts = posts;
-
-  function openDeleteDialog(id: string) {
-    // Prevent opening dialog if operation is already pending
-    if (isPending(id)) return;
-    setPostToDelete(id);
-    setDeleteDialogOpen(true);
-  }
-
-  async function confirmDelete() {
-    if (!postToDelete || isPending(postToDelete)) return;
-
-    setDeleteDialogOpen(false);
-
-    // Optimistic delete - item disappears instantly, rolls back on error
-    await optimisticDelete(
-      postToDelete,
-      () =>
-        fetch(`/api/admin/posts/${postToDelete}`, {
-          method: "DELETE",
-          credentials: "include",
-        }),
-      { errorMessage: "שגיאה במחיקת הכתבה" }
-    );
-
-    setPostToDelete(null);
-  }
-
-  if (isLoading) {
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between gap-3">
-          <div className="space-y-2">
-            <div className="h-9 w-32 rounded bg-muted animate-pulse" />
-            <div className="h-4 w-48 rounded bg-muted animate-pulse" />
-          </div>
-          <div className="h-10 w-28 rounded-md bg-muted animate-pulse" />
-        </div>
-
-        {/* Filters Skeleton */}
-        <Card className="p-4">
-          <div className="flex flex-col gap-4 sm:flex-row">
-            <div className="flex-1">
-              <div className="h-10 w-full rounded-md bg-muted animate-pulse" />
-            </div>
-            <div className="grid grid-cols-3 gap-2 sm:flex">
-              <div className="h-9 w-16 rounded-md bg-muted animate-pulse" />
-              <div className="h-9 w-20 rounded-md bg-muted animate-pulse" />
-              <div className="h-9 w-20 rounded-md bg-muted animate-pulse" />
-            </div>
-          </div>
-        </Card>
-
-        {/* Table Skeleton */}
-        <Card className="md:hidden">
-          <div className="space-y-3 px-4 pb-4">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="rounded-lg border p-4">
-                <div className="space-y-3">
-                  <div className="h-5 w-3/4 rounded bg-muted animate-pulse" />
-                  <div className="h-4 w-1/2 rounded bg-muted animate-pulse" />
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="h-9 rounded-md bg-muted animate-pulse" />
-                    <div className="h-9 rounded-md bg-muted animate-pulse" />
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </Card>
-
-        <Card className="hidden md:block">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="border-b">
-                <tr className="text-start">
-                  <th className="p-4">
-                    <div className="h-4 w-16 rounded bg-muted animate-pulse" />
-                  </th>
-                  <th className="p-4 hidden md:table-cell">
-                    <div className="h-4 w-20 rounded bg-muted animate-pulse" />
-                  </th>
-                  <th className="p-4 hidden lg:table-cell">
-                    <div className="h-4 w-16 rounded bg-muted animate-pulse" />
-                  </th>
-                  <th className="p-4">
-                    <div className="h-4 w-16 rounded bg-muted animate-pulse" />
-                  </th>
-                  <th className="p-4 text-end">
-                    <div className="h-4 w-16 rounded bg-muted animate-pulse ms-auto" />
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {[1, 2, 3, 4, 5].map((i) => (
-                  <tr key={i} className="border-b last:border-0">
-                    <td className="p-4">
-                      <div className="space-y-2">
-                        <div className="h-5 w-48 rounded bg-muted animate-pulse" />
-                        <div className="h-4 w-32 rounded bg-muted animate-pulse" />
-                      </div>
-                    </td>
-                    <td className="p-4 hidden md:table-cell">
-                      <div className="h-5 w-16 rounded-full bg-muted animate-pulse" />
-                    </td>
-                    <td className="p-4 hidden lg:table-cell">
-                      <div className="h-4 w-24 rounded bg-muted animate-pulse" />
-                    </td>
-                    <td className="p-4">
-                      <div className="h-5 w-16 rounded-full bg-muted animate-pulse" />
-                    </td>
-                    <td className="p-4">
-                      <div className="flex justify-end gap-2">
-                        <div className="h-9 w-9 rounded-md bg-muted animate-pulse" />
-                        <div className="h-9 w-9 rounded-md bg-muted animate-pulse" />
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </Card>
-      </div>
-    );
-  }
+  const unlabelled = all.filter((post) => post.coverImage);
+  const filtering = Boolean(filter.search || filter.status);
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="min-w-0">
-          <h1 className="text-2xl font-bold sm:text-3xl">הכתבות שלי</h1>
-          <p className="mt-1 text-muted-foreground">
-            כאן אפשר לנהל טיוטות, לפרסם כתבות ולעקוב אחרי כל מה שכתבת.
-          </p>
-        </div>
-        <Link href="/dashboard/posts/new">
-          <Button className="w-full sm:w-auto">
-            <PlusCircle className="h-4 w-4 me-2" />
-            כתבה חדשה
-          </Button>
-        </Link>
-      </div>
+    <main id="main" className="studio-page">
+      <h1 className="studio-title">{nav.myArticles}</h1>
 
-      {/* Show empty state if no posts */}
-      {posts.length === 0 ? (
-        <Card className="p-6 sm:p-12">
-          <div className="text-center space-y-4">
-            <div className="flex justify-center">
-              <div className="rounded-full bg-muted p-6">
-                <FileText className="h-12 w-12 text-muted-foreground" />
-              </div>
-            </div>
-            <div>
-              <h3 className="text-xl font-semibold mb-2">אין לך כתבות עדיין</h3>
-              <p className="text-muted-foreground mb-4">
-                התחל לכתוב ולשתף את הסיפורים שלך עם הקהילה
-              </p>
-              <Link href="/dashboard/posts/new">
-                <Button>
-                  <PlusCircle className="h-4 w-4 me-2" />
-                  צור כתבה ראשונה
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </Card>
+      {posts.length > 0 || filtering ? (
+        <PostFilter search={filter.search} status={filter.status} />
+      ) : null}
+
+      {posts.length > 0 ? (
+        <>
+          <PostRows posts={posts} />
+          <p className="studio-note">{text.readsSince}</p>
+        </>
+      ) : filtering ? (
+        <p className="studio-note">{text.empty}</p>
       ) : (
         <>
-          {/* Filters */}
-          <Card className="p-4">
-            <div className="flex flex-col gap-4 sm:flex-row">
-              <div className="flex-1 relative">
-                <Search className="absolute start-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="חפש כתבות..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="h-11 ps-10 sm:h-9"
-                />
-              </div>
-              <div className="grid grid-cols-3 gap-2 sm:flex">
-                <Button
-                  variant={statusFilter === "all" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setStatusFilter("all")}
-                  className="h-11 w-full sm:h-9"
-                >
-                  הכל
-                </Button>
-                <Button
-                  variant={statusFilter === "published" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setStatusFilter("published")}
-                  className="h-11 w-full sm:h-9"
-                >
-                  פורסמו
-                </Button>
-                <Button
-                  variant={statusFilter === "draft" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setStatusFilter("draft")}
-                  className="h-11 w-full sm:h-9"
-                >
-                  טיוטות
-                </Button>
-              </div>
-            </div>
-            <p className="mt-3 text-sm text-muted-foreground">
-              טיפ: התחילו מטיוטה אם הכתבה עדיין לא מוכנה לפרסום.
-            </p>
-          </Card>
-
-          {/* Posts Table */}
-          <div className="space-y-3 md:hidden">
-            {filteredPosts.length === 0 ? (
-              <div className="rounded-lg border bg-card p-6 text-center text-muted-foreground">
-                לא נמצאו כתבות התואמות את החיפוש.
-              </div>
-            ) : (
-              filteredPosts.map((post) => (
-                <DashboardPostMobileCard
-                  key={post.id}
-                  post={post}
-                  isPending={isPending}
-                  onDelete={openDeleteDialog}
-                />
-              ))
-            )}
-          </div>
-
-          <Card className="hidden md:block">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="border-b">
-                  <tr className="text-start">
-                    <th className="p-3 sm:p-4 font-medium">כותרת</th>
-                    <th className="p-3 sm:p-4 font-medium hidden md:table-cell">
-                      קטגוריה
-                    </th>
-                    <th className="p-3 sm:p-4 font-medium hidden lg:table-cell">
-                      נוצר
-                    </th>
-                    <th className="p-3 sm:p-4 font-medium">סטטוס</th>
-                    <th className="p-3 sm:p-4 font-medium text-end">פעולות</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredPosts.length === 0 ? (
-                    <tr>
-                      <td
-                        colSpan={5}
-                        className="p-8 text-center text-muted-foreground"
-                      >
-                        לא נמצאו כתבות התואמות את החיפוש.
-                      </td>
-                    </tr>
-                  ) : (
-                    filteredPosts.map((post: Post) => (
-                      <tr
-                        key={post.id}
-                        className="border-b last:border-0 hover:bg-muted/50"
-                      >
-                        <td className="p-3 sm:p-4">
-                          <div>
-                            <Link
-                              href={`/dashboard/posts/${post.id}`}
-                              className="font-medium hover:underline"
-                            >
-                              {post.title}
-                            </Link>
-                          </div>
-                        </td>
-                        <td className="p-3 sm:p-4 hidden md:table-cell">
-                          {post.category && (
-                            <Badge variant="secondary">{post.category}</Badge>
-                          )}
-                        </td>
-                        <td className="p-3 sm:p-4 text-sm text-muted-foreground hidden lg:table-cell">
-                          {formatHebrewDate(post.createdAt)}
-                        </td>
-                        <td className="p-3 sm:p-4">
-                          <PostStatusBadge status={post.status} />
-                        </td>
-                        <td className="p-2 sm:p-4">
-                          <div className="flex justify-end gap-2">
-                            <Link href={`/dashboard/posts/${post.id}`}>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-10 w-10 sm:h-9 sm:w-9"
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                            </Link>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => openDeleteDialog(post.id)}
-                              disabled={isPending(post.id)}
-                              className="h-10 w-10 sm:h-9 sm:w-9"
-                            >
-                              <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </Card>
-
-          {/* Pagination Controls */}
-          {totalPages > 1 && (
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-sm text-muted-foreground">
-                מציג {currentOffset + 1}-
-                {Math.min(currentOffset + POSTS_PER_PAGE, totalPosts)} מתוך{" "}
-                {totalPosts} כתבות
-              </p>
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => goToPage(currentPage - 1)}
-                  disabled={currentPage <= 1}
-                  className="h-11 w-full sm:h-9 sm:w-auto"
-                >
-                  <ChevronRight className="h-4 w-4" />
-                  הקודם
-                </Button>
-                <span className="order-first text-center text-sm text-muted-foreground sm:order-none sm:px-2">
-                  עמוד {currentPage} מתוך {totalPages}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => goToPage(currentPage + 1)}
-                  disabled={!hasMore && currentPage >= totalPages}
-                  className="h-11 w-full sm:h-9 sm:w-auto"
-                >
-                  הבא
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          )}
+          <p className="studio-note">{text.none}</p>
+          <p>
+            <Link className="button" href="/dashboard/posts/new">
+              {text.start}
+            </Link>
+          </p>
         </>
       )}
 
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>מחיקת כתבה</AlertDialogTitle>
-            <AlertDialogDescription>
-              האם אתה בטוח שברצונך למחוק את הכתבה הזו?{"\u200F"} פעולה זו לא ניתנת לביטול.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>ביטול</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={confirmDelete}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              מחק
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </div>
+      {unlabelled.length > 0 ? <AiSurvey posts={unlabelled} /> : null}
+    </main>
   );
 }

@@ -1,519 +1,196 @@
-import type { Post, PostStats, PostSummary } from "@/types/post.types";
-import type {
-  PostQueryResult,
-  PostSummaryQueryResult,
-  StatsQueryResult,
-} from "@/types/database.types";
-import { db } from "../db/client";
-import { CREATOR_USERNAME } from "@/lib/constants";
-import { rowToPost, rowToPostSummary } from "./utils";
+import { cache } from "react";
+import { db } from "@/lib/db";
+import type { ArchiveMonth } from "@/lib/issues/merge-core";
+import { CREATOR_USERNAME } from "@/lib/site";
+import type { Post, PostSummary } from "./types";
 
 /**
- * Pagination options for querying posts
- */
-export interface PaginationOptions {
-  limit?: number;
-  offset?: number;
-}
-
-/**
- * Paginated result for posts query
- */
-export interface PaginatedPosts {
-  posts: Post[];
-  total: number;
-  limit: number;
-  offset: number;
-  hasMore: boolean;
-}
-
-export interface PaginatedPostSummaries {
-  posts: PostSummary[];
-  total: number;
-  limit: number;
-  offset: number;
-  hasMore: boolean;
-}
-
-/**
- * Get all posts, optionally filtered by publication status
+ * Read queries for public pages.
  *
- * @param filterPublished - If true, only return published posts
- * @param pagination - Optional pagination parameters (limit, offset)
- * @returns Array of posts sorted by date (newest first) or paginated result
- */
-export async function getPosts(
-  filterPublished = false,
-  pagination?: PaginationOptions,
-): Promise<Post[] | PaginatedPosts> {
-  try {
-    // If pagination is requested, return paginated result
-    if (pagination) {
-      const limit = pagination.limit || 10;
-      const offset = pagination.offset || 0;
-
-      // Get total count
-      const countResult = filterPublished
-        ? await db.query`
-            SELECT COUNT(*) as count FROM posts WHERE status = 'published'
-          `
-        : await db.query`
-            SELECT COUNT(*) as count FROM posts
-          `;
-
-      const total = parseInt((countResult.rows[0] as { count: string }).count);
-
-      // Get paginated posts
-      const result = filterPublished
-        ? ((await db.query`
-            SELECT
-              p.*,
-              CASE WHEN u.id IS NULL AND p.author_id IS NOT NULL AND p.author_id != 'legacy-admin' THEN true ELSE false END as author_deleted,
-              CASE WHEN u.username = ${CREATOR_USERNAME} THEN true ELSE false END as is_creator_post
-            FROM posts p
-            LEFT JOIN users u ON p.author_id = u.id::text
-            WHERE p.status = 'published'
-            ORDER BY p.date DESC, p.created_at DESC
-            LIMIT ${limit} OFFSET ${offset}
-          `) as PostQueryResult)
-        : ((await db.query`
-            SELECT
-              p.*,
-              CASE WHEN u.id IS NULL AND p.author_id IS NOT NULL AND p.author_id != 'legacy-admin' THEN true ELSE false END as author_deleted,
-              CASE WHEN u.username = ${CREATOR_USERNAME} THEN true ELSE false END as is_creator_post
-            FROM posts p
-            LEFT JOIN users u ON p.author_id = u.id::text
-            ORDER BY p.date DESC, p.created_at DESC
-            LIMIT ${limit} OFFSET ${offset}
-          `) as PostQueryResult);
-
-      const posts = result.rows.map(rowToPost);
-
-      return {
-        posts,
-        total,
-        limit,
-        offset,
-        hasMore: offset + limit < total,
-      };
-    }
-
-    // Non-paginated (backward compatible)
-    const result = filterPublished
-      ? ((await db.query`
-          SELECT
-            p.*,
-            CASE WHEN u.id IS NULL AND p.author_id IS NOT NULL AND p.author_id != 'legacy-admin' THEN true ELSE false END as author_deleted,
-            CASE WHEN u.username = ${CREATOR_USERNAME} THEN true ELSE false END as is_creator_post
-          FROM posts p
-          LEFT JOIN users u ON p.author_id = u.id::text
-          WHERE p.status = 'published'
-          ORDER BY p.date DESC, p.created_at DESC
-        `) as PostQueryResult)
-      : ((await db.query`
-          SELECT
-            p.*,
-            CASE WHEN u.id IS NULL AND p.author_id IS NOT NULL AND p.author_id != 'legacy-admin' THEN true ELSE false END as author_deleted,
-            CASE WHEN u.username = ${CREATOR_USERNAME} THEN true ELSE false END as is_creator_post
-          FROM posts p
-          LEFT JOIN users u ON p.author_id = u.id::text
-          ORDER BY p.date DESC, p.created_at DESC
-        `) as PostQueryResult);
-
-    return result.rows.map(rowToPost);
-  } catch (error) {
-    // Suppress error if posts table doesn't exist (common in fresh installs)
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    if (!errorMessage.includes('relation "posts" does not exist')) {
-      console.error("[ERROR] Failed to fetch posts:", error);
-    }
-    return pagination
-      ? {
-          posts: [],
-          total: 0,
-          limit: pagination.limit || 10,
-          offset: pagination.offset || 0,
-          hasMore: false,
-        }
-      : [];
-  }
-}
-
-/**
- * Get a single post by its ID
+ * None of these catch database errors. If a query fails while Vercel is
+ * regenerating a page, the render fails and the previous page stays up. The old
+ * app returned empty results here, which got an outage cached as an empty issue
+ * or a fake 404.
  *
- * @param id - Post UUID
- * @returns Post object or null if not found
+ * `p.date AT TIME ZONE 'UTC'` reads the zone-less timestamp as UTC, so results
+ * don't depend on the machine's time zone.
  */
-export async function getPostById(id: string): Promise<Post | null> {
-  try {
-    const result = (await db.query`
-      SELECT
-        p.*,
-        CASE WHEN u.id IS NULL AND p.author_id IS NOT NULL AND p.author_id != 'legacy-admin' THEN true ELSE false END as author_deleted,
-        CASE WHEN u.username = ${CREATOR_USERNAME} THEN true ELSE false END as is_creator_post
-      FROM posts p
-      LEFT JOIN users u ON p.author_id = u.id::text
-      WHERE p.id = ${id}
-    `) as PostQueryResult;
 
-    if (result.rows.length === 0) {
-      return null;
-    }
+type Row = Record<string, unknown>;
 
-    return rowToPost(result.rows[0]);
-  } catch (error) {
-    // Suppress error if posts table doesn't exist (common in fresh installs)
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    if (!errorMessage.includes('relation "posts" does not exist')) {
-      console.error("[ERROR] Failed to fetch post by ID:", error);
-    }
-    return null;
-  }
+function toSummary(row: Row): PostSummary {
+  return {
+    id: row.id as string,
+    title: row.title as string,
+    description: row.description as string,
+    coverImage: (row.cover_image as string | null) || undefined,
+    wordCount: (row.word_count as number | null) ?? 0,
+    date: (row.date as Date).toISOString(),
+    author: (row.author as string | null) || undefined,
+    authorGrade: (row.author_grade as string | null) || undefined,
+    authorClass: (row.author_class as number | null) || undefined,
+    authorDeleted: row.author_deleted === true,
+    isTeacherPost: row.is_teacher_post === true,
+    isCreatorPost: row.is_creator_post === true,
+    aiGeneratedImage: row.ai_generated_image === true,
+  };
 }
 
-/**
- * Get a single published post by its ID
- * Only returns published posts for security
- *
- * @param id - Post UUID
- * @returns Post object or null if not found or not published
- */
-export async function getPublishedPostById(id: string): Promise<Post | null> {
-  try {
-    const result = (await db.query`
-      SELECT
-        p.*,
-        CASE WHEN u.id IS NULL AND p.author_id IS NOT NULL AND p.author_id != 'legacy-admin' THEN true ELSE false END as author_deleted,
-        CASE WHEN u.username = ${CREATOR_USERNAME} THEN true ELSE false END as is_creator_post
-      FROM posts p
-      LEFT JOIN users u ON p.author_id = u.id::text
-      WHERE p.id = ${id} AND p.status = 'published'
-    `) as PostQueryResult;
-
-    if (result.rows.length === 0) {
-      return null;
-    }
-
-    return rowToPost(result.rows[0]);
-  } catch (error) {
-    // Suppress error if posts table doesn't exist (common in fresh installs)
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    if (!errorMessage.includes('relation "posts" does not exist')) {
-      console.error("[ERROR] Failed to fetch published post by ID:", error);
-    }
-    return null;
-  }
+function toPost(row: Row): Post {
+  return {
+    ...toSummary(row),
+    content: row.content as string,
+    tags: (row.tags as string[] | null) ?? [],
+    category: (row.category as string | null) || undefined,
+    updatedAt: (row.updated_at as Date).toISOString(),
+  };
 }
 
-/**
- * Get all posts by a specific author
- *
- * @param authorId - User ID of the author
- * @returns Array of posts by the author, sorted by date (newest first)
- */
-export async function getPostsByAuthor(authorId: string): Promise<Post[]> {
-  try {
-    const result = (await db.query`
-      SELECT
-        p.*,
-        CASE WHEN u.id IS NULL AND p.author_id IS NOT NULL AND p.author_id != 'legacy-admin' THEN true ELSE false END as author_deleted,
-        CASE WHEN u.username = ${CREATOR_USERNAME} THEN true ELSE false END as is_creator_post
-      FROM posts p
-      LEFT JOIN users u ON p.author_id = u.id::text
-      WHERE p.author_id = ${authorId}
-      ORDER BY p.date DESC, p.created_at DESC
-    `) as PostQueryResult;
-
-    return result.rows.map(rowToPost);
-  } catch (error) {
-    // Suppress error if posts table doesn't exist (common in fresh installs)
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    if (!errorMessage.includes('relation "posts" does not exist')) {
-      console.error("[ERROR] Failed to fetch posts by author:", error);
-    }
-    return [];
-  }
-}
-
-/**
- * Archive month representation
- */
-export interface ArchiveMonth {
-  year: number;
-  month: number; // 1-12
-  count: number; // Number of published posts in this month
-  /**
-   * Optional Hebrew label override (month span, year appended at render time).
-   * Set when this row represents a merged "double issue" (e.g. "מאי–יוני").
-   */
-  label?: string;
-}
-
-/**
- * Get posts for a specific month and year
- * Only returns published posts
- *
- * @param year - Year (e.g., 2025)
- * @param month - Month number (1-12)
- * @returns Array of posts for that month, sorted by date (newest first)
- */
-export async function getPostsByMonth(
-  year: number,
-  month: number,
-): Promise<Post[]> {
-  try {
-    const result = (await db.query`
-      SELECT
-        p.*,
-        CASE WHEN u.id IS NULL AND p.author_id IS NOT NULL AND p.author_id != 'legacy-admin' THEN true ELSE false END as author_deleted,
-        CASE WHEN u.username = ${CREATOR_USERNAME} THEN true ELSE false END as is_creator_post
-      FROM posts p
-      LEFT JOIN users u ON p.author_id = u.id::text
-      WHERE p.status = 'published'
-        AND EXTRACT(YEAR FROM p.date) = ${year}
-        AND EXTRACT(MONTH FROM p.date) = ${month}
-      ORDER BY p.ai_generated_image ASC, (p.cover_image IS NOT NULL AND p.cover_image != '') DESC, p.date DESC, p.created_at DESC
-    `) as PostQueryResult;
-
-    return result.rows.map(rowToPost);
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    if (!errorMessage.includes('relation "posts" does not exist')) {
-      console.error("[ERROR] Failed to fetch posts by month:", error);
-    }
-    return [];
-  }
-}
-
-export async function getPostSummariesByMonth(
-  year: number,
-  month: number,
-  pagination: PaginationOptions = {},
-): Promise<PaginatedPostSummaries> {
-  const limit = pagination.limit || 12;
-  const offset = pagination.offset || 0;
-
-  try {
-    const countResult = await db.query`
-      SELECT COUNT(*) as count
-      FROM posts
-      WHERE status = 'published'
-        AND EXTRACT(YEAR FROM date) = ${year}
-        AND EXTRACT(MONTH FROM date) = ${month}
-    `;
-
-    const total = parseInt((countResult.rows[0] as { count: string }).count);
-
-    const result = (await db.query`
-      SELECT
-        p.id,
-        p.title,
-        p.cover_image,
-        p.description,
-        p.word_count,
-        p.date,
-        p.author,
-        p.author_grade,
-        p.author_class,
-        CASE WHEN u.id IS NULL AND p.author_id IS NOT NULL AND p.author_id != 'legacy-admin' THEN true ELSE false END as author_deleted,
-        p.is_teacher_post,
-        CASE WHEN u.username = ${CREATOR_USERNAME} THEN true ELSE false END as is_creator_post,
-        p.ai_generated_image,
-        p.tags,
-        p.category
-      FROM posts p
-      LEFT JOIN users u ON p.author_id = u.id::text
-      WHERE p.status = 'published'
-        AND EXTRACT(YEAR FROM p.date) = ${year}
-        AND EXTRACT(MONTH FROM p.date) = ${month}
-      ORDER BY p.ai_generated_image ASC, (p.cover_image IS NOT NULL AND p.cover_image != '') DESC, p.date DESC, p.created_at DESC
-      LIMIT ${limit} OFFSET ${offset}
-    `) as PostSummaryQueryResult;
-
-    return {
-      posts: result.rows.map(rowToPostSummary),
-      total,
-      limit,
-      offset,
-      hasMore: offset + limit < total,
-    };
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    if (!errorMessage.includes('relation "posts" does not exist')) {
-      console.error("[ERROR] Failed to fetch post summaries by month:", error);
-    }
-
-    return {
-      posts: [],
-      total: 0,
-      limit,
-      offset,
-      hasMore: false,
-    };
-  }
-}
-
-/**
- * Get published post summaries within a half-open date range.
- * Mirrors getPostSummariesByMonth exactly (same SELECT and ORDER BY) but filters
- * by `date >= start AND date < endExclusive`, which is what backs merged
- * "double issues" spanning multiple months.
- *
- * Bounds must be passed as plain timestamp strings (e.g. "2026-05-01 00:00:00"),
- * NOT JS Date objects: the `date` column is TIMESTAMP without time zone and the
- * month filters use EXTRACT (no tz conversion), so binding Date objects could
- * shift the boundary and drop/add posts at month edges.
- *
- * @param startInclusive - Range start as a timestamp string (inclusive)
- * @param endExclusive - Range end as a timestamp string (exclusive)
- * @param pagination - Optional pagination parameters (limit, offset)
- */
-export async function getPostSummariesByDateRange(
+/** Published articles in a range with their full text, for printing an issue. */
+export async function getPublishedArticlesInRange(
   startInclusive: string,
   endExclusive: string,
-  pagination: PaginationOptions = {},
-): Promise<PaginatedPostSummaries> {
-  const limit = pagination.limit || 12;
-  const offset = pagination.offset || 0;
+): Promise<Post[]> {
+  const rows = await db()`
+    SELECT
+      p.id, p.title, p.description, p.content, p.cover_image, p.word_count,
+      p.date AT TIME ZONE 'UTC' AS date,
+      p.updated_at AT TIME ZONE 'UTC' AS updated_at,
+      p.author, p.author_grade, p.author_class,
+      p.is_teacher_post, p.ai_generated_image, p.tags, p.category,
+      (u.id IS NULL AND p.author_id IS NOT NULL) AS author_deleted,
+      (u.username IS NOT DISTINCT FROM ${CREATOR_USERNAME}) AS is_creator_post
+    FROM posts p
+    LEFT JOIN users u ON p.author_id = u.id::text
+    WHERE p.status = 'published'
+      AND p.date >= ${startInclusive}
+      AND p.date < ${endExclusive}
+    ORDER BY
+      p.ai_generated_image ASC,
+      (p.cover_image IS NOT NULL AND p.cover_image <> '') DESC,
+      p.date DESC
+  `;
 
-  try {
-    const countResult = await db.query`
-      SELECT COUNT(*) as count
-      FROM posts
-      WHERE status = 'published'
-        AND date >= ${startInclusive}
-        AND date < ${endExclusive}
-    `;
+  return rows.map(toPost);
+}
 
-    const total = parseInt((countResult.rows[0] as { count: string }).count);
+/** Published posts in a half-open date range, in reading order. */
+export async function getPublishedPostsInRange(
+  startInclusive: string,
+  endExclusive: string,
+): Promise<PostSummary[]> {
+  const rows = await db()`
+    SELECT
+      p.id, p.title, p.description, p.cover_image, p.word_count,
+      p.date AT TIME ZONE 'UTC' AS date,
+      p.author, p.author_grade, p.author_class,
+      p.is_teacher_post, p.ai_generated_image,
+      (u.id IS NULL AND p.author_id IS NOT NULL) AS author_deleted,
+      (u.username IS NOT DISTINCT FROM ${CREATOR_USERNAME}) AS is_creator_post
+    FROM posts p
+    LEFT JOIN users u ON p.author_id = u.id::text
+    WHERE p.status = 'published'
+      AND p.date >= ${startInclusive}
+      AND p.date < ${endExclusive}
+    ORDER BY
+      p.ai_generated_image ASC,
+      (p.cover_image IS NOT NULL AND p.cover_image <> '') DESC,
+      p.date DESC
+  `;
 
-    const result = (await db.query`
+  return rows.map(toSummary);
+}
+
+/**
+ * One published post, or null. `idOrSlug` also accepts the old title-based slugs
+ * that 20 posts still have, so those links work again.
+ *
+ * Wrapped in cache() because metadata and the page both ask for it.
+ */
+export const getPublishedPost = cache(
+  async (idOrSlug: string): Promise<Post | null> => {
+    const rows = await db()`
       SELECT
-        p.id,
-        p.title,
-        p.cover_image,
-        p.description,
-        p.word_count,
-        p.date,
-        p.author,
-        p.author_grade,
-        p.author_class,
-        CASE WHEN u.id IS NULL AND p.author_id IS NOT NULL AND p.author_id != 'legacy-admin' THEN true ELSE false END as author_deleted,
-        p.is_teacher_post,
-        CASE WHEN u.username = ${CREATOR_USERNAME} THEN true ELSE false END as is_creator_post,
-        p.ai_generated_image,
-        p.tags,
-        p.category
+        p.id, p.title, p.description, p.content, p.cover_image, p.word_count,
+        p.date AT TIME ZONE 'UTC' AS date,
+        p.updated_at AT TIME ZONE 'UTC' AS updated_at,
+        p.author, p.author_grade, p.author_class,
+        p.is_teacher_post, p.ai_generated_image, p.tags, p.category,
+        (u.id IS NULL AND p.author_id IS NOT NULL) AS author_deleted,
+        (u.username IS NOT DISTINCT FROM ${CREATOR_USERNAME}) AS is_creator_post
       FROM posts p
       LEFT JOIN users u ON p.author_id = u.id::text
       WHERE p.status = 'published'
-        AND p.date >= ${startInclusive}
-        AND p.date < ${endExclusive}
-      ORDER BY p.ai_generated_image ASC, (p.cover_image IS NOT NULL AND p.cover_image != '') DESC, p.date DESC, p.created_at DESC
-      LIMIT ${limit} OFFSET ${offset}
-    `) as PostSummaryQueryResult;
-
-    return {
-      posts: result.rows.map(rowToPostSummary),
-      total,
-      limit,
-      offset,
-      hasMore: offset + limit < total,
-    };
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    if (!errorMessage.includes('relation "posts" does not exist')) {
-      console.error(
-        "[ERROR] Failed to fetch post summaries by date range:",
-        error,
-      );
-    }
-
-    return {
-      posts: [],
-      total: 0,
-      limit,
-      offset,
-      hasMore: false,
-    };
-  }
-}
-
-/**
- * Get all available archive months (months with at least one published post)
- * Returns months grouped by year in descending order
- *
- * @returns Array of archive months with post counts
- */
-export async function getArchiveMonths(): Promise<ArchiveMonth[]> {
-  try {
-    const result = await db.query`
-      SELECT
-        EXTRACT(YEAR FROM date)::int as year,
-        EXTRACT(MONTH FROM date)::int as month,
-        COUNT(*) as count
-      FROM posts
-      WHERE status = 'published'
-      GROUP BY year, month
-      ORDER BY year DESC, month DESC
+        AND (p.id = ${idOrSlug} OR p.slug = ${idOrSlug})
+      LIMIT 1
     `;
 
-    return result.rows.map((row) => ({
-      year: row.year as number,
-      month: row.month as number,
-      count: parseInt(String(row.count)),
-    }));
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    if (!errorMessage.includes('relation "posts" does not exist')) {
-      console.error("[ERROR] Failed to fetch archive months:", error);
-    }
-    return [];
-  }
-}
+    return rows[0] ? toPost(rows[0]) : null;
+  },
+);
 
 /**
- * Get aggregated post statistics
- * Includes total counts, status breakdown, and time-based metrics
- *
- * @returns PostStats object with various counts
+ * Published articles containing a term, title matches first. Both sides go
+ * through normalize_search_text in the database, so they can't drift apart.
  */
-export async function getPostStats(): Promise<PostStats> {
-  try {
-    const result = (await db.query`
-      SELECT
-        COUNT(*) as total,
-        SUM(CASE WHEN status = 'published' THEN 1 ELSE 0 END) as published,
-        SUM(CASE WHEN status = 'draft' THEN 1 ELSE 0 END) as drafts,
-        SUM(CASE WHEN created_at >= CURRENT_DATE THEN 1 ELSE 0 END) as today,
-        SUM(CASE WHEN created_at >= CURRENT_DATE - INTERVAL '7 days' THEN 1 ELSE 0 END) as this_week,
-        SUM(CASE WHEN created_at >= DATE_TRUNC('month', CURRENT_DATE) THEN 1 ELSE 0 END) as this_month
-      FROM posts
-    `) as StatsQueryResult;
+export async function searchPublishedPosts(term: string): Promise<PostSummary[]> {
+  const rows = await db()`
+    WITH search AS (
+      SELECT '%' || replace(normalize_search_text(${term}), '%', '\\%') || '%' AS pattern
+    )
+    SELECT
+      p.id, p.title, p.description, p.cover_image, p.word_count,
+      p.date AT TIME ZONE 'UTC' AS date,
+      p.author, p.author_grade, p.author_class,
+      p.is_teacher_post, p.ai_generated_image,
+      (u.id IS NULL AND p.author_id IS NOT NULL) AS author_deleted,
+      (u.username IS NOT DISTINCT FROM ${CREATOR_USERNAME}) AS is_creator_post
+    FROM posts p
+    CROSS JOIN search
+    LEFT JOIN users u ON p.author_id = u.id::text
+    WHERE p.status = 'published' AND p.search_text LIKE search.pattern
+    ORDER BY
+      (normalize_search_text(p.title) LIKE search.pattern) DESC,
+      p.date DESC
+    LIMIT 30
+  `;
 
-    const row = result.rows[0];
-    return {
-      total: parseInt(row.total) || 0,
-      published: parseInt(row.published) || 0,
-      drafts: parseInt(row.drafts) || 0,
-      today: parseInt(row.today) || 0,
-      thisWeek: parseInt(row.this_week) || 0,
-      thisMonth: parseInt(row.this_month) || 0,
-    };
-  } catch (error) {
-    // Suppress error if posts table doesn't exist (common in fresh installs)
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    if (!errorMessage.includes('relation "posts" does not exist')) {
-      console.error("[ERROR] Failed to fetch post stats:", error);
-    }
-    return {
-      total: 0,
-      published: 0,
-      drafts: 0,
-      today: 0,
-      thisWeek: 0,
-      thisMonth: 0,
-    };
-  }
+  return rows.map(toSummary);
+}
+
+/** Every month with published posts, newest first. */
+export async function getArchiveMonths(): Promise<ArchiveMonth[]> {
+  const rows = await db()`
+    SELECT
+      EXTRACT(YEAR FROM date)::int AS year,
+      EXTRACT(MONTH FROM date)::int AS month,
+      COUNT(*)::int AS count
+    FROM posts
+    WHERE status = 'published'
+    GROUP BY year, month
+    ORDER BY year DESC, month DESC
+  `;
+
+  return rows.map((row) => ({
+    year: row.year as number,
+    month: row.month as number,
+    count: row.count as number,
+  }));
+}
+
+/** Ids and edit times only, so the sitemap never loads article bodies. */
+export async function getPublishedPostStamps(): Promise<
+  { id: string; updatedAt: string }[]
+> {
+  const rows = await db()`
+    SELECT id, updated_at AT TIME ZONE 'UTC' AS updated_at
+    FROM posts
+    WHERE status = 'published'
+    ORDER BY date DESC
+  `;
+
+  return rows.map((row) => ({
+    id: row.id as string,
+    updatedAt: (row.updated_at as Date).toISOString(),
+  }));
 }

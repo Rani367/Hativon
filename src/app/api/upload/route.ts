@@ -1,15 +1,23 @@
-import { NextRequest, NextResponse } from "next/server";
 import { put } from "@vercel/blob";
-import { getCurrentUser } from "@/lib/auth/middleware";
-import { logError } from "@/lib/logger";
-import { createPostImageVariants, fileToDataUrl } from "@/lib/images/server";
-import { bufferHasAiProvenance } from "@/lib/images/ai-metadata";
+import { NextResponse } from "next/server";
+import { isSameOrigin } from "@/lib/auth/guards";
+import { getSessionUser } from "@/lib/auth/session";
+import { studioCopy } from "@/lib/studio-copy";
+import { bytesHaveAiProvenance } from "@/lib/images/ai-metadata";
+import {
+  type CropRect,
+  createCoverImages,
+  createInlineImage,
+} from "@/lib/images/server";
+import { isRateLimited } from "@/lib/rate-limit";
 
-/**
- * Image file signatures (magic bytes) for validation
- * This prevents MIME type spoofing attacks
- */
-const IMAGE_SIGNATURES: Record<string, number[][]> = {
+export const maxDuration = 30;
+
+// Vercel refuses bodies over about 4.5 MB. Bigger photos are shrunk in the browser.
+const MAX_FILE_SIZE = 4.4 * 1024 * 1024;
+
+/** Real image signatures, because the declared type comes from the client. */
+const SIGNATURES: Record<string, number[][]> = {
   "image/jpeg": [[0xff, 0xd8, 0xff]],
   "image/png": [[0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]],
   "image/gif": [
@@ -19,143 +27,72 @@ const IMAGE_SIGNATURES: Record<string, number[][]> = {
   "image/webp": [[0x52, 0x49, 0x46, 0x46]],
 };
 
-/**
- * Parse a single crop coordinate field from FormData.
- * Returns null for missing, empty, or non-numeric values.
- */
-function parseCropField(value: FormDataEntryValue | null): number | null {
-  if (typeof value !== "string" || value.trim() === "") return null;
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : null;
+function matchesSignature(bytes: Uint8Array, type: string): boolean {
+  return (SIGNATURES[type] ?? []).some((signature) =>
+    signature.every((byte, index) => bytes[index] === byte),
+  );
 }
 
-/**
- * Validate that file content matches known image signatures
- */
-async function validateImageSignature(file: File): Promise<boolean> {
-  const buffer = await file.slice(0, 12).arrayBuffer();
-  const bytes = new Uint8Array(buffer);
-
-  for (const signatures of Object.values(IMAGE_SIGNATURES)) {
-    for (const sig of signatures) {
-      if (sig.every((byte, i) => bytes[i] === byte)) {
-        return true;
-      }
-    }
-  }
-  return false;
+function fail(message: string, status: number) {
+  return NextResponse.json({ error: message }, { status });
 }
 
-/**
- * Upload image to Vercel Blob
- * Requires authentication
- * Falls back to base64 data URL in development without BLOB_READ_WRITE_TOKEN
- */
-export async function POST(request: NextRequest) {
+function parseCrop(form: FormData): CropRect | undefined {
+  const values = ["cropX", "cropY", "cropWidth", "cropHeight"].map((name) => {
+    const value = form.get(name);
+    return typeof value === "string" && value.trim() ? Number(value) : Number.NaN;
+  });
+
+  if (!values.every(Number.isFinite)) return undefined;
+  const [x, y, width, height] = values;
+  return { x, y, width, height };
+}
+
+export async function POST(request: Request) {
+  const { upload: text } = studioCopy;
+
+  if (!isSameOrigin(request)) return fail(text.failed, 403);
+
+  const user = await getSessionUser();
+  if (!user) return fail(text.signedOut, 401);
+
+  if (await isRateLimited("upload", user.id)) return fail(text.tooMany, 429);
+
+  const token = process.env.BLOB_READ_WRITE_TOKEN;
+  if (!token) return fail(text.failed, 503);
+
+  const form = await request.formData();
+  const file = form.get("file");
+  if (!(file instanceof File)) return fail(text.notImage, 400);
+  if (file.size > MAX_FILE_SIZE) return fail(text.tooLarge, 400);
+
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  if (!matchesSignature(bytes, file.type)) return fail(text.notImage, 400);
+
+  // Resizing strips metadata, so anything resized in the browser reports what it
+  // found first. It's no weaker than before: metadata was always removable.
+  const aiGenerated =
+    bytesHaveAiProvenance(bytes) || form.get("aiProvenance") === "1";
+
+  const assetId = `${Date.now()}-${crypto.randomUUID().slice(0, 8)}`;
+  const store = (name: string, content: File) =>
+    put(`posts/${assetId}/${name}`, content, { access: "public", token });
+
   try {
-    // Check authentication
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (form.get("purpose") === "inline") {
+      const image = await createInlineImage(file);
+      const { url } = await store(image.filename, image.file);
+      return NextResponse.json({ url, aiGenerated });
     }
 
-    // Get the file from form data
-    const formData = await request.formData();
-    const file = formData.get("file") as File;
-
-    if (!file) {
-      return NextResponse.json({ error: "No file provided" }, { status: 400 });
-    }
-
-    // Validate file type (MIME type check)
-    if (!file.type.startsWith("image/")) {
-      return NextResponse.json(
-        { error: "File must be an image" },
-        { status: 400 },
-      );
-    }
-
-    // Validate file signature (magic bytes check)
-    const isValidImage = await validateImageSignature(file);
-    if (!isValidImage) {
-      return NextResponse.json(
-        { error: "Invalid image file format" },
-        { status: 400 },
-      );
-    }
-
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      return NextResponse.json(
-        { error: "File size must be less than 5MB" },
-        { status: 400 },
-      );
-    }
-
-    // Detect AI-provenance metadata on the ORIGINAL bytes — re-encoding into
-    // the card/full variants below strips it, so this must run first.
-    const aiGenerated = bufferHasAiProvenance(
-      Buffer.from(await file.arrayBuffer()),
-    );
-
-    // Optional client-chosen crop for the card/thumbnail (natural, EXIF-oriented
-    // pixels). Only honored when all four fields are present and finite; bounds
-    // validation lives in createPostImageVariants (never trust client coords).
-    const cropX = parseCropField(formData.get("cropX"));
-    const cropY = parseCropField(formData.get("cropY"));
-    const cropWidth = parseCropField(formData.get("cropWidth"));
-    const cropHeight = parseCropField(formData.get("cropHeight"));
-    const crop =
-      cropX !== null && cropY !== null && cropWidth !== null && cropHeight !== null
-        ? { x: cropX, y: cropY, width: cropWidth, height: cropHeight }
-        : undefined;
-
-    const variants = await createPostImageVariants(file, crop);
-
-    // Check if Vercel Blob token is available
-    if (!process.env.BLOB_READ_WRITE_TOKEN) {
-      // Fallback to optimized data URLs for local development
-      const [fullDataUrl, cardDataUrl] = await Promise.all([
-        fileToDataUrl(variants.full.file),
-        fileToDataUrl(variants.card.file),
-      ]);
-
-      return NextResponse.json({
-        url: fullDataUrl,
-        cardUrl: cardDataUrl,
-        filename: variants.full.filename,
-        aiGenerated,
-      });
-    }
-
-    // Generate unique filename
-    const timestamp = Date.now();
-    const randomString = Math.random().toString(36).substring(7);
-    const assetId = `${timestamp}-${randomString}`;
-    const fullPath = `posts/${assetId}/${variants.full.filename}`;
-    const cardPath = `posts/${assetId}/${variants.card.filename}`;
-
-    // Upload to Vercel Blob
-    const [fullBlob, cardBlob] = await Promise.all([
-      put(fullPath, variants.full.file, {
-        access: "public",
-      }),
-      put(cardPath, variants.card.file, {
-        access: "public",
-      }),
+    const { full, card } = await createCoverImages(file, parseCrop(form));
+    const [fullBlob] = await Promise.all([
+      store(full.filename, full.file),
+      store(card.filename, card.file),
     ]);
-
-    return NextResponse.json({
-      url: fullBlob.url,
-      cardUrl: cardBlob.url,
-      filename: fullPath,
-      aiGenerated,
-    });
+    return NextResponse.json({ url: fullBlob.url, aiGenerated });
   } catch (error) {
-    logError("Image upload error:", error);
-    return NextResponse.json(
-      { error: "Failed to upload image" },
-      { status: 500 },
-    );
+    console.error("Image upload failed:", error);
+    return fail(text.failed, 500);
   }
 }

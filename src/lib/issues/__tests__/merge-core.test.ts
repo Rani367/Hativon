@@ -1,13 +1,17 @@
-import { describe, it, expect } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import {
-  parseMergeGroups,
-  canonicalMonthOf,
-  resolveDefaultMonth,
+  type ArchiveMonth,
   type MergeGroup,
-} from "@/lib/issues/merge-core";
-import type { ArchiveMonth } from "@/lib/posts/queries";
+  chooseHomeIssue,
+  collapseArchiveMonths,
+  findMergeGroup,
+  monthRangeBounds,
+  parseHomeIssuePin,
+  parseMergeGroups,
+} from "../merge-core";
 
-const MAY_JUNE: MergeGroup = {
+// The real group in production.
+const mayJune: MergeGroup = {
   startYear: 2026,
   startMonth: 5,
   endYear: 2026,
@@ -17,154 +21,157 @@ const MAY_JUNE: MergeGroup = {
   label: "מאי–יוני",
 };
 
-describe("merge-core", () => {
-  describe("parseMergeGroups", () => {
-    it("returns [] for null", () => {
-      expect(parseMergeGroups(null)).toEqual([]);
-    });
+const archive: ArchiveMonth[] = [
+  { year: 2026, month: 10, count: 1 },
+  { year: 2026, month: 6, count: 21 },
+  { year: 2026, month: 5, count: 7 },
+  { year: 2026, month: 4, count: 19 },
+];
 
-    it("returns [] for invalid JSON", () => {
-      expect(parseMergeGroups("not json")).toEqual([]);
-    });
+describe("parseMergeGroups", () => {
+  it("reads the stored production value", () => {
+    expect(parseMergeGroups(JSON.stringify([mayJune]))).toEqual([mayJune]);
+  });
 
-    it("returns [] for a non-array", () => {
-      expect(parseMergeGroups(JSON.stringify({ foo: "bar" }))).toEqual([]);
-    });
+  it("treats empty, malformed and non-array values as no groups", () => {
+    expect(parseMergeGroups(null)).toEqual([]);
+    expect(parseMergeGroups("")).toEqual([]);
+    expect(parseMergeGroups("not json")).toEqual([]);
+    expect(parseMergeGroups('{"a":1}')).toEqual([]);
+  });
 
-    it("parses a valid array of groups", () => {
-      expect(parseMergeGroups(JSON.stringify([MAY_JUNE]))).toEqual([MAY_JUNE]);
-    });
+  it("drops invalid groups and keeps valid ones", () => {
+    const backwards = { ...mayJune, startMonth: 7, endMonth: 6 };
+    const unlabelled = { ...mayJune, label: "" };
+    const stringy = { ...mayJune, startYear: "2026" };
 
-    it("drops invalid group entries", () => {
-      const raw = JSON.stringify([
-        MAY_JUNE,
-        { startYear: 2026, label: "broken" }, // missing numeric fields
-        { ...MAY_JUNE, startMonth: 7, endMonth: 6 }, // start after end
-      ]);
-      expect(parseMergeGroups(raw)).toEqual([MAY_JUNE]);
+    expect(
+      parseMergeGroups(JSON.stringify([backwards, mayJune, unlabelled, stringy])),
+    ).toEqual([mayJune]);
+  });
+});
+
+describe("findMergeGroup", () => {
+  it("finds every month in the span", () => {
+    expect(findMergeGroup([mayJune], 2026, 5)).toBe(mayJune);
+    expect(findMergeGroup([mayJune], 2026, 6)).toBe(mayJune);
+  });
+
+  it("finds nothing outside the span", () => {
+    expect(findMergeGroup([mayJune], 2026, 4)).toBeNull();
+    expect(findMergeGroup([mayJune], 2026, 7)).toBeNull();
+    expect(findMergeGroup([mayJune], 2025, 5)).toBeNull();
+  });
+});
+
+describe("monthRangeBounds", () => {
+  it("covers one month", () => {
+    const month = { year: 2026, month: 4 };
+    expect(monthRangeBounds(month, month)).toEqual({
+      startInclusive: "2026-04-01 00:00:00",
+      endExclusive: "2026-05-01 00:00:00",
     });
   });
 
-  describe("canonicalMonthOf", () => {
-    it("maps an in-group month to the group canonical", () => {
-      expect(canonicalMonthOf([MAY_JUNE], 2026, 5)).toEqual({
-        year: 2026,
-        month: 6,
-      });
-    });
-
-    it("returns the input unchanged for an out-of-group month", () => {
-      expect(canonicalMonthOf([MAY_JUNE], 2026, 4)).toEqual({
-        year: 2026,
-        month: 4,
-      });
-    });
-
-    it("returns the input unchanged when there are no groups", () => {
-      expect(canonicalMonthOf([], 2026, 6)).toEqual({ year: 2026, month: 6 });
+  it("covers a merged span", () => {
+    expect(
+      monthRangeBounds({ year: 2026, month: 5 }, { year: 2026, month: 6 }),
+    ).toEqual({
+      startInclusive: "2026-05-01 00:00:00",
+      endExclusive: "2026-07-01 00:00:00",
     });
   });
 
-  describe("resolveDefaultMonth", () => {
-    // The headline regression: a combined May+June issue clears the threshold
-    // on its SUMMED count even though June alone (7) is below it.
-    it("promotes the merged issue on its combined count (May 10 + June 7 = 17)", () => {
-      const archives: ArchiveMonth[] = [
-        { year: 2026, month: 6, count: 7 },
-        { year: 2026, month: 5, count: 10 },
-        { year: 2026, month: 4, count: 20 },
-      ];
+  it("rolls over the end of the year", () => {
+    const december = { year: 2025, month: 12 };
+    expect(monthRangeBounds(december, december).endExclusive).toBe(
+      "2026-01-01 00:00:00",
+    );
+  });
+});
 
-      const decision = resolveDefaultMonth({
-        storedDefault: { year: 2026, month: 4 },
-        current: { year: 2026, month: 6 },
-        archives,
-        groups: [MAY_JUNE],
-        minPosts: 15,
-      });
+describe("collapseArchiveMonths", () => {
+  it("returns the input when there are no groups", () => {
+    expect(collapseArchiveMonths(archive, [])).toBe(archive);
+  });
 
-      // Switches to the group's canonical month (June), not June alone.
-      expect(decision).toEqual({ year: 2026, month: 6, switched: true });
+  it("merges a group's months at the position of its newest month", () => {
+    expect(collapseArchiveMonths(archive, [mayJune])).toEqual([
+      { year: 2026, month: 10, count: 1 },
+      { year: 2026, month: 6, count: 28, label: "מאי–יוני" },
+      { year: 2026, month: 4, count: 19 },
+    ]);
+  });
+
+  it("files a group under its canonical month when only one month has posts", () => {
+    const onlyMay: ArchiveMonth[] = [{ year: 2026, month: 5, count: 7 }];
+
+    expect(collapseArchiveMonths(onlyMay, [mayJune])).toEqual([
+      { year: 2026, month: 6, count: 7, label: "מאי–יוני" },
+    ]);
+  });
+});
+
+describe("parseHomeIssuePin", () => {
+  it("reads a stored pin", () => {
+    expect(parseHomeIssuePin('{"year":2026,"month":4}')).toEqual({
+      year: 2026,
+      month: 4,
     });
+  });
 
-    it("does NOT promote when the combined count is below the threshold", () => {
-      const archives: ArchiveMonth[] = [
-        { year: 2026, month: 6, count: 4 },
-        { year: 2026, month: 5, count: 6 },
-      ];
+  it("treats anything malformed as no pin", () => {
+    expect(parseHomeIssuePin(null)).toBeNull();
+    expect(parseHomeIssuePin("")).toBeNull();
+    expect(parseHomeIssuePin("not json")).toBeNull();
+    expect(parseHomeIssuePin("null")).toBeNull();
+    expect(parseHomeIssuePin('{"year":2026,"month":13}')).toBeNull();
+    expect(parseHomeIssuePin('{"year":2026}')).toBeNull();
+  });
+});
 
-      const decision = resolveDefaultMonth({
-        storedDefault: { year: 2026, month: 4 },
-        current: { year: 2026, month: 6 },
-        archives,
-        groups: [MAY_JUNE],
-        minPosts: 15,
-      });
+describe("chooseHomeIssue", () => {
+  const issues = collapseArchiveMonths(archive, [mayJune]);
 
-      expect(decision).toEqual({ year: 2026, month: 4, switched: false });
+  it("skips a thin new issue for the newest one with enough posts", () => {
+    // Production today: October has 1 post, May–June has 28.
+    expect(chooseHomeIssue(null, issues)).toMatchObject({ year: 2026, month: 6 });
+  });
+
+  it("moves on once a new issue reaches the threshold", () => {
+    const grown = [{ year: 2026, month: 11, count: 15 }, ...issues];
+    expect(chooseHomeIssue(null, grown)).toMatchObject({ year: 2026, month: 11 });
+  });
+
+  it("falls back to the newest issue when none has enough posts", () => {
+    const small = [
+      { year: 2026, month: 2, count: 3 },
+      { year: 2026, month: 1, count: 9 },
+    ];
+    expect(chooseHomeIssue(null, small)).toMatchObject({ year: 2026, month: 2 });
+  });
+
+  it("returns nothing when there are no issues", () => {
+    expect(chooseHomeIssue(null, [])).toBeNull();
+  });
+
+  it("prefers a teacher's pin, even for a thin issue", () => {
+    expect(chooseHomeIssue({ year: 2026, month: 10 }, issues)).toMatchObject({
+      year: 2026,
+      month: 10,
     });
+  });
 
-    it("keeps the stored default when it already resolves to the current issue", () => {
-      // Stored default is the canonical June; current calendar month is May —
-      // both belong to the same merge group, so no switch is needed.
-      const archives: ArchiveMonth[] = [
-        { year: 2026, month: 6, count: 7 },
-        { year: 2026, month: 5, count: 10 },
-      ];
+  it("resolves a pin on a merged member month to the merged issue", () => {
+    expect(
+      chooseHomeIssue({ year: 2026, month: 5 }, issues, [mayJune]),
+    ).toMatchObject({ year: 2026, month: 6, count: 28 });
+  });
 
-      const decision = resolveDefaultMonth({
-        storedDefault: { year: 2026, month: 6 },
-        current: { year: 2026, month: 5 },
-        archives,
-        groups: [MAY_JUNE],
-        minPosts: 15,
-      });
-
-      expect(decision).toEqual({ year: 2026, month: 6, switched: false });
-    });
-
-    describe("with no merge groups (parity with per-month behavior)", () => {
-      it("switches to the current month when it clears the threshold", () => {
-        const archives: ArchiveMonth[] = [{ year: 2026, month: 6, count: 16 }];
-
-        const decision = resolveDefaultMonth({
-          storedDefault: { year: 2026, month: 4 },
-          current: { year: 2026, month: 6 },
-          archives,
-          groups: [],
-          minPosts: 15,
-        });
-
-        expect(decision).toEqual({ year: 2026, month: 6, switched: true });
-      });
-
-      it("keeps the stored default when the current month is below the threshold", () => {
-        const archives: ArchiveMonth[] = [{ year: 2026, month: 6, count: 9 }];
-
-        const decision = resolveDefaultMonth({
-          storedDefault: { year: 2026, month: 4 },
-          current: { year: 2026, month: 6 },
-          archives,
-          groups: [],
-          minPosts: 15,
-        });
-
-        expect(decision).toEqual({ year: 2026, month: 4, switched: false });
-      });
-
-      it("keeps the stored default when it equals the current month", () => {
-        const archives: ArchiveMonth[] = [{ year: 2026, month: 6, count: 99 }];
-
-        const decision = resolveDefaultMonth({
-          storedDefault: { year: 2026, month: 6 },
-          current: { year: 2026, month: 6 },
-          archives,
-          groups: [],
-          minPosts: 15,
-        });
-
-        expect(decision).toEqual({ year: 2026, month: 6, switched: false });
-      });
+  it("ignores a pin on an issue that no longer has posts", () => {
+    expect(chooseHomeIssue({ year: 2020, month: 1 }, issues)).toMatchObject({
+      year: 2026,
+      month: 6,
     });
   });
 });
