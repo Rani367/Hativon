@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { AccountMenu } from "@/components/public/account-menu";
 import { ThemeToggle } from "@/components/public/theme-toggle";
 import { copy } from "@/lib/copy";
 import { SITE_NAME } from "@/lib/site";
@@ -30,7 +31,7 @@ export default function PublicLayout({ children }: { children: ReactNode }) {
           <nav className="masthead-nav" aria-label={copy.nav.main}>
             <a href="/issues">{copy.nav.issues}</a>
             <a href="/search">{copy.nav.search}</a>
-            <a href="/dashboard">{copy.nav.write}</a>
+            <AccountMenu />
             <ThemeToggle />
           </nav>
         </div>

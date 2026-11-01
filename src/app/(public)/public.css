@@ -147,6 +147,81 @@
   }
 }
 
+.account-button {
+  padding: 0.4375rem clamp(0.5rem, 1.4vw, 0.875rem);
+  border-radius: 999px;
+  color: var(--ink);
+  font-weight: 500;
+  cursor: pointer;
+  animation: fade-in 300ms var(--ease) both;
+  transition: background-color 250ms var(--ease);
+}
+
+@media (hover: hover) {
+  .account-button:hover {
+    background: var(--surface);
+  }
+}
+
+/* Opens under the left end of the bar, whatever the screen width. */
+.account-menu {
+  position: fixed;
+  inset: 5.25rem auto auto
+    max(var(--gutter), calc((100vw - var(--page-max)) / 2 + var(--gutter)));
+  display: none;
+  min-width: 11rem;
+  margin: 0;
+  padding: 0.375rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 0.9375rem;
+  box-shadow: 0 1rem 2.5rem rgb(0 0 0 / 0.1);
+  opacity: 0;
+  transform: translateY(-0.375rem) scale(0.98);
+  transform-origin: top left;
+  transition:
+    opacity 220ms var(--ease),
+    transform 320ms var(--ease),
+    display 320ms allow-discrete,
+    overlay 320ms allow-discrete;
+}
+
+.account-menu:popover-open {
+  display: grid;
+  opacity: 1;
+  transform: none;
+}
+
+@starting-style {
+  .account-menu:popover-open {
+    opacity: 0;
+    transform: translateY(-0.375rem) scale(0.98);
+  }
+}
+
+.masthead-nav .account-menu a,
+.account-menu button {
+  display: block;
+  width: 100%;
+  padding: 0.5625rem 0.75rem;
+  border-radius: var(--radius-small);
+  color: var(--ink);
+  font-size: 0.9375rem;
+  font-weight: 400;
+  text-align: start;
+  cursor: pointer;
+  transition: background-color 200ms var(--ease);
+}
+
+@media (hover: hover) {
+  .masthead-nav .account-menu a:hover,
+  .account-menu button:hover {
+    background: var(--surface);
+  }
+}
+
 .theme-toggle {
   flex: none;
   inline-size: 1.125rem;

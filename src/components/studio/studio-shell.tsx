@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { Toaster } from "sonner";
-import { logout } from "@/app/(auth)/actions";
+import { AccountNote, LogoutButton } from "@/components/studio/account-note";
 import { SITE_NAME } from "@/lib/site";
 import { studioCopy } from "@/lib/studio-copy";
 import type { User } from "@/lib/users/types";
@@ -27,13 +27,10 @@ export function StudioShell({
           <Link href="/dashboard/posts/new">{text.newArticle}</Link>
           <Link href="/dashboard/profile">{text.profile}</Link>
           {user.isTeacher ? <Link href="/admin">{text.admin}</Link> : null}
-          <form action={logout}>
-            <button type="submit" className="text-button">
-              {text.logout}
-            </button>
-          </form>
+          <LogoutButton />
         </nav>
       </header>
+      <AccountNote hint={user.isTeacher ? "teacher" : "writer"} />
 
       {children}
 
