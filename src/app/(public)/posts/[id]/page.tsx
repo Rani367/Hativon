@@ -12,6 +12,9 @@ import { SITE_NAME, getSiteUrl, shouldSkipPrerender } from "@/lib/site";
 export const revalidate = 3600;
 export const dynamicParams = true;
 
+// For sharing an article that has no cover photo.
+const DEFAULT_SHARE_IMAGE = "/opengraph-image.png";
+
 interface ArticlePageProps {
   params: Promise<{ id: string }>;
 }
@@ -32,9 +35,9 @@ export async function generateMetadata({
   if (!post) return { title: copy.errors.articleNotFound };
 
   const url = `${getSiteUrl()}/posts/${post.id}`;
-  const images = post.coverImage
-    ? [{ url: post.coverImage, alt: post.title }]
-    : undefined;
+  const images = [
+    { url: post.coverImage ?? DEFAULT_SHARE_IMAGE, alt: post.title },
+  ];
 
   return {
     title: post.title,
@@ -75,7 +78,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
     "@type": "NewsArticle",
     headline: post.title,
     description: post.description,
-    image: post.coverImage,
+    image: post.coverImage ?? `${siteUrl}${DEFAULT_SHARE_IMAGE}`,
     datePublished: post.date,
     dateModified: post.updatedAt,
     author: {
