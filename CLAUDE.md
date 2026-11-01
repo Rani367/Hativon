@@ -4,8 +4,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Hebrew/RTL school-newspaper app on Next.js 16 (App Router, React 19) + Vercel, Neon Postgres and Vercel Blob.
 
-> **Temporary, until cutover:** the rebuild lives on the `rebuild` branch, a one-time exception to "always push directly to main". The cutover merge removes this note.
-
 ## Commands
 
 Use **Bun**: there's no `packageManager` field, so don't default to npm/pnpm.
