@@ -4,6 +4,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Hebrew/RTL school-newspaper app on Next.js 16 (App Router, React 19) + Vercel.
 
+> **Temporary, until cutover:** the full rebuild lives on the `rebuild` branch, a one-time exception to "always push directly to main". `main` is frozen except for security fixes, which get merged into `rebuild`. Everything below describes the old app and gets rewritten in the cutover merge, which also restores the main-only rule.
+
 ## Commands
 
 Use **Bun** — there's no `packageManager` field, so don't default to npm/pnpm.
