@@ -7,8 +7,12 @@ import {
 } from "@/lib/issues/issues";
 import {
   HOME_ISSUE_PIN_SETTING_KEY,
+  findMergeGroup,
+  monthIndex,
   parseHomeIssuePin,
 } from "@/lib/issues/merge-core";
+import { getArchiveMonths } from "@/lib/posts/queries";
+import { monthNumberToHebrew } from "@/lib/date/months";
 import { SIGNUP_CODE_KEY, getSetting } from "@/lib/settings";
 import { studioCopy } from "@/lib/studio-copy";
 import {
@@ -26,14 +30,19 @@ const monthValue = (year: number, month: number) =>
   `${year}-${String(month).padStart(2, "0")}`;
 
 export default async function AdminIssuesPage() {
-  const [issues, groups, rawPin, code] = await Promise.all([
+  const [issues, months, groups, rawPin, code] = await Promise.all([
     getIssues(),
+    getArchiveMonths(),
     getMergeGroups(),
     getSetting(HOME_ISSUE_PIN_SETTING_KEY),
     getSetting(SIGNUP_CODE_KEY),
   ]);
 
   const pin = parseHomeIssuePin(rawPin);
+  // Months with articles that aren't already part of a merge, oldest first.
+  const mergeable = months
+    .filter((m) => !findMergeGroup(groups, m.year, m.month))
+    .sort((a, b) => monthIndex(a.year, a.month) - monthIndex(b.year, b.month));
 
   return (
     <div className="narrow">
@@ -83,14 +92,24 @@ export default async function AdminIssuesPage() {
 
       <ActionForm action={mergeMonths} submitLabel={text.merge}>
         <div className="field-row">
-          <label className="field">
-            <span>{text.from}</span>
-            <input type="month" name="from" dir="ltr" required />
-          </label>
-          <label className="field">
-            <span>{text.to}</span>
-            <input type="month" name="to" dir="ltr" required />
-          </label>
+          {(["from", "to"] as const).map((name) => (
+            <label key={name} className="field">
+              <span>{text[name]}</span>
+              <select name={name} required defaultValue="">
+                <option value="" disabled>
+                  {text.chooseMonth}
+                </option>
+                {mergeable.map((m) => (
+                  <option
+                    key={monthValue(m.year, m.month)}
+                    value={monthValue(m.year, m.month)}
+                  >
+                    {`${monthNumberToHebrew(m.month)} ${m.year}`}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ))}
         </div>
       </ActionForm>
 

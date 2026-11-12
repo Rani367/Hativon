@@ -204,6 +204,7 @@ export const studioCopy = {
     mergeHint: "מציג כמה חודשים רצופים כגיליון אחד, תחת החודש האחרון.",
     from: "מחודש",
     to: "עד חודש",
+    chooseMonth: "בחרו חודש",
     merge: "איחוד",
     unmerge: "ביטול האיחוד",
     mergeInvalid: "בחרו טווח תקין של שני חודשים או יותר.",
